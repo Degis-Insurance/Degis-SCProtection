@@ -1,5 +1,8 @@
 import fs from "fs";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
+import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
 import { HardhatUserConfig, task } from "hardhat/config";
@@ -25,6 +28,20 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  namedAccounts: {
+    delpoyer: {
+      default: 0,
+      localhost: 0,
+      fuji: 0,
+      avax: 0,
+    },
+  },
+  networks: {
+    hardhat: {},
+    localhost: {},
+    fuji: {},
+    avax: {},
   },
   paths: {
     sources: "./src", // Use ./src rather than ./contracts as Hardhat expects
