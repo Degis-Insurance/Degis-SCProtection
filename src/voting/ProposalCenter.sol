@@ -20,7 +20,22 @@
 
 pragma solidity ^0.8.13;
 
-contract name {
+contract ProposalCenter {
+    
+    struct Report {
+        uint256 poolId;
+        uint256 timestamp;
+        bool pending;
+        bool approved;
+    }
+
+    mapping(uint256 => Report) reportId;
+
+    function receiveVote(uint256 _reportId, bool quorum) external {}
+    function reportPool(uint256 _poolId) external {}
+    function proposePool(address _protocol, uint256 _reinsuranceSplit, uint256 _insuranceSplit) external {}
+    function executeNewPool(address _protocol, uint256 _reinsuranceSplit, uint256 _insuranceSplit) external {}
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //

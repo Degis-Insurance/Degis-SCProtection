@@ -20,7 +20,18 @@
 
 pragma solidity ^0.8.13;
 
-contract name {
+import "./ProposalCenter.sol";
+
+contract Comittee {
+
+    address[] public commitee;
+    //report id to quorum
+    mapping(uint256 => mapping(address => bool)) quorum;
+
+    function initiateVote(uint256 _reportId, bool _vote) external {}
+    function partyVote(uint256 _reportId, bool _vote) external {}
+    function submitVote(uint256 _reportId) external {}
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //

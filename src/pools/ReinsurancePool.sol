@@ -1,11 +1,30 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/*
+ //======================================================================\\
+ //======================================================================\\
+  *******         **********     ***********     *****     ***********
+  *      *        *              *                 *       *
+  *        *      *              *                 *       *
+  *         *     *              *                 *       *
+  *         *     *              *                 *       *
+  *         *     **********     *       *****     *       ***********
+  *         *     *              *         *       *                 *
+  *         *     *              *         *       *                 *
+  *        *      *              *         *       *                 *
+  *      *        *              *         *       *                 *
+  *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.13;
 
 import "../interfaces/ReinsurancePoolErrors.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 
 contract ReinsurancePool is
     ReinsurancePoolErrors,
@@ -40,14 +59,14 @@ contract ReinsurancePool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function deposit(uint256 _amount) external {
+    function provideLiquidity(uint256 _amount) external {
         if (_amount == 0) revert ZeroAmount();
 
         IERC20(shield).transferFrom(msg.sender, address(this), _amount);
         _mint(msg.sender, _amount);
     }
 
-    function withdraw(uint256 _amount) external {
+    function removeLiquidity(uint256 _amount) external {
         if (_amount == 0) revert ZeroAmount();
 
         IERC20(shield).safeTransfer(msg.sender, _amount);
@@ -55,8 +74,8 @@ contract ReinsurancePool is
     }
 
     /**
-     * @notice Participate in a project's protection
-     *         Enjoy the reward from that pool but also take the risk
+     * @notice Insure a specific project
+     *         Enjoy rewards from that pool but also take targeted risk
      */
-    function participate() external {}
+    function insureProtocolPool(uint256 _poolId, uint256 _amount) external {}
 }

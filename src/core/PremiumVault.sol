@@ -20,7 +20,14 @@
 
 pragma solidity ^0.8.13;
 
-contract name {
+contract PremiumVault {
+    // user => poolId => staked amount
+    mapping(address => mapping(uint256 => uint256)) premiumVault;
+    function stakeInsuranceToken(uint256 _amount) external {}
+    function harvest(uint256 _poolId) external {}
+
+    function _distributePremium(uint256 _premium) internal {}
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -51,4 +58,5 @@ contract name {
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
 }
