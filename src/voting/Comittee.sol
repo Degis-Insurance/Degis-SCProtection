@@ -25,8 +25,10 @@ import "./ProposalCenter.sol";
 contract Comittee {
 
     address[] public commitee;
+    address[] public team;
     //report id to quorum
-    mapping(uint256 => mapping(address => bool)) quorum;
+    mapping(uint256 => mapping(address => bool)) commiteeQuorum;
+    mapping(uint256 => mapping(address => bool)) teamQuorum;
 
     function initiateVote(uint256 _reportId, bool _vote) external {}
     function partyVote(uint256 _reportId, bool _vote) external {}
