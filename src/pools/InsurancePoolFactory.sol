@@ -34,14 +34,20 @@ import "./PolicyCenter.sol";
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
 contract InsurancePoolFactory is Ownable {
+    
     struct PoolInfo {
+        string protocolName;
         address poolAddress;
-        address projectToken;
+        address protocolToken;
+        uint256 emission;
+        uint256 vaultSplit;
+        uint256 treasurySplit;
+        uint256 maxCapacity;
     }
     // name => pool info
-    mapping(string => PoolInfo) pools;
+    mapping(uint256 => PoolInfo) poolIds;
 
-    address[] poolList;
+    uint256 public poolCounter;
 
     /**
      * @notice Deploy new insurance pools
@@ -49,23 +55,37 @@ contract InsurancePoolFactory is Ownable {
      * @param _name  Name of the project
      * @param _token Native token of the project
      */
-    function deployPool(string calldata _name, address _token)
+    function deployPool(string calldata _name, address _protocolToken, uint256 _emission, uint256 _vaultSplit, uint256 _treasurySplit)
         external
         onlyOwner
     {
         bytes memory bytecode = type(InsurancePool).creationCode;
 
-        bytes32 salt = keccak256(abi.encodePacked(_name, _token));
+        bytes32 salt = keccak256(abi.encodePacked(_name, _protocolToken));
 
         // Deploy the new pool by create2
         address newPoolAddress = _deploy(bytecode, salt);
-
+        ++poolCounter;
         // Store the pool information
-        pools[_name].poolAddress = newPoolAddress;
-        pools[_name].projectToken = _token;
+        pools[poolCounter] = PoolInfo(
+            _name,
+            newPoolAddress,
+            _protocolToken,
+            _emission,
+            _vaultSplit,
+            _treasurySplit,
+            _maxCapacity
+        );
     }
 
-    function getPoolList() external view returns (address[] memory list) {}
+    function getPoolList() external view returns (PoolInfo[] memory list) {
+        PoolInfo[poolCounter] list;
+        for (uint256 i = 0; i < poolCounter; ++i) {
+            list[i] = pools[i];
+        }
+
+        return list;
+    }
 
     /**
      * @notice Deploy function with create2

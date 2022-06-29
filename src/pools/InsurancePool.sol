@@ -20,23 +20,52 @@
 
 pragma solidity ^0.8.13;
 
-import "./openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../mock/MockShield.sol";
 import "./ReinsurancePool.sol";
 
 contract InsurancePool is ERC20 {
+
+
+    address public reinsuranceAddress;
 
     string public name;
     address public insuredToken;
     bool public paused;
     bool public claimable;
     uint256 public maxCapacity;
+    uint256 public underlyingAmount;
     
-    function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {}
-    function provideLiquidity(uint256 _amount) external {}
-    function removeLiquidity(uint256 _amount) external {}
-    function payout() external {}
-    function setClaimStatus(bool _claimable) internal {}
+    function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {
+        maxCapacity = _maxCapacity;
+    }
+
+    function provideLiquidity(uint256 _amount) external {
+        require(_amount < maxCapacity - totalSupply, "InsurancePool: provideLiquidity: amount exceeds maxCapacity");
+        // mint tokens
+        //transfer to msg.sender or someone else?
+    }
+    function removeLiquidity(uint256 _amount) external {
+        require(_amount < totalSupply, "InsurancePool: removeLiquidity: amount exceeds totalSupply");
+    }
+    function payout(uint256 _lpToken) external {
+        require(claimable, "InsurancePool: payout: pool is not claimable");
+        uint256 amount;
+        // calculate how much to payout with this amount of lp tokens
+        if (underlyingAmount >= amount) {
+            shield.transfer(amount);
+        } else {
+            shield.transfer(amount);
+            ReinsurancePool(reinsuranceAddress).assistPool(amount - underlyingAmount, msg.sender);
+        }
+
+        emit Payout(amount);
+    }
+    function _setClaimStatus(bool _claimable) internal {}
+
+    function _requestReinsurance(uin256 _amount) internal {
+        
+    }
 
     //totalSupply < maxCapacity
 
