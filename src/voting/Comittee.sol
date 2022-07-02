@@ -23,7 +23,6 @@ pragma solidity ^0.8.13;
 import "./ProposalCenter.sol";
 
 contract Comittee {
-
     address[] public commitee;
     address[] public team;
     //report id to quorum
@@ -64,8 +63,12 @@ contract Comittee {
 
     function evaluateComittee(uint256 _reportId) external onlyCommitee {
         require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
-        require(block.timestamp - ProposalCenter.reportIds[_reportId].timestamp > 5 days, "Report not up for long enough");
-        
+        require(
+            block.timestamp - ProposalCenter.reportIds[_reportId].timestamp >
+                5 days,
+            "Report not up for long enough"
+        );
+
         uint256 totalVotes = 0;
         for (uint256 i = 0; i < commitee.length; i++) {
             if (commiteeQuorum[_reportId][commitee[i]]) {
@@ -81,8 +84,12 @@ contract Comittee {
 
     function evaluateTeam(uint256 _reportId) external onlyTeam {
         require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
-        require(block.timestamp - ProposalCenter.reportIds[_reportId].timestamp  > 5 days, "Report not up for long enough");
-        
+        require(
+            block.timestamp - ProposalCenter.reportIds[_reportId].timestamp >
+                5 days,
+            "Report not up for long enough"
+        );
+
         uint256 totalVotes = 0;
         for (uint256 i = 0; i < commitee.length; i++) {
             if (commiteeQuorum[_reportId][commitee[i]]) {
@@ -90,12 +97,17 @@ contract Comittee {
             }
         }
         if (totalVotes > commitee.length / 2) {
-            IProposalCenter(proposalCenterAddress).comitteeVote(_reportId, true);
+            IProposalCenter(proposalCenterAddress).comitteeVote(
+                _reportId,
+                true
+            );
         } else {
-            IProposalCenter(proposalCenterAddress).comitteeVote(_reportId, false);
+            IProposalCenter(proposalCenterAddress).comitteeVote(
+                _reportId,
+                false
+            );
         }
     }
-
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //

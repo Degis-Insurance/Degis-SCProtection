@@ -21,10 +21,11 @@
 pragma solidity ^0.8.13;
 
 import "../interfaces/ReinsurancePoolErrors.sol";
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IPolicyCenter.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 
 contract ReinsurancePool is
     ReinsurancePoolErrors,
@@ -39,10 +40,10 @@ contract ReinsurancePool is
     address public shield;
 
     struct PoolInfo {
-        address protocolToken;
+        address protocolAddress;
         uint256 proportion;
     }
-    mapping(address => PoolInfo) pools;
+    mapping(address => PoolInfo) public pools;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -52,6 +53,18 @@ contract ReinsurancePool is
     event Withdraw(address indexed user, uint256 amount);
 
     constructor(address _shield) {
+        shield = _shield;
+    }
+
+    modifier poolOnly() {
+        require(
+            PolicyCenter(policyCenterAddress).isPoolAddress(msg.sender),
+            "Pool not found"
+        );
+        _;
+    }
+
+    function setShield(address _shield) external onlyOwner {
         shield = _shield;
     }
 
@@ -69,13 +82,31 @@ contract ReinsurancePool is
     function removeLiquidity(uint256 _amount) external {
         if (_amount == 0) revert ZeroAmount();
 
-        IERC20(shield).safeTransfer(msg.sender, _amount);
+        IERC20(shield).transfer(msg.sender, _amount);
         _burn(msg.sender, _amount);
     }
 
+    function reinsurePool(uint256 _amount, address _address) external poolOnly {
+        if (_amount == 0) revert ZeroAmount();
+        IERC20(shield).transferFrom(address(this), _address, _amount);
+    }
+
     /**
-     * @notice Insure a specific project
-     *         Enjoy rewards from that pool but also take targeted risk
+     * @notice Move liquidity to another pool to be used for reinsurance.
+     * @param _amount Amount of liquidity to move.
+     * @param _poolId Id of the pool to move the liquidity to.
      */
-    function insureProtocolPool(uint256 _poolId, uint256 _amount) external {}
+    function moveLiquidity(uint256 _poolId, uint256 _amount)
+        external
+        ownerOnly
+    {
+        require(_amount > 0, "Amount must be greater than 0");
+        address poolAddress = PolicyCenter(policyCenterAddress).poolIds[
+            _poolId
+        ];
+        require(poolAddress != address(0), "Pool not found");
+
+        IERC20(shield).transferFrom(address(this), poolAddress, _amount);
+        emit moveLiquidity(_poolId, _amount);
+    }
 }

@@ -20,14 +20,34 @@
 
 pragma solidity ^0.8.13;
 
-contract PremiumVault {
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IReinsurancePool.sol";
+import "../interfaces/IPolicyCenter.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract PremiumVault is Ownable {
     // user => poolId => staked amount
     mapping(address => mapping(uint256 => uint256)) premiumVault;
-    function stakeInsuranceToken(uint256 _amount) external {}
-    function harvest(uint256 _poolId) external {}
+    address public reinsuranceAddress;
+    address public policyCenterAddress;
+
+    function setReinsurancePool(address _reinsuranceAddress) public ownerOnly{
+        reinsuranceAddress = _reinsuranceAddress;
+    }
+
+    function stakeInsuranceToken(uint256 _amount) external {
+      
+    }
+
+    function harvest(uint256 _poolId) external {
+        
+    }
 
     function _distributePremium(uint256 _premium) internal {}
 
+    function _getAddressPoolId(uint256 _poolId) external returns (address) {
+        return IPolicyCenter(policyCenterAddress).poolIds[_poolId];
+    }
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -58,5 +78,4 @@ contract PremiumVault {
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
-
 }
