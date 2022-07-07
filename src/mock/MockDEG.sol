@@ -2,11 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "../interfaces/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MockDEG is IERC20 {
+contract MockDEG is IERC20, Ownable {
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public allowed;
     uint256 public totalSupply;
+    uint256 public constant MAX_UINT256 = 10**5;
     /*
     NOTE:
     The following variables are OPTIONAL vanities. One does not have to include them.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity <0.8.13;
+pragma solidity ^0.8.13;
 
 interface IERC20 {
     /// @param _owner The address from which the balance will be retrieved

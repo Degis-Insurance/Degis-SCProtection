@@ -1,67 +1,57 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-/*
- //======================================================================\\
- //======================================================================\\
-  *******         **********     ***********     *****     ***********
-  *      *        *              *                 *       *
-  *        *      *              *                 *       *
-  *         *     *              *                 *       *
-  *         *     *              *                 *       *
-  *         *     **********     *       *****     *       ***********
-  *         *     *              *         *       *                 *
-  *         *     *              *         *       *                 *
-  *        *      *              *         *       *                 *
-  *      *        *              *         *       *                 *
-  *******         **********     ***********     *****     ***********
- \\======================================================================//
- \\======================================================================//
-*/
-
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IComittee.sol";
-import "../interfaces/IExecutor.sol";
-
-contract PremiumVault is Ownable {
-    // user => poolId => staked amount
-
-    mapping(address => mapping(uint256 => uint256)) premiumVault;
-
-    
-    address public DEG;
-    address public veDEG;
-    address public shield;
-    address public insurancePoolFactory;
-    address public policyCenter;
-    address public proposalCenter;
-    address public executor;
-    address public reinsurancePool;
-    address public insurancePool;
-
-    function setReinsurancePool(address _reinsuranceAddress) public onlyOwner {
-        reinsurancePool = _reinsuranceAddress;
+interface IProposalCenter {
+    struct Report {
+        uint256 poolId;
+        uint256 timestamp;
+        address reporterAddress;
+        uint256 yes;
+        uint256 no;
+        // bool comittee;
+        // bool team;
+        bool pending;
+        bool approved;
+        address[] voted;
     }
 
+    function setVoteWeights(uint256[3] memory _voteWeights) external;
 
+    function setDeg(address _deg) external;
 
-    function getAddressPoolId(uint256 _poolId) public returns (address) {
-        (, address _address, , , ) = IPolicyCenter(policyCenter).getPoolInfo(
-            _poolId
-        );
-        return _address;
-    }
+    function setVeDeg(address _veDeg) external;
 
+    function setPolicyCenter(address _insurancePool) external;
 
-    
+    function setReinsurancePool(address _reinsurancePool) external;
+
+    // function setCommitteeAddress(address _committeeAddress) external onlyOwner {
+    //     ComitteeAddress = _committeeAddress;
+    // }
+
+    function setPoolReported(address _poolAddress, bool _decision) external;
+
+    function vote(uint256 _reportId, bool _quorum) external;
+
+    function evaluateReportVotes(uint256 _reportId) external;
+
+    function reportPool(uint256 _poolId) external;
+
+    function proposePool(
+        address _protocol,
+        uint256 _reinsuranceSplit,
+        uint256 _insuranceSplit,
+        uint256 _maxCapacity
+    ) external;
+
+    function liquidateAndTransferVeDEG(uint256 _reportId, bool _veredict)
+        external;
+
+    function setProposal(uint256 _reportId, bool _proposal) external;
+
+    function getReportStartTime(uint256 _reportId) external view returns (uint256);
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //

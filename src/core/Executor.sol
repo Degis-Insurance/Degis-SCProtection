@@ -17,46 +17,64 @@
  \\======================================================================//
  \\======================================================================//
 */
-
-import "../interfaces/IInsurancePool.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/ReinsurancePoolErrors.sol";
+import "../interfaces/IInsurancePoolFactory.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IPremiumVault.sol";
+import "../interfaces/IProposalCenter.sol";
+import "../interfaces/IComittee.sol";
 
 pragma solidity ^0.8.13;
 
 contract Executor is Ownable {
-    struct queuedReport {
+    struct QueuedReport {
         uint256 poolId;
         uint256 queueEnds;
         bool pending;
         bool approved;
     }
 
-    struct queuedPool {
+    struct QueuedPool {
         string protocolName;
-        uint256 protocolAddress;
-        uint256 reinsuranceSplit;
-        uint256 insuranceSplit;
+        address protocol;
         uint256 maxCapacity;
         uint256 timestamp;
         uint256 queueEnds;
-        address proposerAddress;
+        address proposer;
         bool pending;
         bool approved;
     }
 
-    mapping(uint256 => queuedReport) public queuedReportsById;
+    mapping(uint256 => QueuedReport) public queuedReportsById;
     uint256 public poolBuffer = 7 days;
-    mapping(uint256 => queuedPool) public queuedPoolsById;
+    mapping(uint256 => QueuedPool) public queuedPoolsById;
     uint256 public reportBuffer = 3 days;
 
-    address public policyCenterAddress;
+    address public DEG;
+    address public veDEG;
+    address public shield;
+    address public insurancePoolFactory;
+    address public policyCenter;
+    address public proposalCenter;
+    address public executor;
+    address public reinsurancePool;
+    address public premiumVault;
+    address public insurancePool;
 
     event Queue(uint256 reportId, uint256 poolId, uint256 timestamp);
+    event ReportExecuted(uint256 reportId);
+
+    modifier ownerOrExecutorOnly() {
+        require(
+            msg.sender == owner() || msg.sender == executor,
+            "Only owner or executor can call this function"
+        );
+        _;
+    }
 
     function queueReport(
         bool _pending,
@@ -64,12 +82,9 @@ contract Executor is Ownable {
         uint256 _reportId,
         uint256 _poolId
     ) public {
-        require(
-            msg.sender == proposalCenterAddress,
-            "not sent from proposal center"
-        );
+        require(msg.sender == proposalCenter, "not sent from proposal center");
         uint256 ends = block.timestamp + reportBuffer;
-        queuedReportsById[_reportId] = queuedReport(
+        queuedReportsById[_reportId] = QueuedReport(
             _poolId,
             ends,
             _pending,
@@ -80,89 +95,70 @@ contract Executor is Ownable {
     }
 
     function queuePool(
-        string _protocolName,
+        string memory _protocolName,
         uint256 _proposalId,
-        uint256 _protocolAddress,
-        uint256 _reinsuranceSplit,
-        uint256 _insuranceSplit,
+        address _protocol,
         uint256 _maxCapacity,
         uint256 _timestamp,
-        address _proposerAddress,
+        address _proposer,
         bool _pending,
         bool _approved
     ) public {
-        require(
-            msg.sender == proposalCenterAddress,
-            "not sent from proposal center"
-        );
+        require(msg.sender == proposalCenter, "not sent from proposal center");
         uint256 ends = block.timestamp + poolBuffer;
-        queuedPoolsById[_proposalId] = queuedPool(
+        queuedPoolsById[_proposalId] = QueuedPool(
             _protocolName,
-            _protocolAddress,
-            _reinsuranceSplit,
-            _insuranceSplit,
+            _protocol,
             _maxCapacity,
             _timestamp,
             ends,
-            _proposerAddress,
+            _proposer,
             _pending,
             _approved
         );
-        emit Queue(_reportId, _poolId, ends);
+        emit Queue(_proposalId, _maxCapacity, ends);
     }
 
-    function executeReport(uint256 _reportId) external executorOrOwnerOnly {
-        require(queuedReportsById[_reportId], "tx not queued");
+    function executeReport(uint256 _reportId) external ownerOrExecutorOnly {
         require(queuedReportsById[_reportId].pending, "tx already executed");
         require(
             block.timestamp > queuedReportsById[_reportId].queueEnds,
             "tx not ready"
         );
-        address poolAddress = IPolicyCenter(policyCenterAddress).poolIds[
+        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
             queuedReportsById[_reportId].poolId
-        ];
-        if (queuedReports[_reportId].approved) {
-            IInsurancePool(poolAddress).liquidatePool();
-            IProposalCenter(proposalCenterAddress).liquidateAndTransferVeDEG(
+        );
+        if (queuedReportsById[_reportId].approved) {
+            IInsurancePool(pool).liquidatePool();
+            IProposalCenter(proposalCenter).liquidateAndTransferVeDEG(
                 _reportId,
                 true
             );
         } else {
-            IProposalCenter(proposalCenterAddress).setPoolReported(
-                _reportId,
-                false
-            );
-            IProposalCenter(proposalCenterAddress).liquidateAndTransferVeDEG(
+            IProposalCenter(proposalCenter).setPoolReported(pool, false);
+            IProposalCenter(proposalCenter).liquidateAndTransferVeDEG(
                 _reportId,
                 false
             );
         }
-        queuedReportsById.pending = false;
+        queuedReportsById[_reportId].pending = false;
         emit ReportExecuted(_reportId);
     }
 
-    function executeNewPool(uint256 _proposalId) internal executorOrOwnerOnly {
-        require(queuedPoolsById[_proposalId], "tx not queued");
+    function executeNewPool(uint256 _proposalId) external ownerOrExecutorOnly {
+        require(queuedPoolsById[_proposalId].pending, "tx not queued");
         require(
             block.timestamp > queuedPoolsById[_proposalId].queueEnds,
             "tx not ready"
         );
-        address poolAddress = IPolicyCenter(policyCenterAddress).poolIds[
-            queuedPoolsById[_proposalId].poolId
-        ];
         if (queuedPoolsById[_proposalId].approved) {
-            IInsurancePoolFactory(insurancePoolFactoryAddress).deployPool(
+            IInsurancePoolFactory(insurancePoolFactory).deployPool(
                 queuedPoolsById[_proposalId].protocolName,
-                queuedPoolsById[_proposalId].protocolAddress,
-                queuedPoolsById[_proposalId].maxCapacity,
-                queuedPoolsById[_proposalId].reinsuranceSplit,
-                queuedPoolsById[_proposalId].insuranceSplit
+                queuedPoolsById[_proposalId].protocol,
+                queuedPoolsById[_proposalId].maxCapacity
             );
         } else {
-            IProposalCenter(proposalCenterAddress).transferLiquidatedVeDEG(
-                _proposalId,
-                false
-            );
+            IProposalCenter(proposalCenter).setProposal(_proposalId, false);
         }
     }
     // ---------------------------------------------------------------------------------------- //

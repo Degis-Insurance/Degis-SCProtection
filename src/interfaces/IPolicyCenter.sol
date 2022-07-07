@@ -1,67 +1,49 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-/*
- //======================================================================\\
- //======================================================================\\
-  *******         **********     ***********     *****     ***********
-  *      *        *              *                 *       *
-  *        *      *              *                 *       *
-  *         *     *              *                 *       *
-  *         *     *              *                 *       *
-  *         *     **********     *       *****     *       ***********
-  *         *     *              *         *       *                 *
-  *         *     *              *         *       *                 *
-  *        *      *              *         *       *                 *
-  *      *        *              *         *       *                 *
-  *******         **********     ***********     *****     ***********
- \\======================================================================//
- \\======================================================================//
-*/
-
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IComittee.sol";
-import "../interfaces/IExecutor.sol";
+interface IPolicyCenter {
+    function getPoolInfo(uint256 _poolId) external view returns (string memory, address, uint256, uint256, uint256);
 
-contract PremiumVault is Ownable {
-    // user => poolId => staked amount
+    function getInsurancePoolById(uint256 _poolId) external view returns (address);
 
-    mapping(address => mapping(uint256 => uint256)) premiumVault;
+    function isPoolAddress(address _poolAddress) external view returns (bool);
 
-    
-    address public DEG;
-    address public veDEG;
-    address public shield;
-    address public insurancePoolFactory;
-    address public policyCenter;
-    address public proposalCenter;
-    address public executor;
-    address public reinsurancePool;
-    address public insurancePool;
+    function setPremiumSplit(
+        uint256 _treasury,
+        uint256 _insurance,
+        uint256 _reinsurance,
+        uint256 _splitter
+    ) external;
 
-    function setReinsurancePool(address _reinsuranceAddress) public onlyOwner {
-        reinsurancePool = _reinsuranceAddress;
-    }
+    /**
+     * @notice Buy new policies
+     */
+    function buyCoverage(
+        uint256 _poolId,
+        uint256 _amount,
+        uint256 _length
+    ) external;
 
+    function splitFunds(address _poolId) external;
 
+    function addDEGToTreasury(uint256 _amount) external;
 
-    function getAddressPoolId(uint256 _poolId) public returns (address) {
-        (, address _address, , , ) = IPolicyCenter(policyCenter).getPoolInfo(
-            _poolId
-        );
-        return _address;
-    }
+    function rewardReporter(address _reporter, uint256 _poolId) external;
 
+    function getAvaiableDepositbyPool(address _poolId)
+        external
+        view
+        returns (uint256);
 
-    
+    function claimPayout(uint256 _poolId, uint256 _amount) external;
+
+    function provideLiquidity(uint256 _poolId, uint256 _amount) external;
+
+    function removeLiquidity(uint256 _poolId, uint256 _amount) external;
+
+    function addPoolId(uint256 _poolId, address _address) external;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -88,8 +70,5 @@ contract PremiumVault is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 }

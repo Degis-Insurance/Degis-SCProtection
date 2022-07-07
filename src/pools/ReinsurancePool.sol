@@ -20,24 +20,42 @@
 
 pragma solidity ^0.8.13;
 
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IPolicyCenter.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/ReinsurancePoolErrors.sol";
+import "../interfaces/IPolicyCenter.sol";
+import "../interfaces/IReinsurancePool.sol";
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IPremiumVault.sol";
+import "../interfaces/IProposalCenter.sol";
+import "../interfaces/IComittee.sol";
+import "../interfaces/IExecutor.sol";
 
 contract ReinsurancePool is
     ReinsurancePoolErrors,
-    ERC20("ReinsurancePoolLP", "RLP")
+    ERC20("ReinsurancePoolLP", "RLP"),
+    Ownable
 {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
+    address public DEG;
+    address public veDEG;
     address public shield;
+    address public insurancePoolFactory;
+    address public policyCenter;
+    address public proposalCenter;
+    address public executor;
+    address public reinsurancePool;
+    address public premiumVault;
+    address public insurancePool;
+
+    bool public insurancePoolLiquidated;
+    bool public paused;
 
     struct PoolInfo {
         address protocolAddress;
@@ -51,6 +69,7 @@ contract ReinsurancePool is
 
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
+    event MoveLiquidity(uint256 poolId, uint256 amount);
 
     constructor(address _shield) {
         shield = _shield;
@@ -58,7 +77,7 @@ contract ReinsurancePool is
 
     modifier poolOnly() {
         require(
-            PolicyCenter(policyCenterAddress).isPoolAddress(msg.sender),
+            IPolicyCenter(policyCenter).isPoolAddress(msg.sender),
             "Pool not found"
         );
         _;
@@ -68,18 +87,26 @@ contract ReinsurancePool is
         shield = _shield;
     }
 
+    function endLiquidationPeriod() external onlyOwner {
+        insurancePoolLiquidated = false;
+    }
+
+
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function provideLiquidity(uint256 _amount) external {
+    function provideLiquidity(uint256 _amount, address _provider) external {
         if (_amount == 0) revert ZeroAmount();
 
         IERC20(shield).transferFrom(msg.sender, address(this), _amount);
         _mint(msg.sender, _amount);
     }
 
-    function removeLiquidity(uint256 _amount) external {
+    function removeLiquidity(uint256 _amount, address _provider) external {
+        require(!insurancePoolLiquidated, "insurance pool liquidated cannot remove liquidity");
+        require(!paused, "pool is paused");
         if (_amount == 0) revert ZeroAmount();
 
         IERC20(shield).transfer(msg.sender, _amount);
@@ -98,15 +125,18 @@ contract ReinsurancePool is
      */
     function moveLiquidity(uint256 _poolId, uint256 _amount)
         external
-        ownerOnly
+        onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        address poolAddress = PolicyCenter(policyCenterAddress).poolIds[
-            _poolId
-        ];
+        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(_poolId);
         require(poolAddress != address(0), "Pool not found");
 
         IERC20(shield).transferFrom(address(this), poolAddress, _amount);
-        emit moveLiquidity(_poolId, _amount);
+        emit MoveLiquidity(_poolId, _amount);
+    }
+
+    function setPausedReinsurancePool(bool _paused) external {
+        require((msg.sender == owner()) || (msg.sender == proposalCenter), "Only owner or proposalCenter can call this function");
+        paused = _paused;
     }
 }

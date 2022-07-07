@@ -20,11 +20,45 @@
 
 pragma solidity ^0.8.13;
 
-import "./ProposalCenter.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Comittee {
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/ReinsurancePoolErrors.sol";
+import "../interfaces/IPolicyCenter.sol";
+import "../interfaces/IReinsurancePool.sol";
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IPremiumVault.sol";
+import "../interfaces/IProposalCenter.sol";
+import "../interfaces/IComittee.sol";
+import "../interfaces/IExecutor.sol";
+
+contract Comittee is Ownable {
+    struct Report {
+        uint256 poolId;
+        uint256 timestamp;
+        address reporterAddress;
+        uint256 yes;
+        uint256 no;
+        // bool comittee;
+        // bool team;
+        bool pending;
+        bool approved;
+        address[] voted;
+    }
+
     address[] public commitee;
     address[] public team;
+    address public DEG;
+    address public veDEG;
+    address public shield;
+    address public insurancePoolFactory;
+    address public policyCenter;
+    address public proposalCenter;
+    address public executor;
+    address public reinsurancePool;
+    address public premiumVault;
+    address public insurancePool;
     //report id to quorum
     mapping(uint256 => mapping(address => bool)) commiteeQuorum;
     mapping(uint256 => mapping(address => bool)) teamQuorum;
@@ -51,21 +85,32 @@ contract Comittee {
         _;
     }
 
-    function teamVote(uint256 _reportId, bool _vote) external onlyTeam {
-        require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
+    function teamVote(uint256 _reportId, bool _vote)
+        external
+        onlyTeam(_reportId)
+    {
+        uint256 starttime = IProposalCenter(proposalCenter).getReportStartTime(
+            _reportId
+        );
+        require(starttime < block.timestamp, "Report not found");
         teamQuorum[_reportId][msg.sender] = _vote;
     }
 
-    function comitteeVote(uint256 _reportId, bool _vote) external onlyCommitee {
-        require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
+    function comitteeVote(uint256 _reportId, bool _vote) external onlyCommitee(_reportId) {
+        uint256 starttime = IProposalCenter(proposalCenter).getReportStartTime(
+            _reportId
+        );
+        require(starttime < block.timestamp, "Report not found");
         commiteeQuorum[_reportId][msg.sender] = _vote;
     }
 
-    function evaluateComittee(uint256 _reportId) external onlyCommitee {
-        require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
+    function evaluateComittee(uint256 _reportId) external onlyCommitee(_reportId) {
+        uint256 starttime = IProposalCenter(proposalCenter).getReportStartTime(
+            _reportId
+        );
+        require(starttime < block.timestamp, "Report not found");
         require(
-            block.timestamp - ProposalCenter.reportIds[_reportId].timestamp >
-                5 days,
+            block.timestamp - starttime > 5 days,
             "Report not up for long enough"
         );
 
@@ -76,17 +121,19 @@ contract Comittee {
             }
         }
         if (totalVotes > commitee.length / 2) {
-            ProposalCenter.comitteeVote(_reportId, true);
+            // IProposalCenter(proposalCenter).comitteeVote(_reportId, true);
         } else {
-            ProposalCenter.comitteeVote(_reportId, false);
+            // IProposalCenter(proposalCenter).comitteeVote(_reportId, false);
         }
     }
 
-    function evaluateTeam(uint256 _reportId) external onlyTeam {
-        require(ProposalCenter.reportIds[_reportId] != 0, "Report not found");
+    function evaluateTeam(uint256 _reportId) external onlyTeam(_reportId) {
+        uint256 starttime = IProposalCenter(proposalCenter).getReportStartTime(
+            _reportId
+        );
+        require(starttime < block.timestamp, "Report not found");
         require(
-            block.timestamp - ProposalCenter.reportIds[_reportId].timestamp >
-                5 days,
+            block.timestamp - starttime > 5 days,
             "Report not up for long enough"
         );
 
@@ -97,15 +144,9 @@ contract Comittee {
             }
         }
         if (totalVotes > commitee.length / 2) {
-            IProposalCenter(proposalCenterAddress).comitteeVote(
-                _reportId,
-                true
-            );
+            // IProposalCenter(proposalCenter).comitteeVote(_reportId, true);
         } else {
-            IProposalCenter(proposalCenterAddress).comitteeVote(
-                _reportId,
-                false
-            );
+            // IProposalCenter(proposalCenter).comitteeVote(_reportId, false);
         }
     }
 

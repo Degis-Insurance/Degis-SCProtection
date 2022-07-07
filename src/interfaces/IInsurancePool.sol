@@ -3,21 +3,51 @@
 pragma solidity ^0.8.13;
 
 interface IInsurancePool {
-    string public name;
-    address public insuredToken;
-    bool public paused;
-    bool public claimable;
-    uint256 public maxCapacity;
+    function initialize() external;
+
+    function poolInfo()
+        external
+        view
+        returns (
+            string memory,
+            address,
+            uint256,
+            uint256,
+            uint256
+        );
+
+    function policyPrice(
+        uint256 _amount,
+        uint256 _premium,
+        uint256 _length
+    ) external view returns (uint256);
+
+    function isHalted() external view returns (bool);
+
+    function claimPayout(uint256 _amount) external;
+
+    function liquidatePool() external;
 
     function setMaxCapacity(uint256 _maxCapacity) external;
 
-    function provideLiquidity(uint256 _amount) external;
+    function provideLiquidity(uint256 _amount, address _provider) external;
 
-    function removeLiquidity(uint256 _amount) external;
+    function removeLiquidity(uint256 _amount, address _provider) external;
+
+    function addPremium(uint256 _amount) external;
 
     function payout() external;
 
+    function buyCoverage(
+        uint256 _paid,
+        uint256 _amount,
+        uint256 _length,
+        address _insured
+    ) external;
+
     function setClaimStatus(bool _claimable) external;
+
+    function setPausedInsurancePool(bool _paused) external;
 
     //totalSupply < maxCapacity
 }
