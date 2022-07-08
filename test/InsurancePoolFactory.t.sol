@@ -44,7 +44,7 @@ contract InsurancePoolFactoryTest is Test {
     }
 
     function testDeployPool() public {
-        address pool1 = ipf.deployPool(
+        ipf.deployPool(
             "pool1",
             address(ipf),
             10000
