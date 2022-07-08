@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "../interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MockDEG is IERC20, Ownable {
+contract MockDEG is Ownable {
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public allowed;
     uint256 public totalSupply;
@@ -18,6 +18,9 @@ contract MockDEG is IERC20, Ownable {
     string public name; //fancy name: eg Simon Bucks
     uint8 public decimals; //How many decimals to show.
     string public symbol; //An identifier: eg SBX
+
+        event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     constructor(
         uint256 _initialAmount,
@@ -34,7 +37,7 @@ contract MockDEG is IERC20, Ownable {
 
     function transfer(address _to, uint256 _value)
         public
-        override
+        
         returns (bool success)
     {
         require(
@@ -51,7 +54,7 @@ contract MockDEG is IERC20, Ownable {
         address _from,
         address _to,
         uint256 _value
-    ) public override returns (bool success) {
+    ) public  returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
         require(
             balances[_from] >= _value && allowance >= _value,
@@ -69,7 +72,7 @@ contract MockDEG is IERC20, Ownable {
     function balanceOf(address _owner)
         public
         view
-        override
+        
         returns (uint256 balance)
     {
         return balances[_owner];
@@ -77,7 +80,7 @@ contract MockDEG is IERC20, Ownable {
 
     function approve(address _spender, uint256 _value)
         public
-        override
+        
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -88,7 +91,7 @@ contract MockDEG is IERC20, Ownable {
     function allowance(address _owner, address _spender)
         public
         view
-        override
+        
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];

@@ -132,6 +132,13 @@ contract PolicyCenter is Ownable {
         return insurancePools[_poolId];
     }
 
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        public
+        onlyOwner
+    {
+        insurancePoolFactory = _insurancePoolFactory;
+    }
+
     function setPremiumSplit(
         uint256 _treasury,
         uint256 _insurance,

@@ -18,7 +18,7 @@ interface IInsurancePoolFactory {
         uint256 _maxCapacity
     ) external;
 
-    function getPoolList() external view returns (PoolInfo[] memory list);
+    function getPoolAddressList() external view returns (PoolInfo[] memory list);
 
     function getPoolCounter() external view returns (uint256);
 }
