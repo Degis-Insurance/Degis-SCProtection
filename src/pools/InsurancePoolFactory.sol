@@ -24,7 +24,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../interfaces/ReinsurancePoolErrors.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
@@ -58,7 +57,6 @@ contract InsurancePoolFactory is Ownable {
     address public DEG;
     address public veDEG;
     address public shield;
-    address public insurancePoolFactory;
     address public policyCenter;
     address public proposalCenter;
     address public executor;
@@ -66,25 +64,26 @@ contract InsurancePoolFactory is Ownable {
     address public premiumVault;
     address public insurancePool;
 
-    constructor(address _poolFactory) {
+    constructor() {
         poolCounter = 0;
-        insurancePoolFactory = _poolFactory;
     }
 
-    
     function getPoolCounter() public view returns (uint256) {
         return poolCounter;
+    }
+
+    function setPolicyCenter(address _policyCenter) public onlyOwner {
+        policyCenter = _policyCenter;
     }
 
     function deployPool(
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity
-    ) external onlyOwner {
-        
+    ) external onlyOwner returns (address) {
         bytes memory bytecode = type(InsurancePool).creationCode;
 
-        bytes32 salt = keccak256(abi.encodePacked(_name, _protocolToken));
+        bytes32 salt = keccak256(abi.encodePacked(_protocolToken, _maxCapacity, _name, _name));
 
         // Deploy the new pool by create2
         ++poolCounter;
@@ -97,16 +96,17 @@ contract InsurancePoolFactory is Ownable {
             _protocolToken,
             _maxCapacity
         );
+
+        return newPoolAddress;
     }
 
-    function getPoolList() external view returns (PoolInfo[] memory) {
-        PoolInfo[] memory list;
+    function getPoolAddressList() external view returns (address[] memory) {
+        address[] memory list;
         for (uint256 i = 0; i < poolCounter; ++i) {
-            list.push(poolInfoById[i]);
+            list[i] = poolInfoById[i].poolAddress;
         }
         return list;
     }
-
 
     /**
      * @notice Deploy function with create2
