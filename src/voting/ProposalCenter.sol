@@ -83,7 +83,7 @@ contract ProposalCenter is Ownable {
     mapping(address => bool) public poolReported;
     mapping(address => bool) public poolProposed;
 
-    uint256[3] public voteWeights = [7000, 2000, 1000];
+    uint256[3] public voteWeights;
 
     event Vote(uint256 _reportId, bool _quorum, string _who);
     event ReportCreated(
@@ -125,12 +125,26 @@ contract ProposalCenter is Ownable {
         address _proposerAddress
     );
 
+
     modifier onlyOwnerOrExecutor() {
         require(
             (msg.sender == owner()) || (msg.sender == executor),
             "Only owner or executor can call this function"
         );
         _;
+    }
+
+    function getReport(uint256 _reportId) public view returns ( uint256,uint256,address,uint256, uint256, bool,bool,address[] memory){
+        Report storage report = reportIds[_reportId];
+        return (
+        report.poolId,
+       report.timestamp,
+       report.reporterAddress,
+       report.yes,
+        report.no,
+        report.pending,
+        report.approved,
+        report.voted);
     }
 
     function getReportStartTime(uint256 _reportId) public view returns (uint256) {
@@ -161,17 +175,25 @@ contract ProposalCenter is Ownable {
         veDEG = _veDeg;
     }
 
-    function setPolicyCenter(address _insurancePool) external onlyOwner {
-        insurancePool = _insurancePool;
+    function setShield(address _shield) external onlyOwner {
+        shield = _shield;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
     }
 
     function setReinsurancePool(address _reinsurancePool) external onlyOwner {
         reinsurancePool = _reinsurancePool;
     }
 
-    // function setCommitteeAddress(address _committeeAddress) external onlyOwner {
-    //     ComitteeAddress = _committeeAddress;
-    // }
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+        insurancePoolFactory = _insurancePoolFactory;
+    }
 
     function setPoolReported(address _poolAddress, bool _decision)
         external
@@ -263,7 +285,7 @@ contract ProposalCenter is Ownable {
             reportIds[_reportId].approved = false;
             poolReported[pool] = false;
             emit ReportRejected(
-                _reportId,
+                _reportId, 
                 reportIds[_reportId].poolId,
                 reportIds[_reportId].timestamp,
                 reportIds[_reportId].reporterAddress
@@ -305,8 +327,6 @@ contract ProposalCenter is Ownable {
     function proposePool(
         address _protocol,
         string memory _name,
-        uint256 _reinsuranceSplit,
-        uint256 _insuranceSplit,
         uint256 _maxCapacity
     ) external {
         require(!poolProposed[_protocol], "Protocol already proposed");
@@ -314,8 +334,6 @@ contract ProposalCenter is Ownable {
         PoolProposal memory proposal;
         proposal.protocolName = _name;
         proposal.protocolAddress = _protocol;
-        proposal.reinsuranceSplit = _reinsuranceSplit;
-        proposal.insuranceSplit = _insuranceSplit;
         proposal.maxCapacity = _maxCapacity;
         proposal.timestamp = block.timestamp;
         proposal.proposerAddress = msg.sender;
@@ -337,7 +355,7 @@ contract ProposalCenter is Ownable {
         require(report.pending, "Report is not pending");
         require(report.approved, "Report is not approved");
 
-        Executor(executor).queueReport(
+        IExecutor(executor).queueReport(
             report.pending,
             report.approved,
             _reportId,
@@ -351,7 +369,7 @@ contract ProposalCenter is Ownable {
         require(proposal.pending, "Proposal is not pending");
         require(proposal.approved, "Proposal is not approved");
 
-        Executor(executor).queuePool(
+        IExecutor(executor).queuePool(
             proposal.protocolName,
             _proposalId,
             proposal.protocolAddress,

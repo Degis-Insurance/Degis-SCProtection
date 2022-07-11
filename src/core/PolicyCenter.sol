@@ -80,8 +80,9 @@ contract PolicyCenter is Ownable {
     // amount in shield
     uint256 public treasury;
 
-    constructor(address _reinsurancePool) public {
+    constructor(address _reinsurancePool) {
         insurancePools[0] = _reinsurancePool;
+        reinsurancePool = _reinsurancePool;
         // 5 % to treasury, 45% to insurance, 50% to reinsurance 0.03% to splitter
         premiumSplits = [499, 44999, 49999, 3];
     }
@@ -132,10 +133,35 @@ contract PolicyCenter is Ownable {
         return insurancePools[_poolId];
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
-        public
-        onlyOwner
-    {
+    function setDeg(address _deg) external onlyOwner {
+        DEG = _deg;
+    }
+
+    function setVeDeg(address _veDeg) external onlyOwner {
+        veDEG = _veDeg;
+    }
+
+    function setShield(address _shield) external onlyOwner {
+        shield = _shield;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        reinsurancePool = _reinsurancePool;
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
         insurancePoolFactory = _insurancePoolFactory;
     }
 
@@ -259,7 +285,7 @@ contract PolicyCenter is Ownable {
         insurancePools[_poolId] = _address;
     }
 
-    function rewardReporter(address _reporter, uint256 _poolId) external {
+    function rewardReporter(address _reporter) external {
         require(
             msg.sender == proposalCenter,
             "not requested from by Proposal Center"

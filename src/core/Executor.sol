@@ -76,6 +76,34 @@ contract Executor is Ownable {
         _;
     }
 
+    function setDeg(address _deg) external onlyOwner {
+        DEG = _deg;
+    }
+
+    function setVeDeg(address _veDeg) external onlyOwner {
+        veDEG = _veDeg;
+    }
+
+    function setShield(address _shield) external onlyOwner {
+        shield = _shield;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        reinsurancePool = _reinsurancePool;
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+        insurancePoolFactory = _insurancePoolFactory;
+    }
+
     function queueReport(
         bool _pending,
         bool _approved,

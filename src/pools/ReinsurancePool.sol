@@ -97,14 +97,14 @@ contract ReinsurancePool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function provideLiquidity(uint256 _amount, address _provider) external {
+    function provideLiquidity(uint256 _amount) external {
         if (_amount == 0) revert ZeroAmount();
 
         IERC20(shield).transferFrom(msg.sender, address(this), _amount);
         _mint(msg.sender, _amount);
     }
 
-    function removeLiquidity(uint256 _amount, address _provider) external {
+    function removeLiquidity(uint256 _amount) external {
         require(!insurancePoolLiquidated, "insurance pool liquidated cannot remove liquidity");
         require(!paused, "pool is paused");
         if (_amount == 0) revert ZeroAmount();
