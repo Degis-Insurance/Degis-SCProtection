@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-interface Executor {
+interface IExecutor {
     function queueReport(
         bool _pending,
         bool _approved,

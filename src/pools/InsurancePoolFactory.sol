@@ -53,6 +53,7 @@ contract InsurancePoolFactory is Ownable {
     mapping(uint256 => PoolInfo) public poolInfoById;
 
     uint256 public poolCounter;
+    uint256 public maxCapacity;
 
     address public DEG;
     address public veDEG;
@@ -64,30 +65,72 @@ contract InsurancePoolFactory is Ownable {
     address public premiumVault;
     address public insurancePool;
 
-    constructor() {
+    constructor(address _reinsurancePool, address _shield) {
         poolCounter = 0;
+        reinsurancePool = _reinsurancePool;
+        shield = _shield;
+        poolInfoById[poolCounter] = PoolInfo(
+            "ReinsurancePool",
+            _reinsurancePool,
+            _shield,
+            1000000000
+        );
+    }
+
+    function setMaxCapacity(uint256 _maxCapacity) public onlyOwner {
+        maxCapacity = _maxCapacity;
     }
 
     function getPoolCounter() public view returns (uint256) {
         return poolCounter;
     }
 
-    function setPolicyCenter(address _policyCenter) public onlyOwner {
+    function setDeg(address _deg) external onlyOwner {
+        DEG = _deg;
+    }
+
+    function setVeDeg(address _veDeg) external onlyOwner {
+        veDEG = _veDeg;
+    }
+
+    function setShield(address _shield) external onlyOwner {
+        shield = _shield;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
         policyCenter = _policyCenter;
+    }
+
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        reinsurancePool = _reinsurancePool;
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
     }
 
     function deployPool(
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity
-    ) external onlyOwner returns (address) {
-        bytes memory bytecode = type(InsurancePool).creationCode;
+    ) public
+     returns (address) {
+       bytes32 salt = keccak256(abi.encodePacked(_name));
 
-        bytes32 salt = keccak256(abi.encodePacked(_protocolToken, _maxCapacity, _name, _name));
+        bytes memory bytecode = _getInsurancePoolBytecode(
+            _protocolToken,
+         _maxCapacity,
+        _name,
+        _name
+        );
 
-        // Deploy the new pool by create2
         ++poolCounter;
         address newPoolAddress = _deploy(bytecode, salt);
+
         // Store the pool information
         IPolicyCenter(policyCenter).addPoolId(poolCounter, newPoolAddress);
         poolInfoById[poolCounter] = PoolInfo(
@@ -100,9 +143,26 @@ contract InsurancePoolFactory is Ownable {
         return newPoolAddress;
     }
 
+    function _getInsurancePoolBytecode(
+        address _protocolToken,
+        uint256 _maxCapacity,
+        string memory _tokenName,
+        string memory _symbol
+    ) internal virtual view returns (bytes memory) {
+        bytes memory bytecode = type(InsurancePool).creationCode;
+
+        // Encodepacked the parameters
+        // The minter is set to be the policyCore address
+        return
+            abi.encodePacked(
+                bytecode,
+                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol)
+            );
+    }
+
     function getPoolAddressList() external view returns (address[] memory) {
-        address[] memory list;
-        for (uint256 i = 0; i < poolCounter; ++i) {
+        address[] memory list = new address[](poolCounter + 1);
+        for (uint256 i = 0; i < poolCounter + 1; i++) {
             list[i] = poolInfoById[i].poolAddress;
         }
         return list;

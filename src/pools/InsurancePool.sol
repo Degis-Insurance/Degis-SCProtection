@@ -93,7 +93,7 @@ contract InsurancePool is ERC20, Ownable {
     ) ERC20(_name, _symbol) {
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
-        startTime = block.timestamp;
+        startTime = block.timestamp;    
     }
 
     modifier onlyOwnerOrExecutor() {
@@ -102,6 +102,38 @@ contract InsurancePool is ERC20, Ownable {
             "Only owner or executor can call this function"
         );
         _;
+    }
+
+    function setDeg(address _deg) external onlyOwner {
+        DEG = _deg;
+    }
+
+    function setVeDeg(address _veDeg) external onlyOwner {
+        veDEG = _veDeg;
+    }
+
+    function setShield(address _shield) external onlyOwner {
+        shield = _shield;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        reinsurancePool = _reinsurancePool;
+    }
+
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+        insurancePoolFactory = _insurancePoolFactory;
     }
 
     function isLiquidated() public view returns (bool) {
@@ -130,7 +162,7 @@ contract InsurancePool is ERC20, Ownable {
         return _amount * policyPricePerShield * _length;
     }
 
-    function setMaxCapacity(uint256 _maxCapacity) external onlyOwnerOrExecutor {
+    function setMaxCapacity(uint256 _maxCapacity) external {
         maxCapacity = _maxCapacity;
     }
 
