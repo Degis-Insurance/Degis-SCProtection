@@ -16,15 +16,16 @@ interface IInsurancePool {
             uint256
         );
 
-    function policyPrice(
+    function coveragePrice(
         uint256 _amount,
-        uint256 _premium,
         uint256 _length
     ) external view returns (uint256);
 
-    function isHalted() external view returns (bool);
+    function paused() external view returns (bool);
 
     function claimPayout(uint256 _amount) external;
+
+    function claimReward(address _provider) external;
 
     function liquidatePool() external;
 
@@ -35,8 +36,6 @@ interface IInsurancePool {
     function removeLiquidity(uint256 _amount, address _provider) external;
 
     function addPremium(uint256 _amount) external;
-
-    function payout() external;
 
     function buyCoverage(
         uint256 _paid,

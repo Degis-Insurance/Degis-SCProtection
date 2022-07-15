@@ -2,6 +2,7 @@ import fs from "fs";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
+import "../node_modules/hardhat/console.sol";
 import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";

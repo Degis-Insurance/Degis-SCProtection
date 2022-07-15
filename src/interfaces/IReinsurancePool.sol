@@ -3,18 +3,33 @@
 pragma solidity ^0.8.13;
 
 interface IReinsurancePool {
-    function setShield(address _shield) external;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
+     function setDeg(address _deg) external;
 
+    function setVeDeg(address _veDeg) external;
+
+    function setShield(address _shield) external;
+
+    function setPolicyCenter(address _policyCenter) external;
+
+    function setProposalCenter(address _policyCenter) external;
+
+    function setExecutor(address _executor) external;
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+
+    function addPremium(uint256 _amount) external;
+    
     function provideLiquidity(uint256 _amount, address _provider) external;
 
     function removeLiquidity(uint256 _amount, address _provider) external;
 
     function reinsurePool(uint256 _amount, address _address) external;
 
+    function claimReward(address _provider) external;
     /**
      * @notice Move liquidity to another pool to be used for reinsurance.
      * @param _amount Amount of liquidity to move.

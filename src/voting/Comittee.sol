@@ -49,8 +49,8 @@ contract Comittee is Ownable {
 
     address[] public commitee;
     address[] public team;
-    address public DEG;
-    address public veDEG;
+    address public deg;
+    address public veDeg;
     address public shield;
     address public insurancePoolFactory;
     address public policyCenter;
@@ -60,8 +60,8 @@ contract Comittee is Ownable {
     address public premiumVault;
     address public insurancePool;
     //report id to quorum
-    mapping(uint256 => mapping(address => bool)) commiteeQuorum;
-    mapping(uint256 => mapping(address => bool)) teamQuorum;
+    mapping(uint256 => mapping(address => bool)) public commiteeQuorum;
+    mapping(uint256 => mapping(address => bool)) public teamQuorum;
 
     modifier onlyCommitee(uint256 _reportId) {
         bool isComittee = false;

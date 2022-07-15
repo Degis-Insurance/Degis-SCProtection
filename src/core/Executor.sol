@@ -54,8 +54,8 @@ contract Executor is Ownable {
     mapping(uint256 => QueuedPool) public queuedPoolsById;
     uint256 public reportBuffer = 3 days;
 
-    address public DEG;
-    address public veDEG;
+    address public deg;
+    address public veDeg;
     address public shield;
     address public insurancePoolFactory;
     address public policyCenter;
@@ -77,11 +77,11 @@ contract Executor is Ownable {
     }
 
     function setDeg(address _deg) external onlyOwner {
-        DEG = _deg;
+        deg = _deg;
     }
 
     function setVeDeg(address _veDeg) external onlyOwner {
-        veDEG = _veDeg;
+        veDeg = _veDeg;
     }
 
     function setShield(address _shield) external onlyOwner {
@@ -102,6 +102,14 @@ contract Executor is Ownable {
 
     function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
         insurancePoolFactory = _insurancePoolFactory;
+    }
+
+    function getQueuedReportById(uint256 _id) public view returns (uint256, uint256, bool, bool) {
+        QueuedReport memory queuedReport = queuedReportsById[_id];
+        return (queuedReport.poolId,
+        queuedReport.queueEnds,
+        queuedReport.pending,
+       queuedReport.approved);
     }
 
     function queueReport(
