@@ -16,6 +16,8 @@ interface IPolicyCenter {
         uint256 _splitter
     ) external;
 
+    function getPremiumSplits() external view returns (uint256, uint256, uint256);
+
     /**
      * @notice Buy new policies
      */

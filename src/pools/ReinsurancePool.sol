@@ -40,11 +40,17 @@ contract ReinsurancePool is
 {
     using SafeERC20 for IERC20;
 
+    struct Liquidity {
+        uint256 amount;
+        uint256 userDebt;
+        uint256 lastClaim;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-    address public DEG;
-    address public veDEG;
+    address public deg;
+    address public veDeg;
     address public shield;
     address public insurancePoolFactory;
     address public policyCenter;
@@ -57,11 +63,17 @@ contract ReinsurancePool is
     bool public insurancePoolLiquidated;
     bool public paused;
 
+    uint256 public totalReward;
+    uint256 public totalDistributedReward;
+    uint256 public accumulatedRewardPerShare;
+    uint256 public emissionRate;
+
     struct PoolInfo {
         address protocolAddress;
         uint256 proportion;
     }
     mapping(address => PoolInfo) public pools;
+    mapping(address => Liquidity) public liquidities;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -83,34 +95,100 @@ contract ReinsurancePool is
         _;
     }
 
+     function setDeg(address _deg) external onlyOwner {
+        deg = _deg;
+    }
+
+    function setVeDeg(address _veDeg) external onlyOwner {
+        veDeg = _veDeg;
+    }
+
     function setShield(address _shield) external onlyOwner {
         shield = _shield;
     }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+        insurancePoolFactory = _insurancePoolFactory;
+    }
+
 
     function endLiquidationPeriod() external onlyOwner {
         insurancePoolLiquidated = false;
     }
 
-
+    function calculateReward(address _provider) public view returns(uint256) {
+        return accumulatedRewardPerShare * liquidities[_provider].amount - liquidities[_provider].userDebt;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function provideLiquidity(uint256 _amount) external {
-        if (_amount == 0) revert ZeroAmount();
-
-        IERC20(shield).transferFrom(msg.sender, address(this), _amount);
-        _mint(msg.sender, _amount);
+   function provideLiquidity(uint256 _amount, address _provider) external {
+        require(!insurancePoolLiquidated, "cannot provide new liquidity");
+        require(_amount > 0, "amount should be greater than 0");
+        require(msg.sender == policyCenter, "you can only provide liquidity through policy center");
+        uint256 reward = calculateReward(_provider);
+        liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount + _amount);
+        liquidities[msg.sender].lastClaim = block.timestamp;
+        IERC20(shield).transfer(msg.sender, reward);
+        _mint(_provider, _amount);   
     }
 
-    function removeLiquidity(uint256 _amount) external {
-        require(!insurancePoolLiquidated, "insurance pool liquidated cannot remove liquidity");
-        require(!paused, "pool is paused");
-        if (_amount == 0) revert ZeroAmount();
+    function removeLiquidity(uint256 _amount, address _provider) external {
+        require(
+            !insurancePoolLiquidated,
+            "Pool liquidated, cannot remove liquidity"
+        );
+        require(_amount <= totalSupply(), "amount exceeds totalSupply");
+        require(
+            block.timestamp >= liquidities[msg.sender].lastClaim + 604800,
+            "cannot remove liquidity within 7 days of last claim"
+        );
+        require(
+            liquidities[msg.sender].amount <= _amount,
+            "amount exceeds staked amount"
+        );
+        require(msg.sender == policyCenter, "liquidity can only be provide through policy center");
 
-        IERC20(shield).transfer(msg.sender, _amount);
-        _burn(msg.sender, _amount);
+        require(!paused, "cannot remove liquidity while paused");
+        uint256 reward = calculateReward(_provider);
+        liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount - liquidities[msg.sender].userDebt);
+        liquidities[msg.sender].lastClaim = block.timestamp;
+        _burn(_provider, _amount);
+        ERC20(shield).transfer(_provider, _amount + reward);        
+    }
+
+    function addPremium(uint256 _amount) external {
+        require(
+            msg.sender == policyCenter,
+            "Only policyCenter can add premium"
+        );
+        require(_amount > 0, "amount should be greater than 0");
+        totalReward += _amount;
+    }
+
+    function claimReward(address _provider) public {
+        require(msg.sender == policyCenter, "Not sent from policy center");
+        require(!insurancePoolLiquidated, "Pool has been liquidated, cannot claim stake");
+        uint256 stake = liquidities[_provider].amount;
+        require(stake > 0, "No stake to claim");
+
+        uint256 reward = calculateReward(_provider);
+        liquidities[_provider].userDebt += reward;
+        IERC20(shield).transfer(_provider, reward);
     }
 
     function reinsurePool(uint256 _amount, address _address) external poolOnly {

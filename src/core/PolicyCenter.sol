@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/ReinsurancePoolErrors.sol";
 import "../interfaces/IReinsurancePool.sol";
@@ -30,7 +30,7 @@ import "../interfaces/IPremiumVault.sol";
 import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IComittee.sol";
 import "../interfaces/IExecutor.sol";
-
+import "forge-std/console.sol";
 /**
  * @title Policy Center
  *
@@ -42,6 +42,7 @@ import "../interfaces/IExecutor.sol";
  *
  */
 contract PolicyCenter is Ownable {
+
     struct Coverage {
         uint256 _poolId;
         uint256 _amount;
@@ -58,15 +59,14 @@ contract PolicyCenter is Ownable {
         uint256 poolId;
     }
 
-    address public DEG;
-    address public veDEG;
+    address public deg;
+    address public veDeg;
     address public shield;
     address public insurancePoolFactory;
     address public policyCenter;
     address public proposalCenter;
     address public executor;
     address public reinsurancePool;
-    address public premiumVault;
     address public insurancePool;
 
     // productIds => address, updated once pools are deployed
@@ -76,7 +76,7 @@ contract PolicyCenter is Ownable {
 
     mapping(uint256 => uint256) public toInsuranceByPoolId;
 
-    uint256[4] public premiumSplits;
+    uint256[3] public premiumSplits;
     // amount in shield
     uint256 public treasury;
 
@@ -84,12 +84,16 @@ contract PolicyCenter is Ownable {
         insurancePools[0] = _reinsurancePool;
         reinsurancePool = _reinsurancePool;
         // 5 % to treasury, 45% to insurance, 50% to reinsurance 0.03% to splitter
-        premiumSplits = [499, 44999, 49999, 3];
+        premiumSplits = [490, 4490, 4990];
     }
 
     modifier poolExists(uint256 _poolId) {
         require(insurancePools[_poolId] != address(0), "Pool not found");
         _;
+    }
+
+    function getPremiumSplits() public view returns (uint256, uint256, uint256) {
+        return (premiumSplits[0], premiumSplits[1], premiumSplits[2]);
     }
 
     function getPoolInfo(uint256 _poolId)
@@ -134,11 +138,11 @@ contract PolicyCenter is Ownable {
     }
 
     function setDeg(address _deg) external onlyOwner {
-        DEG = _deg;
+        deg = _deg;
     }
 
     function setVeDeg(address _veDeg) external onlyOwner {
-        veDEG = _veDeg;
+        veDeg = _veDeg;
     }
 
     function setShield(address _shield) external onlyOwner {
@@ -168,14 +172,15 @@ contract PolicyCenter is Ownable {
     function setPremiumSplit(
         uint256 _treasury,
         uint256 _insurance,
-        uint256 _reinsurance,
-        uint256 _splitter
+        uint256 _reinsurance
     ) external onlyOwner {
-        require(_treasury + _insurance + _reinsurance + _splitter == 10000);
+        // should sum up to 100% and reward up to 1%
+        require(_treasury + _insurance + _reinsurance <= 10000);
+        require(_treasury + _insurance + _reinsurance >= 9900);
         require(_treasury > 0, "has not given a treasury split");
         require(_insurance > 0, "has not given an insurance split");
         require(_reinsurance > 0, "has not given a reinsurance split");
-        premiumSplits = [_treasury, _insurance, _reinsurance, _splitter];
+        premiumSplits = [_treasury, _insurance, _reinsurance];
     }
 
     /**
@@ -183,29 +188,24 @@ contract PolicyCenter is Ownable {
      */
     function buyCoverage(
         uint256 _poolId,
-        uint256 _paid,
-        uint256 _amount,
+        uint256 _pay,
+        uint256 _coverAmount,
         uint256 _length
     ) external poolExists(_poolId) {
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_coverAmount > 0, "Amount must be greater than 0");
         require(_length > 0, "Length must be greater than 0");
         require(_poolId > 0, "PoolId must be greater than 0");
-        require(
-            _poolId <=
-                IInsurancePoolFactory(insurancePoolFactory).getPoolCounter(),
-            "PoolId must be less than or equal to the number of pools"
-        );
 
-        uint256 price = IInsurancePool(insurancePool).policyPrice(
-            _poolId,
-            _amount,
+        uint256 price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
+            _coverAmount,
             _length
         );
+        require(price == _pay, "pay does not correspond to price");
         toSplitByPoolId[_poolId] = toSplitByPoolId[_poolId] + price;
         IERC20(shield).transferFrom(msg.sender, address(this), price);
-        IInsurancePool(insurancePool).buyCoverage(
-            _paid,
-            _amount,
+        IInsurancePool(insurancePools[_poolId]).buyCoverage(
+            _pay,
+            _coverAmount,
             _length,
             msg.sender
         );
@@ -214,32 +214,38 @@ contract PolicyCenter is Ownable {
     function splitPremium(uint256 _poolId) external poolExists(_poolId) {
         require(toSplitByPoolId[_poolId] > 0, "No funds to split");
         uint256 totalSplit = toSplitByPoolId[_poolId];
-        uint256 toPool = ((totalSplit * 4499) / 10000);
-        uint256 toReinusrancePool = ((totalSplit * 4999) / 10000);
-        uint256 toTreasury = ((totalSplit * 499) / 10000);
-        uint256 toSplitter = ((totalSplit * 3) / 10000);
+        uint256 toTreasury = totalSplit * premiumSplits[0] / 10000;
+        uint256 toPool = totalSplit * premiumSplits[1] / 10000;
+        uint256 toReinusrancePool = totalSplit * premiumSplits[2] / 10000;
+        console.log(uint256(toTreasury));
+        console.log(uint256(toPool));
+        console.log(uint256(toReinusrancePool));
+        uint256 toSplitter = totalSplit - toPool - toReinusrancePool - toTreasury;
 
-        IERC20(shield).transferFrom(
-            address(this),
-            insurancePools[_poolId],
-            toPool
-        );
-        IInsurancePool(insurancePools[_poolId]).addPremium(toPool);
-        IERC20(shield).transferFrom(
-            address(this),
-            reinsurancePool,
-            toReinusrancePool
-        );
         treasury = treasury + toTreasury;
-        IERC20(shield).transferFrom(address(this), msg.sender, toSplitter);
+        IInsurancePool(insurancePools[_poolId]).addPremium(toPool);
+        IReinsurancePool(reinsurancePool).addPremium(toReinusrancePool);
+
+        IERC20(shield).transfer(insurancePools[_poolId], toPool);
+        IERC20(shield).transfer(reinsurancePool, toReinusrancePool);
+        IERC20(shield).transfer(msg.sender, toSplitter);
     }
 
     function claimPayout(uint256 _poolId, uint256 _amount) external {
         require(
-            IInsurancePool(insurancePools[_poolId]).isHalted(),
+            IInsurancePool(insurancePools[_poolId]).paused(),
             "Pool is not claimable"
         );
         IInsurancePool(insurancePools[_poolId]).claimPayout(_amount);
+    }
+
+    function claimReward(uint256 _poolId) external poolExists(_poolId) {
+        if (_poolId == 0){
+            IReinsurancePool(reinsurancePool).claimReward(msg.sender);
+        } else {
+            IInsurancePool(insurancePools[_poolId]).claimReward(msg.sender);
+        }
+       
     }
 
     function provideLiquidity(uint256 _poolId, uint256 _amount)
@@ -280,7 +286,7 @@ contract PolicyCenter is Ownable {
     function addPoolId(uint256 _poolId, address _address) external {
         require(
             msg.sender == insurancePoolFactory,
-            "not requested from by Insurance Pool Factory"
+            "not requested by Insurance Pool Factory"
         );
         insurancePools[_poolId] = _address;
     }

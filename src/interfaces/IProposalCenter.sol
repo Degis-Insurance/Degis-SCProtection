@@ -40,10 +40,12 @@ interface IProposalCenter {
 
     function proposePool(
         address _protocol,
-        uint256 _reinsuranceSplit,
-        uint256 _insuranceSplit,
         uint256 _maxCapacity
     ) external;
+
+    function reportBuffer() external view returns (uint256);
+
+    function proposalBuffer() external view returns (uint256);
 
     function liquidateAndTransferVeDEG(uint256 _reportId, bool _veredict)
         external;

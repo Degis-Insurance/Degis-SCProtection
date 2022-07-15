@@ -48,6 +48,7 @@ contract InsurancePoolFactory is Ownable {
         address poolAddress;
         address protocolToken;
         uint256 maxCapacity;
+        uint256 initialpolicyPricePerShield;
     }
     // poolIds => pool info
     mapping(uint256 => PoolInfo) public poolInfoById;
@@ -55,8 +56,8 @@ contract InsurancePoolFactory is Ownable {
     uint256 public poolCounter;
     uint256 public maxCapacity;
 
-    address public DEG;
-    address public veDEG;
+    address public deg;
+    address public veDeg;
     address public shield;
     address public policyCenter;
     address public proposalCenter;
@@ -73,7 +74,8 @@ contract InsurancePoolFactory is Ownable {
             "ReinsurancePool",
             _reinsurancePool,
             _shield,
-            1000000000
+            1000000000,
+            1
         );
     }
 
@@ -86,11 +88,11 @@ contract InsurancePoolFactory is Ownable {
     }
 
     function setDeg(address _deg) external onlyOwner {
-        DEG = _deg;
+        deg = _deg;
     }
 
     function setVeDeg(address _veDeg) external onlyOwner {
-        veDEG = _veDeg;
+        veDeg = _veDeg;
     }
 
     function setShield(address _shield) external onlyOwner {
@@ -116,7 +118,8 @@ contract InsurancePoolFactory is Ownable {
     function deployPool(
         string calldata _name,
         address _protocolToken,
-        uint256 _maxCapacity
+        uint256 _maxCapacity,
+        uint256 _initialpolicyPricePerShield
     ) public
      returns (address) {
        bytes32 salt = keccak256(abi.encodePacked(_name));
@@ -124,6 +127,7 @@ contract InsurancePoolFactory is Ownable {
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
          _maxCapacity,
+         _initialpolicyPricePerShield,
         _name,
         _name
         );
@@ -137,7 +141,8 @@ contract InsurancePoolFactory is Ownable {
             _name,
             newPoolAddress,
             _protocolToken,
-            _maxCapacity
+            _maxCapacity,
+            _initialpolicyPricePerShield
         );
 
         return newPoolAddress;
@@ -146,6 +151,7 @@ contract InsurancePoolFactory is Ownable {
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
+        uint256 _initialpolicyPricePerShield,
         string memory _tokenName,
         string memory _symbol
     ) internal virtual view returns (bytes memory) {
@@ -156,7 +162,7 @@ contract InsurancePoolFactory is Ownable {
         return
             abi.encodePacked(
                 bytecode,
-                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol)
+                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol, _initialpolicyPricePerShield, msg.sender)
             );
     }
 
