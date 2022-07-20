@@ -19,6 +19,7 @@ contract MockVeDEG is Ownable {
     uint8 public decimals; //How many decimals to show.
     string public symbol; //An identifier: eg SBX
     mapping(address => bool) public whitelist;
+    mapping(address => uint256) public lockedBalances;
 
         event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -79,6 +80,14 @@ contract MockVeDEG is Ownable {
         }
         emit Transfer(_from, _to, _value); //solhint-disable-line indent, no-unused-vars
         return true;
+    }
+
+    function lockVeDEG(address _owner, uint256 _value) public {
+        lockedBalances[_owner] += _value;
+    }
+
+    function unlockVeDEG(address _owner, uint256 _value) public {
+        lockedBalances[_owner] += _value;
     }
 
     function balanceOf(address _owner)

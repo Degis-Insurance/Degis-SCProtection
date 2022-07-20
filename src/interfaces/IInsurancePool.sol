@@ -3,50 +3,75 @@
 pragma solidity ^0.8.13;
 
 interface IInsurancePool {
-    function initialize() external;
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Claim(uint256 amount, address sender);
+    event Liquidation(uint256 amount);
+    event LiquidityProvision(uint256 amount, address sender);
+    event LiquidityRemoved(uint256 amount, address sender);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Payout(uint256 amount, address sender);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    function poolInfo()
-        external
-        view
-        returns (
-            string memory,
-            address,
-            uint256,
-            uint256,
-            uint256
-        );
-
-    function coveragePrice(
-        uint256 _amount,
-        uint256 _length
-    ) external view returns (uint256);
-
-    function paused() external view returns (bool);
-
-    function claimPayout(uint256 _amount) external;
-
-    function claimReward(address _provider) external;
-
-    function liquidatePool() external;
-
-    function setMaxCapacity(uint256 _maxCapacity) external;
-
-    function provideLiquidity(uint256 _amount, address _provider) external;
-
-    function removeLiquidity(uint256 _amount, address _provider) external;
-
+    function accumulatedRewardPerShare() view external returns (uint256);
     function addPremium(uint256 _amount) external;
-
-    function buyCoverage(
-        uint256 _paid,
-        uint256 _amount,
-        uint256 _length,
-        address _insured
-    ) external;
-
-    function setClaimStatus(bool _claimable) external;
-
+    function allowance(address owner, address spender) view external returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function balanceOf(address account) view external returns (uint256);
+    function buyCoverage(uint256 _paid, uint256 _amount, uint256 _length, address _insured) external;
+    function calculatePayout(address _insured) view external returns (uint256);
+    function calculateReward(address _provider) view external returns (uint256);
+    function claimPayout(address _insured) external;
+    function claimReward(address _provider) external;
+    function coveragePrice(uint256 _amount, uint256 _length) view external returns (uint256);
+    function coverages(address) view external returns (uint256 amount, uint256 buyDate, uint256 length);
+    function covered() view external returns (uint256);
+    function decimals() view external returns (uint8);
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+    function deg() view external returns (address);
+    function emissionRate() view external returns (uint256);
+    function executor() view external returns (address);
+    function getCoverage(address _covered) view external returns (uint256, uint256, uint256);
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+    function insurancePoolFactory() view external returns (address);
+    function insuredToken() view external returns (address);
+    function isLiquidated() view external returns (bool);
+    function lastRewardTimestamp() view external returns (uint256);
+    function liquidatePool() external;
+    function liquidated() view external returns (bool);
+    function liquidities(address) view external returns (uint256 amount, uint256 userDebt, uint256 lastClaim);
+    function manager() view external returns (address);
+    function maxCapacity() view external returns (uint256);
+    function maxLength() view external returns (uint256);
+    function name() view external returns (string memory);
+    function owner() view external returns (address);
+    function paused() view external returns (bool);
+    function policyCenter() view external returns (address);
+    function policyPricePerShield() view external returns (uint256);
+    function poolInfo() view external returns (string memory, address, uint256, uint256, uint256);
+    function proposalCenter() view external returns (address);
+    function provideLiquidity(uint256 _amount, address _provider) external;
+    function reinsurancePool() view external returns (address);
+    function removeLiquidity(uint256 _amount, address _provider) external;
+    function renounceOwnership() external;
+    function setDeg(address _deg) external;
+    function setExecutor(address _executor) external;
+    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setMaxCapacity(uint256 _maxCapacity) external;
+    function setMaxLength(uint256 _maxLength) external;
     function setPausedInsurancePool(bool _paused) external;
-
-    //totalSupply < maxCapacity
+    function setPolicyCenter(address _policyCenter) external;
+    function setProposalCenter(address _proposalCenter) external;
+    function setReinsurancePool(address _reinsurancePool) external;
+    function setShield(address _shield) external;
+    function setVeDeg(address _veDeg) external;
+    function shield() view external returns (address);
+    function startTime() view external returns (uint256);
+    function symbol() view external returns (string memory);
+    function totalDistributedReward() view external returns (uint256);
+    function totalReward() view external returns (uint256);
+    function totalSupply() view external returns (uint256);
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transferOwnership(address newOwner) external;
+    function veDeg() view external returns (address);
 }

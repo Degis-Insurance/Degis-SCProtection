@@ -18,6 +18,7 @@ contract MockDEG is Ownable {
     string public name; //fancy name: eg Simon Bucks
     uint8 public decimals; //How many decimals to show.
     string public symbol; //An identifier: eg SBX
+    mapping(address => bool) minter;
 
         event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -33,6 +34,15 @@ contract MockDEG is Ownable {
         name = _tokenName; // Set the name for display purposes
         decimals = _decimalUnits; // Amount of decimals for display purposes
         symbol = _tokenSymbol; // Set the symbol for display purposes
+    }
+
+    modifier validMinter() {
+        require(minter[msg.sender]);
+        _;
+    }
+
+    function addMinter(address _minter) public onlyOwner {
+        minter[_minter] = true;
     }
 
     function transfer(address _to, uint256 _value)
@@ -95,5 +105,10 @@ contract MockDEG is Ownable {
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];
+    }
+
+    function mintDegis(address _account, uint256 _amount) external validMinter {
+        balances[_account] += _amount;
+        totalSupply += _amount;
     }
 }

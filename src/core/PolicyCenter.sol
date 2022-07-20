@@ -22,15 +22,15 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "../interfaces/ReinsurancePoolErrors.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
 import "../interfaces/IInsurancePoolFactory.sol";
-import "../interfaces/IPremiumVault.sol";
 import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IComittee.sol";
 import "../interfaces/IExecutor.sol";
-import "forge-std/console.sol";
+import "../util/Setters.sol";
 /**
  * @title Policy Center
  *
@@ -41,7 +41,7 @@ import "forge-std/console.sol";
  *         Sellers can provide liquidity and choose the pools to cover
  *
  */
-contract PolicyCenter is Ownable {
+contract PolicyCenter is Ownable, Setters {
 
     struct Coverage {
         uint256 _poolId;
@@ -51,7 +51,6 @@ contract PolicyCenter is Ownable {
         address signerAddress;
     }
 
-    // should the LP provider be stored at this level?
     struct LiquidityProvider {
         uint256 amount;
         uint256 length;
@@ -59,15 +58,9 @@ contract PolicyCenter is Ownable {
         uint256 poolId;
     }
 
-    address public deg;
-    address public veDeg;
-    address public shield;
-    address public insurancePoolFactory;
-    address public policyCenter;
-    address public proposalCenter;
-    address public executor;
-    address public reinsurancePool;
-    address public insurancePool;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     // productIds => address, updated once pools are deployed
     // ReinsurancePool is pool 0
@@ -80,6 +73,15 @@ contract PolicyCenter is Ownable {
     // amount in shield
     uint256 public treasury;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor(address _reinsurancePool) {
         insurancePools[0] = _reinsurancePool;
         reinsurancePool = _reinsurancePool;
@@ -87,15 +89,31 @@ contract PolicyCenter is Ownable {
         premiumSplits = [490, 4490, 4990];
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     modifier poolExists(uint256 _poolId) {
         require(insurancePools[_poolId] != address(0), "Pool not found");
         _;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    
+    /**
+     * @dev returns premium split used by Policy Center
+     */
     function getPremiumSplits() public view returns (uint256, uint256, uint256) {
         return (premiumSplits[0], premiumSplits[1], premiumSplits[2]);
     }
 
+    /**
+     * @dev returns pool info for a given pool id
+     * @param _poolId pool id generated on Policy Center
+     */
     function getPoolInfo(uint256 _poolId)
         public
         view
@@ -108,16 +126,19 @@ contract PolicyCenter is Ownable {
             uint256
         )
     {
-        (
-            string memory name,
+        (   string memory name,
             address insuredToken,
             uint256 maxCapacity,
             uint256 liquidity,
             uint256 claimable
-        ) = IInsurancePool(insurancePools[_poolId]).poolInfo();
+            ) = IInsurancePool(insurancePools[_poolId]).poolInfo();
         return (name, insuredToken, maxCapacity, liquidity, claimable);
     }
 
+    /**
+     * @dev returns true if given pool address is a valid pool
+     * @param _poolAddress pool address 
+     */
     function isPoolAddress(address _poolAddress) public view returns (bool) {
         uint256 length = IInsurancePoolFactory(insurancePoolFactory)
             .getPoolCounter();
@@ -129,6 +150,10 @@ contract PolicyCenter is Ownable {
         return false;
     }
 
+    /**
+     * @dev returns insurance pool address given a pool id
+     * @param _poolId pool id generated on Policy Center 
+     */
     function getInsurancePoolById(uint256 _poolId)
         public
         view
@@ -137,51 +162,33 @@ contract PolicyCenter is Ownable {
         return insurancePools[_poolId];
     }
 
-    function setDeg(address _deg) external onlyOwner {
-        deg = _deg;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
-    function setVeDeg(address _veDeg) external onlyOwner {
-        veDeg = _veDeg;
-    }
-
-    function setShield(address _shield) external onlyOwner {
-        shield = _shield;
-    }
-
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        policyCenter = _policyCenter;
-    }
-
-    function setProposalCenter(address _proposalCenter) external onlyOwner {
-        proposalCenter = _proposalCenter;
-    }
-
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        reinsurancePool = _reinsurancePool;
-    }
-
-    function setExecutor(address _executor) external onlyOwner {
-        executor = _executor;
-    }
-
-    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
-        insurancePoolFactory = _insurancePoolFactory;
-    }
-
+    /**
+     * @dev sets the premium splits used by Policy Center
+     * @param _treasury split for treasury
+     * @param _insurance split for insurance
+     * @param _reinsurance split for reinsurance
+     */
     function setPremiumSplit(
         uint256 _treasury,
         uint256 _insurance,
         uint256 _reinsurance
     ) external onlyOwner {
         // should sum up to 100% and reward up to 1%
-        require(_treasury + _insurance + _reinsurance <= 10000);
-        require(_treasury + _insurance + _reinsurance >= 9900);
+        require(_treasury + _insurance + _reinsurance <= 10000, "Invalid split");
+        require(_treasury + _insurance + _reinsurance >= 9900, "Invalid split");
         require(_treasury > 0, "has not given a treasury split");
         require(_insurance > 0, "has not given an insurance split");
         require(_reinsurance > 0, "has not given a reinsurance split");
         premiumSplits = [_treasury, _insurance, _reinsurance];
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Buy new policies
@@ -201,25 +208,27 @@ contract PolicyCenter is Ownable {
             _length
         );
         require(price == _pay, "pay does not correspond to price");
-        toSplitByPoolId[_poolId] = toSplitByPoolId[_poolId] + price;
-        IERC20(shield).transferFrom(msg.sender, address(this), price);
+        toSplitByPoolId[_poolId] += price;
         IInsurancePool(insurancePools[_poolId]).buyCoverage(
-            _pay,
+            _pay * premiumSplits[1] / 10000,
             _coverAmount,
             _length,
             msg.sender
         );
+        IERC20(shield).transferFrom(msg.sender, address(this), price);
     }
 
+    /**
+     * @notice splits received premium given a pool id
+     * @param _poolId pool id generated on Policy Center
+     */
     function splitPremium(uint256 _poolId) external poolExists(_poolId) {
         require(toSplitByPoolId[_poolId] > 0, "No funds to split");
         uint256 totalSplit = toSplitByPoolId[_poolId];
         uint256 toTreasury = totalSplit * premiumSplits[0] / 10000;
         uint256 toPool = totalSplit * premiumSplits[1] / 10000;
         uint256 toReinusrancePool = totalSplit * premiumSplits[2] / 10000;
-        console.log(uint256(toTreasury));
-        console.log(uint256(toPool));
-        console.log(uint256(toReinusrancePool));
+
         uint256 toSplitter = totalSplit - toPool - toReinusrancePool - toTreasury;
 
         treasury = treasury + toTreasury;
@@ -231,12 +240,17 @@ contract PolicyCenter is Ownable {
         IERC20(shield).transfer(msg.sender, toSplitter);
     }
 
-    function claimPayout(uint256 _poolId, uint256 _amount) external {
+    /**
+     * @notice claims liquidation payout given a pool id
+     * @param _poolId pool id generated on Policy Center
+     */
+    function claimPayout(uint256 _poolId) external {
         require(
             IInsurancePool(insurancePools[_poolId]).paused(),
             "Pool is not claimable"
         );
-        IInsurancePool(insurancePools[_poolId]).claimPayout(_amount);
+        require(IInsurancePool(insurancePools[_poolId]).isLiquidated(), "Pool is not claimable");
+        IInsurancePool(insurancePools[_poolId]).claimPayout(msg.sender);
     }
 
     function claimReward(uint256 _poolId) external poolExists(_poolId) {
@@ -248,6 +262,11 @@ contract PolicyCenter is Ownable {
        
     }
 
+    /**
+     * @notice provide liquidity to a give pool id
+     * @param _poolId pool id generated on Policy Center
+     * @param _amount amount of liquidity to provide
+     */
     function provideLiquidity(uint256 _poolId, uint256 _amount)
         external
         poolExists(_poolId)
@@ -273,6 +292,11 @@ contract PolicyCenter is Ownable {
         }
     }
 
+     /**
+     * @notice remove liquidity to a give pool id
+     * @param _poolId pool id generated on Policy Center
+     * @param _amount amount of liquidity to provide
+     */
     function removeLiquidity(uint256 _poolId, uint256 _amount)
         external
         poolExists(_poolId)
@@ -283,6 +307,11 @@ contract PolicyCenter is Ownable {
         );
     }
 
+    /**
+     * @notice registers a new insurance pool deployed by pool factory
+     * @param _poolId pool id generated on Policy Center
+     * @param _address address of the insurance pool
+     */
     function addPoolId(uint256 _poolId, address _address) external {
         require(
             msg.sender == insurancePoolFactory,
@@ -291,6 +320,11 @@ contract PolicyCenter is Ownable {
         insurancePools[_poolId] = _address;
     }
 
+    /**
+     * @notice rewards reporter when a reported insurance pool is liquidated
+     * callable by contract only
+     * @param _reporter address of the reporter
+     */
     function rewardReporter(address _reporter) external {
         require(
             msg.sender == proposalCenter,
@@ -300,35 +334,4 @@ contract PolicyCenter is Ownable {
         treasury -= reward;
         IERC20(shield).transfer(_reporter, reward);
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constants **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Errors ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constructor ************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************** Modifiers *************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ View Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Main Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
 }

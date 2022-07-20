@@ -28,17 +28,16 @@ import "../interfaces/ReinsurancePoolErrors.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IPremiumVault.sol";
 import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IComittee.sol";
 import "../interfaces/IExecutor.sol";
+import "../util/Setters.sol";
 
 contract ReinsurancePool is
     ReinsurancePoolErrors,
     ERC20("ReinsurancePoolLP", "RLP"),
-    Ownable
+    Ownable, Setters
 {
-    using SafeERC20 for IERC20;
 
     struct Liquidity {
         uint256 amount;
@@ -49,16 +48,6 @@ contract ReinsurancePool is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-    address public deg;
-    address public veDeg;
-    address public shield;
-    address public insurancePoolFactory;
-    address public policyCenter;
-    address public proposalCenter;
-    address public executor;
-    address public reinsurancePool;
-    address public premiumVault;
-    address public insurancePool;
 
     bool public insurancePoolLiquidated;
     bool public paused;
@@ -95,34 +84,6 @@ contract ReinsurancePool is
         _;
     }
 
-     function setDeg(address _deg) external onlyOwner {
-        deg = _deg;
-    }
-
-    function setVeDeg(address _veDeg) external onlyOwner {
-        veDeg = _veDeg;
-    }
-
-    function setShield(address _shield) external onlyOwner {
-        shield = _shield;
-    }
-
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        policyCenter = _policyCenter;
-    }
-
-    function setProposalCenter(address _proposalCenter) external onlyOwner {
-        proposalCenter = _proposalCenter;
-    }
-
-    function setExecutor(address _executor) external onlyOwner {
-        executor = _executor;
-    }
-
-    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
-        insurancePoolFactory = _insurancePoolFactory;
-    }
-
 
     function endLiquidationPeriod() external onlyOwner {
         insurancePoolLiquidated = false;
@@ -141,9 +102,12 @@ contract ReinsurancePool is
         require(_amount > 0, "amount should be greater than 0");
         require(msg.sender == policyCenter, "you can only provide liquidity through policy center");
         uint256 reward = calculateReward(_provider);
-        liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount + _amount);
-        liquidities[msg.sender].lastClaim = block.timestamp;
-        IERC20(shield).transfer(msg.sender, reward);
+        if (reward > 0) {
+            liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount + _amount);
+            liquidities[msg.sender].lastClaim = block.timestamp;
+            // reward liquidity provider
+            IERC20(shield).transfer(_provider, reward);
+        }
         _mint(_provider, _amount);   
     }
 
@@ -168,7 +132,7 @@ contract ReinsurancePool is
         liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount - liquidities[msg.sender].userDebt);
         liquidities[msg.sender].lastClaim = block.timestamp;
         _burn(_provider, _amount);
-        ERC20(shield).transfer(_provider, _amount + reward);        
+        IERC20(shield).transfer(_provider, _amount + reward);        
     }
 
     function addPremium(uint256 _amount) external {
