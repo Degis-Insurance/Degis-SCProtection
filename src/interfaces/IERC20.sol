@@ -41,10 +41,18 @@ interface IERC20 {
         view
         returns (uint256 remaining);
 
+    function lockVeDEG(address _owner, uint256 _value) external;
+
+    function unlockVeDEG(address _owner, uint256 _value) external;
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(
         address indexed _owner,
         address indexed _spender,
         uint256 _value
     );
+
+    function mintDegis(address _account, uint256 _amount) external;
+
+    function addMinter(address _minter) external;
 }

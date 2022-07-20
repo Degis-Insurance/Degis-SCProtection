@@ -27,10 +27,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IPremiumVault.sol";
 import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IComittee.sol";
 import "./InsurancePool.sol";
+import "../util/Setters.sol";
 
 import "../interfaces/IExecutor.sol";
 
@@ -42,7 +42,8 @@ import "../interfaces/IExecutor.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePoolFactory is Ownable {
+contract InsurancePoolFactory is Ownable, Setters {
+
     struct PoolInfo {
         string protocolName;
         address poolAddress;
@@ -50,26 +51,36 @@ contract InsurancePoolFactory is Ownable {
         uint256 maxCapacity;
         uint256 initialpolicyPricePerShield;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+    
     // poolIds => pool info
     mapping(uint256 => PoolInfo) public poolInfoById;
 
     uint256 public poolCounter;
     uint256 public maxCapacity;
 
-    address public deg;
-    address public veDeg;
-    address public shield;
-    address public policyCenter;
-    address public proposalCenter;
-    address public executor;
-    address public reinsurancePool;
-    address public premiumVault;
+    address public administrator;
     address public insurancePool;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+    
+    event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 initialpolicyPricePerShield);
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+    
 
     constructor(address _reinsurancePool, address _shield) {
         poolCounter = 0;
         reinsurancePool = _reinsurancePool;
         shield = _shield;
+        setAdministrator(msg.sender);
         poolInfoById[poolCounter] = PoolInfo(
             "ReinsurancePool",
             _reinsurancePool,
@@ -78,43 +89,54 @@ contract InsurancePoolFactory is Ownable {
             1
         );
     }
+    
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
-    function setMaxCapacity(uint256 _maxCapacity) public onlyOwner {
-        maxCapacity = _maxCapacity;
+    /**
+     * @notice Get the pool address for a given pool id
+     * @return Array of pool addresses
+     */
+    function getPoolAddressList() external view returns (address[] memory) {
+        address[] memory list = new address[](poolCounter + 1);
+        for (uint256 i = 0; i < poolCounter + 1; i++) {
+            list[i] = poolInfoById[i].poolAddress;
+        }
+        return list;
     }
 
+    /**
+     * @notice gets the pool counter which indicates the latest pool id
+     * @return PoolCounter pool id
+     */
     function getPoolCounter() public view returns (uint256) {
         return poolCounter;
     }
 
-    function setDeg(address _deg) external onlyOwner {
-        deg = _deg;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+    
+    /**
+     * @notice Sets the administrator of the deployed Insurance pools
+     * @param _administrator The address of the new administrator
+     */
+    function setAdministrator(address _administrator) public onlyOwner {
+        administrator = _administrator;
     }
 
-    function setVeDeg(address _veDeg) external onlyOwner {
-        veDeg = _veDeg;
-    }
-
-    function setShield(address _shield) external onlyOwner {
-        shield = _shield;
-    }
-
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        policyCenter = _policyCenter;
-    }
-
-    function setProposalCenter(address _proposalCenter) external onlyOwner {
-        proposalCenter = _proposalCenter;
-    }
-
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        reinsurancePool = _reinsurancePool;
-    }
-
-    function setExecutor(address _executor) external onlyOwner {
-        executor = _executor;
-    }
-
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+    
+    /**
+     * @notice Creates a new insurance pool
+     * @param _name Name of the protocol
+     * @param _protocolToken Address of the token used for the protocol
+     * @param _maxCapacity Maximum capacity of the pool
+     * @param _initialpolicyPricePerShield Initial policy price per shield
+     */
     function deployPool(
         string calldata _name,
         address _protocolToken,
@@ -145,9 +167,24 @@ contract InsurancePoolFactory is Ownable {
             _initialpolicyPricePerShield
         );
 
+        emit PoolCreated(newPoolAddress, poolCounter, _name, _protocolToken, _maxCapacity, _initialpolicyPricePerShield);
+
         return newPoolAddress;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice gets bytecode for insurance pool creation according to parameters
+     *
+     * @param _protocolToken address of the protocol token to insure
+     * @param _maxCapacity max coverage capacity
+     * @param _initialpolicyPricePerShield policy price per shield
+     * @param _tokenName name for the new pool
+     * @param _symbol symbol for new pool
+     */
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
@@ -162,16 +199,8 @@ contract InsurancePoolFactory is Ownable {
         return
             abi.encodePacked(
                 bytecode,
-                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol, _initialpolicyPricePerShield, msg.sender)
+                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol, _initialpolicyPricePerShield, administrator)
             );
-    }
-
-    function getPoolAddressList() external view returns (address[] memory) {
-        address[] memory list = new address[](poolCounter + 1);
-        for (uint256 i = 0; i < poolCounter + 1; i++) {
-            list[i] = poolInfoById[i].poolAddress;
-        }
-        return list;
     }
 
     /**
@@ -193,35 +222,4 @@ contract InsurancePoolFactory is Ownable {
             }
         }
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constants **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Errors ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constructor ************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************** Modifiers *************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ View Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Main Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
 }

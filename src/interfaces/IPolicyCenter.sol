@@ -3,74 +3,43 @@
 pragma solidity ^0.8.13;
 
 interface IPolicyCenter {
-    function getPoolInfo(uint256 _poolId) external view returns (string memory, address, uint256, uint256, uint256);
-
-    function getInsurancePoolById(uint256 _poolId) external view returns (address);
-
-    function isPoolAddress(address _poolAddress) external view returns (bool);
-
-    function setPremiumSplit(
-        uint256 _treasury,
-        uint256 _insurance,
-        uint256 _reinsurance,
-        uint256 _splitter
-    ) external;
-
-    function getPremiumSplits() external view returns (uint256, uint256, uint256);
-
-    /**
-     * @notice Buy new policies
-     */
-    function buyCoverage(
-        uint256 _poolId,
-        uint256 _amount,
-        uint256 _length
-    ) external;
-
-    function splitFunds(address _poolId) external;
-
-    function addDEGToTreasury(uint256 _amount) external;
-
-    function rewardReporter(address _reporter, uint256 _poolId) external;
-
-    function getAvaiableDepositbyPool(address _poolId)
-        external
-        view
-        returns (uint256);
-
-    function claimPayout(uint256 _poolId, uint256 _amount) external;
-
-    function provideLiquidity(uint256 _poolId, uint256 _amount) external;
-
-    function removeLiquidity(uint256 _poolId, uint256 _amount) external;
+     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     function addPoolId(uint256 _poolId, address _address) external;
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constants **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Errors ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constructor ************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************** Modifiers *************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ View Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Main Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
+    function buyCoverage(uint256 _poolId, uint256 _pay, uint256 _coverAmount, uint256 _length) external;
+    function claimPayout(uint256 _poolId, uint256 _amount) external;
+    function claimReward(uint256 _poolId) external;
+    function deg() view external returns (address);
+    function executor() view external returns (address);
+    function getInsurancePoolById(uint256 _poolId) view external returns (address);
+    function getPoolInfo(uint256 _poolId) view external returns (string memory, address, uint256, uint256, uint256);
+    function getPremiumSplits() view external returns (uint256, uint256, uint256);
+    function insurancePoolFactory() view external returns (address);
+    function insurancePools(uint256) view external returns (address);
+    function isPoolAddress(address _poolAddress) view external returns (bool);
+    function owner() view external returns (address);
+    function policyCenter() view external returns (address);
+    function premiumSplits(uint256) view external returns (uint256);
+    function proposalCenter() view external returns (address);
+    function provideLiquidity(uint256 _poolId, uint256 _amount) external;
+    function reinsurancePool() view external returns (address);
+    function removeLiquidity(uint256 _poolId, uint256 _amount) external;
+    function renounceOwnership() external;
+    function rewardReporter(address _reporter) external;
+    function setDeg(address _deg) external;
+    function setExecutor(address _executor) external;
+    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setPolicyCenter(address _policyCenter) external;
+    function setPremiumSplit(uint256 _treasury, uint256 _insurance, uint256 _reinsurance) external;
+    function setProposalCenter(address _proposalCenter) external;
+    function setReinsurancePool(address _reinsurancePool) external;
+    function setShield(address _shield) external;
+    function setVeDeg(address _veDeg) external;
+    function shield() view external returns (address);
+    function splitPremium(uint256 _poolId) external;
+    function toInsuranceByPoolId(uint256) view external returns (uint256);
+    function toSplitByPoolId(uint256) view external returns (uint256);
+    function transferOwnership(address newOwner) external;
+    function treasury() view external returns (uint256);
+    function veDeg() view external returns (address);
 }
