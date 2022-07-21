@@ -532,8 +532,7 @@ contract ProposalCenterVotingTest is Test {
         shield.approve(address(policyc), 1000e18);
         vm.warp(30 days);
         vm.prank(alice);
-        policyc.splitPremium(1);
-        uint256 reward = InsurancePool(pool1).calculateReward(alice);
+        uint256 reward = policyc.calculateReward(1, alice);
         console.log("reward", reward);
         vm.prank(alice);
         policyc.claimReward(1);

@@ -136,13 +136,14 @@ contract ClaimPayoutTest is Test {
     }
 
     function testProvideLiquidityNewPool() public {
-        policyc.provideLiquidity(1, 10000);
+        policyc.provideLiquidity(2, 10000);
         assertEq(InsurancePool(pool2).totalSupply() == 10000, true);
     }
 
     function testBuyCoverageNewPool() public {
-        uint256 price  = InsurancePool(pool2).coveragePrice(10000, 10);
-        policyc.buyCoverage(2, price, 10000, 10);
-        assertEq(InsurancePool(pool2).totalSupply() == 10000, true);
+        uint256 price  = InsurancePool(pool2).coveragePrice(10000, 100);
+        policyc.buyCoverage(2, price, 10000, 100);
+        (uint256 amount,,) = policyc.getCoverage(2, address(this));
+        assertEq(amount == 10000, true);
     }
 }

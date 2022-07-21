@@ -464,16 +464,14 @@ contract ProposalCenter is Ownable, Setters {
         );
     }
 
-    function liquidateByReportId(uint256 _reportId, bool _veredict)
+    function rewardByReportId(uint256 _reportId, bool _veredict)
         external
     {
         require(msg.sender == executor, "Only Executor can liquidate");
         address[] memory voted = reportIds[_reportId].voted;
-        // reporter gets 1000 deg back + 1000 for successful liquidation
-        uint256 degToReporter = 2000;
-
         if (_veredict) {
-            MockDEG(deg).mintDegis(reportIds[_reportId].reporterAddress, degToReporter);
+            IPolicyCenter(policyCenter).rewardTreasuryToReporter(reportIds[_reportId].reporterAddress);
+            MockDEG(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
         for (uint256 i = 0; i < voted.length; i++) {
             if (confirmsReport[_reportId][voted[i]] == _veredict) {
                 // if voted with the decision, reward deg and unlock vedeg according to their stake

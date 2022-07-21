@@ -165,7 +165,7 @@ function setUp() public {
         InsurancePool(pool1).setMaxCapacity(10);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 365);
         vm.expectRevert("exceeds max capacity");
-        policyc.buyCoverage(1,price, 10000 , 365);
+        policyc.buyCoverage(1, price, 10000 , 365);
     }
 
     function provideLiqudityDirectlyToInsurancePool() public {
@@ -195,7 +195,7 @@ function setUp() public {
         uint256 price = InsurancePool(pool1).coveragePrice(1000, 365);
         console.log(price);
         policyc.buyCoverage(1, price, 1000, 365);
-        (uint256 amount,,) = InsurancePool(pool1).getCoverage(address(this));
+        (uint256 amount,,) = policyc.getCoverage(1, address(this));
         assertEq(amount == 1000, true);
     }
 
@@ -204,7 +204,7 @@ function setUp() public {
         uint256 price = InsurancePool(pool1).coveragePrice(1000, 365);
         shield.approve(address(policyc), 100e18);
         policyc.buyCoverage(1, price, 1000, 365);
-        (uint256 amount, uint256 buyDate, uint256 length) = InsurancePool(pool1).getCoverage(address(this));
+        (uint256 amount, uint256 buyDate, uint256 length) = policyc.getCoverage(1, address(this));
         assertEq(amount == 1000, true);
         assertEq(buyDate - block.timestamp < 100, true);
         assertEq(length == 365, true);
@@ -239,27 +239,33 @@ function setUp() public {
     }
 
     function testSetPremiumSplit() public {
-        policyc.setPremiumSplit(999, 1999, 7000);
+        policyc.setPremiumSplit(1000, 2000, 7000);
         (uint256 split0, uint256 split1,  uint256 split2) = policyc.getPremiumSplits();
-        assertEq(split0 == 999, true);
-        assertEq(split1 == 1999, true);
+        assertEq(split0 == 1000, true);
+        assertEq(split1 == 2000, true);
         assertEq(split2 == 7000, true);
     }
 
-    function testSplitPremium() public {
+    function testSetPremiumSplitBadInput() public {
+        vm.expectRevert("Invalid split");
+        policyc.setPremiumSplit(999, 1999, 7000);
+    }
+
+    function testFundsAreSplit() public {
+        uint256 prevBalance = shield.balanceOf(address(policyc));
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 365);
         policyc.buyCoverage(1, price, 10000, 365);
         console.log(shield.balanceOf(address(policyc)));
-        policyc.splitPremium(1);
+        assertEq(shield.balanceOf(address(policyc)) == prevBalance + price, true);
     }
 
     function testRemoveLiquidityAfterReport() public {
         policyc.provideLiquidity(1, 10000);
-        assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
         deg.transfer(address(this), 1000);
         deg.approve(address(proposalc), 10000e18);
         vm.warp(1000000);
         proposalc.reportPool(1);
+        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         vm.expectRevert("cannot remove liquidity while paused");
         policyc.removeLiquidity(1, 10000);
     }
