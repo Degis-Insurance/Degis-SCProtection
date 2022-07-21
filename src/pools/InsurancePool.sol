@@ -35,17 +35,6 @@ import "../util/Setters.sol";
 
 contract InsurancePool is ERC20, Ownable, Setters {
 
-    struct Liquidity {
-        uint256 amount;
-        uint256 userDebt;
-        uint256 lastClaim;
-    }
-
-    struct Coverage {
-        uint256 amount;
-        uint256 buyDate;
-        uint256 length;
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
@@ -59,24 +48,15 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    mapping(address => Coverage) public coverages;
     address public insuredToken;
     address public administrator;
     bool public paused;
     bool public liquidated;
-    uint256 public covered;
     uint256 public maxCapacity;
     uint256 public maxLength;
-    //totalLiquidity is expressed with totalSupply()
-    
-    //provider address => Liquidity provision
-    mapping(address => Liquidity) public liquidities;
-
     uint256 public startTime;
     uint256 public policyPricePerShield;
-    // total reward might
-
-    uint256 public totalReward;
+    //totalLiquidity is expressed in totalSupply()
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
@@ -86,8 +66,6 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
     
-    event Payout(uint256 amount, address sender);
-    event Claim(uint256 amount, address sender);
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
     event Liquidation(uint256 amount);
@@ -156,7 +134,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
             uint256
         )
     {
-        return (name(), insuredToken, maxCapacity, totalSupply(), covered);
+        return (name(), insuredToken, maxCapacity, totalSupply(), totalDistributedReward);
     }
 
     /**
@@ -171,29 +149,17 @@ contract InsurancePool is ERC20, Ownable, Setters {
     {
         require(_amount > 0, "amount cannot be zero");
         require(_length > 0, "length cannot be zero");
-        require(_length <= maxLength, "length cannot be greater than MAX_LENGTH");
+        require(_length <= maxLength, "length cannot be greater than maxLength");
         return (policyPricePerShield *_amount * _length / 1 days * (DISCOUNT_DIVISOR + 1 - _length)) /
             DISCOUNT_DIVISOR;
     }
 
-    /**
-    @dev returns information about the coverage of a given user
-    @param _covered address of the covered wallet
-    @return amount of tokens covered, buy date, length of coverage
-    @return buyDate 0 if no coverage
-    @return length 0 if no coverage
-     */
-    function getCoverage(address _covered) public view returns (uint256, uint256, uint256) {
-        return (coverages[_covered].amount, coverages[_covered].buyDate, coverages[_covered].length);
-    }
-
-    function calculateReward(address _provider) public view returns (uint256) {
-       uint256 time = block.timestamp - lastRewardTimestamp;
+    function calculateReward(uint256 _amount, uint256 _userDebt, address _provider) public view returns (uint256) {
+        uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
-        Liquidity memory liquidity = liquidities[_provider];
-        return (liquidity.amount * acc) - liquidity.userDebt;
-
+        uint256 reward = (_amount * acc) - _userDebt;
+        return reward;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -269,13 +235,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
         require(!liquidated, "cannot provide new liquidity");
         require(_amount > 0, "amount should be greater than 0");
         require(msg.sender == policyCenter, "cannot provide liquidity directly to insurance pool");
-        Liquidity storage liquidity = liquidities[_provider];
-        // pay rewards to provider
-        claimReward(_provider);
-        // update amount and debt
-        liquidity.amount = liquidity.amount + _amount;
-        liquidity.userDebt = liquidity.amount * accumulatedRewardPerShare;
-        liquidity.lastClaim = block.timestamp;
+
         _mint(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);  
     }
@@ -286,104 +246,39 @@ contract InsurancePool is ERC20, Ownable, Setters {
     @param _provider liquidity provider adress
     */
     function removeLiquidity(uint256 _amount, address _provider) external {
-        Liquidity storage liquidity = liquidities[_provider];
-        require(!liquidated, "Pool has been liquidated, cannot remove liquidity");
-        require(block.timestamp >= liquidities[_provider].lastClaim + 604800,
-                "cannot remove liquidity within 7 days of last claim");
-        require(liquidity.amount <= _amount, "amount exceeds staked amount");
+        require(!liquidated, "Pool has been liquidated, cannot remove liquidity");  
         require(msg.sender == policyCenter, "cannot remove liquidity directly from insurance pool");
         require(!paused, "cannot remove liquidity while paused");
-        require(_amount  > 0, "cannot remove zero liquidity");
-        // claim rewards
-        claimReward(_provider);
-        // update amount and debt
-        liquidity.amount -= _amount;
-        liquidity.userDebt = liquidity.amount * accumulatedRewardPerShare;
-        liquidity.lastClaim = block.timestamp;
+        require(_amount > 0, "amount should be greater than 0");
         _burn(_provider, _amount);      
         emit LiquidityRemoved(_amount, _provider);         
     }
 
-    function addPremium(uint256 _amount) external {
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can add premium"
-        );
-        require(_amount > 0, "amount should be greater than 0");
-        totalReward += _amount;
-    }
-
-
-    function buyCoverage(
-        uint256 _paid,
-        uint256 _amount,
-        uint256 _length,
-        address _insured
+    /**
+    @dev called when a coverage is bought on PolicyCenter. Only callable through policyCenter
+    @param _paid amount paid to insure amount of tokens
+    */
+    function registerNewCoverage(
+        uint256 _paid
     ) external {
-        require(_amount + covered <= maxCapacity, "exceeds max capacity");
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can buy coverage"
-        );
-        require(
-            _paid > 0,
-            "InsurancePool: buyCoverage: paid should be greater than 0"
-        );
-        covered += _amount;
-        emissionRate =
-            (_paid - totalDistributedReward) / DISTRIBUTION_PERIOD;
-        
-        coverages[_insured] = Coverage(_amount, block.timestamp, _length);
+        require(msg.sender == policyCenter, "Only policyCenter can buy coverage");
+        require(_paid > 0, "paid should be greater than 0");
         totalDistributedReward += emissionRate * (block.timestamp - startTime);
         accumulatedRewardPerShare +=
             (_paid * (block.timestamp - startTime)) /
             (totalSupply() == 0 ? 1 : totalSupply());
+        emissionRate =
+            (_paid - totalDistributedReward) / DISTRIBUTION_PERIOD;
     }
 
-    function claimReward(address _provider) public {
-        updateRewards();
-        require(msg.sender == policyCenter || msg.sender == address(this), "Not sent from policy center");
-        require(!liquidated, "Pool has been liquidated, cannot claim stake");
-        Liquidity storage liquidity = liquidities[_provider];
-        uint256 reward = (liquidity.amount * accumulatedRewardPerShare) - liquidity.userDebt;
-        if (reward == 0){
-            liquidity.userDebt = liquidity.amount * accumulatedRewardPerShare;
-            return;
-        }
-        liquidity.userDebt = liquidity.amount * accumulatedRewardPerShare;
-        IERC20(shield).transfer(_provider, reward);
-    }
-
-
-    function claimPayout(address _insured) external {
-        require(liquidated, "payout: pool is not claimable");
-        require(
-            (msg.sender == policyCenter),
-            "Not sent from policy center"
-        );
-        require(coverages[_insured].amount > 0, "no coverage to claim");
-        uint256 amount = (coverages[_insured].amount / covered) *
-            totalReward;
-        coverages[_insured].amount = 0;
-        covered -= coverages[_insured].amount;
-        if (totalSupply() >= amount) {
-            IERC20(shield).transfer(_insured, amount);
-        } else {
-            IERC20(shield).transfer(_insured, amount);
-            _requestReinsurance(amount - totalSupply(), msg.sender);
-        }
-        emit Payout(amount, msg.sender);
-    }
-    function calculatePayout(address _insured) public view returns (uint256) {
-        uint256 amount = (coverages[_insured].amount / covered) *
-            totalReward;
-            return amount;
+    function updateRewards() public {
+        require(msg.sender == policyCenter, "Only pollicyCenter can update rewards");
+        _updateRewards();
     }
 
     function liquidatePool() external onlyOwnerOrExecutor {
         _setLiquidationStatus(true);
         uint256 amount = totalSupply();
-
         emit Liquidation(amount);
     }
 
@@ -391,22 +286,17 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function updateRewards() private {
+    function _updateRewards() internal {
         if (totalSupply() == 0) {
             lastRewardTimestamp = block.timestamp;
             return;
         }
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
-        accumulatedRewardPerShare = accumulatedRewardPerShare + (rewards / totalSupply());
+        accumulatedRewardPerShare = accumulatedRewardPerShare + (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
         lastRewardTimestamp = block.timestamp;
         console.log("emission rate", emissionRate);
     }
 
-    function _requestReinsurance(uint256 _amount, address _address) internal {
-        IReinsurancePool(reinsurancePool).reinsurePool(
-            _amount - totalSupply(),
-            _address
-        );
-    }
+    
 }

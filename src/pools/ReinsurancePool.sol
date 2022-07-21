@@ -52,7 +52,6 @@ contract ReinsurancePool is
     bool public insurancePoolLiquidated;
     bool public paused;
 
-    uint256 public totalReward;
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public emissionRate;
@@ -71,6 +70,8 @@ contract ReinsurancePool is
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event MoveLiquidity(uint256 poolId, uint256 amount);
+    event LiquidityProvision(uint256 amount, address sender);
+    event LiquidityRemoved(uint256 amount, address sender);
 
     constructor(address _shield) {
         shield = _shield;
@@ -97,64 +98,39 @@ contract ReinsurancePool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-   function provideLiquidity(uint256 _amount, address _provider) external {
-        require(!insurancePoolLiquidated, "cannot provide new liquidity");
+   /**
+    @dev provide liquidity from liquidity pool. Only callable through policyCenter
+    @param _amount token being insured
+    @param _provider liquidity provider adress
+    */
+    function provideLiquidity(uint256 _amount, address _provider) external {        
         require(_amount > 0, "amount should be greater than 0");
-        require(msg.sender == policyCenter, "you can only provide liquidity through policy center");
-        uint256 reward = calculateReward(_provider);
-        if (reward > 0) {
-            liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount + _amount);
-            liquidities[msg.sender].lastClaim = block.timestamp;
-            // reward liquidity provider
-            IERC20(shield).transfer(_provider, reward);
-        }
-        _mint(_provider, _amount);   
+        require(msg.sender == policyCenter, "cannot provide liquidity directly to insurance pool");
+        _mint(_provider, _amount);
+        emit LiquidityProvision(_amount, _provider);  
     }
 
+     /**
+    @dev remove liquidity from insurance pool. Only callable through policyCenter
+    @param _amount token being insured
+    @param _provider liquidity provider adress
+    */
     function removeLiquidity(uint256 _amount, address _provider) external {
-        require(
-            !insurancePoolLiquidated,
-            "Pool liquidated, cannot remove liquidity"
-        );
         require(_amount <= totalSupply(), "amount exceeds totalSupply");
-        require(
-            block.timestamp >= liquidities[msg.sender].lastClaim + 604800,
-            "cannot remove liquidity within 7 days of last claim"
-        );
-        require(
-            liquidities[msg.sender].amount <= _amount,
-            "amount exceeds staked amount"
-        );
-        require(msg.sender == policyCenter, "liquidity can only be provide through policy center");
-
-        require(!paused, "cannot remove liquidity while paused");
-        uint256 reward = calculateReward(_provider);
-        liquidities[msg.sender].userDebt += accumulatedRewardPerShare * (liquidities[msg.sender].amount - liquidities[msg.sender].userDebt);
-        liquidities[msg.sender].lastClaim = block.timestamp;
-        _burn(_provider, _amount);
-        IERC20(shield).transfer(_provider, _amount + reward);        
-    }
-
-    function addPremium(uint256 _amount) external {
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can add premium"
-        );
+        require(block.timestamp >= liquidities[msg.sender].lastClaim + 604800,
+                "cannot remove liquidity within 7 days of last claim");
         require(_amount > 0, "amount should be greater than 0");
-        totalReward += _amount;
+        require(msg.sender == policyCenter, "liquidity can only be provide through policy center");
+        require(!paused, "cannot remove liquidity while paused");
+        _burn(_provider, _amount);
+        emit LiquidityRemoved(_amount, _provider); 
     }
 
-    function claimReward(address _provider) public {
-        require(msg.sender == policyCenter, "Not sent from policy center");
-        require(!insurancePoolLiquidated, "Pool has been liquidated, cannot claim stake");
-        uint256 stake = liquidities[_provider].amount;
-        require(stake > 0, "No stake to claim");
-
-        uint256 reward = calculateReward(_provider);
-        liquidities[_provider].userDebt += reward;
-        IERC20(shield).transfer(_provider, reward);
-    }
-
+    /**
+    @dev provides liquidity to pools in need of it. Only callable by Pools
+    @param _amount token being insured
+    @param _address address of covered wallet
+    */   
     function reinsurePool(uint256 _amount, address _address) external poolOnly {
         if (_amount == 0) revert ZeroAmount();
         IERC20(shield).transferFrom(address(this), _address, _amount);

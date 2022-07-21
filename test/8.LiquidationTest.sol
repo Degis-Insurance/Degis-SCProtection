@@ -104,27 +104,36 @@ contract ClaimPayoutTest is Test {
         shield.transfer(address(this), 1000e18);
         shield.approve(address(policyc), 10000e18);
         policyc.provideLiquidity(1, 10000);
-        proposalc.proposePool(yeti, "Yeti", 10000, 1);
+        proposalc.reportPool(1);
         vm.prank(alice);
-        proposalc.votePoolProposal(1, true);
+        proposalc.voteReport(1, true);
         vm.prank(bob);
-        proposalc.votePoolProposal(1, true);
+        proposalc.voteReport(1, true);
         vm.prank(carol);
-        proposalc.votePoolProposal(1, true);
+        proposalc.voteReport(1, true);
         vm.warp(260000);
         vm.prank(address(0x1abc));
-        proposalc.evaluatePoolProposalVotes(1);
+        proposalc.evaluateReportVotes(1);
+        vm.warp(3500000);
+        vm.prank(address(0x1abc));
+        proposalc.evaluateReportVotes(1);
+        vm.warp(10000000);
+        e.executeReport(1);
     }
 
     function testClaimPayout() public {
-        uint256 amount = InsurancePool(pool1).calculatePayout(carol);
+        uint256 amount = policyc.calculatePayout(1, address(this));
         policyc.claimPayout(1);
         console.log(amount);
     }
     
-    function testClaimPayoutDirectlyToInsurancePool() public {
-        vm.expectRevert("Not sent from policy center");
-        InsurancePool(pool1).claimPayout(carol);
+    function testClaimPayoutUnexsistentpool() public {
+        vm.expectRevert("Pool not found");
+        policyc.claimPayout(2);
+    }
+
+    function testRequestReinsurance() public {
+        // uint256 amount = policyc.calculateReinsurance(1);
     }
 
     function unpauseLiquidatedPool() public {

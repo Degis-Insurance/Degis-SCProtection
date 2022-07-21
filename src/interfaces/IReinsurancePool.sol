@@ -15,7 +15,7 @@ interface IReinsurancePool {
     function allowance(address owner, address spender) view external returns (uint256);
     function approve(address spender, uint256 amount) external returns (bool);
     function balanceOf(address account) view external returns (uint256);
-    function calculateReward(address _provider) view external returns (uint256);
+    function calculateReward(uint256 _amount, uint256 _userDebt, address _provider) view external returns (uint256);
     function claimReward(address _provider) external;
     function decimals() view external returns (uint8);
     function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);

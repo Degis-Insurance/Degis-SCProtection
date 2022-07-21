@@ -115,13 +115,11 @@ contract NoLiquidationTest is Test {
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 365);
         vm.prank(carol);
         policyc.buyCoverage(1, price, 10000, 365);
-        vm.warp(200);
-        policyc.splitPremium(1);
         vm.warp(30 days);
     }
 
     function testClaimRewardsToInsurancePool() public {
-        uint256 reward = InsurancePool(pool1).calculateReward(alice);
+        uint256 reward = policyc.calculateReward(1, alice);
         console.log("reward", reward);
         vm.prank(alice);
         policyc.claimReward(1);
@@ -129,23 +127,11 @@ contract NoLiquidationTest is Test {
     }
 
     function testClaimRewardsToReinsurancePool() public {
-        uint256 reward = InsurancePool(pool1).calculateReward(bob);
+        uint256 reward = policyc.calculateReward(1, bob);
         console.log("reward", reward);
         vm.prank(bob);
         policyc.claimReward(0);
         assertEq(reward > 0, true);
     }
-    
-    function testClaimRewardsDirectlyToInsurancePool() public {
-        vm.expectRevert("Not sent from policy center");
-        InsurancePool(pool1).claimReward(alice);
-    }
-
-    function testClaimRewardsToReisurancePool() public {
-        vm.expectRevert("Not sent from policy center");
-        rp.claimReward(bob);
-    }
-
-
 }
 

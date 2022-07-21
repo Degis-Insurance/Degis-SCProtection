@@ -118,17 +118,16 @@ contract ExecutorTest is Test {
         proposalc.voteReport(1, true);
         vm.prank(carol);
         proposalc.voteReport(1, true);
-        vm.warp(350000);
-        vm.prank(address(0x1abc));
+        vm.warp(260000);
         proposalc.evaluateReportVotes(1);
         proposalc.evaluatePoolProposalVotes(1);
-        vm.warp(500000);
+        vm.warp(350000);
         proposalc.evaluateReportVotes(1);
         proposalc.evaluatePoolProposalVotes(1);
     }
 
     function testGetPendingPools() public {
-        (uint256 poolId,, bool pending, bool approved) = e.getQueuedReportById(1);
+        (uint256 poolId,, bool pending, bool approved) = e.queuedReportsById(1);
         assertEq(poolId == 1, true);
         assertEq(pending == true, true);
         assertEq(approved == true, true);
@@ -146,10 +145,7 @@ contract ExecutorTest is Test {
     }
 
     function testExecutePoolAfterBuffer() public {
-        vm.warp(350000);
-        vm.prank(address(0x1abc));
-        proposalc.evaluatePoolProposalVotes(1);
-        vm.warp(1209602);
+        vm.warp(1000000);
         address newPool = e.executeNewPool(1);
         address[] memory addresses = ipf.getPoolAddressList();
         address registeredNewPool = addresses[addresses.length - 1];
@@ -173,11 +169,12 @@ contract ExecutorTest is Test {
     function testCancelReport() public {
         vm.warp(1000000);
         e.cancelReport(1);
-        (uint256 poolId,, bool pending, bool approved) = e.getQueuedReportById(1);
+        (uint256 poolId,, bool pending, bool approved) = e.queuedReportsById(1);
+        bool truthy = InsurancePool(pool1).isLiquidated();
         assertEq(poolId == 1, true);
         assertEq(pending == false, true);
-        assertEq(approved == false, true);
-        assertEq(InsurancePool(pool1).isLiquidated()  == false, true);
+        assertEq(approved == true, true);
+        assertEq(truthy == false, true);
     }
 
     function testCancelPool() public {

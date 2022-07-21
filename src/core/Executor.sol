@@ -80,35 +80,6 @@ contract Executor is Ownable, Setters {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @dev Returns the a queued report
-     * @param _reportId The ID of the queued report
-     */
-    function getQueuedReportById(uint256 _reportId) public view returns (uint256, uint256, bool, bool) {
-        require(queuedReportsById[_reportId].pending, "Report not pending");
-        QueuedReport memory queuedReport = queuedReportsById[_reportId];
-        return (queuedReport.poolId,
-        queuedReport.queueEnds,
-        queuedReport.pending,
-       queuedReport.approved);
-    }
-
-    /**
-     * @dev Returns the a queued pool
-     * @param _proposalId The ID of the queued pool
-     */
-    function getQueuedPoolsById(uint256 _proposalId) public view returns (string memory, address, uint256, uint256, uint256, bool, bool) {
-        require(queuedPoolsById[_proposalId].pending, "Report not pending");
-        QueuedPool memory queuedPool = queuedPoolsById[_proposalId];
-        return (queuedPool.protocolName,
-                queuedPool.protocol,
-                queuedPool.maxCapacity,
-                queuedPool.initialpolicyPricePerShield,
-                queuedPool.queueEnds,
-                queuedPool.pending,
-                queuedPool.approved);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -200,19 +171,15 @@ contract Executor is Ownable, Setters {
         );
         if (queuedReportsById[_reportId].approved) {
             IInsurancePool(pool).liquidatePool();
-            IProposalCenter(proposalCenter).liquidateByReportId(
-                _reportId,
-                true
-            );
             emit ReportExecuted(pool, queuedReportsById[_reportId].poolId, _reportId);
         } else {
             IProposalCenter(proposalCenter).setPoolReported(pool, false);
-            IProposalCenter(proposalCenter).liquidateByReportId(
-                _reportId,
-                false
-            );
             queuedReportsById[_reportId].pending = false;
         }
+         IProposalCenter(proposalCenter).rewardByReportId(
+                _reportId,
+                queuedReportsById[_reportId].approved
+            );
         queuedReportsById[_reportId].pending = false;
     }
 

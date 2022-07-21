@@ -25,7 +25,7 @@ interface IPolicyCenter {
     function reinsurancePool() view external returns (address);
     function removeLiquidity(uint256 _poolId, uint256 _amount) external;
     function renounceOwnership() external;
-    function rewardReporter(address _reporter) external;
+    function rewardTreasuryToReporter(address _reporter) external;
     function setDeg(address _deg) external;
     function setExecutor(address _executor) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
@@ -36,7 +36,6 @@ interface IPolicyCenter {
     function setShield(address _shield) external;
     function setVeDeg(address _veDeg) external;
     function shield() view external returns (address);
-    function splitPremium(uint256 _poolId) external;
     function toInsuranceByPoolId(uint256) view external returns (uint256);
     function toSplitByPoolId(uint256) view external returns (uint256);
     function transferOwnership(address newOwner) external;
