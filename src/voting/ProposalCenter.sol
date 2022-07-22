@@ -64,7 +64,8 @@ contract ProposalCenter is Ownable, Setters {
         address proposerAddress;
         address[] voted;
         uint256 maxCapacity;
-        uint256 initialpolicyPricePerShield;
+        // per year in bps 10000 == 100%
+        uint256 policyPricePerShield;
         uint256 timestamp;
         uint256 yes;
         uint256 no;
@@ -204,7 +205,7 @@ contract ProposalCenter is Ownable, Setters {
                     proposal.voted,
                     proposal.maxCapacity,
                     proposal.timestamp,
-                    proposal.initialpolicyPricePerShield,
+                    proposal.policyPricePerShield,
                     proposal.yes,
                     proposal.no,
                     proposal.pending,
@@ -370,7 +371,7 @@ contract ProposalCenter is Ownable, Setters {
             _proposalId,
             proposalIds[_proposalId].protocolAddress,
             proposalIds[_proposalId].maxCapacity,
-            proposalIds[_proposalId].initialpolicyPricePerShield,
+            proposalIds[_proposalId].policyPricePerShield,
             proposalIds[_proposalId].pending,
             proposalIds[_proposalId].approved
             );
@@ -434,7 +435,7 @@ contract ProposalCenter is Ownable, Setters {
         address _protocol,
         string memory _name,
         uint256 _maxCapacity,
-        uint256 _initialpolicyPricePerShield
+        uint256 _policyPricePerShield
     ) public {
         require(!poolProposed[_protocol], "Protocol already proposed");
         ++proposalCounter;
@@ -445,7 +446,7 @@ contract ProposalCenter is Ownable, Setters {
         msg.sender,
         emptyVoted,
        _maxCapacity,
-        _initialpolicyPricePerShield,
+        _policyPricePerShield,
         block.timestamp,
         0,
         0,

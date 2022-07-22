@@ -146,4 +146,18 @@ contract ClaimPayoutTest is Test {
         (uint256 amount,,) = policyc.getCoverage(2, address(this));
         assertEq(amount == 10000, true);
     }
+    
+    function testSetAdministratorProposedPool() public {
+        InsurancePool(pool1).setAdministrator(alice);
+        assertEq(InsurancePool(pool1).administrator() == address(alice), true);
+        vm.prank(alice);
+        InsurancePool(pool1).setAdministrator(bob);
+        assertEq(InsurancePool(pool1).administrator() == address(bob), true);
+    }
+
+    function testWrongSetAdministrator() public {
+        vm.prank(alice);
+        vm.expectRevert("Only owner, executor or administrator can call this function");
+        InsurancePool(pool1).setAdministrator(alice);
+    }
 }

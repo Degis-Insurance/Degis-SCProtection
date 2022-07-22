@@ -49,7 +49,7 @@ contract InsurancePoolFactory is Ownable, Setters {
         address poolAddress;
         address protocolToken;
         uint256 maxCapacity;
-        uint256 initialpolicyPricePerShield;
+        uint256 policyPricePerShield;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -69,7 +69,7 @@ contract InsurancePoolFactory is Ownable, Setters {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
     
-    event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 initialpolicyPricePerShield);
+    event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 policyPricePerShield);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -135,13 +135,14 @@ contract InsurancePoolFactory is Ownable, Setters {
      * @param _name Name of the protocol
      * @param _protocolToken Address of the token used for the protocol
      * @param _maxCapacity Maximum capacity of the pool
-     * @param _initialpolicyPricePerShield Initial policy price per shield
+     * @param _policyPricePerShield Initial policy price per shield
+    * @return  address of the new insurance pool
      */
     function deployPool(
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _initialpolicyPricePerShield
+        uint256 _policyPricePerShield
     ) public
      returns (address) {
        bytes32 salt = keccak256(abi.encodePacked(_name));
@@ -149,7 +150,7 @@ contract InsurancePoolFactory is Ownable, Setters {
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
          _maxCapacity,
-         _initialpolicyPricePerShield,
+         _policyPricePerShield,
         _name,
         _name
         );
@@ -164,10 +165,10 @@ contract InsurancePoolFactory is Ownable, Setters {
             newPoolAddress,
             _protocolToken,
             _maxCapacity,
-            _initialpolicyPricePerShield
+            _policyPricePerShield
         );
 
-        emit PoolCreated(newPoolAddress, poolCounter, _name, _protocolToken, _maxCapacity, _initialpolicyPricePerShield);
+        emit PoolCreated(newPoolAddress, poolCounter, _name, _protocolToken, _maxCapacity, _policyPricePerShield);
 
         return newPoolAddress;
     }
@@ -181,14 +182,15 @@ contract InsurancePoolFactory is Ownable, Setters {
      *
      * @param _protocolToken address of the protocol token to insure
      * @param _maxCapacity max coverage capacity
-     * @param _initialpolicyPricePerShield policy price per shield
+     * @param _policyPricePerShield policy price per shield
      * @param _tokenName name for the new pool
      * @param _symbol symbol for new pool
+     * @return bytecode for insurance pool creation
      */
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _initialpolicyPricePerShield,
+        uint256 _policyPricePerShield,
         string memory _tokenName,
         string memory _symbol
     ) internal virtual view returns (bytes memory) {
@@ -199,7 +201,7 @@ contract InsurancePoolFactory is Ownable, Setters {
         return
             abi.encodePacked(
                 bytecode,
-                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol, _initialpolicyPricePerShield, administrator)
+                abi.encode(_protocolToken, _maxCapacity, _tokenName, _symbol, _policyPricePerShield, administrator)
             );
     }
 

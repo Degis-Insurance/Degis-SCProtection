@@ -111,4 +111,17 @@ function setUp() public {
         assertEq(shield.allowance(address(this), pool1) == 10000, true);
     }
 
+    function testSetAdministrator() public {
+        pool1 = ipf.deployPool(
+            "insurance",
+            ptp,
+            uint256(10000),
+            uint256(1)
+        );
+        InsurancePool(pool1).setAdministrator(alice);
+        assertEq(InsurancePool(pool1).administrator() == address(alice), true);
+        vm.prank(alice);
+        InsurancePool(pool1).setAdministrator(bob);
+        assertEq(InsurancePool(pool1).administrator() == address(bob), true);
+    }
 }

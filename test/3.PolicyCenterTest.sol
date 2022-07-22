@@ -150,7 +150,9 @@ function setUp() public {
 
     function testProvideLiquidityIP() public {
         policyc.provideLiquidity(1, 10000);
+        console.log(InsurancePool(pool1).totalSupply());
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
+        
     }
 
     function testRemoveLiquidityBeforeTimeIP() public {
@@ -183,6 +185,7 @@ function setUp() public {
         policyc.provideLiquidity(1, 10000);
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         vm.warp(604801);
+        console.log(InsurancePool(pool1).totalSupply());
         policyc.removeLiquidity(1, 10000);
     }
 
@@ -227,15 +230,16 @@ function setUp() public {
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         policyc.removeLiquidity(0, 10000);
         assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
-         assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
+        assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityAfterTimeRP() public {
         policyc.provideLiquidity(0, 10000);
-       assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
+        uint256 initialBalance = shield.balanceOf(address(this));
+        assertEq(ReinsurancePool(rp).balanceOf(address(this)) == 10000, true);
         vm.warp(604801);
         policyc.removeLiquidity(0, 10000);
-        assertEq(shield.balanceOf(address(this)) == 10000 * 10**18, true);
+        assertEq(shield.balanceOf(address(this)) == initialBalance, true);
     }
 
     function testSetPremiumSplit() public {

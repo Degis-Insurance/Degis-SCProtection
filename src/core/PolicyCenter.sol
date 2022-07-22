@@ -31,6 +31,8 @@ import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IComittee.sol";
 import "../interfaces/IExecutor.sol";
 import "../util/Setters.sol";
+
+import "forge-std/console.sol";
 /**
  * @title Policy Center
  *
@@ -195,7 +197,7 @@ contract PolicyCenter is Ownable, Setters {
 
     function calculatePayout(uint256 _poolId, address _insured) public view returns (uint256) {
         require(_poolId > 0, "Reinsurance pool grants no direct payout");
-        uint256 amount = coverages[_poolId][_insured].amount / (fundsByPoolId[_poolId] == 0 ? 1 : fundsByPoolId[_poolId]);
+        uint256 amount = coverages[_poolId][_insured].amount;
             return amount;
     }
 
@@ -227,7 +229,11 @@ contract PolicyCenter is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Buy new policies
+     * @notice Buy new coverage for a given pool
+    * @param _poolId pool id generated on Policy Center
+    * @param _pay amount paid to cover amount of tokens
+    * @param _coverAmount amount of tokens to cover
+    * @param _length lenght of coverage in days
      */
     function buyCoverage(
         uint256 _poolId,
@@ -238,6 +244,7 @@ contract PolicyCenter is Ownable, Setters {
         require(_coverAmount > 0, "Amount must be greater than 0");
         require(_length > 0, "Length must be greater than 0");
         require(_poolId > 0, "PoolId must be greater than 0");
+        // TODO 
         require(IInsurancePool(insurancePools[_poolId]).maxCapacity() >= _pay + fundsByPoolId[_poolId], "exceeds max capacity");
         uint256 price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
             _coverAmount,
@@ -271,7 +278,11 @@ contract PolicyCenter is Ownable, Setters {
         // reinsurance pool is pool 0
         fundsByPoolId[0] += toReinusrancePool;
     }
-
+    
+    /**
+     * @notice claim rewards from a given pool id
+     * @param _poolId pool id to claim rewards from
+     */
     function claimReward(uint256 _poolId) public poolExists(_poolId) {
        _claimReward(_poolId, msg.sender);
     }
@@ -331,34 +342,21 @@ contract PolicyCenter is Ownable, Setters {
         uint256 newAmount = liquidity.amount - _amount;
         liquidity.amount = newAmount;
         liquidity.lastClaim = block.timestamp;
-        
+        uint256 totalSupply;
         // transfer rewards
          if (_poolId == 0){
             IReinsurancePool pool = IReinsurancePool(reinsurancePool);
-            pool.removeLiquidity(_amount, msg.sender);
             liquidity.userDebt = liquidity.amount * pool.accumulatedRewardPerShare();
+            totalSupply = pool.totalSupply();
+            pool.removeLiquidity(_amount, msg.sender);
         } else {
             IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
-            pool.removeLiquidity(_amount, msg.sender);
             liquidity.userDebt = liquidity.amount * pool.accumulatedRewardPerShare();
+            totalSupply = pool.totalSupply();
+            pool.removeLiquidity(_amount, msg.sender);
         }
-        IERC20(shield).transfer( msg.sender, _amount);
-    }
-
-    function _claimReward(uint256 _poolId, address _provider) internal {
-        if (_poolId > 0){
-            require(!IInsurancePool(insurancePools[_poolId]).isLiquidated(), "Pool has been liquidated, cannot claim stake");
-            IInsurancePool(insurancePools[_poolId]).updateRewards();
-        } else {
-            require(!IReinsurancePool(reinsurancePool).paused(), "a pool has been liquidated, unable to remove liquidity");
-        }
-        Liquidity storage liquidity = liquidities[_poolId][_provider];
-        uint256 reward = (liquidity.amount * IInsurancePool(insurancePools[_poolId]).accumulatedRewardPerShare()) - liquidity.userDebt;
-        if (reward == 0){
-            liquidity.userDebt = liquidity.amount * IInsurancePool(insurancePools[_poolId]).accumulatedRewardPerShare();
-            return;
-        } 
-        IERC20(shield).transfer(_provider, reward);
+        uint256 amountToTransfer = liquidityByPoolId[_poolId] / totalSupply * _amount;
+        IERC20(shield).transfer( msg.sender, amountToTransfer);
     }
 
     /**
@@ -369,10 +367,14 @@ contract PolicyCenter is Ownable, Setters {
         require(_poolId > 0, "PoolId must be greater than 0");
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
         Coverage storage coverage = coverages[_poolId][msg.sender];
-        require(pool.isLiquidated(), "pool is not claimable");
+        
+        require(pool.liquidated(), "pool is not claimable");
+        require(pool.endLiquidationDate() <= block.timestamp, "claim period is over");
+        // buy date + length + liquidation date - 5 days buffer
+        // so that people that were covered during report process are covered
+        require(coverage.buyDate + (coverage.length * 1 days) >= pool.endLiquidationDate() - 20 days, "coverage has expired");
         require(coverage.amount > 0, "no coverage to claim");
         uint256 amount = calculatePayout(_poolId, msg.sender);
-        
         fundsByPoolId[_poolId] -= coverage.amount;
         coverage.amount = 0;
         if (pool.totalSupply() >= amount) {
@@ -415,8 +417,32 @@ contract PolicyCenter is Ownable, Setters {
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    
+    /**
+     * @notice claims rewards from a given pool id
+     * @param _poolId pool id to claim rewards from
+     * @param _provider address of the claimer
+     */
+    function _claimReward(uint256 _poolId, address _provider) internal {
+        if (_poolId > 0){
+            require(!IInsurancePool(insurancePools[_poolId]).liquidated(), "Pool has been liquidated, cannot claim stake");
+            IInsurancePool(insurancePools[_poolId]).updateRewards();
+        } else {
+            require(!IReinsurancePool(reinsurancePool).paused(), "a pool has been liquidated, unable to remove liquidity");
+        }
+        Liquidity storage liquidity = liquidities[_poolId][_provider];
+        uint256 reward = (liquidity.amount * IInsurancePool(insurancePools[_poolId]).accumulatedRewardPerShare()) - liquidity.userDebt;
+        if (reward == 0){
+            liquidity.userDebt = liquidity.amount * IInsurancePool(insurancePools[_poolId]).accumulatedRewardPerShare();
+            return;
+        } 
+        IERC20(shield).transfer(_provider, reward);
+    }
 
+    /**
+     * @notice requests reinsurance from Reinsurance Pool
+     * @param _amount amount of liquidity to request
+     * @param _address address of the claimer
+     */
     function _requestReinsurance(uint256 _amount, address _address) internal {
         IReinsurancePool(reinsurancePool).reinsurePool(
             _amount,

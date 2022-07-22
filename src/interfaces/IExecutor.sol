@@ -39,9 +39,9 @@ interface IExecutor {
     function policyCenter() view external returns (address);
     function poolBuffer() view external returns (uint256);
     function proposalCenter() view external returns (address);
-    function queuePool(string memory _protocolName, uint256 _proposalId, address _protocol, uint256 _maxCapacity, uint256 _initialpolicyPricePerShield, bool _pending, bool _approved) external;
+    function queuePool(string memory _protocolName, uint256 _proposalId, address _protocol, uint256 _maxCapacity, uint256 _policyPricePerShield, bool _pending, bool _approved) external;
     function queueReport(bool _pending, bool _approved, uint256 _reportId, uint256 _poolId) external;
-    function queuedPoolsById(uint256) view external returns (string memory protocolName, address protocol, uint256 maxCapacity, uint256 initialpolicyPricePerShield, uint256 queueEnds, bool pending, bool approved);
+    function queuedPoolsById(uint256) view external returns (string memory protocolName, address protocol, uint256 maxCapacity, uint256 policyPricePerShield, uint256 queueEnds, bool pending, bool approved);
     function queuedReportsById(uint256) view external returns (uint256 poolId, uint256 queueEnds, bool pending, bool approved);
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;

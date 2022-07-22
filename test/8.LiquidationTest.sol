@@ -104,6 +104,9 @@ contract ClaimPayoutTest is Test {
         shield.transfer(address(this), 1000e18);
         shield.approve(address(policyc), 10000e18);
         policyc.provideLiquidity(1, 10000);
+        uint256 price = InsurancePool(pool1).coveragePrice(1000, 365);
+        shield.approve(address(policyc), 100e18);
+        policyc.buyCoverage(1, price, 1000, 365);
         proposalc.reportPool(1);
         vm.prank(alice);
         proposalc.voteReport(1, true);
@@ -117,7 +120,7 @@ contract ClaimPayoutTest is Test {
         vm.warp(3500000);
         vm.prank(address(0x1abc));
         proposalc.evaluateReportVotes(1);
-        vm.warp(10000000);
+        vm.warp(4500000);
         e.executeReport(1);
     }
 
@@ -138,6 +141,6 @@ contract ClaimPayoutTest is Test {
 
     function unpauseLiquidatedPool() public {
         InsurancePool(pool1).setPausedInsurancePool(false);
-        assertEq(InsurancePool(pool1).isLiquidated() == false, true);
+        assertEq(InsurancePool(pool1).liquidated() == false, true);
     }
 }

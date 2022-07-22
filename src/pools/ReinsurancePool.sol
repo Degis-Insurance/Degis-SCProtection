@@ -54,6 +54,7 @@ contract ReinsurancePool is
 
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
+    uint256 public lastRewardTimestamp;
     uint256 public emissionRate;
 
     struct PoolInfo {
@@ -90,8 +91,12 @@ contract ReinsurancePool is
         insurancePoolLiquidated = false;
     }
 
-    function calculateReward(address _provider) public view returns(uint256) {
-        return accumulatedRewardPerShare * liquidities[_provider].amount - liquidities[_provider].userDebt;
+    function calculateReward(uint256 _amount, uint256 _userDebt) public view returns(uint256) {
+        uint256 time = block.timestamp - lastRewardTimestamp;
+        uint256 rewards = time * emissionRate;
+        uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
+        uint256 reward = (_amount * acc) - _userDebt;
+        return reward;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -99,7 +104,7 @@ contract ReinsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
    /**
-    @dev provide liquidity from liquidity pool. Only callable through policyCenter
+    @dev mints liquidity tokens. Only callable through policyCenter
     @param _amount token being insured
     @param _provider liquidity provider adress
     */
@@ -111,7 +116,7 @@ contract ReinsurancePool is
     }
 
      /**
-    @dev remove liquidity from insurance pool. Only callable through policyCenter
+    @dev burns liquidity tokens. Only callable through policyCenter
     @param _amount token being insured
     @param _provider liquidity provider adress
     */
@@ -153,6 +158,10 @@ contract ReinsurancePool is
         emit MoveLiquidity(_poolId, _amount);
     }
 
+    /**
+     * @notice Sets paused state of the reinsurance pool
+     * @param _paused true if paused, false if not.
+     */
     function setPausedReinsurancePool(bool _paused) external {
         require((msg.sender == owner()) || (msg.sender == proposalCenter), "Only owner or proposalCenter can call this function");
         paused = _paused;
