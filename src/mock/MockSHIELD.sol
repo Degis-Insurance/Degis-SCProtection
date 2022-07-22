@@ -9,7 +9,7 @@ contract MockSHIELD is Ownable {
     mapping(address => mapping(address => uint256)) public allowed;
     uint256 public totalSupply;
     uint256 public totalBurned;
-    uint256 constant public MAX_UINT256 = 10**5;
+    uint256 public constant MAX_UINT256 = 10**5;
     /*
     NOTE:
     The following variables are OPTIONAL vanities. One does not have to include them.
@@ -21,7 +21,11 @@ contract MockSHIELD is Ownable {
     string public symbol; //An identifier: eg SBX
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     constructor(
         uint256 _initialAmount,
@@ -69,18 +73,12 @@ contract MockSHIELD is Ownable {
         return true;
     }
 
-    function balanceOf(address _owner)
-        public
-        view
-        
-        returns (uint256 balance)
-    {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
     function approve(address _spender, uint256 _value)
         public
-        
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -91,7 +89,6 @@ contract MockSHIELD is Ownable {
     function allowance(address _owner, address _spender)
         public
         view
-        
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];

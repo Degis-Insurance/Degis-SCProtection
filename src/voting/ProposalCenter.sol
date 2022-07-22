@@ -37,15 +37,13 @@ import "../mock/MockDEG.sol";
 pragma solidity ^0.8.13;
 
 contract ProposalCenter is Ownable, Setters {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-    
-   
+
     struct Report {
         uint256 poolId;
         uint256 timestamp;
@@ -93,7 +91,7 @@ contract ProposalCenter is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
-    
+
     event Vote(uint256 _id, bool _quorum, string _who);
     event ReportCreated(
         uint256 _reportId,
@@ -148,7 +146,6 @@ contract ProposalCenter is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
-    
 
     constructor() {
         reportBuffer = 3 days;
@@ -171,51 +168,70 @@ contract ProposalCenter is Ownable, Setters {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getReport(uint256 _reportId) public view returns ( uint256,uint256,address,uint256, uint256, bool,bool,address[] memory){
+    function getReport(uint256 _reportId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address,
+            uint256,
+            uint256,
+            bool,
+            bool,
+            address[] memory
+        )
+    {
         Report memory report = reportIds[_reportId];
         return (
-        report.poolId,
-       report.timestamp,
-       report.reporterAddress,
-       report.yes,
-        report.no,
-        report.pending,
-        report.approved,
-        report.voted);
+            report.poolId,
+            report.timestamp,
+            report.reporterAddress,
+            report.yes,
+            report.no,
+            report.pending,
+            report.approved,
+            report.voted
+        );
     }
 
-    function getPoolProposal(uint256 _proposalId) public view returns (
-        string memory,
-        address,
-        address,
-        address[] memory,
-        uint256,
-        uint256,
-        uint256,
-        uint256,
-        uint256,
-        bool,
-        bool
-     ) {
-        
-            PoolProposal memory proposal = proposalIds[_proposalId];
-            return (proposal.protocolName,
-                    proposal.protocolAddress,
-                    proposal.proposerAddress,
-                    proposal.voted,
-                    proposal.maxCapacity,
-                    proposal.timestamp,
-                    proposal.policyPricePerShield,
-                    proposal.yes,
-                    proposal.no,
-                    proposal.pending,
-                    proposal.approved);
-        }
+    function getPoolProposal(uint256 _proposalId)
+        public
+        view
+        returns (
+            string memory,
+            address,
+            address,
+            address[] memory,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            bool,
+            bool
+        )
+    {
+        PoolProposal memory proposal = proposalIds[_proposalId];
+        return (
+            proposal.protocolName,
+            proposal.protocolAddress,
+            proposal.proposerAddress,
+            proposal.voted,
+            proposal.maxCapacity,
+            proposal.timestamp,
+            proposal.policyPricePerShield,
+            proposal.yes,
+            proposal.no,
+            proposal.pending,
+            proposal.approved
+        );
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-    
+
     function setPoolReported(address _poolAddress, bool _decision)
         external
         onlyOwnerOrExecutor
@@ -231,7 +247,10 @@ contract ProposalCenter is Ownable, Setters {
         proposalIds[_proposalId].pending = false;
     }
 
-    function setBuffers(uint256 _reportBuffer, uint256 _proposalBuffer) external onlyOwnerOrExecutor {
+    function setBuffers(uint256 _reportBuffer, uint256 _proposalBuffer)
+        external
+        onlyOwnerOrExecutor
+    {
         reportBuffer = _reportBuffer;
         proposalBuffer = _proposalBuffer;
     }
@@ -249,7 +268,7 @@ contract ProposalCenter is Ownable, Setters {
         }
         uint256 balance = IERC20(veDeg).balanceOf(msg.sender);
         require(balance > 0, "You have no tokens");
-        
+
         MockVeDEG(veDeg).lockVeDEG(msg.sender, balance / 5);
         if (_vote) {
             reportIds[_reportId].yes += balance;
@@ -258,7 +277,7 @@ contract ProposalCenter is Ownable, Setters {
             reportIds[_reportId].no += balance;
             confirmsReport[_reportId][msg.sender] = false;
         }
-        
+
         voted.push(msg.sender);
         emit Vote(_reportId, _vote, "Report");
     }
@@ -300,14 +319,23 @@ contract ProposalCenter is Ownable, Setters {
     function evaluateReportVotes(uint256 _reportId) external {
         require(reportIds[_reportId].pending, "report not pending");
         // 3 days for the report to be evaluated
-        require(reportIds[_reportId].timestamp + reportBuffer < block.timestamp, "report not ready");
+        require(
+            reportIds[_reportId].timestamp + reportBuffer < block.timestamp,
+            "report not ready"
+        );
 
         uint256 total = reportIds[_reportId].yes + reportIds[_reportId].no;
         require(total > IERC20(veDeg).totalSupply() / 2, "Not enough votes");
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(reportIds[_reportId].poolId);
+        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
+            reportIds[_reportId].poolId
+        );
         bool result = reportIds[_reportId].yes > reportIds[_reportId].no;
         // if last round or vote agrees with previous round, move on with the report
-        if ((reportIds[_reportId].round == 2) || (reportIds[_reportId].round > 0 && result == reportIds[_reportId].approved)) {
+        if (
+            (reportIds[_reportId].round == 2) ||
+            (reportIds[_reportId].round > 0 &&
+                result == reportIds[_reportId].approved)
+        ) {
             if (result) {
                 reportIds[_reportId].approved = true;
                 emit ReportApproved(
@@ -318,18 +346,18 @@ contract ProposalCenter is Ownable, Setters {
                     reportIds[_reportId].yes,
                     reportIds[_reportId].no
                 );
-                
-            IExecutor(executor).queueReport(
-                reportIds[_reportId].pending,
-                reportIds[_reportId].approved,
-                _reportId,
-                reportIds[_reportId].poolId
-            );
+
+                IExecutor(executor).queueReport(
+                    reportIds[_reportId].pending,
+                    reportIds[_reportId].approved,
+                    _reportId,
+                    reportIds[_reportId].poolId
+                );
             } else {
                 reportIds[_reportId].approved = false;
                 poolReported[pool] = false;
                 emit ReportRejected(
-                    _reportId, 
+                    _reportId,
                     reportIds[_reportId].poolId,
                     reportIds[_reportId].timestamp,
                     reportIds[_reportId].reporterAddress,
@@ -350,44 +378,54 @@ contract ProposalCenter is Ownable, Setters {
     function evaluatePoolProposalVotes(uint256 _proposalId) external {
         require(proposalIds[_proposalId].pending, "proposal not pending");
         // 1 week for the report to be evaluated
-        require( proposalIds[_proposalId].timestamp + proposalBuffer < block.timestamp, "proposal not ready");
+        require(
+            proposalIds[_proposalId].timestamp + proposalBuffer <
+                block.timestamp,
+            "proposal not ready"
+        );
         address protocol = proposalIds[_proposalId].protocolAddress;
-        uint256 total = proposalIds[_proposalId].yes + proposalIds[_proposalId].no;
+        uint256 total = proposalIds[_proposalId].yes +
+            proposalIds[_proposalId].no;
         require(total > IERC20(veDeg).totalSupply() / 2, "Not enough votes");
-        bool result = proposalIds[_proposalId].yes > proposalIds[_proposalId].no;
-        if ((proposalIds[_proposalId].round == 2) || (proposalIds[_proposalId].round > 0 && result == proposalIds[_proposalId].approved)) {
+        bool result = proposalIds[_proposalId].yes >
+            proposalIds[_proposalId].no;
+        if (
+            (proposalIds[_proposalId].round == 2) ||
+            (proposalIds[_proposalId].round > 0 &&
+                result == proposalIds[_proposalId].approved)
+        ) {
             if (result) {
                 proposalIds[_proposalId].approved = true;
-            emit PoolProposalApproved(
-                _proposalId,
-                protocol,
-                proposalIds[_proposalId].timestamp,
-                proposalIds[_proposalId].proposerAddress,
-                proposalIds[_proposalId].yes,
-                proposalIds[_proposalId].no
-            );
-            IExecutor(executor).queuePool(
-            proposalIds[_proposalId].protocolName,
-            _proposalId,
-            proposalIds[_proposalId].protocolAddress,
-            proposalIds[_proposalId].maxCapacity,
-            proposalIds[_proposalId].policyPricePerShield,
-            proposalIds[_proposalId].pending,
-            proposalIds[_proposalId].approved
-            );
+                emit PoolProposalApproved(
+                    _proposalId,
+                    protocol,
+                    proposalIds[_proposalId].timestamp,
+                    proposalIds[_proposalId].proposerAddress,
+                    proposalIds[_proposalId].yes,
+                    proposalIds[_proposalId].no
+                );
+                IExecutor(executor).queuePool(
+                    proposalIds[_proposalId].protocolName,
+                    _proposalId,
+                    proposalIds[_proposalId].protocolAddress,
+                    proposalIds[_proposalId].maxCapacity,
+                    proposalIds[_proposalId].policyPricePerShield,
+                    proposalIds[_proposalId].pending,
+                    proposalIds[_proposalId].approved
+                );
             } else {
-            proposalIds[_proposalId].approved = false;
-            poolProposed[protocol] = false;
-            emit PoolProposalRejected(
-                _proposalId, 
-                protocol,
-                proposalIds[_proposalId].timestamp,
-                proposalIds[_proposalId].proposerAddress,
-                proposalIds[_proposalId].yes,
-                proposalIds[_proposalId].no
-            );
-        }
-        proposalIds[_proposalId].pending = false;
+                proposalIds[_proposalId].approved = false;
+                poolProposed[protocol] = false;
+                emit PoolProposalRejected(
+                    _proposalId,
+                    protocol,
+                    proposalIds[_proposalId].timestamp,
+                    proposalIds[_proposalId].proposerAddress,
+                    proposalIds[_proposalId].yes,
+                    proposalIds[_proposalId].no
+                );
+            }
+            proposalIds[_proposalId].pending = false;
         } else {
             // if not definitive round, set approval for future check
             // and add 24hrs to voting period
@@ -395,7 +433,6 @@ contract ProposalCenter is Ownable, Setters {
             proposalIds[_proposalId].timestamp += 86400;
         }
         proposalIds[_proposalId].round++;
-        
     }
 
     function reportPool(uint256 _poolId) public {
@@ -422,7 +459,7 @@ contract ProposalCenter is Ownable, Setters {
         IERC20(deg).transferFrom(msg.sender, deg, 1000);
         IInsurancePool(pool).setPausedInsurancePool(true);
         IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
-        
+
         emit ReportCreated(
             reportCounter,
             reportIds[reportCounter].poolId,
@@ -441,18 +478,18 @@ contract ProposalCenter is Ownable, Setters {
         ++proposalCounter;
         address[] memory emptyVoted;
         proposalIds[proposalCounter] = PoolProposal(
-        _name,
-        _protocol,
-        msg.sender,
-        emptyVoted,
-       _maxCapacity,
-        _policyPricePerShield,
-        block.timestamp,
-        0,
-        0,
-        0,
-        true,
-        false
+            _name,
+            _protocol,
+            msg.sender,
+            emptyVoted,
+            _maxCapacity,
+            _policyPricePerShield,
+            block.timestamp,
+            0,
+            0,
+            0,
+            true,
+            false
         );
 
         poolProposed[_protocol] = true;
@@ -465,22 +502,22 @@ contract ProposalCenter is Ownable, Setters {
         );
     }
 
-    function rewardByReportId(uint256 _reportId, bool _veredict)
-        external
-    {
+    function rewardByReportId(uint256 _reportId, bool _veredict) external {
         require(msg.sender == executor, "Only Executor can liquidate");
         address[] memory voted = reportIds[_reportId].voted;
         if (_veredict) {
-            IPolicyCenter(policyCenter).rewardTreasuryToReporter(reportIds[_reportId].reporterAddress);
+            IPolicyCenter(policyCenter).rewardTreasuryToReporter(
+                reportIds[_reportId].reporterAddress
+            );
             MockDEG(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
-        for (uint256 i = 0; i < voted.length; i++) {
-            if (confirmsReport[_reportId][voted[i]] == _veredict) {
-                // if voted with the decision, reward deg and unlock vedeg according to their stake
-                uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
-                MockDEG(deg).mintDegis(voted[i], balance / 500);
-                MockVeDEG(veDeg).unlockVeDEG(voted[i], balance / 5);
+            for (uint256 i = 0; i < voted.length; i++) {
+                if (confirmsReport[_reportId][voted[i]] == _veredict) {
+                    // if voted with the decision, reward deg and unlock vedeg according to their stake
+                    uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
+                    MockDEG(deg).mintDegis(voted[i], balance / 500);
+                    MockVeDEG(veDeg).unlockVeDEG(voted[i], balance / 5);
+                }
             }
-        }
         }
     }
 }

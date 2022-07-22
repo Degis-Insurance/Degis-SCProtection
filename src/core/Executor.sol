@@ -31,7 +31,6 @@ import "../util/Setters.sol";
 pragma solidity ^0.8.13;
 
 contract Executor is Ownable, Setters {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -65,13 +64,17 @@ contract Executor is Ownable, Setters {
     event QueueReport(uint256 reportId, uint256 poolId, uint256 ends);
     event QueuePool(uint256 proposalId, uint256 maxCapacity, uint256 ends);
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
-    event NewPoolEecuted(address poolAddress, uint256 proposalId, address protocol);
+    event NewPoolEecuted(
+        address poolAddress,
+        uint256 proposalId,
+        address protocol
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor () {
+    constructor() {
         poolBuffer = 3 days;
         reportBuffer = 3 days;
     }
@@ -87,13 +90,13 @@ contract Executor is Ownable, Setters {
     /**
      * @dev sets pool and report time buffers
      * @param _poolBuffer time in unix
-     * @param _reportBuffer time in unix    
+     * @param _reportBuffer time in unix
      */
     function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) public {
         poolBuffer = _poolBuffer;
         reportBuffer = _reportBuffer;
     }
-    
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -101,7 +104,7 @@ contract Executor is Ownable, Setters {
     /**
      * @dev sets pool and report time buffers
      * @param _pending state of the proposal
-     * @param _approved if report is approved 
+     * @param _approved if report is approved
      * @param _reportId report id generated on Policy Center
      * @param _poolId pool id generated on Policy Center
      */
@@ -131,7 +134,7 @@ contract Executor is Ownable, Setters {
      * @param _maxCapacity max capacity suggested
      * @param _policyPricePerShield initial policy price per shield
      * @param _pending state of the proposal
-     * @param _approved if report is approved 
+     * @param _approved if report is approved
      */
     function queuePool(
         string memory _protocolName,
@@ -161,7 +164,10 @@ contract Executor is Ownable, Setters {
      * @param _reportId report id generated on Policy Center
      */
     function executeReport(uint256 _reportId) external onlyOwner {
-        require(queuedReportsById[_reportId].pending, "report not pending or not found");
+        require(
+            queuedReportsById[_reportId].pending,
+            "report not pending or not found"
+        );
         require(
             block.timestamp > queuedReportsById[_reportId].queueEnds,
             "report not ready"
@@ -171,15 +177,19 @@ contract Executor is Ownable, Setters {
         );
         if (queuedReportsById[_reportId].approved) {
             IInsurancePool(pool).liquidatePool();
-            emit ReportExecuted(pool, queuedReportsById[_reportId].poolId, _reportId);
+            emit ReportExecuted(
+                pool,
+                queuedReportsById[_reportId].poolId,
+                _reportId
+            );
         } else {
             IProposalCenter(proposalCenter).setPoolReported(pool, false);
             queuedReportsById[_reportId].pending = false;
         }
-         IProposalCenter(proposalCenter).rewardByReportId(
-                _reportId,
-                queuedReportsById[_reportId].approved
-            );
+        IProposalCenter(proposalCenter).rewardByReportId(
+            _reportId,
+            queuedReportsById[_reportId].approved
+        );
         queuedReportsById[_reportId].pending = false;
     }
 
@@ -188,13 +198,17 @@ contract Executor is Ownable, Setters {
      * @param _proposalId proposal id generated on Policy Center
      * @return newPool address of the new pool
      */
-    function executeNewPool(uint256 _proposalId) external onlyOwner returns (address newPool){
+    function executeNewPool(uint256 _proposalId)
+        external
+        onlyOwner
+        returns (address newPool)
+    {
         require(queuedPoolsById[_proposalId].pending, "pool not pending");
         require(
             block.timestamp > queuedPoolsById[_proposalId].queueEnds,
             "pool not ready"
         );
-        
+
         if (queuedPoolsById[_proposalId].approved) {
             newPool = IInsurancePoolFactory(insurancePoolFactory).deployPool(
                 queuedPoolsById[_proposalId].protocolName,
@@ -202,7 +216,11 @@ contract Executor is Ownable, Setters {
                 queuedPoolsById[_proposalId].maxCapacity,
                 queuedPoolsById[_proposalId].policyPricePerShield
             );
-            emit NewPoolEecuted(newPool, _proposalId, queuedPoolsById[_proposalId].protocol);
+            emit NewPoolEecuted(
+                newPool,
+                _proposalId,
+                queuedPoolsById[_proposalId].protocol
+            );
             return newPool;
         } else {
             IProposalCenter(proposalCenter).setProposal(_proposalId, false);

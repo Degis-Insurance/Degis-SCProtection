@@ -21,8 +21,12 @@ contract MockVeDEG is Ownable {
     mapping(address => bool) public whitelist;
     mapping(address => uint256) public lockedBalances;
 
-        event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     constructor(
         uint256 _initialAmount,
@@ -49,7 +53,6 @@ contract MockVeDEG is Ownable {
 
     function transfer(address _to, uint256 _value)
         public
-        
         whitelisted
         returns (bool success)
     {
@@ -67,7 +70,7 @@ contract MockVeDEG is Ownable {
         address _from,
         address _to,
         uint256 _value
-    ) public  whitelisted returns (bool success) {
+    ) public whitelisted returns (bool success) {
         uint256 a = allowed[_from][msg.sender];
         require(
             balances[_from] >= _value && a >= _value,
@@ -90,18 +93,12 @@ contract MockVeDEG is Ownable {
         lockedBalances[_owner] += _value;
     }
 
-    function balanceOf(address _owner)
-        public
-        view
-        
-        returns (uint256 balance)
-    {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
     function approve(address _spender, uint256 _value)
         public
-        
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -112,7 +109,6 @@ contract MockVeDEG is Ownable {
     function allowance(address _owner, address _spender)
         public
         view
-        
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];
