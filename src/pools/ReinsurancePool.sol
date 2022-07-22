@@ -36,9 +36,9 @@ import "../util/Setters.sol";
 contract ReinsurancePool is
     ReinsurancePoolErrors,
     ERC20("ReinsurancePoolLP", "RLP"),
-    Ownable, Setters
+    Ownable,
+    Setters
 {
-
     struct Liquidity {
         uint256 amount;
         uint256 userDebt;
@@ -86,12 +86,15 @@ contract ReinsurancePool is
         _;
     }
 
-
     function endLiquidationPeriod() external onlyOwner {
         insurancePoolLiquidated = false;
     }
 
-    function calculateReward(uint256 _amount, uint256 _userDebt) public view returns(uint256) {
+    function calculateReward(uint256 _amount, uint256 _userDebt)
+        public
+        view
+        returns (uint256)
+    {
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
@@ -103,39 +106,47 @@ contract ReinsurancePool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-   /**
+    /**
     @dev mints liquidity tokens. Only callable through policyCenter
     @param _amount token being insured
     @param _provider liquidity provider adress
     */
-    function provideLiquidity(uint256 _amount, address _provider) external {        
+    function provideLiquidity(uint256 _amount, address _provider) external {
         require(_amount > 0, "amount should be greater than 0");
-        require(msg.sender == policyCenter, "cannot provide liquidity directly to insurance pool");
+        require(
+            msg.sender == policyCenter,
+            "cannot provide liquidity directly to insurance pool"
+        );
         _mint(_provider, _amount);
-        emit LiquidityProvision(_amount, _provider);  
+        emit LiquidityProvision(_amount, _provider);
     }
 
-     /**
+    /**
     @dev burns liquidity tokens. Only callable through policyCenter
     @param _amount token being insured
     @param _provider liquidity provider adress
     */
     function removeLiquidity(uint256 _amount, address _provider) external {
         require(_amount <= totalSupply(), "amount exceeds totalSupply");
-        require(block.timestamp >= liquidities[msg.sender].lastClaim + 604800,
-                "cannot remove liquidity within 7 days of last claim");
+        require(
+            block.timestamp >= liquidities[msg.sender].lastClaim + 604800,
+            "cannot remove liquidity within 7 days of last claim"
+        );
         require(_amount > 0, "amount should be greater than 0");
-        require(msg.sender == policyCenter, "liquidity can only be provide through policy center");
+        require(
+            msg.sender == policyCenter,
+            "liquidity can only be provide through policy center"
+        );
         require(!paused, "cannot remove liquidity while paused");
         _burn(_provider, _amount);
-        emit LiquidityRemoved(_amount, _provider); 
+        emit LiquidityRemoved(_amount, _provider);
     }
 
     /**
     @dev provides liquidity to pools in need of it. Only callable by Pools
     @param _amount token being insured
     @param _address address of covered wallet
-    */   
+    */
     function reinsurePool(uint256 _amount, address _address) external poolOnly {
         if (_amount == 0) revert ZeroAmount();
         IERC20(shield).transferFrom(address(this), _address, _amount);
@@ -151,7 +162,9 @@ contract ReinsurancePool is
         onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(_poolId);
+        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+            _poolId
+        );
         require(poolAddress != address(0), "Pool not found");
 
         IERC20(shield).transferFrom(address(this), poolAddress, _amount);
@@ -163,7 +176,10 @@ contract ReinsurancePool is
      * @param _paused true if paused, false if not.
      */
     function setPausedReinsurancePool(bool _paused) external {
-        require((msg.sender == owner()) || (msg.sender == proposalCenter), "Only owner or proposalCenter can call this function");
+        require(
+            (msg.sender == owner()) || (msg.sender == proposalCenter),
+            "Only owner or proposalCenter can call this function"
+        );
         paused = _paused;
     }
 }

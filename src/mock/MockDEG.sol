@@ -20,8 +20,12 @@ contract MockDEG is Ownable {
     string public symbol; //An identifier: eg SBX
     mapping(address => bool) minter;
 
-        event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     constructor(
         uint256 _initialAmount,
@@ -47,7 +51,6 @@ contract MockDEG is Ownable {
 
     function transfer(address _to, uint256 _value)
         public
-        
         returns (bool success)
     {
         require(
@@ -64,7 +67,7 @@ contract MockDEG is Ownable {
         address _from,
         address _to,
         uint256 _value
-    ) public  returns (bool success) {
+    ) public returns (bool success) {
         uint256 a = allowed[_from][msg.sender];
         require(
             balances[_from] >= _value && a >= _value,
@@ -79,18 +82,12 @@ contract MockDEG is Ownable {
         return true;
     }
 
-    function balanceOf(address _owner)
-        public
-        view
-        
-        returns (uint256 balance)
-    {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
     function approve(address _spender, uint256 _value)
         public
-        
         returns (bool success)
     {
         allowed[msg.sender][_spender] = _value;
@@ -101,7 +98,6 @@ contract MockDEG is Ownable {
     function allowance(address _owner, address _spender)
         public
         view
-        
         returns (uint256 remaining)
     {
         return allowed[_owner][_spender];
