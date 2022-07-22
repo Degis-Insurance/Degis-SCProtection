@@ -43,6 +43,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     uint256 constant public DISTRIBUTION_PERIOD = 30 days;
     // up to 25% discount if protection is bought for an entire year
     uint256 constant public DISCOUNT_DIVISOR = 1460;
+    uint256 constant public COVER_PERIOD = 15 days;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -61,6 +62,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
     uint256 public emissionRate;
+    uint256 public endLiquidationDate;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -68,7 +70,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
-    event Liquidation(uint256 amount);
+    event Liquidation(uint256 amount, uint256 endDate);
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Errors ***************************************** //
@@ -101,7 +103,15 @@ contract InsurancePool is ERC20, Ownable, Setters {
     modifier onlyOwnerOrExecutor() {
         require(
             (msg.sender == owner()) || (msg.sender == executor) || (msg.sender == administrator),
-            "Only owner or executor can call this function"
+            "Only owner, executor or administrator can call this function"
+        );
+        _;
+    }
+
+    modifier onlyExecutor(){
+        require(
+            msg.sender == executor,
+            "Only executor can call this function"
         );
         _;
     }
@@ -111,17 +121,12 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @dev returns if the pool has been liquidated for coverage claims
-    @return liquidated boolean true if liquidated, false otherwise
-     */
-    function isLiquidated() public view returns (bool) {
-        return liquidated;
-    }
-
-
-    /**
     @dev returns information about the pool
-    @return name, insuredToken, maxCapacity, totalSupply and how much is being covered
+    @return name of the pool
+    @return insuredToken address of the token insured by the pool
+    @return maxCapacity max coverage bought
+    @return totalSupply total amount of LP tokens
+    @return totalDistributedReward how much has been distributed to liquidity providers
      */
     function poolInfo()
         public
@@ -154,7 +159,12 @@ contract InsurancePool is ERC20, Ownable, Setters {
             DISCOUNT_DIVISOR;
     }
 
-    function calculateReward(uint256 _amount, uint256 _userDebt, address _provider) public view returns (uint256) {
+    /**
+    @dev returns the amount of reward a give amount and userDebt are allowed to claim
+    @param _amount amount in provided liquidity
+    @param _userDebt amount of debt the user has
+     */
+    function calculateReward(uint256 _amount, uint256 _userDebt) public view returns (uint256) {
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
@@ -218,6 +228,11 @@ contract InsurancePool is ERC20, Ownable, Setters {
         maxCapacity = _maxCapacity;
     }
 
+    /**
+    @dev pools receive an administrator (address that deployed the Insurance Pool Factory)
+    and passes it forward to the Insurance Pools the Factory deploys.
+    @param _administrator address of the administrator
+     */
     function setAdministrator(address _administrator) external onlyOwnerOrExecutor {
         administrator = _administrator;
     }
@@ -237,6 +252,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
         require(msg.sender == policyCenter, "cannot provide liquidity directly to insurance pool");
 
         _mint(_provider, _amount);
+        console.log(totalSupply());
         emit LiquidityProvision(_amount, _provider);  
     }
 
@@ -271,21 +287,32 @@ contract InsurancePool is ERC20, Ownable, Setters {
             (_paid - totalDistributedReward) / DISTRIBUTION_PERIOD;
     }
 
+    /**
+    @dev called when liqudity is provided, removed or coverage is bought.
+    updates all state variables to reflect current reward emission.
+    */
     function updateRewards() public {
         require(msg.sender == policyCenter, "Only pollicyCenter can update rewards");
         _updateRewards();
     }
 
-    function liquidatePool() external onlyOwnerOrExecutor {
+    /**
+    @dev sets this insurance pool to liquidated. Only callable by executor
+    */
+    function liquidatePool() external onlyExecutor {
         _setLiquidationStatus(true);
         uint256 amount = totalSupply();
-        emit Liquidation(amount);
+        endLiquidationDate = block.timestamp + COVER_PERIOD;
+        emit Liquidation(amount, endLiquidationDate);
     }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+    @dev updates local states to reflect current reward emission.
+    */
     function _updateRewards() internal {
         if (totalSupply() == 0) {
             lastRewardTimestamp = block.timestamp;

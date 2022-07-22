@@ -141,7 +141,7 @@ contract ExecutorTest is Test {
     function testExecuteReportAfterBuffer() public {
         vm.warp(1000000);
         e.executeReport(1);
-        assertEq(InsurancePool(pool1).isLiquidated()  == true, true);
+        assertEq(InsurancePool(pool1).liquidated()  == true, true);
     }
 
     function testExecutePoolAfterBuffer() public {
@@ -170,7 +170,7 @@ contract ExecutorTest is Test {
         vm.warp(1000000);
         e.cancelReport(1);
         (uint256 poolId,, bool pending, bool approved) = e.queuedReportsById(1);
-        bool truthy = InsurancePool(pool1).isLiquidated();
+        bool truthy = InsurancePool(pool1).liquidated();
         assertEq(poolId == 1, true);
         assertEq(pending == false, true);
         assertEq(approved == true, true);

@@ -23,11 +23,11 @@ interface IInsurancePool {
     function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
     function deg() view external returns (address);
     function emissionRate() view external returns (uint256);
+    function endLiquidationDate() view external returns (uint256);
     function executor() view external returns (address);
     function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
     function insurancePoolFactory() view external returns (address);
     function insuredToken() view external returns (address);
-    function isLiquidated() view external returns (bool);
     function lastRewardTimestamp() view external returns (uint256);
     function liquidatePool() external;
     function liquidated() view external returns (bool);

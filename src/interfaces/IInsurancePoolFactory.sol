@@ -4,10 +4,10 @@ pragma solidity ^0.8.13;
 
 interface IInsurancePoolFactory {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 initialpolicyPricePerShield);
+    event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 policyPricePerShield);
 
     function deg() view external returns (address);
-    function deployPool(string memory _name, address _protocolToken, uint256 _maxCapacity, uint256 _initialpolicyPricePerShield) external returns (address);
+    function deployPool(string memory _name, address _protocolToken, uint256 _maxCapacity, uint256 _policyPricePerShield) external returns (address);
     function executor() view external returns (address);
     function getPoolAddressList() view external returns (address[] memory);
     function getPoolCounter() view external returns (uint256);
@@ -17,7 +17,7 @@ interface IInsurancePoolFactory {
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
     function poolCounter() view external returns (uint256);
-    function poolInfoById(uint256) view external returns (string memory protocolName, address poolAddress, address protocolToken, uint256 maxCapacity, uint256 initialpolicyPricePerShield);
+    function poolInfoById(uint256) view external returns (string memory protocolName, address poolAddress, address protocolToken, uint256 maxCapacity, uint256 policyPricePerShield);
     function premiumVault() view external returns (address);
     function proposalCenter() view external returns (address);
     function reinsurancePool() view external returns (address);
