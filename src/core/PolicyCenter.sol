@@ -23,6 +23,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "../interfaces/IExchange.sol";
 import "../interfaces/ReinsurancePoolErrors.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
@@ -67,6 +68,7 @@ contract PolicyCenter is Ownable, Setters {
 
     mapping(uint256 => mapping(address => Coverage)) public coverages;
     mapping(uint256 => uint256) public fundsByPoolId;
+    mapping(uint256 => address) public tokenByPoolId;
 
     mapping(uint256 => mapping(address => Liquidity)) public liquidities;
     mapping(uint256 => uint256) public liquidityByPoolId;
@@ -76,6 +78,7 @@ contract PolicyCenter is Ownable, Setters {
     uint256[3] public premiumSplits;
     // amount in shield
     uint256 public treasury;
+    address public exchange;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -267,6 +270,19 @@ contract PolicyCenter is Ownable, Setters {
         premiumSplits = [_treasury, _insurance, _reinsurance];
     }
 
+    /**
+    @dev set exchange address to be used for token swaps
+    @param _exchange address of traderjoe contract
+     */
+    function setExchange(address _exchange) external onlyOwner {
+        exchange = _exchange;
+    }
+
+    function setTokenByPoolId(address _token, uint256 _index) external {
+        require(msg.sender == owner() || msg.sender == insurancePoolFactory, "Only owner or insurancePoolFactory can set tokens");
+        tokenByPoolId[_index] = _token;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -306,27 +322,7 @@ contract PolicyCenter is Ownable, Setters {
         coverage.length = _length;
 
         IInsurancePool(insurancePools[_poolId]).registerNewCoverage(_pay);
-        IERC20(shield).transferFrom(msg.sender, address(this), price);
-    }
-
-    /**
-     * @notice splits received premium given a pool id
-     * @param _poolId pool id generated on Policy Center
-     */
-    function _splitPremium(uint256 _poolId, uint256 _amount)
-        internal
-        poolExists(_poolId)
-    {
-        require(_amount > 0, "No funds to split");
-        uint256 totalSplit = _amount;
-        uint256 toTreasury = (totalSplit * premiumSplits[0]) / 10000;
-        uint256 toPool = (totalSplit * premiumSplits[1]) / 10000;
-        uint256 toReinusrancePool = (totalSplit * premiumSplits[2]) / 10000;
-
-        treasury += toTreasury;
-        fundsByPoolId[_poolId] += toPool;
-        // reinsurance pool is pool 0
-        fundsByPoolId[0] += toReinusrancePool;
+        IERC20(tokenByPoolId[_poolId]).transferFrom(msg.sender, address(this), price);
     }
 
     /**
@@ -366,7 +362,7 @@ contract PolicyCenter is Ownable, Setters {
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
 
-        IERC20(shield).transferFrom(msg.sender, address(this), _amount);
+        IERC20(tokenByPoolId[_poolId]).transferFrom(msg.sender, address(this), _amount);
     }
 
     /**
@@ -420,7 +416,7 @@ contract PolicyCenter is Ownable, Setters {
         }
         uint256 amountToTransfer = (liquidityByPoolId[_poolId] / totalSupply) *
             _amount;
-        IERC20(shield).transfer(msg.sender, amountToTransfer);
+        IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amountToTransfer);
     }
 
     /**
@@ -449,10 +445,11 @@ contract PolicyCenter is Ownable, Setters {
         fundsByPoolId[_poolId] -= coverage.amount;
         coverage.amount = 0;
         if (pool.totalSupply() >= amount) {
-            IERC20(shield).transfer(msg.sender, amount);
+            // TODO WHAT TOKEN DOES THE PAYOUT PROVIDES? HOW MUCH?
+            IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amount);
         } else {
             // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
-            IERC20(shield).transfer(msg.sender, pool.totalSupply());
+            IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, pool.totalSupply());
             _requestReinsurance(amount - pool.totalSupply(), msg.sender);
         }
         emit Payout(amount, msg.sender);
@@ -481,7 +478,7 @@ contract PolicyCenter is Ownable, Setters {
         // 10% of treasury + 2000 DEG
         uint256 reward = (treasury * 1000) / 10000;
         treasury -= reward;
-        IERC20(shield).transfer(_reporter, reward);
+        IERC20(deg).transfer(_reporter, reward);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -517,7 +514,7 @@ contract PolicyCenter is Ownable, Setters {
                     .accumulatedRewardPerShare();
             return;
         }
-        IERC20(shield).transfer(_provider, reward);
+        IERC20(tokenByPoolId[_poolId]).transfer(_provider, reward);
     }
 
     /**
@@ -527,5 +524,33 @@ contract PolicyCenter is Ownable, Setters {
      */
     function _requestReinsurance(uint256 _amount, address _address) internal {
         IReinsurancePool(reinsurancePool).reinsurePool(_amount, _address);
+    }
+
+    function _swapForDEG(uint256 _amount, address _token) internal returns (uint256 receives) {
+        uint256 length = 1;
+        address[] memory array = new address[](1);
+        array[0] = _token;
+        uint256 receives = IExchange(exchange).swapExactTokensForTokens(_amount, (_amount * 99 / 100), array, deg, 0);
+    }
+
+     /**
+     * @notice splits received premium given a pool id
+     * @param _poolId pool id generated on Policy Center
+     */
+    function _splitPremium(uint256 _poolId, uint256 _amount)
+        internal
+        poolExists(_poolId)
+    {
+        require(_amount > 0, "No funds to split");
+        uint256 totalSplit = _amount;
+        uint256 toTreasury = (totalSplit * premiumSplits[0]) / 10000;
+        uint256 toPool = (totalSplit * premiumSplits[1]) / 10000;
+        uint256 toReinusrancePool = (totalSplit * premiumSplits[2]) / 10000;
+        uint256 treasuryReceives = _swapForDEG(toTreasury, shield);
+        uint256 reinsuranceReceives = _swapForDEG(toReinusrancePool, deg);
+        treasury += treasuryReceives;
+        fundsByPoolId[_poolId] += toPool;
+        // reinsurance pool is pool 0
+        fundsByPoolId[0] += reinsuranceReceives;
     }
 }

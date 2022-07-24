@@ -164,6 +164,7 @@ contract InsurancePoolFactory is Ownable, Setters {
 
         // Store the pool information
         IPolicyCenter(policyCenter).addPoolId(poolCounter, newPoolAddress);
+        IPolicyCenter(policyCenter).setTokenByPoolId(_protocolToken, poolCounter);
         poolInfoById[poolCounter] = PoolInfo(
             _name,
             newPoolAddress,
