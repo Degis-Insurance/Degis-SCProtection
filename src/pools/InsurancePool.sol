@@ -200,11 +200,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
         shield = _shield;
     }
 
-    function setPolicyCenter(address _policyCenter)
-        external
-        override
-        onlyRole
-    {
+    function setPolicyCenter(address _policyCenter) external override onlyRole {
         policyCenter = _policyCenter;
     }
 
@@ -224,11 +220,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
         proposalCenter = _proposalCenter;
     }
 
-    function setExecutor(address _executor)
-        external
-        override
-        onlyRole
-    {
+    function setExecutor(address _executor) external override onlyRole {
         executor = _executor;
     }
 
@@ -261,10 +253,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
     and passes it forward to the Insurance Pools the Factory deploys.
     @param _administrator address of the administrator
      */
-    function setAdministrator(address _administrator)
-        external
-        onlyRole
-    {
+    function setAdministrator(address _administrator) external onlyRole {
         administrator = _administrator;
     }
 

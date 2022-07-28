@@ -32,11 +32,7 @@ import "../util/ProtocolProtection.sol";
  *         If the insurance pool is unable to fulfil the insurance, the reinsurance pool
  *         will be able to provide the insurance to the user.
  */
-contract ReinsurancePool is
-    ERC20("ReinsurancePool", "RP"),
-    ProtocolProtection
-{
-
+contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //

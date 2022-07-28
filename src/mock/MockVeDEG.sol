@@ -51,7 +51,11 @@ contract MockVeDEG is Ownable {
         whitelist[_address] = _status;
     }
 
-    function users (uint256 input, address _address) public view returns (uint256, uint256){
+    function users(uint256 input, address _address)
+        public
+        view
+        returns (uint256, uint256)
+    {
         return (balances[_address], lockedBalances[_address]);
     }
 

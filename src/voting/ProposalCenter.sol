@@ -32,7 +32,6 @@ pragma solidity ^0.8.13;
  *         Users can evaluate proposals and reports and vote to pass them on weighted by their veDeg balance.
  */
 contract ProposalCenter is ProtocolProtection {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -333,7 +332,7 @@ contract ProposalCenter is ProtocolProtection {
         uint256 balance = IERC20(veDeg).balanceOf(msg.sender);
         require(balance > 0, "You have no tokens");
         // lock vedeg until vote is processed
-        MockVeDEG(veDeg).lockVeDEG(msg.sender, balance * 4 / 5);
+        MockVeDEG(veDeg).lockVeDEG(msg.sender, (balance * 4) / 5);
         // register vote
         if (_vote) {
             reportIds[_reportId].yes += balance;
@@ -391,7 +390,10 @@ contract ProposalCenter is ProtocolProtection {
 
         uint256 total = reportIds[_reportId].yes + reportIds[_reportId].no;
         // requires 30% of vedeg total supply to vote on a report
-        require(total > IERC20(veDeg).totalSupply() * 3 / 10, "Not enough votes");
+        require(
+            total > (IERC20(veDeg).totalSupply() * 3) / 10,
+            "Not enough votes"
+        );
         address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
             reportIds[_reportId].poolId
         );
@@ -460,7 +462,10 @@ contract ProposalCenter is ProtocolProtection {
         uint256 total = proposalIds[_proposalId].yes +
             proposalIds[_proposalId].no;
         // requires 30% of vedeg total supply to vote on a proposal
-        require(total > IERC20(veDeg).totalSupply() * 3 / 10, "Not enough votes");
+        require(
+            total > (IERC20(veDeg).totalSupply() * 3) / 10,
+            "Not enough votes"
+        );
         bool result = proposalIds[_proposalId].yes >
             proposalIds[_proposalId].no;
         // if last round or vote agrees with previous round, move on with the report
@@ -520,8 +525,9 @@ contract ProposalCenter is ProtocolProtection {
     @param _poolId id of the pool to be reported
     */
     function reportPool(uint256 _poolId) public {
-        address pool = IPolicyCenter(policyCenter)
-                        .getInsurancePoolById(_poolId);
+        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
+            _poolId
+        );
         require(!poolReported[pool], "Pool already reported");
         require(pool != address(0), "Pool doesn't exist");
         ++reportCounter;
@@ -613,14 +619,24 @@ contract ProposalCenter is ProtocolProtection {
             );
             MockDEG(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
             // punishment for voting against majority
-            for (uint i = 0; i < voted.length; i++){
-                if (confirmsReport[_reportId][voted[i]] != _veredict){
-                    (uint256 veDegBalance,) = MockVeDEG(deg).users(1, voted[i]);
-                    uint256 stakedDegPenalty = veDegBalance * 4 / 500;
+            for (uint256 i = 0; i < voted.length; i++) {
+                if (confirmsReport[_reportId][voted[i]] != _veredict) {
+                    (uint256 veDegBalance, ) = MockVeDEG(deg).users(
+                        1,
+                        voted[i]
+                    );
+                    uint256 stakedDegPenalty = (veDegBalance * 4) / 500;
                     reward += stakedDegPenalty;
-                    MockDEG(deg).transferFrom(voted[i], address(this), stakedDegPenalty);
+                    MockDEG(deg).transferFrom(
+                        voted[i],
+                        address(this),
+                        stakedDegPenalty
+                    );
                     // unlock vedeg balance
-                    MockVeDEG(veDeg).unlockVeDEG(voted[i], veDegBalance * 4 / 5);
+                    MockVeDEG(veDeg).unlockVeDEG(
+                        voted[i],
+                        (veDegBalance * 4) / 5
+                    );
                 }
             }
             // rewards for voting with majority
@@ -629,9 +645,10 @@ contract ProposalCenter is ProtocolProtection {
                     // if voted with the decision, reward 50% of penalty to voters
                     // according to the amount of vedeg they hold
                     uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
-                    uint256 toTransfer = balance * reportIds[_reportId].yes / 2;
+                    uint256 toTransfer = (balance * reportIds[_reportId].yes) /
+                        2;
                     MockDEG(deg).transfer(voted[i], toTransfer);
-                    MockVeDEG(veDeg).unlockVeDEG(voted[i], balance * 4 / 5);
+                    MockVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
                     reward -= toTransfer;
                 }
             }
