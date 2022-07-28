@@ -8,6 +8,7 @@ import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IInsurancePool.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IVeDEG.sol";
+import "../interfaces/IDegisToken.sol";
 
 import "./interfaces/IncidentReportParameters.sol";
 
@@ -40,6 +41,7 @@ contract IncidentReport is IncidentReportParameters {
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
         uint256 status;
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
+        uint256 votingReward;
     }
     // Report id => report info
     mapping(uint256 => Report) public reports;
@@ -52,8 +54,10 @@ contract IncidentReport is IncidentReportParameters {
     mapping(uint256 => TempResult) public reportTempResults;
 
     struct UserVote {
-        bool choice;
+        uint256 choice;
         uint256 amount;
+        uint256 claimable;
+        bool claimed;
     }
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public userReportVotes;
@@ -78,13 +82,20 @@ contract IncidentReport is IncidentReportParameters {
     event ReportVoted(
         uint256 reportId,
         address indexed user,
-        bool voteFor,
+        uint256 voteFor,
         uint256 amount
     );
 
     event ReportSettled(uint256 reportId, uint256 result);
 
     event ReportExtended(uint256 reportId, uint256 round);
+
+    event DebtPaid(
+        address payer,
+        address user,
+        uint256 debt,
+        uint256 unlockAmount
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -99,7 +110,7 @@ contract IncidentReport is IncidentReportParameters {
      *
      * @param _poolId Pool id to report incident
      */
-    function report(uint256 _poolId) public {
+    function report(uint256 _poolId) external {
         address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
             _poolId
         );
@@ -118,7 +129,7 @@ contract IncidentReport is IncidentReportParameters {
         newReport.status = PENDING_STATUS;
 
         // transfer back to deg address. another option is to burn it.
-        IERC20(DEG).transferFrom(msg.sender, address(this), 1000);
+        IERC20(DEG).transferFrom(msg.sender, address(this), REPORT_THRESHOLD);
 
         // Pause insurance pool and reinsurance pool
         _pausePools(pool);
@@ -134,18 +145,20 @@ contract IncidentReport is IncidentReportParameters {
      *         Punished if votes against majority
      *
      * @param _reportId Id of the report to be voted on
-     * @param _isFor    The user's choice (0: vote for, 1: vote against)
+     * @param _isFor    The user's choice (1: vote for, 2: vote against)
      * @param _amount   Amount of veDEG used for this vote
      */
     function vote(
         uint256 _reportId,
-        bool _isFor,
+        uint256 _isFor,
         uint256 _amount
     ) external {
         require(
             reports[_reportId].status == PENDING_STATUS,
             "Report is not pending status"
         );
+
+        require(_isFor == 1 && _isFor == 2, "Wrong choice");
 
         // Should have enough veDEG
         uint256 balance = IERC20(veDEG).balanceOf(msg.sender) -
@@ -170,7 +183,7 @@ contract IncidentReport is IncidentReportParameters {
 
         Report storage currentReport = reports[_reportId];
         // Record the vote for this report
-        if (_isFor) {
+        if (_isFor == 1) {
             currentReport.numFor += _amount;
         } else {
             currentReport.numAgainst += _amount;
@@ -193,6 +206,11 @@ contract IncidentReport is IncidentReportParameters {
         emit ReportVoted(_reportId, msg.sender, _isFor, _amount);
     }
 
+    /**
+     * @notice Settle the final result for a report
+     *
+     * @param _reportId Report id
+     */
     function settle(uint256 _reportId) external {
         Report storage currentReport = reports[_reportId];
 
@@ -205,24 +223,107 @@ contract IncidentReport is IncidentReportParameters {
             "Not reached settlement"
         );
 
+        require(currentReport.result == 0, "Already settled");
+
         _checkQuorum(currentReport.numFor + currentReport.numAgainst);
 
         uint256 res = _checkRoundExtended(_reportId, currentReport.round);
 
         if (res > 0) {
+            _settleVotingReward(_reportId, res);
             emit ReportSettled(_reportId, res);
         } else {
             emit ReportExtended(_reportId, currentReport.round);
         }
     }
 
-    function _checkQuorum(uint256 _totalVotes) internal {
+    function claimReward(uint256 _reportId) external {
+        UserVote memory userVote = userReportVotes[msg.sender][_reportId];
+        uint256 finalResult = reports[_reportId].result;
+
+        require(finalResult > 0, "Not settled");
+
+        // Correct choice
+        if (userVote.choice == finalResult) {
+            IDegisToken(DEG).mintDegis(
+                msg.sender,
+                (reports[_reportId].votingReward * userVote.amount) / SCALE
+            );
+        } else if (finalResult == TIED_RESULT) {
+            // Tied result, give back user's veDEG
+            IVeDEG(veDEG).unlockVeDEG(msg.sender, userVote.amount);
+        } else revert("No reward to claim");
+    }
+
+    function payDebt(uint256 _reportId, address _user) external {
+        UserVote memory userVote = userReportVotes[_user][_reportId];
+        uint256 finalResult = reports[_reportId].result;
+
+        require(finalResult > 0, "Not settled");
+        require(userVote.choice != finalResult, "Not wrong choice");
+
+        uint256 debt = (userVote.amount * DEBT_RATIO) / 100;
+
+        // Pay the debt in DEG
+        IERC20(DEG).transferFrom(msg.sender, address(this), debt);
+
+        // Unlock the user's veDEG
+        IVeDEG(veDEG).unlockVeDEG(_user, userVote.amount);
+
+        emit DebtPaid(msg.sender, _user, debt, userVote.amount);
+    }
+
+    function _settleVotingReward(uint256 _reportId, uint256 _result) internal {
+        Report storage currentReport = reports[_reportId];
+
+        if (_result == 1) {
+            IERC20(DEG).transfer(currentReport.reporter, REPORT_THRESHOLD);
+            IDegisToken(DEG).mintDegis(currentReport.reporter, REPORTER_REWARD);
+
+            // Total deg reward
+            uint256 totalRewardToVoters = REPORT_THRESHOLD +
+                currentReport.numAgainst /
+                100;
+
+            // Update deg reward for those who vote for
+            currentReport.votingReward =
+                (totalRewardToVoters * SCALE) /
+                currentReport.numFor;
+        } else if (_result == 2) {
+            // Total deg reward
+            uint256 totalRewardToVoters = REPORT_THRESHOLD +
+                currentReport.numFor /
+                100;
+
+            // Update deg reward for those who vote against
+            currentReport.votingReward =
+                (totalRewardToVoters * SCALE) /
+                currentReport.numAgainst;
+        }
+    }
+
+    /**
+     * @notice Check quorum requirement
+     *
+     *         30% of totalSupply is the minimum requirement for participation
+     *
+     * @param _totalVotes Total vote numbers
+     */
+    function _checkQuorum(uint256 _totalVotes) internal view {
         require(
             _totalVotes >= IVeDEG(veDEG).totalSupply() * QUORUM_RATIO,
             "Not reached quorum"
         );
     }
 
+    /**
+     * @notice Check whether has passed the voting time period
+     *
+     * @param _round      Current round
+     * @param _reportTime Start timestamp of the report
+     *
+     * @return hasPassed True for not passing
+     */
     function _notPassedVotingPeriod(uint256 _round, uint256 _reportTime)
         internal
         view
@@ -232,23 +333,38 @@ contract IncidentReport is IncidentReportParameters {
         return block.timestamp <= endTime;
     }
 
+    /**
+     * @notice Check whether this round need extend
+     *
+     * @param _reportId Report id
+     * @param _round    Current round
+     *
+     * @return result 0 for extending, 1/2/3 for final result
+     */
     function _checkRoundExtended(uint256 _reportId, uint256 _round)
         internal
-        returns (uint256)
+        returns (uint256 result)
     {
         if (!reportTempResults[_reportId].hasChanged) {
-            return
-                _settleResult(
-                    _reportId,
-                    reports[_reportId].numFor,
-                    reports[_reportId].numAgainst
-                );
+            result = _settleResult(
+                _reportId,
+                reports[_reportId].numFor,
+                reports[_reportId].numAgainst
+            );
         } else if (reportTempResults[_reportId].hasChanged && _round < 2) {
             _extendRound(_reportId);
-            return 0;
         }
     }
 
+    /**
+     * @notice Settle the result for a report
+     *
+     * @param _reportId   Report id
+     * @param _numFor     Number of votes voting for
+     * @param _numAgainst Number of votes voting against
+     *
+     * @return result 0 for pass, 1 for reject and 2 for tied
+     */
     function _settleResult(
         uint256 _reportId,
         uint256 _numFor,
@@ -266,6 +382,11 @@ contract IncidentReport is IncidentReportParameters {
         }
     }
 
+    /**
+     * @notice Extend the current round
+     *
+     * @param _reportId Report id
+     */
     function _extendRound(uint256 _reportId) internal {
         reports[_reportId].round += 1;
     }
