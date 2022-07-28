@@ -20,19 +20,10 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IComittee.sol";
+import "../util/ProtocolProtection.sol";
 import "./InsurancePool.sol";
-import "../util/Setters.sol";
 
-import "../interfaces/IExecutor.sol";
 
 /**
  * @title Insurance Pool Factory
@@ -42,7 +33,12 @@ import "../interfaces/IExecutor.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePoolFactory is Ownable, Setters {
+contract InsurancePoolFactory is ProtocolProtection {
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     struct PoolInfo {
         string protocolName;
         address poolAddress;
@@ -50,12 +46,6 @@ contract InsurancePoolFactory is Ownable, Setters {
         uint256 maxCapacity;
         uint256 policyPricePerShield;
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    // poolIds => pool info
     mapping(uint256 => PoolInfo) public poolInfoById;
 
     uint256 public poolCounter;
@@ -81,16 +71,17 @@ contract InsurancePoolFactory is Ownable, Setters {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _reinsurancePool, address _shield) {
-        poolCounter = 0;
+    constructor(address _reinsurancePool, address _degis) {
+        // stores addresses of the reinsurance pool and degis token
         reinsurancePool = _reinsurancePool;
-        shield = _shield;
-        setAdministrator(msg.sender);
+        deg = _degis;
+        _setAdministrator(msg.sender);
+        // stores information about reinsurance pool, first pool recorded
         poolInfoById[poolCounter] = PoolInfo(
             "ReinsurancePool",
             _reinsurancePool,
-            _shield,
-            1000000000,
+            _degis,
+            100000e18,
             1
         );
     }
@@ -101,7 +92,7 @@ contract InsurancePoolFactory is Ownable, Setters {
 
     /**
      * @notice Get the pool address for a given pool id
-     * @return Array of pool addresses
+     * @return list of pool addresses
      */
     function getPoolAddressList() external view returns (address[] memory) {
         address[] memory list = new address[](poolCounter + 1);
@@ -127,8 +118,8 @@ contract InsurancePoolFactory is Ownable, Setters {
      * @notice Sets the administrator of the deployed Insurance pools
      * @param _administrator The address of the new administrator
      */
-    function setAdministrator(address _administrator) public onlyOwner {
-        administrator = _administrator;
+    function setAdministrator(address _administrator) external onlyOwner {
+        _setAdministrator(_administrator);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -136,25 +127,26 @@ contract InsurancePoolFactory is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Creates a new insurance pool
-     * @param _name Name of the protocol
-     * @param _protocolToken Address of the token used for the protocol
-     * @param _maxCapacity Maximum capacity of the pool
-     * @param _policyPricePerShield Initial policy price per shield
-     * @return  address of the new insurance pool
+     * @notice                      Creates a new insurance pool
+     * @param _name                 Name of the protocol
+     * @param _protocolToken        Address of the token used for the protocol
+     * @param _maxCapacity          Maximum capacity of the pool
+     * @param _policyPricePerToken Initial policy price per shield
+     * @return  address             of the new insurance pool
      */
     function deployPool(
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPricePerShield
+        uint256 _policyPricePerToken
     ) public returns (address) {
+        require(msg.sender == owner() || msg.sender == executor, "Only owner or executor contract can create a new insurance pool");
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
             _maxCapacity,
-            _policyPricePerShield,
+            _policyPricePerToken,
             _name,
             _name
         );
@@ -170,7 +162,7 @@ contract InsurancePoolFactory is Ownable, Setters {
             newPoolAddress,
             _protocolToken,
             _maxCapacity,
-            _policyPricePerShield
+            _policyPricePerToken
         );
 
         emit PoolCreated(
@@ -179,7 +171,7 @@ contract InsurancePoolFactory is Ownable, Setters {
             _name,
             _protocolToken,
             _maxCapacity,
-            _policyPricePerShield
+            _policyPricePerToken
         );
 
         return newPoolAddress;
@@ -192,17 +184,17 @@ contract InsurancePoolFactory is Ownable, Setters {
     /**
      * @notice gets bytecode for insurance pool creation according to parameters
      *
-     * @param _protocolToken address of the protocol token to insure
-     * @param _maxCapacity max coverage capacity
-     * @param _policyPricePerShield policy price per shield
-     * @param _tokenName name for the new pool
-     * @param _symbol symbol for new pool
-     * @return bytecode for insurance pool creation
+     * @param _protocolToken        address of the protocol token to insure
+     * @param _maxCapacity          max coverage capacity
+     * @param _policyPricePerToken policy price per shield
+     * @param _tokenName            name for the new pool
+     * @param _symbol               symbol for new pool
+     * @return bytecode             for insurance pool creation
      */
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPricePerShield,
+        uint256 _policyPricePerToken,
         string memory _tokenName,
         string memory _symbol
     ) internal view virtual returns (bytes memory) {
@@ -218,7 +210,7 @@ contract InsurancePoolFactory is Ownable, Setters {
                     _maxCapacity,
                     _tokenName,
                     _symbol,
-                    _policyPricePerShield,
+                    _policyPricePerToken,
                     administrator
                 )
             );
@@ -242,5 +234,9 @@ contract InsurancePoolFactory is Ownable, Setters {
                 revert(0, 0)
             }
         }
+    }
+
+    function _setAdministrator(address _administrator) internal onlyOwner {
+        administrator = _administrator;
     }
 }

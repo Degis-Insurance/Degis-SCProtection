@@ -41,7 +41,7 @@ interface IInsurancePool {
     function poolInfo() view external returns (string memory, address, uint256, uint256, uint256);
     function proposalCenter() view external returns (address);
     function provideLiquidity(uint256 _amount, address _provider) external;
-    function registerNewCoverage(uint256 _paid) external;
+    function updatePoolDistribution(uint256 _paid) external;
     function reinsurancePool() view external returns (address);
     function removeLiquidity(uint256 _amount, address _provider) external;
     function renounceOwnership() external;
