@@ -25,4 +25,16 @@ abstract contract IncidentReportParameters {
 
     // Quorum parameter
     uint256 constant QUORUM_RATIO = 30;
+
+    // DEG threshold for starting a report
+    uint256 constant REPORT_THRESHOLD = 1000 ether;
+
+    // DEG reward for correct reporter
+    uint256 constant REPORTER_REWARD = 1000 ether;
+
+    // Punishment for those who vote wrong
+    uint256 constant PUNISHMENT_RATIO = 40;  // 40% go to winners, 40% reserve
+    uint256 constant DEBT_RATIO = 80;  // 80% as the debt to unlock veDEG
+
+    uint256 constant SCALE = 1e12;
 }
