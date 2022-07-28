@@ -20,20 +20,17 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IComittee.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IExecutor.sol";
-import "forge-std/console.sol";
-import "../util/Setters.sol";
+import "../util/ProtocolProtection.sol";
 
-contract InsurancePool is ERC20, Ownable, Setters {
+/**
+ * @title Insurance Pool Factory
+ *
+ * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
+ *
+ * @notice This is the factory contract for deploying new insurance pools
+ *         Each pool represents a project that has joined Degis Smart Contract Protection
+ */
+contract InsurancePool is ERC20, ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -41,7 +38,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     uint256 public constant DISTRIBUTION_PERIOD = 30 days;
     // up to 25% discount if protection is bought for an entire year
     uint256 public constant DISCOUNT_DIVISOR = 1460;
-    uint256 public constant COVER_PERIOD = 15 days;
+    uint256 public constant PAY_COVER_PERIOD = 10 days;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -71,9 +68,6 @@ contract InsurancePool is ERC20, Ownable, Setters {
     event Liquidation(uint256 amount, uint256 endDate);
 
     // ---------------------------------------------------------------------------------------- //
-    // *************************************** Errors ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
@@ -82,22 +76,24 @@ contract InsurancePool is ERC20, Ownable, Setters {
         uint256 _maxCapacity,
         string memory _name,
         string memory _symbol,
-        uint256 _policyPricePerShield,
+        uint256 _policyPricePerToken,
         address _administrator
     ) ERC20(_name, _symbol) {
+        // token address insured by pool
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
-        policyPricePerShield = _policyPricePerShield;
+        policyPricePerShield = _policyPricePerToken;
         administrator = _administrator;
-        maxLength = 365;
+        maxLength = 90;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    modifier onlyOwnerOrExecutor() {
+    // allows owner, executor contract or administrator
+    modifier onlyRole() {
         require(
             (msg.sender == owner()) ||
                 (msg.sender == executor) ||
@@ -107,6 +103,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
         _;
     }
 
+    // allows executor contract
     modifier onlyExecutor() {
         require(msg.sender == executor, "Only executor can call this function");
         _;
@@ -117,12 +114,12 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @dev returns information about the pool
-    @return name of the pool
-    @return insuredToken address of the token insured by the pool
-    @return maxCapacity max coverage bought
-    @return totalSupply total amount of LP tokens
-    @return totalDistributedReward how much has been distributed to liquidity providers
+    @notice returns information about the pool
+    @return name                    of the pool
+    @return insuredToken            address of the token insured by the pool
+    @return maxCapacity             max coverage bought
+    @return totalSupply             total amount of LP tokens
+    @return totalDistributedReward  how much has been distributed to liquidity providers
      */
     function poolInfo()
         public
@@ -145,7 +142,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev returns cost to buy coverage for a given period of time and amount of tokens
+    @notice returns cost to buy coverage for a given period of time and amount of tokens
     @param _amount amount being covered
     @param _length coverage length
      */
@@ -166,9 +163,9 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev returns the amount of reward a give amount and userDebt are allowed to claim
-    @param _amount amount in provided liquidity
-    @param _userDebt amount of debt the user has
+    @notice returns the amount of reward a give amount and userDebt are allowed to claim
+    @param _amount      amount in provided liquidity
+    @param _userDebt    amount of debt the user has
      */
     function calculateReward(uint256 _amount, uint256 _userDebt)
         public
@@ -186,26 +183,27 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setMaxLength(uint256 _maxLength) external onlyOwnerOrExecutor {
+    // overriden set functions to allow special roles to change set addresses
+    function setMaxLength(uint256 _maxLength) external onlyRole {
         maxLength = _maxLength;
     }
 
-    function setDeg(address _deg) external override onlyOwnerOrExecutor {
+    function setDeg(address _deg) external override onlyRole {
         deg = _deg;
     }
 
-    function setVeDeg(address _veDeg) external override onlyOwnerOrExecutor {
+    function setVeDeg(address _veDeg) external override onlyRole {
         veDeg = _veDeg;
     }
 
-    function setShield(address _shield) external override onlyOwnerOrExecutor {
+    function setShield(address _shield) external override onlyRole {
         shield = _shield;
     }
 
     function setPolicyCenter(address _policyCenter)
         external
         override
-        onlyOwnerOrExecutor
+        onlyRole
     {
         policyCenter = _policyCenter;
     }
@@ -213,7 +211,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     function setReinsurancePool(address _reinsurancePool)
         external
         override
-        onlyOwnerOrExecutor
+        onlyRole
     {
         reinsurancePool = _reinsurancePool;
     }
@@ -221,7 +219,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     function setProposalCenter(address _proposalCenter)
         external
         override
-        onlyOwnerOrExecutor
+        onlyRole
     {
         proposalCenter = _proposalCenter;
     }
@@ -229,7 +227,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     function setExecutor(address _executor)
         external
         override
-        onlyOwnerOrExecutor
+        onlyRole
     {
         executor = _executor;
     }
@@ -237,15 +235,15 @@ contract InsurancePool is ERC20, Ownable, Setters {
     function setInsurancePoolFactory(address _insurancePoolFactory)
         external
         override
-        onlyOwnerOrExecutor
+        onlyRole
     {
         insurancePoolFactory = _insurancePoolFactory;
     }
 
-    function _setLiquidationStatus(bool _liquidated) internal {
-        liquidated = _liquidated;
-    }
-
+    /**
+    @notice sets if pool is paused
+    @param _paused if true paused, else not paused
+     */
     function setPausedInsurancePool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == proposalCenter),
@@ -254,18 +252,18 @@ contract InsurancePool is ERC20, Ownable, Setters {
         paused = _paused;
     }
 
-    function setMaxCapacity(uint256 _maxCapacity) external onlyOwnerOrExecutor {
+    function setMaxCapacity(uint256 _maxCapacity) external onlyRole {
         maxCapacity = _maxCapacity;
     }
 
     /**
-    @dev pools receive an administrator (address that deployed the Insurance Pool Factory)
+    @notice pools receive an administrator (address that deployed the Insurance Pool Factory)
     and passes it forward to the Insurance Pools the Factory deploys.
     @param _administrator address of the administrator
      */
     function setAdministrator(address _administrator)
         external
-        onlyOwnerOrExecutor
+        onlyRole
     {
         administrator = _administrator;
     }
@@ -275,9 +273,9 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @dev provide liquidity from liquidity pool. Only callable through policyCenter
-    @param _amount token being insured
-    @param _provider liquidity provider adress
+    @notice provide liquidity from liquidity pool. Only callable through policyCenter
+    @param _amount      token being insured
+    @param _provider    liquidity provider adress
     */
     function provideLiquidity(uint256 _amount, address _provider) external {
         require(!liquidated, "cannot provide new liquidity");
@@ -293,9 +291,9 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev remove liquidity from insurance pool. Only callable through policyCenter
-    @param _amount token being insured
-    @param _provider liquidity provider adress
+    @notice remove liquidity from insurance pool. Only callable through policyCenter
+    @param _amount      token being insured
+    @param _provider    liquidity provider adress
     */
     function removeLiquidity(uint256 _amount, address _provider) external {
         require(
@@ -313,10 +311,10 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev called when a coverage is bought on PolicyCenter. Only callable through policyCenter
+    @notice called when a coverage is bought on PolicyCenter. Only callable through policyCenter
     @param _paid amount paid to insure amount of tokens
     */
-    function registerNewCoverage(uint256 _paid) external {
+    function updatePoolDistribution(uint256 _paid) external {
         require(
             msg.sender == policyCenter,
             "Only policyCenter can buy coverage"
@@ -330,7 +328,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev called when liqudity is provided, removed or coverage is bought.
+    @notice called when liqudity is provided, removed or coverage is bought.
     updates all state variables to reflect current reward emission.
     */
     function updateRewards() public {
@@ -342,12 +340,15 @@ contract InsurancePool is ERC20, Ownable, Setters {
     }
 
     /**
-    @dev sets this insurance pool to liquidated. Only callable by executor
+    @notice sets this insurance pool to liquidated. Only callable by executor
     */
     function liquidatePool() external onlyExecutor {
+        // changes the status of the insurance pool to liquidated and allows payout claims
         _setLiquidationStatus(true);
+        // when liquidated, totalSupply does not change. liquidity providers keep LP tokens.
+        // LP tokens represent their share of remaining liquidity after payout is done.
         uint256 amount = totalSupply();
-        endLiquidationDate = block.timestamp + COVER_PERIOD;
+        endLiquidationDate = block.timestamp + PAY_COVER_PERIOD;
         emit Liquidation(amount, endLiquidationDate);
     }
 
@@ -356,7 +357,7 @@ contract InsurancePool is ERC20, Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @dev updates local states to reflect current reward emission.
+    @notice updates local states to reflect current reward emission.
     */
     function _updateRewards() internal {
         if (totalSupply() == 0) {
@@ -370,5 +371,9 @@ contract InsurancePool is ERC20, Ownable, Setters {
             (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
         lastRewardTimestamp = block.timestamp;
         console.log("emission rate", emissionRate);
+    }
+
+    function _setLiquidationStatus(bool _liquidated) internal {
+        liquidated = _liquidated;
     }
 }
