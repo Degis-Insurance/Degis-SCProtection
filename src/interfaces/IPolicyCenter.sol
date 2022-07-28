@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 interface IPolicyCenter {
      event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function addPoolId(uint256 _poolId, address _address) external;
+    function setPoolId(uint256 _poolId, address _address) external;
     function buyCoverage(uint256 _poolId, uint256 _pay, uint256 _coverAmount, uint256 _length) external;
     function claimPayout(uint256 _poolId, uint256 _amount) external;
     function claimReward(uint256 _poolId) external;

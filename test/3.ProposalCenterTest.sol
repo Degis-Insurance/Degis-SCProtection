@@ -13,6 +13,7 @@ import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
+import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/ReinsurancePoolErrors.sol";
@@ -36,6 +37,7 @@ contract ProposalCenterTest is Test {
     Executor public executor;
     ERC20 public ptp;
     ERC20 public yeti;
+    Exchange public exchange;
 
     // defines users
     address public alice = address(0x1337);
@@ -62,6 +64,7 @@ function setUp() public {
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor =new Executor();
         proposalCenter = new ProposalCenter();
+        exchange = new Exchange();
 
         // sets addresses needed to execute functions
         policyCenter.setDeg(address(deg));
@@ -71,6 +74,7 @@ function setUp() public {
         policyCenter.setProposalCenter(address(proposalCenter));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setExchange(address(exchange));
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
         insurancePoolFactory.setShield(address(shield));
@@ -238,6 +242,7 @@ contract ProposalCenterVotingTest is Test {
     MockVeDEG public vedeg;
     InsurancePool public insurancePool;
     Executor public executor;
+    Exchange public exchange;
     ERC20 public ptp;
     ERC20 public yeti;
 
@@ -263,6 +268,8 @@ contract ProposalCenterVotingTest is Test {
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor =new Executor();
         proposalCenter = new ProposalCenter();
+        exchange = new Exchange();
+
         vm.label(address(proposalCenter), "Proposal Center");
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
@@ -282,6 +289,7 @@ contract ProposalCenterVotingTest is Test {
         policyCenter.setVeDeg(address(vedeg));
         policyCenter.setShield(address(shield));
         policyCenter.setExecutor(address(executor));
+        policyCenter.setExchange(address(exchange));
         policyCenter.setProposalCenter(address(proposalCenter));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));

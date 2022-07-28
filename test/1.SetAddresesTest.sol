@@ -13,6 +13,7 @@ import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
+import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/ReinsurancePoolErrors.sol";
@@ -33,19 +34,21 @@ contract setAddressesTest is Test {
     MockDEG public deg;
     MockVeDEG public vedeg;
     InsurancePool public insurancePool;
+    Exchange public exchange;
     Executor public executor;
+    ERC20 public ptp;
 
     address public alice = address(0x1337);
     address public bob = address(0x133702);
     address public carol = address(0x133703);
-    address public ptp = address(0x133704);
-    address public yeti = address(0x133705);
     address public pool1;
 
     function setUp() public {
         shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000e18, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
+        exchange = new Exchange();
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
@@ -53,7 +56,9 @@ contract setAddressesTest is Test {
         proposalCenter = new ProposalCenter();
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("PTP", ptp, uint256(10000), uint256(1));
+        policyCenter.setExchange(address(exchange));
+
+        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), uint256(10000), uint256(1));
     }
 
     function testSetPolicyCenterAddress() public {

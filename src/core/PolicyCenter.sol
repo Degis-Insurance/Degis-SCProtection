@@ -292,6 +292,29 @@ contract PolicyCenter is ProtocolProtection {
         );
         // maps address to pool id
         tokenByPoolId[_poolId] = _token;
+        // approve token swapping for internal fudns management
+        _approvePoolToken(_token);
+    }
+
+     /**
+     * @notice registers a new insurance pool deployed by pool factory
+     * @param _poolId   pool id generated on Policy Center
+     * @param _address  address of the insurance pool
+     */
+    function setPoolId(uint256 _poolId, address _address) external {
+        require(
+            msg.sender == insurancePoolFactory,
+            "not requested by Insurance Pool Factory"
+        );
+        insurancePools[_poolId] = _address;
+    }
+
+    function approvePoolToken(address _token) external {
+        require(
+            msg.sender == owner() || msg.sender == insurancePoolFactory,
+            "Only owner or insurancePoolFactory can set tokens"
+        );
+        _approvePoolToken(_token);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -497,19 +520,6 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
-     * @notice registers a new insurance pool deployed by pool factory
-     * @param _poolId   pool id generated on Policy Center
-     * @param _address  address of the insurance pool
-     */
-    function addPoolId(uint256 _poolId, address _address) external {
-        require(
-            msg.sender == insurancePoolFactory,
-            "not requested by Insurance Pool Factory"
-        );
-        insurancePools[_poolId] = _address;
-    }
-
-    /**
      * @notice rewards reporter when a reported insurance pool is liquidated with treasury
      * callable by contract only
      * @param _reporter address of the reporter
@@ -588,8 +598,6 @@ contract PolicyCenter is ProtocolProtection {
     {
         address[] memory array = new address[](1);
         array[0] = _token;
-        // approve exchange to swap policy center tokens for deg
-        IERC20(_token).approve(exchange, 2**256 - 1);
         // exchange tokens for deg and return amount of deg received
         receives = IExchange(exchange).swapExactTokensForTokens(
             _amount,
@@ -622,5 +630,11 @@ contract PolicyCenter is ProtocolProtection {
         totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
         totalRewardsByPoolId[0] += reinsuranceReceives;
+    }
+
+    function _approvePoolToken(address _token) internal {
+        require(exchange != address(0), "Exchange address not set");
+        // approve exchange to swap policy center tokens for deg
+        IERC20(_token).approve(exchange, type(uint256).max);
     }
 }
