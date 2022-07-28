@@ -142,6 +142,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     }
 
     function testApprovePTPPolicyCenter() public {
+        // approve ptp pool to policy center
         ptp.approve(address(policyCenter), 10000e18);
         assertEq(ptp.allowance(address(this), address(policyCenter)) == 10000e18, true);
     }
@@ -194,14 +195,14 @@ contract PostInsurancePoolDeploymentTest is Test {
         policyCenter.buyCoverage(1, price, 10000 , 90);
     }
     
-    function provideLiqudityDirectlyToInsurancePool() public {
+    function testProvideLiqudityDirectlyToInsurancePool() public {
         ptp.approve(address(policyCenter), 10000e18);
         // user should not be able to provide liquidity directly to insurance pool
         vm.expectRevert("cannot provide liquidity directly to insurance pool");
         InsurancePool(pool1).provideLiquidity(10000, address(this));
     }
 
-    function removeLiquidityDirectlyFromInsurancePool() public {
+    function testRemoveLiquidityDirectlyFromInsurancePool() public {
         ptp.approve(address(policyCenter), 10000e18);
         policyCenter.provideLiquidity(1, 10000);
         vm.warp(604801);
@@ -210,7 +211,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         InsurancePool(pool1).removeLiquidity(10000, address(this));
     }
 
-    function removeLiquidityWithoutProvidingLiquidity() public {
+    function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
         InsurancePool(pool1).removeLiquidity(1, address(this));
