@@ -13,6 +13,7 @@ import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
+import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/ReinsurancePoolErrors.sol";

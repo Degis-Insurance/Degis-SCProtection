@@ -87,6 +87,7 @@ contract SecondaryContractDeploymentTest is Test {
     MockVeDEG public vedeg;
     InsurancePool public insurancePool;
     Executor public executor;
+    Exchange public exchange;
     ERC20 public ptp;
 
     function setUp() public {
@@ -110,7 +111,9 @@ contract SecondaryContractDeploymentTest is Test {
     function testDeployInsurancePool() public {
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        exchange = new Exchange();
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setExchange(address(exchange));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         address pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000, 1);
         console.log(pool1);
