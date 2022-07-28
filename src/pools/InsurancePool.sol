@@ -20,6 +20,8 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/security/Pausable.sol";
+
 import "../util/ProtocolProtection.sol";
 
 /**
@@ -30,7 +32,7 @@ import "../util/ProtocolProtection.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePool is ERC20, ProtocolProtection {
+contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -46,7 +48,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
 
     address public insuredToken;
     address public administrator;
-    bool public paused;
+
     bool public liquidated;
     uint256 public maxCapacity;
     uint256 public maxLength;
@@ -237,11 +239,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
     @param _paused if true paused, else not paused
      */
     function setPausedInsurancePool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == proposalCenter),
-            "Only owner or proposalCenter can call this function"
-        );
-        paused = _paused;
+        _pause();
     }
 
     function setMaxCapacity(uint256 _maxCapacity) external onlyRole {
@@ -266,7 +264,10 @@ contract InsurancePool is ERC20, ProtocolProtection {
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
-    function provideLiquidity(uint256 _amount, address _provider) external {
+    function provideLiquidity(uint256 _amount, address _provider)
+        external
+        whenNotPaused
+    {
         require(!liquidated, "cannot provide new liquidity");
         require(_amount > 0, "amount should be greater than 0");
         require(
@@ -284,7 +285,10 @@ contract InsurancePool is ERC20, ProtocolProtection {
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
-    function removeLiquidity(uint256 _amount, address _provider) external {
+    function removeLiquidity(uint256 _amount, address _provider)
+        external
+        whenNotPaused
+    {
         require(
             !liquidated,
             "Pool has been liquidated, cannot remove liquidity"
@@ -293,7 +297,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
             msg.sender == policyCenter,
             "cannot remove liquidity directly from insurance pool"
         );
-        require(!paused, "cannot remove liquidity while paused");
+
         require(_amount > 0, "amount should be greater than 0");
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
