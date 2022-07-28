@@ -19,10 +19,25 @@
 */
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import "../interfaces/IExchange.sol";
+import "../interfaces/IReinsurancePool.sol";
+import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IInsurancePoolFactory.sol";
+import "../interfaces/IProposalCenter.sol";
+import "../interfaces/IPolicyCenter.sol";
+import "../interfaces/IExecutor.sol";
+
+import "../mock/MockSHIELD.sol";
+import "../mock/MockVeDEG.sol";
+import "../mock/MockDEG.sol";
+
+import "forge-std/console.sol";
 
 pragma solidity ^0.8.13;
 
-contract Setters is Ownable {
+contract ProtocolProtection is Ownable {
 
     address public deg;
     address public veDeg;

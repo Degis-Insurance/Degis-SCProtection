@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Exchange {
     string public name;
-    constructor () public {
+    constructor () {
         name = "exchange";
     }
     function swapExactTokensForTokens(
@@ -21,7 +21,8 @@ contract Exchange {
        returns (uint256 amountOut)
     {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(to).transfer(msg.sender, amountOutMin);
+        amountOut = getAmountOut(amountIn, amountOutMin, amountOutMin);
+        IERC20(to).transfer(msg.sender, amountOut);
     }
 
     function getAmountOut(

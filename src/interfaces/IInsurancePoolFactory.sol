@@ -7,7 +7,7 @@ interface IInsurancePoolFactory {
     event PoolCreated(address poolAddress, uint256 poolId, string protocolName, address protocolToken, uint256 maxCapacity, uint256 policyPricePerShield);
 
     function deg() view external returns (address);
-    function deployPool(string memory _name, address _protocolToken, uint256 _maxCapacity, uint256 _policyPricePerShield) external returns (address);
+    function deployPool(string memory _name, address _protocolToken, uint256 _maxCapacity, uint256 _policyPricePerToken) external returns (address);
     function executor() view external returns (address);
     function getPoolAddressList() view external returns (address[] memory);
     function getPoolCounter() view external returns (uint256);

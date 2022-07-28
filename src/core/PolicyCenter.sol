@@ -20,64 +20,56 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "../interfaces/IExchange.sol";
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IInsurancePoolFactory.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IComittee.sol";
-import "../interfaces/IExecutor.sol";
-import "../util/Setters.sol";
-
-import "forge-std/console.sol";
+import "../util/ProtocolProtection.sol";
+import "../mock/MockExchange.sol";
 
 /**
  * @title Policy Center
  *
- * @author Eric Lee (ylikp.ust@gmail.com)
+ * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
  *
- * @notice This is the policy center for degis smart contract insurance
+ * @notice This is the policy center for degis Protocol Protection
  *         Users can buy policies and get payoff here
  *         Sellers can provide liquidity and choose the pools to cover
  *
  */
-contract PolicyCenter is Ownable, Setters {
+contract PolicyCenter is ProtocolProtection {
+    
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // poolIds => address, updated once pools are deployed
+    // ReinsurancePool is pool 0
+    mapping(uint256 => address) public insurancePools;
+    mapping(uint256 => address) public tokenByPoolId;
+
+    // poolId => user => Coverage info
     struct Coverage {
         uint256 amount;
         uint256 buyDate;
         uint256 length;
     }
-
+    mapping(uint256 => mapping(address => Coverage)) public coverages;
+    mapping(uint256 => uint256) public fundsByPoolId;
+    // amount of rewards by pool Id paid by coverage buyers
+    mapping(uint256 => uint256) public totalRewardsByPoolId;
+    
+    // poolId => user => Liquidity info
     struct Liquidity {
         uint256 amount;
         uint256 userDebt;
         uint256 lastClaim;
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    // productIds => address, updated once pools are deployed
-    // ReinsurancePool is pool 0
-    mapping(uint256 => address) public insurancePools;
-
-    mapping(uint256 => mapping(address => Coverage)) public coverages;
-    mapping(uint256 => uint256) public fundsByPoolId;
-    mapping(uint256 => address) public tokenByPoolId;
-
     mapping(uint256 => mapping(address => Liquidity)) public liquidities;
+    // amount of liquidity by pool id given by liquidity providers
     mapping(uint256 => uint256) public liquidityByPoolId;
-    // totalRewards by pool id
-    mapping(uint256 => uint256) public totalRewardsByPoolId;
-
-    uint256[3] public premiumSplits;
-    // amount in shield
+    
+    // bps distribution of premiums 0: treasury, 1: insurance pool, 2: reinsurance pool
+    uint256[2] public premiumSplits;
+    // amount of degis in treasury
     uint256 public treasury;
+    // exchange used to trade native tokens for degis
     address public exchange;
 
     // ---------------------------------------------------------------------------------------- //
@@ -91,17 +83,21 @@ contract PolicyCenter is Ownable, Setters {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _reinsurancePool) {
+    constructor(address _reinsurancePool, address _degis) {
+        // initializes required reinsurance address and degis token as reinsurance token
         insurancePools[0] = _reinsurancePool;
+        tokenByPoolId[0] = _degis;
         reinsurancePool = _reinsurancePool;
-        // 5 % to treasury, 45% to insurance, 50% to reinsurance 0.03% to splitter
-        premiumSplits = [500, 4500, 5000];
+        deg = _degis;
+        // initializes premium split standard in bps
+        premiumSplits = [4500, 5000];
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // veirifies if pool exists. used throughout insurance contracts
     modifier poolExists(uint256 _poolId) {
         require(insurancePools[_poolId] != address(0), "Pool not found");
         _;
@@ -112,23 +108,29 @@ contract PolicyCenter is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @dev returns premium split used by Policy Center
+     * @notice returns premium split used by Policy Center
+     * @return insurancePool premium split in bps
+     * @return reinsurancePool premium split in bps   
      */
     function getPremiumSplits()
         public
         view
         returns (
             uint256,
-            uint256,
             uint256
         )
     {
-        return (premiumSplits[0], premiumSplits[1], premiumSplits[2]);
+        return (premiumSplits[0], premiumSplits[1]);
     }
 
     /**
-     * @dev returns pool info for a given pool id
-     * @param _poolId pool id generated on Policy Center
+     * @notice returns pool             info for a given pool id
+     * @param _poolId                   pool id generated on Policy Center
+     * @return name                     of token pool
+     * @return insuredToken             address of token insured by pool
+     * @return maxCapacity              of token used by pool
+     * @return liqudity                 deposited amount of liquidity in pool
+     * @return totalDistributedReward   of tokens used by pool
      */
     function getPoolInfo(uint256 _poolId)
         public
@@ -159,12 +161,15 @@ contract PolicyCenter is Ownable, Setters {
     }
 
     /**
-     * @dev returns true if given pool address is a valid pool
+     * @notice returns true if given pool address is a valid pool
      * @param _poolAddress pool address
+     * @return bool true if pool address is valid
      */
     function isPoolAddress(address _poolAddress) public view returns (bool) {
+        // gets the amount of deployed pools by Insurance Pool Factory
         uint256 length = IInsurancePoolFactory(insurancePoolFactory)
             .getPoolCounter();
+        // iterates through all pools. If not found, returns false
         for (uint256 i = 0; i < length; i++) {
             if (insurancePools[i] == _poolAddress) {
                 return true;
@@ -174,8 +179,9 @@ contract PolicyCenter is Ownable, Setters {
     }
 
     /**
-     * @dev returns insurance pool address given a pool id
+     * @notice returns insurance pool address given a pool id
      * @param _poolId pool id generated on Policy Center
+     * @return address of insurance pool
      */
     function getInsurancePoolById(uint256 _poolId)
         public
@@ -186,11 +192,11 @@ contract PolicyCenter is Ownable, Setters {
     }
 
     /**
-    @dev returns information about the coverage of a given user
-    @param _poolId address of the covered wallet
-    @return _covered address of covered wallet
-    @return buyDate 0 if no coverage
-    @return length 0 if no coverage
+    @notice returns information about the coverage of a given user
+    @param _poolId      address of the covered wallet
+    @return _covered    address of covered wallet
+    @return buyDate     date bought
+    @return length      length of coverage
      */
     function getCoverage(uint256 _poolId, address _covered)
         public
@@ -207,17 +213,19 @@ contract PolicyCenter is Ownable, Setters {
     }
 
     /**
-     * @dev returns reward to liquidity providers
+     * @notice returns reward to liquidity providers
      * @param _poolId pool id to claim from. 0 if reinsurance pool
+     * @return uint256 amount of reward
      */
     function calculateReward(uint256 _poolId, address _provider)
         public
         view
         poolExists(_poolId)
         returns (uint256)
-    {
+    {  
         Liquidity memory liquidity = liquidities[_poolId][_provider];
         if (_poolId > 0) {
+            // gets reward from insurance pool
             return
                 IInsurancePool(insurancePools[_poolId]).calculateReward(
                     liquidity.amount,
@@ -226,6 +234,7 @@ contract PolicyCenter is Ownable, Setters {
                 );
         } else {
             return
+            // gets reward from reinsurance pool
                 IReinsurancePool(reinsurancePool).calculateReward(
                     liquidity.amount,
                     liquidity.userDebt,
@@ -234,12 +243,18 @@ contract PolicyCenter is Ownable, Setters {
         }
     }
 
+    /**
+     * @notice returns payout given to coverage buyers when report passes
+     * @param _poolId pool id to claim from. 0 if reinsurance pool
+     * @return uint256 amount of payout
+     */
     function calculatePayout(uint256 _poolId, address _insured)
         public
         view
         returns (uint256)
     {
         require(_poolId > 0, "Reinsurance pool grants no direct payout");
+        // returns amount user has paid for coverage
         uint256 amount = coverages[_poolId][_insured].amount;
         return amount;
     }
@@ -249,38 +264,42 @@ contract PolicyCenter is Ownable, Setters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @dev sets the premium splits used by Policy Center
-     * @param _treasury split for treasury
-     * @param _insurance split for insurance
-     * @param _reinsurance split for reinsurance
+     * @notice sets the premium splits used by Policy Center
+     * @param _insurance    split for insurance
+     * @param _reinsurance  split for reinsurance
      */
     function setPremiumSplit(
-        uint256 _treasury,
         uint256 _insurance,
         uint256 _reinsurance
     ) external onlyOwner {
-        // should sum up to 100% and reward up to 1%
+        // up to 1000bps, left over goes to treasury
         require(
-            _treasury + _insurance + _reinsurance == 10000,
+            _insurance + _reinsurance <= 10000,
             "Invalid split"
         );
-        require(_treasury > 0, "has not given a treasury split");
         require(_insurance > 0, "has not given an insurance split");
         require(_reinsurance > 0, "has not given a reinsurance split");
-        premiumSplits = [_treasury, _insurance, _reinsurance];
+        //sets insurance and reinsurance splits
+        premiumSplits = [_insurance, _reinsurance];
     }
 
     /**
-    @dev set exchange address to be used for token swaps
-    @param _exchange address of traderjoe contract
+     *  @notice set exchange address to be used for token swaps
+     *  @param _exchange address of traderjoe contract
      */
     function setExchange(address _exchange) external onlyOwner {
         exchange = _exchange;
     }
 
-    function setTokenByPoolId(address _token, uint256 _index) external {
+    /**
+     * @notice sets the insurance pool factory address
+     * @param _token address of token that a pool negotiates in
+    * @param _poolId id of the pool
+     */
+    function setTokenByPoolId(address _token, uint256 _poolId) external {
         require(msg.sender == owner() || msg.sender == insurancePoolFactory, "Only owner or insurancePoolFactory can set tokens");
-        tokenByPoolId[_index] = _token;
+        // maps address to pool id
+        tokenByPoolId[_poolId] = _token;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -289,10 +308,10 @@ contract PolicyCenter is Ownable, Setters {
 
     /**
      * @notice Buy new coverage for a given pool
-     * @param _poolId pool id generated on Policy Center
-     * @param _pay amount paid to cover amount of tokens
-     * @param _coverAmount amount of tokens to cover
-     * @param _length lenght of coverage in days
+     * @param _poolId       pool id generated on Policy Center
+     * @param _pay          amount paid to cover amount of tokens
+     * @param _coverAmount  amount of tokens to cover
+     * @param _length       lenght of coverage in days
      */
     function buyCoverage(
         uint256 _poolId,
@@ -303,7 +322,6 @@ contract PolicyCenter is Ownable, Setters {
         require(_coverAmount > 0, "Amount must be greater than 0");
         require(_length > 0, "Length must be greater than 0");
         require(_poolId > 0, "PoolId must be greater than 0");
-        // TODO
         require(
             IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
                 _pay + fundsByPoolId[_poolId],
@@ -313,16 +331,18 @@ contract PolicyCenter is Ownable, Setters {
             _coverAmount,
             _length
         );
-        require(price == _pay, "pay does not correspond to price");
-        _splitPremium(_poolId, _pay);
+        // checks if user is paying just enough to cover the amount of tokens
+        require(price == _pay, "pay does not correspond to price"); 
         //register coverage
         Coverage storage coverage = coverages[_poolId][msg.sender];
         coverage.amount += _coverAmount;
-        coverage.buyDate = block.timestamp;
+        // initial 7 days buffer so pool cannot be exploited
+        coverage.buyDate = block.timestamp + 7 days;
         coverage.length = _length;
-
-        IInsurancePool(insurancePools[_poolId]).registerNewCoverage(_pay);
+        // updates pool distribution based on paid amount
+        IInsurancePool(insurancePools[_poolId]).updatePoolDistribution(_pay);
         IERC20(tokenByPoolId[_poolId]).transferFrom(msg.sender, address(this), price);
+        _splitPremium(_poolId, _pay);
     }
 
     /**
@@ -343,22 +363,25 @@ contract PolicyCenter is Ownable, Setters {
         poolExists(_poolId)
     {
         require(_amount > 0, "Amount must be greater than 0");
-        // claim rewards
+        // claim rewards. user debt is updated in _claimReward
         _claimReward(_poolId, msg.sender);
         // adds liquidity to insurance or reinsurance pool
         liquidityByPoolId[_poolId] += _amount;
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
         if (_poolId > 0) {
+            // emits tokens to user from insurnace pool
             IInsurancePool(insurancePools[_poolId]).provideLiquidity(
                 _amount,
                 msg.sender
             );
         } else {
+            // emits tokens to user from reinsurnace pool
             IReinsurancePool(reinsurancePool).provideLiquidity(
                 _amount,
                 msg.sender
             );
         }
+        // upsates user provided amount and last claim
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
 
@@ -390,10 +413,12 @@ contract PolicyCenter is Ownable, Setters {
         );
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
-        // claim rewards
+        // claim rewards for caller by pool id. user debt is updated in claim reward
         _claimReward(_poolId, msg.sender);
-        // adds liquidity to insurance or reinsurance pool
+        // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= _amount;
+
+        // new amount owned by caller
         uint256 newAmount = liquidity.amount - _amount;
         liquidity.amount = newAmount;
         liquidity.lastClaim = block.timestamp;
@@ -401,21 +426,27 @@ contract PolicyCenter is Ownable, Setters {
         // transfer rewards
         if (_poolId == 0) {
             IReinsurancePool pool = IReinsurancePool(reinsurancePool);
+            // updates user debt based on accumulated rewards per share
             liquidity.userDebt =
                 liquidity.amount *
                 pool.accumulatedRewardPerShare();
             totalSupply = pool.totalSupply();
+            // burns tokens owner by caller
             pool.removeLiquidity(_amount, msg.sender);
         } else {
             IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+            // updates user debt based on accumulated rewards per share
             liquidity.userDebt =
                 liquidity.amount *
                 pool.accumulatedRewardPerShare();
             totalSupply = pool.totalSupply();
+            // burns tokens owner by caller
             pool.removeLiquidity(_amount, msg.sender);
         }
+        // calculates amount to transfer to caller in native token
         uint256 amountToTransfer = (liquidityByPoolId[_poolId] / totalSupply) *
             _amount;
+        // transfers tokens used to provide liquidity
         IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amountToTransfer);
     }
 
@@ -427,7 +458,9 @@ contract PolicyCenter is Ownable, Setters {
         require(_poolId > 0, "PoolId must be greater than 0");
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
         Coverage storage coverage = coverages[_poolId][msg.sender];
-
+        //the user can only claim a payout 7 days after the coverage was bought
+        // exploit protection
+        require(coverage.buyDate < block.timestamp, "coverage is not yet active");
         require(pool.liquidated(), "pool is not claimable");
         require(
             pool.endLiquidationDate() <= block.timestamp,
@@ -441,24 +474,26 @@ contract PolicyCenter is Ownable, Setters {
             "coverage has expired"
         );
         require(coverage.amount > 0, "no coverage to claim");
+        // gets amount to give as payout
         uint256 amount = calculatePayout(_poolId, msg.sender);
+        // registers removal of funds from pool
         fundsByPoolId[_poolId] -= coverage.amount;
+        // coverage by user is removed
         coverage.amount = 0;
-        if (pool.totalSupply() >= amount) {
-            // TODO WHAT TOKEN DOES THE PAYOUT PROVIDES? HOW MUCH?
+        if (fundsByPoolId[_poolId] >= amount) {
             IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amount);
         } else {
             // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
-            IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, pool.totalSupply());
-            _requestReinsurance(amount - pool.totalSupply(), msg.sender);
+            IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, fundsByPoolId[_poolId]);
+            _requestReinsurance(amount - fundsByPoolId[_poolId], msg.sender);
         }
         emit Payout(amount, msg.sender);
     }
 
     /**
      * @notice registers a new insurance pool deployed by pool factory
-     * @param _poolId pool id generated on Policy Center
-     * @param _address address of the insurance pool
+     * @param _poolId   pool id generated on Policy Center
+     * @param _address  address of the insurance pool
      */
     function addPoolId(uint256 _poolId, address _address) external {
         require(
@@ -478,7 +513,17 @@ contract PolicyCenter is Ownable, Setters {
         // 10% of treasury + 2000 DEG
         uint256 reward = (treasury * 1000) / 10000;
         treasury -= reward;
+        
         IERC20(deg).transfer(_reporter, reward);
+    }
+
+    /**
+    @notice receive funds from ProposalCenter after it penalizes and rewards report voters
+     */
+
+    function receiveFunds(uint256 _amount, address _token) external {
+        require(msg.sender == proposalCenter, "not requested by Executor");
+        treasury += _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -487,7 +532,7 @@ contract PolicyCenter is Ownable, Setters {
 
     /**
      * @notice claims rewards from a given pool id
-     * @param _poolId pool id to claim rewards from
+     * @param _poolId   pool id to claim rewards from
      * @param _provider address of the claimer
      */
     function _claimReward(uint256 _poolId, address _provider) internal {
@@ -519,18 +564,22 @@ contract PolicyCenter is Ownable, Setters {
 
     /**
      * @notice requests reinsurance from Reinsurance Pool
-     * @param _amount amount of liquidity to request
-     * @param _address address of the claimer
+     * @param _amount   amount of liquidity to request
+     * @param _address  address of the claimer
      */
     function _requestReinsurance(uint256 _amount, address _address) internal {
         IReinsurancePool(reinsurancePool).reinsurePool(_amount, _address);
     }
 
+    /**
+     * @notice swaps tokens for deg
+     * @param _amount amount of liquidity to request
+     * @param _token address of token to exchange from
+     */
     function _swapForDEG(uint256 _amount, address _token) internal returns (uint256 receives) {
-        uint256 length = 1;
         address[] memory array = new address[](1);
         array[0] = _token;
-        uint256 receives = IExchange(exchange).swapExactTokensForTokens(_amount, (_amount * 99 / 100), array, deg, 0);
+        receives = IExchange(exchange).swapExactTokensForTokens(_amount, (_amount * 99 / 100), array, deg, 0);
     }
 
      /**
@@ -543,14 +592,17 @@ contract PolicyCenter is Ownable, Setters {
     {
         require(_amount > 0, "No funds to split");
         uint256 totalSplit = _amount;
-        uint256 toTreasury = (totalSplit * premiumSplits[0]) / 10000;
-        uint256 toPool = (totalSplit * premiumSplits[1]) / 10000;
-        uint256 toReinusrancePool = (totalSplit * premiumSplits[2]) / 10000;
-        uint256 treasuryReceives = _swapForDEG(toTreasury, shield);
-        uint256 reinsuranceReceives = _swapForDEG(toReinusrancePool, deg);
+
+        uint256 toInsurancePool = (totalSplit * premiumSplits[0]) / 10000;
+        uint256 toReinsurancePool = (totalSplit * premiumSplits[1]) / 10000;
+        // treasury receives left overs
+        uint256 toTreasury = totalSplit - toInsurancePool - toReinsurancePool;
+        // swap native for degis
+        uint256 treasuryReceives = _swapForDEG(toTreasury, deg);
+        uint256 reinsuranceReceives = _swapForDEG(toReinsurancePool, deg);
         treasury += treasuryReceives;
-        fundsByPoolId[_poolId] += toPool;
+        totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
-        fundsByPoolId[0] += reinsuranceReceives;
+        totalRewardsByPoolId[0] += reinsuranceReceives;
     }
 }
