@@ -399,31 +399,49 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
     }
 
     /**
-    @notice votes on currently pending proposal in proposal center.
-            voting power is decided by the amount of staked veDEG.
-            no penalty nor rewards.
-    @param _proposalId id of the pool proposal to be voted on
-    @param _vote true if yes, false if no
-    */
-    function votePoolProposal(uint256 _proposalId, bool _vote) external {
+     * @notice votes on currently pending proposal in proposal center.
+     *       voting power is decided by the amount of staked veDEG.
+     *       no penalty nor rewards.
+     *
+     * @param _proposalId Id of the pool proposal to be voted on
+     * @param _vote       True if yes, false if no
+     * @param _amount     Amount of veDEG used for this vote
+     */
+    function votePoolProposal(
+        uint256 _proposalId,
+        bool _vote,
+        uint256 _amount
+    ) external {
         require(proposals[_proposalId].pending, "Report is not pending");
-        address[] storage voted = proposals[_proposalId].voted;
-        uint256 length = voted.length;
-        // verifies if address already voted
-        for (uint256 i = 0; i < length; i++) {
-            require(voted[i] != msg.sender, "Address already voted");
-        }
+
+        // Should have enough veDEG
         uint256 balance = IERC20(veDeg).balanceOf(msg.sender);
-        require(balance > 0, "You have no tokens");
+        if (balance < _amount) revert NotEnoughVeDEG();
+
+        // Lock vedeg until this report is settled
+        IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
+
+        // Record the user's choice
+        UserVote storage userProposalVote = userProposalVotes[msg.sender][
+            _proposalId
+        ];
+        if (userProposalVote.amount > 0) {
+            require(
+                userProposalVote.choice == _vote,
+                "Can not choose both sides"
+            );
+        } else {
+            userProposalVote.choice = _vote;
+        }
+
         // register votes
         if (_vote) {
             proposals[_proposalId].yes += balance;
         } else {
             proposals[_proposalId].no += balance;
         }
-        // registers voter
-        voted.push(msg.sender);
-        emit Vote(_proposalId, _vote, "New Pool");
+
+        emit ProposalVoted(_proposalId, msg.sender, _vote, _amount);
     }
 
     /**
@@ -506,20 +524,17 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
         require(proposals[_proposalId].pending, "proposal not pending");
         // 3 days for the report to be evaluated
         require(
-            proposals[_proposalId].timestamp + proposalBuffer <
-                block.timestamp,
+            proposals[_proposalId].timestamp + proposalBuffer < block.timestamp,
             "proposal not ready"
         );
         address protocol = proposals[_proposalId].protocolAddress;
-        uint256 total = proposals[_proposalId].yes +
-            proposals[_proposalId].no;
+        uint256 total = proposals[_proposalId].yes + proposals[_proposalId].no;
         // requires 30% of vedeg total supply to vote on a proposal
         require(
             total > (IERC20(veDeg).totalSupply() * 3) / 10,
             "Not enough votes"
         );
-        bool result = proposals[_proposalId].yes >
-            proposals[_proposalId].no;
+        bool result = proposals[_proposalId].yes > proposals[_proposalId].no;
         // if last round or vote agrees with previous round, move on with the report
         if (
             (proposals[_proposalId].round == 2) ||
