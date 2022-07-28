@@ -38,7 +38,6 @@ import "forge-std/console.sol";
 pragma solidity ^0.8.13;
 
 contract ProtocolProtection is Ownable {
-
     address public deg;
     address public veDeg;
     address public shield;
@@ -68,16 +67,27 @@ contract ProtocolProtection is Ownable {
         policyCenter = _policyCenter;
     }
 
-    function setProposalCenter(address _proposalCenter) external virtual onlyOwner {
+    function setProposalCenter(address _proposalCenter)
+        external
+        virtual
+        onlyOwner
+    {
         proposalCenter = _proposalCenter;
     }
 
-    function setReinsurancePool(address _reinsurancePool) external virtual onlyOwner {
+    function setReinsurancePool(address _reinsurancePool)
+        external
+        virtual
+        onlyOwner
+    {
         reinsurancePool = _reinsurancePool;
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory) external virtual onlyOwner {
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        virtual
+        onlyOwner
+    {
         insurancePoolFactory = _insurancePoolFactory;
     }
-
 }

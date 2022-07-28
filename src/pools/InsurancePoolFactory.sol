@@ -20,10 +20,8 @@
 
 pragma solidity ^0.8.13;
 
-
 import "../util/ProtocolProtection.sol";
 import "./InsurancePool.sol";
-
 
 /**
  * @title Insurance Pool Factory
@@ -34,7 +32,6 @@ import "./InsurancePool.sol";
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
 contract InsurancePoolFactory is ProtocolProtection {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -140,7 +137,10 @@ contract InsurancePoolFactory is ProtocolProtection {
         uint256 _maxCapacity,
         uint256 _policyPricePerToken
     ) public returns (address) {
-        require(msg.sender == owner() || msg.sender == executor, "Only owner or executor contract can create a new insurance pool");
+        require(
+            msg.sender == owner() || msg.sender == executor,
+            "Only owner or executor contract can create a new insurance pool"
+        );
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
         bytes memory bytecode = _getInsurancePoolBytecode(
@@ -156,7 +156,10 @@ contract InsurancePoolFactory is ProtocolProtection {
 
         // Store the pool information
         IPolicyCenter(policyCenter).addPoolId(poolCounter, newPoolAddress);
-        IPolicyCenter(policyCenter).setTokenByPoolId(_protocolToken, poolCounter);
+        IPolicyCenter(policyCenter).setTokenByPoolId(
+            _protocolToken,
+            poolCounter
+        );
         poolInfoById[poolCounter] = PoolInfo(
             _name,
             newPoolAddress,
