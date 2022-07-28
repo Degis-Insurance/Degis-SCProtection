@@ -52,7 +52,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
         uint256 round;
         bool pending;
         bool approved;
-        address[] voted;
     }
     mapping(uint256 => Report) public reports;
 
@@ -68,7 +67,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
         string protocolName;
         address protocolAddress;
         address proposerAddress;
-        address[] voted;
         uint256 maxCapacity;
         // per year in bps 10000 == 100%
         uint256 policyPricePerShield;
@@ -191,7 +189,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
      * @return no               number of no votes in veDEG
      * @return pending          if decision is still pending
      * @return approved         if current decision is approved
-     * @return voted            list of addresses that have already voted
      */
     function getReport(uint256 _reportId)
         public
@@ -203,8 +200,7 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
             uint256,
             uint256,
             bool,
-            bool,
-            address[] memory
+            bool
         )
     {
         Report memory report = reports[_reportId];
@@ -215,8 +211,7 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
             report.yes,
             report.no,
             report.pending,
-            report.approved,
-            report.voted
+            report.approved
         );
     }
 
@@ -225,7 +220,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
      * @return protocolName     name of the protocol
      * @return protocolAddress  address of the protocol
      * @return proposerAddress  address of the proposer
-     * @return voted            list of addresses that have already voted
      * @return maxCapacity      maximum capacity of the pool
      * @return timestamp        timestamp of the proposal
      * @return policyPricePerShield  price per shield in bps
@@ -242,7 +236,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
             string memory,
             address,
             address,
-            address[] memory,
             uint256,
             uint256,
             uint256,
@@ -257,7 +250,6 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
             proposal.protocolName,
             proposal.protocolAddress,
             proposal.proposerAddress,
-            proposal.voted,
             proposal.maxCapacity,
             proposal.timestamp,
             proposal.policyPricePerShield,
@@ -445,29 +437,35 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
     }
 
     /**
-    @notice evaluates votes on a pending report in proposal center.
-            if it approval is the same twice in a row or round is 2,
-            it is approved and sent to executor queue.
-    @param _reportId id of the report to be voted on
-    */
+     * @notice evaluates votes on a pending report in proposal center.
+     *         if it approval is the same twice in a row or round is 2,
+     *         it is approved and sent to executor queue.
+     *
+     * @param _reportId id of the report to be voted on
+     */
     function evaluateReportVotes(uint256 _reportId) external {
         require(reports[_reportId].pending, "report not pending");
+
         // 3 days for the report to be evaluated
         require(
             reports[_reportId].timestamp + reportBuffer < block.timestamp,
             "report not ready"
         );
 
-        uint256 total = reports[_reportId].yes + reports[_reportId].no;
+        uint256 totalVotes = reports[_reportId].yes + reports[_reportId].no;
+
         // requires 30% of vedeg total supply to vote on a report
         require(
-            total > (IERC20(veDeg).totalSupply() * 3) / 10,
+            totalVotes > (IERC20(veDeg).totalSupply() * 3) / 10,
             "Not enough votes"
         );
+
         address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
             reports[_reportId].poolId
         );
+
         bool result = reports[_reportId].yes > reports[_reportId].no;
+
         // if last round or vote agrees with previous round, move on with the report
         if (
             (reports[_reportId].round == 2) ||
@@ -515,11 +513,11 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
     }
 
     /**
-    @notice evaluates votes on a pending pool proposal in proposal center.
-            if it approval is the same twice in a row or round is 2,
-            it is approved and sent to executor queue.
-    @param _proposalId id of the proposal to be voted on
-    */
+     * @notice evaluates votes on a pending pool proposal in proposal center.
+     *       if it approval is the same twice in a row or round is 2,
+     *       it is approved and sent to executor queue.
+     * @param _proposalId id of the proposal to be voted on
+     */
     function evaluatePoolProposalVotes(uint256 _proposalId) external {
         require(proposals[_proposalId].pending, "proposal not pending");
         // 3 days for the report to be evaluated
@@ -585,21 +583,24 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
     }
 
     /**
-    @notice reports that a protocol has been compromised.
-            user notifies that pool should be liquidated.
-            1000 DEG tokens are held by the proposal center
-            until report is deemed truthful.
-    @param _poolId id of the pool to be reported
-    */
+     * @notice reports that a protocol has been compromised.
+     *       user notifies that pool should be liquidated.
+     *       1000 DEG tokens are held by the proposal center
+     *      until report is deemed truthful.
+     *
+     * @param _poolId id of the pool to be reported
+     */
     function reportPool(uint256 _poolId) public {
         address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
             _poolId
         );
         require(!poolReported[pool], "Pool already reported");
         require(pool != address(0), "Pool doesn't exist");
+
         ++reportCounter;
-        address[] memory initializeArray;
+
         poolReported[pool] = true;
+
         // registers new report
         reports[reportCounter] = Report(
             _poolId,
@@ -609,30 +610,27 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
             0,
             0,
             true,
-            false,
-            initializeArray
+            false
         );
+
         // transfer back to deg address. another option is to burn it.
         IERC20(deg).transferFrom(msg.sender, deg, 1000);
+
+        // Pause insurance pool and reinsurance pool
         IInsurancePool(pool).setPausedInsurancePool(true);
         IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
 
-        emit ReportCreated(
-            reportCounter,
-            reports[reportCounter].poolId,
-            reports[reportCounter].timestamp,
-            reports[reportCounter].reporterAddress
-        );
+        emit ReportCreated(reportCounter, _poolId, block.timestamp, msg.sender);
     }
 
     /**
-    @notice proposes a new protocol to be insured.
-
-    @param _protocol            address of token to receive have a new insurance pool.
-    @param _name                name of the protocol to be insured.
-    @param _maxCapacity         maximum capacity of the insurance pool in native token.
-    @param _policyPricePerToken price of the policy in native token.
-    */
+     * @notice proposes a new protocol to be insured.
+     *
+     * @param _protocol            Protocol native token address
+     * @param _name                Name of the protocol to be insured
+     * @param _maxCapacity         Maximum capacity of the insurance pool in native token
+     * @param _policyPricePerToken Price of the policy in native token
+     */
     function proposePool(
         address _protocol,
         string memory _name,
@@ -640,14 +638,14 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
         uint256 _policyPricePerToken
     ) public {
         require(!poolProposed[_protocol], "Protocol already proposed");
+
         ++proposalCounter;
-        address[] memory emptyVoted;
+
         // registers new proposal
         proposals[proposalCounter] = PoolProposal(
             _name,
             _protocol,
             msg.sender,
-            emptyVoted,
             _maxCapacity,
             _policyPricePerToken,
             block.timestamp,
@@ -670,54 +668,55 @@ contract ProposalCenter is Pausable, ProtocolProtection, ProposalCenterErrors {
     }
 
     /**
-    @notice reward voters for a report with a final result and penalizes
-            bad votes.
-            Only callable through executor.
-    @param _reportId    id of the report to be reward voters on.
-    @param _veredict    true if report was approved, false if rejected.
+     * @notice reward voters for a report with a final result and penalizes
+     *       bad votes.
+     *       Only callable through executor.
+     *
+     * @param _reportId    Report id
+     * @param _veredict    True if report was approved, false if rejected.
      */
     function rewardByReportId(uint256 _reportId, bool _veredict) external {
         require(msg.sender == executor, "Only Executor can liquidate");
-        address[] memory voted = reports[_reportId].voted;
+
         uint256 reward = 0;
         if (_veredict) {
-            IPolicyCenter(policyCenter).rewardTreasuryToReporter(
-                reports[_reportId].reporterAddress
-            );
-            MockDEG(deg).mintDegis(reports[_reportId].reporterAddress, 2000);
-            // punishment for voting against majority
-            for (uint256 i = 0; i < voted.length; i++) {
-                if (confirmsReport[_reportId][voted[i]] != _veredict) {
-                    (uint256 veDegBalance, ) = MockVeDEG(deg).users(
-                        1,
-                        voted[i]
-                    );
-                    uint256 stakedDegPenalty = (veDegBalance * 4) / 500;
-                    reward += stakedDegPenalty;
-                    MockDEG(deg).transferFrom(
-                        voted[i],
-                        address(this),
-                        stakedDegPenalty
-                    );
-                    // unlock vedeg balance
-                    MockVeDEG(veDeg).unlockVeDEG(
-                        voted[i],
-                        (veDegBalance * 4) / 5
-                    );
-                }
-            }
-            // rewards for voting with majority
-            for (uint256 i = 0; i < voted.length; i++) {
-                if (confirmsReport[_reportId][voted[i]] == _veredict) {
-                    // if voted with the decision, reward 50% of penalty to voters
-                    // according to the amount of vedeg they hold
-                    uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
-                    uint256 toTransfer = (balance * reports[_reportId].yes) / 2;
-                    MockDEG(deg).transfer(voted[i], toTransfer);
-                    MockVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
-                    reward -= toTransfer;
-                }
-            }
+            // IPolicyCenter(policyCenter).rewardTreasuryToReporter(
+            //     reports[_reportId].reporterAddress
+            // );
+            // MockDEG(deg).mintDegis(reports[_reportId].reporterAddress, 2000);
+            // // punishment for voting against majority
+            // for (uint256 i = 0; i < voted.length; i++) {
+            //     if (confirmsReport[_reportId][voted[i]] != _veredict) {
+            //         (uint256 veDegBalance, ) = MockVeDEG(deg).users(
+            //             1,
+            //             voted[i]
+            //         );
+            //         uint256 stakedDegPenalty = (veDegBalance * 4) / 500;
+            //         reward += stakedDegPenalty;
+            //         MockDEG(deg).transferFrom(
+            //             voted[i],
+            //             address(this),
+            //             stakedDegPenalty
+            //         );
+            //         // unlock vedeg balance
+            //         MockVeDEG(veDeg).unlockVeDEG(
+            //             voted[i],
+            //             (veDegBalance * 4) / 5
+            //         );
+            //     }
+            // }
+            // // rewards for voting with majority
+            // for (uint256 i = 0; i < voted.length; i++) {
+            //     if (confirmsReport[_reportId][voted[i]] == _veredict) {
+            //         // if voted with the decision, reward 50% of penalty to voters
+            //         // according to the amount of vedeg they hold
+            //         uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
+            //         uint256 toTransfer = (balance * reports[_reportId].yes) / 2;
+            //         MockDEG(deg).transfer(voted[i], toTransfer);
+            //         MockVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
+            //         reward -= toTransfer;
+            //     }
+            // }
             MockDEG(deg).transfer(policyCenter, reward);
         }
     }

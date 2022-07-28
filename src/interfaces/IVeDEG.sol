@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @dev Interface of the VeDEG
  */
 interface IVeDEG is IERC20 {
+    function locked(address _user) external view returns (uint256);
+
     function deposit(uint256 _amount) external;
 
     function depositMaxTime(uint256 _amount) external;
