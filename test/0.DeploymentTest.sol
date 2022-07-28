@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
+import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
@@ -22,76 +23,96 @@ import "src/interfaces/IProposalCenter.sol";
 import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
+/** 
+@notice Tests initial deployment for most contracts.
+ */
+contract InitialContractDeploymentTest is Test {
 
-contract ContractDeploymentTest is Test {
-
-    InsurancePoolFactory public ipf;
-    ReinsurancePool public rp;
-    PolicyCenter public policyc;
-    ProposalCenter public proposalc;
+    InsurancePoolFactory public insurancePoolFactory;
+    ReinsurancePool public reinsurancePool;
+    PolicyCenter public policyCenter;
+    ProposalCenter public proposalCenter;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
     InsurancePool public insurancePool;
-    Executor public e;
+    Executor public executor;
 
-    address public alice = address(0x1337);
-    address public bob = address(0x133702);
-    address public carol = address(0x133703);
-    address public ptp = address(0x133704);
-    address public yeti = address(0x133705);
-    address public pool1;
-
-    function setUp() public {
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
-        rp = new ReinsurancePool(address(shield));
-    }
-
-    function testDeployIpf() public {
-        ipf = new InsurancePoolFactory(address(rp), address(shield));
-        vm.label(address(ipf), "Insurance Pool Factory");
-        assertEq(ipf.poolCounter() == 0, true);
-    }
+    function setUp() public {}
 
     function testDeployShield() public {
         shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
-        vm.label(address(shield), "shield token");
         assertEq(keccak256(bytes(shield.name())) == keccak256(bytes("Shield")), true);
     }
 
     function testDeployDEG() public {
         deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        vm.label(address(deg), "degis token");
         assertEq(keccak256(bytes(deg.name())) == keccak256(bytes("Degis")), true);
     }
 
     function testDeployVeDEG() public {
         vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
-        vm.label(address(vedeg), "veDegis token");
         assertEq(keccak256(bytes(vedeg.name())) == keccak256(bytes("veDegis")), true);
     }
 
     function testDeployReinsurancePool() public {
-        rp = new ReinsurancePool(address(shield));
-        vm.label(address(rp), "Reinsurance Pool");
-        assertEq(rp.shield() == address(shield), true);
-    }
-
-    function testDeployPolicyCenter() public {
-        policyc = new PolicyCenter(address(rp));
-        vm.label(address(policyc), "Policy Center");
-        assertEq(policyc.reinsurancePool() == address(rp), true);
+        reinsurancePool = new ReinsurancePool();
+        assertEq(keccak256(bytes(reinsurancePool.name())) == keccak256(bytes("ReinsurancePool")), true);
     }
 
     function testDeployExecutor() public {
-        e = new Executor();
-        assertEq(e.poolBuffer() == 3 days, true);
+       executor =new Executor();
+        assertEq(executor.poolBuffer() == 1 days, true);
     }
 
     function testDeployProposalCenter() public {
-        proposalc = new ProposalCenter();
-        vm.label(address(proposalc), "Proposal Center");
+        proposalCenter = new ProposalCenter();
+        assertEq(address(proposalCenter) == address(0), false);
+    }
 
-        assertEq(address(proposalc) == address(0), false);
+    
+}
+
+/** 
+@notice Tests secondary deployment for most contracts since they are dependent on other contracts.
+ */
+contract SecondaryContractDeploymentTest is Test {
+
+    InsurancePoolFactory public insurancePoolFactory;
+    ReinsurancePool public reinsurancePool;
+    PolicyCenter public policyCenter;
+    ProposalCenter public proposalCenter;
+    MockSHIELD public shield;
+    MockDEG public deg;
+    MockVeDEG public vedeg;
+    InsurancePool public insurancePool;
+    Executor public executor;
+    ERC20 public ptp;
+
+    function setUp() public {
+        // Policy Center, Factory and Insurrance Pool require deg, a third party token
+        // and the reinsurancePool already deployed.
+        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
+        reinsurancePool = new ReinsurancePool();
+    }
+
+    function testDeployPolicyCenter() public {
+        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        assertEq(policyCenter.reinsurancePool() == address(reinsurancePool), true);
+    }
+
+    function testDeployFactory() public {
+        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        assertEq(insurancePoolFactory.poolCounter() == 0, true);
+    }
+
+    function testDeployInsurancePool() public {
+        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        insurancePoolFactory.setPolicyCenter(address(policyCenter));
+        address pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000, 1);
+        console.log(pool1);
     }
 }

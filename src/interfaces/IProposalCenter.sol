@@ -29,7 +29,7 @@ interface IProposalCenter {
     function proposalCenter() view external returns (address);
     function proposalCounter() view external returns (uint256);
     function proposalIds(uint256) view external returns (string memory protocolName, address protocolAddress, address proposerAddress, uint256 maxCapacity, uint256 policyPricePerShield, uint256 timestamp, uint256 yes, uint256 no, uint256 round, bool pending, bool approved);
-    function proposePool(address _protocol, string memory _name, uint256 _maxCapacity, uint256 _policyPricePerShield) external;
+    function proposePool(address _protocol, string memory _name, uint256 _maxCapacity, uint256 _policyPricePerToken) external;
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;
     function reportBuffer() view external returns (uint256);

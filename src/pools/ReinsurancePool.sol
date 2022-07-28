@@ -20,34 +20,39 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/ReinsurancePoolErrors.sol";
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IProposalCenter.sol";
-import "../interfaces/IComittee.sol";
-import "../interfaces/IExecutor.sol";
-import "../util/Setters.sol";
+import "../util/ProtocolProtection.sol";
 
+/**
+ * @title Reinsurance Pool
+ *
+ * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
+ *
+ * @notice This is the reinsurance pool contract for degis Protocol Protection
+ *         Users can provide liquidity to it through the Policy Center.
+ *         If the insurance pool is unable to fulfil the insurance, the reinsurance pool
+ *         will be able to provide the insurance to the user.
+ */
 contract ReinsurancePool is
-    ReinsurancePoolErrors,
-    ERC20("ReinsurancePoolLP", "RLP"),
-    Ownable,
-    Setters
+    ERC20("ReinsurancePool", "RP"),
+    ProtocolProtection
 {
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    struct PoolInfo {
+        address protocolAddress;
+        uint256 proportion;
+    }
+    mapping(address => PoolInfo) public pools;
+
     struct Liquidity {
         uint256 amount;
         uint256 userDebt;
         uint256 lastClaim;
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
+    mapping(address => Liquidity) public liquidities;
 
     bool public insurancePoolLiquidated;
     bool public paused;
@@ -56,13 +61,6 @@ contract ReinsurancePool is
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
     uint256 public emissionRate;
-
-    struct PoolInfo {
-        address protocolAddress;
-        uint256 proportion;
-    }
-    mapping(address => PoolInfo) public pools;
-    mapping(address => Liquidity) public liquidities;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -74,10 +72,11 @@ contract ReinsurancePool is
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
 
-    constructor(address _shield) {
-        shield = _shield;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
+    // only allows to be calle from a pool
     modifier poolOnly() {
         require(
             IPolicyCenter(policyCenter).isPoolAddress(msg.sender),
@@ -86,10 +85,16 @@ contract ReinsurancePool is
         _;
     }
 
-    function endLiquidationPeriod() external onlyOwner {
-        insurancePoolLiquidated = false;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Returns the to be rewarded by reinsurance pool
+     * @param _amount   amount of liquidity provided by the user
+     * @param _userDebt amount of debt the user has to the pool
+     * @return reward   amount to receive considering amount and userDebt
+     */
     function calculateReward(uint256 _amount, uint256 _userDebt)
         public
         view
@@ -103,13 +108,24 @@ contract ReinsurancePool is
     }
 
     // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+    @notice terminate liquidation period on reinsurance pool only
+    */
+    function endLiquidationPeriod() external onlyOwner {
+        insurancePoolLiquidated = false;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @dev mints liquidity tokens. Only callable through policyCenter
-    @param _amount token being insured
-    @param _provider liquidity provider adress
+    @notice mints liquidity tokens. Only callable through policyCenter
+    @param _amount      token being insured
+    @param _provider    liquidity provider adress
     */
     function provideLiquidity(uint256 _amount, address _provider) external {
         require(_amount > 0, "amount should be greater than 0");
@@ -122,9 +138,9 @@ contract ReinsurancePool is
     }
 
     /**
-    @dev burns liquidity tokens. Only callable through policyCenter
-    @param _amount token being insured
-    @param _provider liquidity provider adress
+    @notice burns liquidity tokens. Only callable through policyCenter
+    @param _amount      token being insured
+    @param _provider    liquidity provider adress
     */
     function removeLiquidity(uint256 _amount, address _provider) external {
         require(_amount <= totalSupply(), "amount exceeds totalSupply");
@@ -143,18 +159,19 @@ contract ReinsurancePool is
     }
 
     /**
-    @dev provides liquidity to pools in need of it. Only callable by Pools
-    @param _amount token being insured
-    @param _address address of covered wallet
+    @notice provides liquidity to pools in need of it. Only callable by Pools
+    @param _amount      token being insured
+    @param _address     address of covered wallet
     */
     function reinsurePool(uint256 _amount, address _address) external poolOnly {
-        if (_amount == 0) revert ZeroAmount();
+        require(_amount > 0, "amount should be greater than 0");
         IERC20(shield).transferFrom(address(this), _address, _amount);
     }
 
     /**
-     * @notice Move liquidity to another pool to be used for reinsurance.
-     * @param _amount Amount of liquidity to move.
+     * @notice  Move liquidity to another pool to be used for reinsurance,
+                reducing gas costs during liquidation period.
+     * @param _amount Amount of liquidity to transfer to insurance pool
      * @param _poolId Id of the pool to move the liquidity to.
      */
     function moveLiquidity(uint256 _poolId, uint256 _amount)
