@@ -54,9 +54,8 @@ contract IncidentReport is IncidentReportParameters {
     mapping(uint256 => TempResult) public reportTempResults;
 
     struct UserVote {
-        uint256 choice;
+        uint256 choice; // 1: vote for, 2: vote against
         uint256 amount;
-        uint256 claimable;
         bool claimed;
     }
     // User address => report id => user's voting info
@@ -242,6 +241,7 @@ contract IncidentReport is IncidentReportParameters {
         uint256 finalResult = reports[_reportId].result;
 
         require(finalResult > 0, "Not settled");
+        require(!userVote.claimed, "Already claimed");
 
         // Correct choice
         if (userVote.choice == finalResult) {
@@ -253,6 +253,8 @@ contract IncidentReport is IncidentReportParameters {
             // Tied result, give back user's veDEG
             IVeDEG(veDEG).unlockVeDEG(msg.sender, userVote.amount);
         } else revert("No reward to claim");
+
+        userReportVotes[msg.sender][_reportId].claimed = true;
     }
 
     function payDebt(uint256 _reportId, address _user) external {
