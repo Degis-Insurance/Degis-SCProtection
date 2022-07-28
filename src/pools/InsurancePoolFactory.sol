@@ -155,7 +155,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         address newPoolAddress = _deploy(bytecode, salt);
 
         // Store the pool information
-        IPolicyCenter(policyCenter).addPoolId(poolCounter, newPoolAddress);
+        IPolicyCenter(policyCenter).setPoolId(poolCounter, newPoolAddress);
         IPolicyCenter(policyCenter).setTokenByPoolId(
             _protocolToken,
             poolCounter
