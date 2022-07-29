@@ -7,7 +7,6 @@ import "../util/ProtocolProtection.sol";
 import "./interfaces/IncidentReportParameters.sol";
 
 contract IncidentReport is ProtocolProtection, IncidentReportParameters {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -16,15 +15,16 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     uint256 public reportCounter;
 
     struct Report {
-        uint256 poolId;
-        uint256 reportTimestamp;
-        address reporter;
-        uint256 numFor;
-        uint256 numAgainst;
+        uint256 poolId; // Project pool id
+        uint256 reportTimestamp; // Time of starting report
+        address reporter; // Reporter address
+        uint256 voteTimestamp; // Voting start timestamp
+        uint256 numFor; // Votes voting for
+        uint256 numAgainst; // Votes voting against
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
         uint256 status;
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
-        uint256 votingReward;
+        uint256 votingReward; // Voting reward per veDEG if the report passed
     }
     // Report id => report info
     mapping(uint256 => Report) public reports;
@@ -61,6 +61,10 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         address indexed reporter
     );
 
+    event VotingStart(uint256 reportId, uint256 startTimestamp);
+
+    event ReportClosed(uint256 reportId, uint256 closeTimestamp);
+
     event ReportVoted(
         uint256 reportId,
         address indexed user,
@@ -78,83 +82,6 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         uint256 debt,
         uint256 unlockAmount
     );
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ View Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-    
-     /**
-     * @notice Returns the number of reports in the proposal center.
-     * @return poolId           id of the pool the report refers to
-     * @return timestamp        timestamp of the report
-     * @return reporterAddress  address of the reporter
-     * @return yes              number of yes votes in veDEG
-     * @return no               number of no votes in veDEG
-     * @return pending          if decision is still pending
-     * @return approved         if current decision is approved
-     * @return voted            list of addresses that have already voted
-     */
-    function getReport(uint256 _reportId)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            address,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256 
-        )
-    {
-        Report memory _report = reports[_reportId];
-        return (
-        _report.poolId,
-        _report.reportTimestamp,
-        _report.reporter,
-        _report.numFor,
-        _report.numAgainst,
-        _report.round, // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
-        _report.status,
-        _report.result, // 1: Pass, 2: Reject, 3: Tied
-        _report.votingReward
-        );
-    }
-
-    function getTempResult(uint256 _reportId)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            bool
-        )
-    {
-        TempResult memory _tempResult = reportTempResults[_reportId];
-        return (
-        _tempResult.result,
-        _tempResult.sampleTimestamp,
-        _tempResult.hasChanged
-        );
-    }
-
-    function getUserVote(address _user, uint256 _reportId)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            bool
-        )
-    {
-        UserVote memory _vote = userReportVotes[_user][_reportId];
-        return (
-            _vote.choice,
-            _vote.amount,
-            _vote.claimed
-        );
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -197,6 +124,45 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
+     * @notice Start the voting process
+     */
+    function startVoting(uint256 _reportId) external {
+        Report storage currentReport = reports[_reportId];
+        require(currentReport.status == PENDING_STATUS, "Not pending status");
+
+        // Can only start the voting after pending period
+        require(
+            _passedPendingPeriod(currentReport.reportTimestamp),
+            "Not passed pending period"
+        );
+
+        currentReport.status = VOTING_STATUS;
+        currentReport.voteTimestamp = block.timestamp;
+
+        emit VotingStart(_reportId, block.timestamp);
+    }
+
+    /**
+     * @notice Close a pending report
+     *
+     * @param _reportId Report id
+     */
+    function closeReport(uint256 _reportId) external onlyOwner {
+        Report storage currentReport = reports[_reportId];
+        require(currentReport.status == PENDING_STATUS, "Not pending status");
+
+        // Must close the report before pending period ends
+        require(
+            !_passedPendingPeriod(currentReport.reportTimestamp),
+            "Already pass pending period"
+        );
+
+        currentReport.status = CLOSE_STATUS;
+
+        emit ReportClosed(_reportId, block.timestamp);
+    }
+
+    /**
      * @notice Vote on currently pending reports
      *
      *         Voting power is decided by the (unlocked) balance of veDEG
@@ -212,12 +178,13 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         uint256 _isFor,
         uint256 _amount
     ) external {
+        // Should be manually switched on the voting process
         require(
-            reports[_reportId].status == PENDING_STATUS,
-            "Report is not pending status"
+            reports[_reportId].status == VOTING_STATUS,
+            "Not voting status"
         );
 
-        require(_isFor == 1 && _isFor == 2, "Wrong choice");
+        require(_isFor == 1 || _isFor == 2, "Wrong choice");
 
         // Should have enough veDEG
         uint256 balance = IERC20(veDeg).balanceOf(msg.sender) -
@@ -253,7 +220,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         // If the voting period has passed, no need for update
         if (
             !reportTempResults[_reportId].hasChanged &&
-            _notPassedVotingPeriod(
+            !_passedVotingPeriod(
                 currentReport.round,
                 currentReport.reportTimestamp
             )
@@ -276,9 +243,11 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     function settle(uint256 _reportId) external {
         Report storage currentReport = reports[_reportId];
 
+        require(currentReport.status == VOTING_STATUS, "Not voting status");
+
         // Check has passed the voting period
         require(
-            !_notPassedVotingPeriod(
+            _passedVotingPeriod(
                 currentReport.round,
                 currentReport.reportTimestamp
             ),
@@ -360,8 +329,13 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         Report storage currentReport = reports[_reportId];
 
         if (currentReport.result == 1) {
-            IERC20(deg).transfer(currentReport.reporter, REPORT_THRESHOLD);
-            IDegisToken(deg).mintDegis(currentReport.reporter, REPORTER_REWARD);
+            // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
+            IDegisToken(deg).mintDegis(
+                currentReport.reporter,
+                REPORTER_REWARD + REPORT_THRESHOLD
+            );
+
+            _distributeIncomeForWinner(currentReport.reporter);
 
             // Total deg reward
             uint256 totalRewardToVoters = REPORT_THRESHOLD +
@@ -386,6 +360,13 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
+     * @notice Distribute part of shield income to correct reporter
+     *
+     * @param _winner Winner address
+     */
+    function _distributeIncomeForWinner(address _winner) internal {}
+
+    /**
      * @notice Check quorum requirement
      *         30% of totalSupply is the minimum requirement for participation
      *
@@ -399,20 +380,39 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
+     * @notice Check whether has passed the pending time period
+     *
+     * @param _reportTimestamp Start timestamp of the report
+     *
+     * @return hasPassed True for passing
+     */
+    function _passedPendingPeriod(uint256 _reportTimestamp)
+        internal
+        view
+        returns (bool)
+    {
+        return block.timestamp > _reportTimestamp + PENDING_PERIOD;
+    }
+
+    /**
      * @notice Check whether has passed the voting time period
      *
      * @param _round      Current round
      * @param _reportTime Start timestamp of the report
      *
-     * @return hasPassed True for not passing
+     * @return hasPassed True for passing
      */
-    function _notPassedVotingPeriod(uint256 _round, uint256 _reportTime)
+    function _passedVotingPeriod(uint256 _round, uint256 _reportTime)
         internal
         view
         returns (bool)
     {
-        uint256 endTime = _reportTime + VOTING_PERIOD + _round * EXTEND_PERIOD;
-        return block.timestamp <= endTime;
+        uint256 endTime = _reportTime +
+            PENDING_PERIOD +
+            VOTING_PERIOD +
+            _round *
+            EXTEND_PERIOD;
+        return block.timestamp > endTime;
     }
 
     /**
