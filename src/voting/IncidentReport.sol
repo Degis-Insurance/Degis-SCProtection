@@ -186,10 +186,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
         require(_isFor == 1 || _isFor == 2, "Wrong choice");
 
-        // Should have enough veDEG
-        uint256 balance = IERC20(veDeg).balanceOf(msg.sender) -
-            IVeDEG(veDeg).locked(msg.sender);
-        require(balance >= _amount, "Not enough veDEG");
+        _enoughVeDEG(msg.sender, _amount);
 
         // Lock vedeg until this report is settled
         IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
@@ -235,6 +232,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         emit ReportVoted(_reportId, msg.sender, _isFor, _amount);
     }
 
+    
     /**
      * @notice Settle the final result for a report
      *
@@ -378,6 +376,19 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
             "Not reached quorum"
         );
     }
+
+    /**
+     * @notice Check veDEG to be enough 
+     *
+     * @param _user   User address
+     * @param _amount Amount to fulfill
+     */
+    function _enoughVeDEG(address _user, uint256 _amount) internal view {
+        uint256 unlockedBalance = IERC20(veDeg).balanceOf(_user) -
+            IVeDEG(veDeg).locked(_user);
+        require(unlockedBalance >= _amount, "Not enough veDEG");
+    }
+
 
     /**
      * @notice Check whether has passed the pending time period
