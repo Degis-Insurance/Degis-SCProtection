@@ -9,6 +9,7 @@ import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/ProposalCenter.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -32,6 +33,7 @@ contract InitialContractDeploymentTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -70,7 +72,10 @@ contract InitialContractDeploymentTest is Test {
         assertEq(address(proposalCenter) == address(0), false);
     }
 
-    
+    function testDeployIncidentReport() public {
+        incidentReport = new IncidentReport();
+        assertEq(address(incidentReport) == address(0), false);
+    }
 }
 
 /** 

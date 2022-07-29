@@ -155,43 +155,7 @@ contract ProposalCenter is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
-    /**
-     * @notice Returns the number of reports in the proposal center.
-     * @return poolId           id of the pool the report refers to
-     * @return timestamp        timestamp of the report
-     * @return reporterAddress  address of the reporter
-     * @return yes              number of yes votes in veDEG
-     * @return no               number of no votes in veDEG
-     * @return pending          if decision is still pending
-     * @return approved         if current decision is approved
-     * @return voted            list of addresses that have already voted
-     */
-    function getReport(uint256 _reportId)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            address,
-            uint256,
-            uint256,
-            bool,
-            bool,
-            address[] memory
-        )
-    {
-        Report memory report = reportIds[_reportId];
-        return (
-            report.poolId,
-            report.timestamp,
-            report.reporterAddress,
-            report.yes,
-            report.no,
-            report.pending,
-            report.approved,
-            report.voted
-        );
-    }
+   
 
     /**
      * @notice Returns the number of proposals in the proposal center.
@@ -332,7 +296,7 @@ contract ProposalCenter is ProtocolProtection {
         uint256 balance = IERC20(veDeg).balanceOf(msg.sender);
         require(balance > 0, "You have no tokens");
         // lock vedeg until vote is processed
-        MockVeDEG(veDeg).lockVeDEG(msg.sender, (balance * 4) / 5);
+        IVeDEG(veDeg).lockVeDEG(msg.sender, (balance * 4) / 5);
         // register vote
         if (_vote) {
             reportIds[_reportId].yes += balance;
@@ -617,23 +581,23 @@ contract ProposalCenter is ProtocolProtection {
             IPolicyCenter(policyCenter).rewardTreasuryToReporter(
                 reportIds[_reportId].reporterAddress
             );
-            MockDEG(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
+            IDegisToken(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
             // punishment for voting against majority
             for (uint256 i = 0; i < voted.length; i++) {
                 if (confirmsReport[_reportId][voted[i]] != _veredict) {
-                    (uint256 veDegBalance, ) = MockVeDEG(deg).users(
+                    (uint256 veDegBalance, ) = IVeDEG(deg).users(
                         1,
                         voted[i]
                     );
                     uint256 stakedDegPenalty = (veDegBalance * 4) / 500;
                     reward += stakedDegPenalty;
-                    MockDEG(deg).transferFrom(
+                    IERC20(deg).transferFrom(
                         voted[i],
                         address(this),
                         stakedDegPenalty
                     );
                     // unlock vedeg balance
-                    MockVeDEG(veDeg).unlockVeDEG(
+                    IVeDEG(veDeg).unlockVeDEG(
                         voted[i],
                         (veDegBalance * 4) / 5
                     );
@@ -647,12 +611,12 @@ contract ProposalCenter is ProtocolProtection {
                     uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
                     uint256 toTransfer = (balance * reportIds[_reportId].yes) /
                         2;
-                    MockDEG(deg).transfer(voted[i], toTransfer);
-                    MockVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
+                    IERC20(deg).transfer(voted[i], toTransfer);
+                    IVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
                     reward -= toTransfer;
                 }
             }
-            MockDEG(deg).transfer(policyCenter, reward);
+            IERC20(deg).transfer(policyCenter, reward);
         }
     }
 }
