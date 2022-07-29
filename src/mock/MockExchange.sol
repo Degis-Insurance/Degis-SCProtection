@@ -35,4 +35,19 @@ contract Exchange {
         
         return amountIn * 99 / 100;
     }
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+       external
+      
+    {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
+        amountOut = getAmountOut(amountInMax, amountOut, amountOut);
+        IERC20(to).transfer(msg.sender, amountOut);
+    }
 }

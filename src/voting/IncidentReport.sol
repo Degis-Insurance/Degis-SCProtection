@@ -2,32 +2,15 @@
 
 pragma solidity ^0.8.13;
 
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import "../interfaces/IPolicyCenter.sol";
-import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IReinsurancePool.sol";
-import "../interfaces/IVeDEG.sol";
-import "../interfaces/IDegisToken.sol";
+import "../util/ProtocolProtection.sol";
 
 import "./interfaces/IncidentReportParameters.sol";
 
-contract IncidentReport is IncidentReportParameters {
+contract IncidentReport is ProtocolProtection, IncidentReportParameters {
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // DEG token address
-    address public DEG;
-
-    // VeDEG token address
-    address public veDEG;
-
-    // Policy center address
-    address public policyCenter;
-
-    // ReInsurancePool address
-    address public reInsurancePool;
 
     // Total number of reports
     uint256 public reportCounter;
@@ -96,6 +79,85 @@ contract IncidentReport is IncidentReportParameters {
         uint256 debt,
         uint256 unlockAmount
     );
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+    
+     /**
+     * @notice Returns the number of reports in the proposal center.
+     * @return poolId           id of the pool the report refers to
+     * @return timestamp        timestamp of the report
+     * @return reporterAddress  address of the reporter
+     * @return yes              number of yes votes in veDEG
+     * @return no               number of no votes in veDEG
+     * @return pending          if decision is still pending
+     * @return approved         if current decision is approved
+     * @return voted            list of addresses that have already voted
+     */
+    function getReport(uint256 _reportId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256 
+        )
+    {
+        Report memory _report = reports[_reportId];
+        return (
+        _report.poolId,
+        _report.reportTimestamp,
+        _report.reporter,
+        _report.numFor,
+        _report.numAgainst,
+        _report.round, // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
+        _report.status,
+        _report.result, // 1: Pass, 2: Reject, 3: Tied
+        _report.votingReward
+        );
+    }
+
+    function getTempResult(uint256 _reportId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        TempResult memory _tempResult = reportTempResults[_reportId];
+        return (
+        _tempResult.result,
+        _tempResult.sampleTimestamp,
+        _tempResult.hasChanged
+        );
+    }
+
+    function getUserVote(address _user, uint256 _reportId)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        UserVote memory _vote = userReportVotes[_user][_reportId];
+        return (
+            _vote.choice,
+            _vote.amount,
+            _vote.claimable,
+            _vote.claimed
+        );
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -128,8 +190,8 @@ contract IncidentReport is IncidentReportParameters {
         newReport.reporter = msg.sender;
         newReport.status = PENDING_STATUS;
 
-        // transfer back to deg address. another option is to burn it.
-        IERC20(DEG).transferFrom(msg.sender, address(this), REPORT_THRESHOLD);
+        // burn degis tokens to start a report
+        IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
 
         // Pause insurance pool and reinsurance pool
         _pausePools(pool);
@@ -161,12 +223,12 @@ contract IncidentReport is IncidentReportParameters {
         require(_isFor == 1 && _isFor == 2, "Wrong choice");
 
         // Should have enough veDEG
-        uint256 balance = IERC20(veDEG).balanceOf(msg.sender) -
-            IVeDEG(veDEG).locked(msg.sender);
+        uint256 balance = IERC20(veDeg).balanceOf(msg.sender) -
+            IVeDEG(veDeg).locked(msg.sender);
         require(balance >= _amount, "Not enough veDEG");
 
         // Lock vedeg until this report is settled
-        IVeDEG(veDEG).lockVeDEG(msg.sender, _amount);
+        IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
 
         // Record the user's choice
         UserVote storage userReportVote = userReportVotes[msg.sender][
@@ -245,13 +307,13 @@ contract IncidentReport is IncidentReportParameters {
 
         // Correct choice
         if (userVote.choice == finalResult) {
-            IDegisToken(DEG).mintDegis(
+            IDegisToken(deg).mintDegis(
                 msg.sender,
                 (reports[_reportId].votingReward * userVote.amount) / SCALE
             );
         } else if (finalResult == TIED_RESULT) {
             // Tied result, give back user's veDEG
-            IVeDEG(veDEG).unlockVeDEG(msg.sender, userVote.amount);
+            IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
         } else revert("No reward to claim");
     }
 
@@ -265,10 +327,10 @@ contract IncidentReport is IncidentReportParameters {
         uint256 debt = (userVote.amount * DEBT_RATIO) / 100;
 
         // Pay the debt in DEG
-        IERC20(DEG).transferFrom(msg.sender, address(this), debt);
+        IDegisToken(deg).burnDegis(msg.sender, debt);
 
         // Unlock the user's veDEG
-        IVeDEG(veDEG).unlockVeDEG(_user, userVote.amount);
+        IVeDEG(veDeg).unlockVeDEG(_user, userVote.amount);
 
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
@@ -277,8 +339,8 @@ contract IncidentReport is IncidentReportParameters {
         Report storage currentReport = reports[_reportId];
 
         if (_result == 1) {
-            IERC20(DEG).transfer(currentReport.reporter, REPORT_THRESHOLD);
-            IDegisToken(DEG).mintDegis(currentReport.reporter, REPORTER_REWARD);
+            IERC20(deg).transfer(currentReport.reporter, REPORT_THRESHOLD);
+            IDegisToken(deg).mintDegis(currentReport.reporter, REPORTER_REWARD);
 
             // Total deg reward
             uint256 totalRewardToVoters = REPORT_THRESHOLD +
@@ -304,14 +366,13 @@ contract IncidentReport is IncidentReportParameters {
 
     /**
      * @notice Check quorum requirement
-     *
      *         30% of totalSupply is the minimum requirement for participation
      *
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view {
         require(
-            _totalVotes >= IVeDEG(veDEG).totalSupply() * QUORUM_RATIO,
+            _totalVotes >= IVeDEG(veDeg).totalSupply() * QUORUM_RATIO,
             "Not reached quorum"
         );
     }
@@ -430,8 +491,17 @@ contract IncidentReport is IncidentReportParameters {
      */
     function _pausePools(address _pool) internal {
         IInsurancePool(_pool).setPausedInsurancePool(true);
-        IReinsurancePool(reInsurancePool).setPausedReinsurancePool(true);
+        IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
     }
 
-    function _unpausePools(address _pool) internal {}
+    /**
+     * @notice Pause the related project pool and the re-insurance pool
+     *         Once there is an incident reported
+     *
+     * @param _pool Project pool address
+     */
+    function _unpausePools(address _pool) internal {
+        IInsurancePool(_pool).setPausedInsurancePool(false);
+        IReinsurancePool(reinsurancePool).setPausedReinsurancePool(false);
+    }
 }

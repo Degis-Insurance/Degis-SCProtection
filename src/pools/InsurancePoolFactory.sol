@@ -43,14 +43,14 @@ contract InsurancePoolFactory is ProtocolProtection {
         uint256 maxCapacity;
         uint256 policyPricePerShield;
     }
+    // poolId => Pool Information
     mapping(uint256 => PoolInfo) public poolInfoById;
 
     uint256 public poolCounter;
     uint256 public maxCapacity;
 
     address public administrator;
-    address public insurancePool;
-
+    
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -89,6 +89,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice Get the pool address for a given pool id
+     *
      * @return list of pool addresses
      */
     function getPoolAddressList() external view returns (address[] memory) {
@@ -101,6 +102,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice gets the pool counter which indicates the latest pool id
+     *
      * @return PoolCounter pool id
      */
     function getPoolCounter() public view returns (uint256) {
@@ -125,6 +127,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice                      Creates a new insurance pool
+     *
      * @param _name                 Name of the protocol
      * @param _protocolToken        Address of the token used for the protocol
      * @param _maxCapacity          Maximum capacity of the pool
@@ -154,9 +157,9 @@ contract InsurancePoolFactory is ProtocolProtection {
         ++poolCounter;
         address newPoolAddress = _deploy(bytecode, salt);
 
-        // Store the pool information
-        IPolicyCenter(policyCenter).setPoolId(poolCounter, newPoolAddress);
-        IPolicyCenter(policyCenter).setTokenByPoolId(
+        // Store pool information in Policy Center
+        IPolicyCenter(policyCenter).storePoolInformation(
+            newPoolAddress,
             _protocolToken,
             poolCounter
         );

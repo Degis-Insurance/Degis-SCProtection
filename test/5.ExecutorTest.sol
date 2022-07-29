@@ -9,6 +9,7 @@ import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/ProposalCenter.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -30,6 +31,7 @@ contract ExecutorTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -96,6 +98,13 @@ contract ExecutorTest is Test {
         proposalCenter.setPolicyCenter(address(policyCenter));
         proposalCenter.setReinsurancePool(address(reinsurancePool));
         proposalCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        incidentReport.setDeg(address(deg));
+        incidentReport.setVeDeg(address(vedeg));
+        incidentReport.setShield(address(shield));
+        incidentReport.setExecutor(address(executor));
+        incidentReport.setPolicyCenter(address(policyCenter));
+        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
         executor.setDeg(address(deg));
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
@@ -125,7 +134,7 @@ contract ExecutorTest is Test {
 
         policyCenter.provideLiquidity(1, 10000);
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);
-        proposalCenter.reportPool(1);
+        incidentReport.report(1);
         vm.prank(alice);
         proposalCenter.votePoolProposal(1, true);
         vm.prank(bob);
@@ -133,11 +142,11 @@ contract ExecutorTest is Test {
         vm.prank(carol);
         proposalCenter.votePoolProposal(1, true);
         vm.prank(alice);
-        proposalCenter.voteReport(1, true);
+        incidentReport.vote(1, true);
         vm.prank(bob);
-        proposalCenter.voteReport(1, true);
+        incidentReport.vote(1, true);
         vm.prank(carol);
-        proposalCenter.voteReport(1, true);
+        incidentReport.vote(1, true);
         vm.warp(260000);
         proposalCenter.evaluateReportVotes(1);
         proposalCenter.evaluatePoolProposalVotes(1);
