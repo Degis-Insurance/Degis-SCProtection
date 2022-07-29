@@ -35,8 +35,6 @@ import "../mock/MockSHIELD.sol";
 import "../mock/MockVeDEG.sol";
 import "../mock/MockDEG.sol";
 
-import "forge-std/console.sol";
-
 pragma solidity ^0.8.13;
 
 contract ProtocolProtection is Ownable {

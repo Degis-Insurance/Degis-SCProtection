@@ -50,6 +50,8 @@ contract InsurancePoolFactory is ProtocolProtection {
     uint256 public maxCapacity;
 
     address public administrator;
+
+    mapping(address => bool) public registered;
     
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //

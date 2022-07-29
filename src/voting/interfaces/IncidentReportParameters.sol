@@ -9,12 +9,14 @@ abstract contract IncidentReportParameters is VotingResultParameters {
     uint256 constant INIT_STATUS = 0;
     uint256 constant PENDING_STATUS = 1;
     uint256 constant VOTING_STATUS = 2;
+    uint256 constant CLOSE_STATUS = 404;
 
     // Cool down time parameter
     // If you submitted a wrong report, you cannot start another within cooldown period
     uint256 public constant COOLDOWN_WRONGREPORT = 7 days;
 
     // Voting time length parameters
+    uint256 constant PENDING_PERIOD = 3 days;
     uint256 constant VOTING_PERIOD = 3 days;
     uint256 constant EXTEND_PERIOD = 1 days;
     uint256 constant SAMPLE_PERIOD = 1 days;
