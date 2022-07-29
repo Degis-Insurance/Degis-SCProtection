@@ -189,7 +189,10 @@ contract IncidentReport is IncidentReportParameters {
         }
 
         // Record a temporary result
+        // If the hasChanged already been true, no need for further update
+        // If the voting period has passed, no need for update
         if (
+            !reportTempResults[_reportId].hasChanged &&
             _notPassedVotingPeriod(
                 currentReport.round,
                 currentReport.reportTimestamp
@@ -389,17 +392,10 @@ contract IncidentReport is IncidentReportParameters {
         uint256 _reportId,
         uint256 _numFor,
         uint256 _numAgainst
-    ) internal returns (uint256) {
-        if (_numFor > _numAgainst) {
-            reports[_reportId].result = PASS_RESULT;
-            return PASS_RESULT;
-        } else if (_numFor < _numAgainst) {
-            reports[_reportId].result = REJECT_RESULT;
-            return REJECT_RESULT;
-        } else {
-            reports[_reportId].result = TIED_RESULT;
-            return TIED_RESULT;
-        }
+    ) internal returns (uint256 result) {
+        result = _getVotingResult(_numFor, _numAgainst);
+
+        reports[_reportId].result = result;
     }
 
     /**
@@ -431,15 +427,33 @@ contract IncidentReport is IncidentReportParameters {
             block.timestamp >
             reports[_reportId].reportTimestamp + VOTING_PERIOD - SAMPLE_PERIOD
         ) {
-            uint256 currentResult = _numFor > _numAgainst ? 1 : 2;
+            uint256 currentResult = _getVotingResult(_numFor, _numAgainst);
 
-            // If this is the first time goes in sample period, not record change
+            // If this is the first time for sampling, not record change
             if (temp.result > 0) {
                 temp.hasChanged = currentResult == temp.result;
             }
 
             temp.result = currentResult;
         }
+    }
+
+    /**
+     * @notice Get the final voting result
+     *
+     * @param _numFor     Votes for
+     * @param _numAgainst Votes against
+     *
+     * @return result Pass, reject or tied
+     */
+    function _getVotingResult(uint256 _numFor, uint256 _numAgainst)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        if (_numFor > _numAgainst) result = PASS_RESULT;
+        else if (_numFor < _numAgainst) result = REJECT_RESULT;
+        else result = TIED_RESULT;
     }
 
     /**
