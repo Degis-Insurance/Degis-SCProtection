@@ -9,6 +9,7 @@ import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/ProposalCenter.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -30,6 +31,7 @@ contract ProposalCenterTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -131,45 +133,6 @@ function setUp() public {
         assertEq(protocolAddress == address(yeti), true);
     }
 
-    function testReportPool() public {
-        // approve then report ptp pool
-        deg.transfer(address(this), 1000);
-        deg.approve(address(proposalCenter), 1000e18);
-        proposalCenter.reportPool(1);
-        // verify that pool has been reported and report has been registered
-        (,,address reporterAddress,,, bool pending ,bool approved,) = proposalCenter.getReport(1);
-        assertEq(reporterAddress == address(this), true);
-        assertEq(pending == true, true);
-        assertEq(approved == false, true);
-    }
-
-    function testSetPoolReported() public {
-        // approve then report ptp pool by alice
-        deg.transfer(alice, 1000);
-        vm.prank(alice);
-        deg.approve(address(proposalCenter), 1000e18);
-        // report pool by alice
-        vm.prank(alice);
-        proposalCenter.reportPool(1);
-        // set pool as not reported. only owner
-        proposalCenter.setPoolReported(address(ptp), false);
-        assertEq(proposalCenter.poolReported(address(ptp)) == false, true);
-    }
-
-    function testSetPoolReportedNotOwner() public {
-        // approve then report ptp pool by alice
-        deg.transfer(alice, 1000);
-        vm.prank(alice);
-        deg.approve(address(proposalCenter), 1000e18);
-        // report pool by alice
-        vm.prank(alice);
-        proposalCenter.reportPool(1);
-        // set pool as not reported. only owner
-        vm.prank(alice);
-        vm.expectRevert("Only owner or executor can call this function");
-        proposalCenter.setPoolReported(address(ptp), false);
-    }
-
     function testSetPoolProposed() public {
         // set pooll as proposed. only owner
         proposalCenter.setPoolProposed(address(yeti), true);
@@ -183,21 +146,7 @@ function setUp() public {
         proposalCenter.setPoolProposed(address(yeti), true);
     }
 
-    function setReportStatus() public {
-         // approve then report ptp pool by alice
-        deg.transfer(alice, 1000);
-        vm.prank(alice);
-        deg.approve(address(proposalCenter), 1000e18);
-        vm.prank(alice);
-        InsurancePool(pool1).setProposalCenter(address(proposalCenter));
-        // report pool by alice
-        vm.prank(alice);
-        proposalCenter.reportPool(1);
-        proposalCenter.setReportApproval(1, true);
-        (,,,,,,,,,,bool approved) = proposalCenter.getPoolProposal(1);
-        assertEq( approved == true, true);
-    }   
-
+  
     function setProposalStatus() public {
         // change proposal status by owner
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);
@@ -215,7 +164,7 @@ function setUp() public {
         InsurancePool(pool1).setProposalCenter(address(proposalCenter));
         // report pool by alice
         vm.prank(alice);
-        proposalCenter.reportPool(1);
+        incidentReport.report(1);
         vm.prank(alice);
         // non owner should not be able to set proposal status
         vm.expectRevert("Only owner or executor can call this function");
@@ -237,6 +186,7 @@ contract ProposalCenterVotingTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -320,13 +270,15 @@ contract ProposalCenterVotingTest is Test {
 
         deg.transfer(address(this), 1000e18);
         deg.approve(address(proposalCenter), 10000e18);
-        vedeg.transfer(alice, 3000e18);
-        vedeg.transfer(bob, 1500e18);
-        vedeg.transfer(carol, 1600e18);
-        vedeg.transfer(address(this), 1000e18);
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);
-        proposalCenter.reportPool(1);
+
         shield.transfer(alice, 3000e18);
+    }
+
+    function testExecuteReportBeforeBeingQueued() public {
+        // a report should only be executable once its queued in the executor
+        vm.expectRevert("report not pending or not found");
+       executor.executeReport(1);
     }
 
     function testVoteProposal() public {
@@ -358,33 +310,7 @@ contract ProposalCenterVotingTest is Test {
         assertEq(carolVoted == true, true);
     }
 
-    function testVoteReport() public {
-        vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, false);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, true);
-        bool aliceVote;
-        bool bobVote;
-        bool carolVote;
-        aliceVote = proposalCenter.confirmsReport(1,alice);
-        bobVote = proposalCenter.confirmsReport(1,bob);
-        carolVote = proposalCenter.confirmsReport(1,carol);
-        // check if votes are recorded
-        assertEq(aliceVote == true, true);
-        assertEq(bobVote == false, true);
-        assertEq(carolVote == true, true);
-    }
-
-    function testVoteMoreThanOnceOnReport() public {
-        // user should not be able to vote twice
-        vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(alice);
-        vm.expectRevert("Address already voted");
-        proposalCenter.voteReport(1, true);
-    }
+    
 
     function testVoteMoreThanOnceOnPoolProposal() public {
         // user should not be able to vote twice
@@ -395,45 +321,7 @@ contract ProposalCenterVotingTest is Test {
         proposalCenter.votePoolProposal(1, true);
     }
 
-    function testEvaluateReportNotEnoughVotes() public {
-        // proposal should only pass if at least 30% of vedeg has participated in the vote
-        // vm.prank(bob);
-        // proposalCenter.voteReport(1, false);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, true);
-        vm.warp(604801);
-        vm.expectRevert("Not enough votes");
-        proposalCenter.evaluateReportVotes(1);
-    }
-
-    function testEvaluateReportTrue() public {
-        // report should be truthy if majority of votes are true
-       vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, false);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, true);
-        vm.warp(604801);
-        vm.prank(address(0x11133159));
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,,bool approved,) = proposalCenter.getReport(1);
-        assertEq(approved == true, true);
-    }
-
-    function testEvaluateReportFalse() public {
-        // report should be false if majority of votes are false
-       vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, false);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, false);
-        vm.warp(604801);
-        vm.prank(address(0x11133159));
-        (,,,,,,,,,,bool approved) = proposalCenter.getPoolProposal(1);
-        assertEq(approved == false, true);
-    }
+   
 
     function testEvaluatePoolProposalTrue() public {
         // pool proposal should be truthy if majority of votes are true
@@ -465,15 +353,8 @@ contract ProposalCenterVotingTest is Test {
         assertEq(approved == false, true); 
     }
 
-    function testReportPoolAlreadyReported() public {
-        // report should not reported twice
-        deg.transfer(alice, 1000);
-        vm.prank(alice);
-        deg.approve(address(proposalCenter), 1000e18);
-        vm.prank(alice);
-        vm.expectRevert("Pool already reported");
-        proposalCenter.reportPool(1);
-    }
+   
+
 
     function testProposePooolAlreadyProposed() public {
         // pool proposal should not be proposed twice
@@ -482,31 +363,7 @@ contract ProposalCenterVotingTest is Test {
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);
     }
 
-    function testReportPoolAfterFailedReport() public {
-        // after a failed report, a new report should be possible
-        vm.prank(alice);
-        proposalCenter.voteReport(1, false);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, false);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, false);
-        vm.warp(260000);
-        vm.prank(address(0x11133159));
-        // evaluate report round 0
-        proposalCenter.evaluateReportVotes(1);
-         vm.warp(350000);
-        vm.prank(address(0x11133159));
-        // evaluate report round 1: approval did not change, report moves on.
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,bool pending1,bool approved1,) = proposalCenter.getReport(1);
-        assertEq(pending1 == false, true);
-        assertEq(approved1 == false, true);
-        proposalCenter.reportPool(1);
-        (,,,,,bool pending2,bool approved2,) = proposalCenter.getReport(2);
-        assertEq(pending2 == true, true);
-        assertEq(approved2 == false, true);
-    }
-
+   
     function testProposePoolAfterFailedProposal() public {
         // after a failed proposal, a new proposal should be possible
         vm.prank(alice);
@@ -534,26 +391,6 @@ contract ProposalCenterVotingTest is Test {
         assertEq(approved2 == false, true);
     }
 
-    function testReportPoolAfterSuccessfulReport() public {
-        // after a succesful report, a new report should not be possible
-        vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, true);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, true);
-        vm.warp(260000);
-        vm.prank(address(0x11133159));
-        proposalCenter.evaluateReportVotes(1);
-        vm.warp(350000);
-        vm.prank(address(0x11133159));
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,bool pending,bool approved,) = proposalCenter.getReport(1);
-        assertEq(pending == false, true);
-        assertEq(approved == true, true);
-        vm.expectRevert("Pool already reported");
-        proposalCenter.reportPool(1);
-    }
 
     function testProposePoolAfterSuccessfulProposal() public {
         // after a succesful proposal, a new pool proposal should not be possible
@@ -574,39 +411,7 @@ contract ProposalCenterVotingTest is Test {
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);
     }
 
-    function testChangingReportVotes() public {
-        // initial voting period takes 3 days.
-        // votes are evaluated and approval truthness is set.
-        // for a day, more people can vote. If voting approval changes,
-        // the voting period is extended by a day. else, report is sent to executor.
-        // for a second day, more people can vote.
-        // vote is definitive and report is sent to executor.
-        vm.prank(alice);
-        proposalCenter.voteReport(1, true);
-        vm.prank(bob);
-        proposalCenter.voteReport(1, false);
-        vm.warp(260000);
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,bool pending1,bool approved1,) = proposalCenter.getReport(1);
-        // first evaluation finds that report is true
-        assertEq(pending1 == true, true);
-        assertEq(approved1 == true, true);
-        vm.warp(350000);
-        vm.prank(carol);
-        proposalCenter.voteReport(1, false);
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,bool pending2,bool approved2,) = proposalCenter.getReport(1);
-        // second evaluation finds that report is false
-        assertEq(pending2 == true, true);
-        assertEq(approved2 == false, true);
-        vm.warp(500000);
-        proposalCenter.voteReport(1, true);
-        proposalCenter.evaluateReportVotes(1);
-        (,,,,,bool pending3,bool approved3,) = proposalCenter.getReport(1);
-        // third evaluation finds that report is true
-        assertEq(pending3 == false, true);
-        assertEq(approved3 == true, true);
-    }
+
 
     function testChangingPoolVotes() public {
         // initial voting period takes 3 days.
@@ -640,11 +445,5 @@ contract ProposalCenterVotingTest is Test {
         // third evaluation finds that report is true
         assertEq(pending3 == false, true);
         assertEq(approved3 == true, true);
-    }
-
-    function testExecuteReportBeforeBeingQueued() public {
-        // a report should only be executable once its queued in the executor
-        vm.expectRevert("report not pending or not found");
-       executor.executeReport(1);
     }
 }

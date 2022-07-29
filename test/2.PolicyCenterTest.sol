@@ -9,6 +9,7 @@ import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/ProposalCenter.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -36,6 +37,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -312,7 +314,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         deg.transfer(address(this), 1000);
         deg.approve(address(proposalCenter), 10000e18);
         vm.warp(1000000);
-        proposalCenter.reportPool(1);
+        incidentReport.report(1);
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         vm.expectRevert("cannot remove liquidity while paused");
         policyCenter.removeLiquidity(1, 10000);

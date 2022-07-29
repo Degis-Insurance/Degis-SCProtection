@@ -87,6 +87,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
 
     /**
      * @notice Returns the to be rewarded by reinsurance pool
+     *
      * @param _amount   amount of liquidity provided by the user
      * @param _userDebt amount of debt the user has to the pool
      * @return reward   amount to receive considering amount and userDebt
@@ -120,6 +121,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
 
     /**
     @notice mints liquidity tokens. Only callable through policyCenter
+     *
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
@@ -135,6 +137,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
 
     /**
     @notice burns liquidity tokens. Only callable through policyCenter
+     *
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
@@ -154,19 +157,12 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         emit LiquidityRemoved(_amount, _provider);
     }
 
-    /**
-    @notice provides liquidity to pools in need of it. Only callable by Pools
-    @param _amount      token being insured
-    @param _address     address of covered wallet
-    */
-    function reinsurePool(uint256 _amount, address _address) external poolOnly {
-        require(_amount > 0, "amount should be greater than 0");
-        IERC20(shield).transferFrom(address(this), _address, _amount);
-    }
+    
 
     /**
      * @notice  Move liquidity to another pool to be used for reinsurance,
                 reducing gas costs during liquidation period.
+     *
      * @param _amount Amount of liquidity to transfer to insurance pool
      * @param _poolId Id of the pool to move the liquidity to.
      */
@@ -186,6 +182,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
 
     /**
      * @notice Sets paused state of the reinsurance pool
+     *
      * @param _paused true if paused, false if not.
      */
     function setPausedReinsurancePool(bool _paused) external {

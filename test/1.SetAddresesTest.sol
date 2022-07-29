@@ -9,6 +9,7 @@ import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/ProposalCenter.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -30,6 +31,7 @@ contract setAddressesTest is Test {
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     ProposalCenter public proposalCenter;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
