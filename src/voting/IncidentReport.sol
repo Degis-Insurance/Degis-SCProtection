@@ -37,9 +37,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     mapping(uint256 => TempResult) public reportTempResults;
 
     struct UserVote {
-        uint256 choice;
+        uint256 choice; // 1: vote for, 2: vote against
         uint256 amount;
-        uint256 claimable;
         bool claimed;
     }
     // User address => report id => user's voting info
@@ -146,7 +145,6 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         returns (
             uint256,
             uint256,
-            uint256,
             bool
         )
     {
@@ -154,7 +152,6 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         return (
             _vote.choice,
             _vote.amount,
-            _vote.claimable,
             _vote.claimed
         );
     }
@@ -292,18 +289,24 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         uint256 res = _checkRoundExtended(_reportId, currentReport.round);
 
         if (res > 0) {
-            _settleVotingReward(_reportId, res);
+            _settleVotingReward(_reportId);
             emit ReportSettled(_reportId, res);
         } else {
             emit ReportExtended(_reportId, currentReport.round);
         }
     }
 
+    /**
+     * @notice Claim the voting reward
+     *
+     * @param _reportId Report id
+     */
     function claimReward(uint256 _reportId) external {
         UserVote memory userVote = userReportVotes[msg.sender][_reportId];
         uint256 finalResult = reports[_reportId].result;
 
         require(finalResult > 0, "Not settled");
+        require(!userVote.claimed, "Already claimed");
 
         // Correct choice
         if (userVote.choice == finalResult) {
@@ -315,8 +318,18 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
             // Tied result, give back user's veDEG
             IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
         } else revert("No reward to claim");
+
+        userReportVotes[msg.sender][_reportId].claimed = true;
     }
 
+    /**
+     * @notice Pay debt to get back veDEG
+     *
+     *         For those who made a wrong voting choice
+     *
+     * @param _reportId Report id
+     * @param _user     User address (can pay debt for another user)
+     */
     function payDebt(uint256 _reportId, address _user) external {
         UserVote memory userVote = userReportVotes[_user][_reportId];
         uint256 finalResult = reports[_reportId].result;
@@ -335,10 +348,15 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
 
-    function _settleVotingReward(uint256 _reportId, uint256 _result) internal {
+    /**
+     * @notice Settle voting reward depending on the result
+     *
+     * @param _reportId Report id
+     */
+    function _settleVotingReward(uint256 _reportId) internal {
         Report storage currentReport = reports[_reportId];
 
-        if (_result == 1) {
+        if (currentReport.result == 1) {
             IERC20(deg).transfer(currentReport.reporter, REPORT_THRESHOLD);
             IDegisToken(deg).mintDegis(currentReport.reporter, REPORTER_REWARD);
 
@@ -351,7 +369,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
             currentReport.votingReward =
                 (totalRewardToVoters * SCALE) /
                 currentReport.numFor;
-        } else if (_result == 2) {
+        } else if (currentReport.result == 2) {
             // Total deg reward
             uint256 totalRewardToVoters = REPORT_THRESHOLD +
                 currentReport.numFor /
