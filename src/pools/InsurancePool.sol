@@ -276,7 +276,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         );
 
         _mint(_provider, _amount);
-        console.log(totalSupply());
+
         emit LiquidityProvision(_amount, _provider);
     }
 
@@ -363,7 +363,6 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             accumulatedRewardPerShare +
             (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
         lastRewardTimestamp = block.timestamp;
-        console.log("emission rate", emissionRate);
     }
 
     function _setLiquidationStatus(bool _liquidated) internal {
