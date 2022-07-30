@@ -41,13 +41,14 @@ contract setAddressesTest is Test {
     address public alice = address(0x1337);
     address public bob = address(0x133702);
     address public carol = address(0x133703);
+
     address public pool1;
 
     function setUp() public {
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         exchange = new Exchange();
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));

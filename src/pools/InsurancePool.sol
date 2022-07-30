@@ -147,7 +147,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
     @param _length coverage length
      */
     function coveragePrice(uint256 _amount, uint256 _length)
-        public
+        external
         view
         returns (uint256)
     {
@@ -168,7 +168,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
     @param _userDebt    amount of debt the user has
      */
     function calculateReward(uint256 _amount, uint256 _userDebt)
-        public
+        external
         view
         returns (uint256)
     {

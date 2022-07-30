@@ -41,17 +41,17 @@ contract InitialContractDeploymentTest is Test {
     function setUp() public {}
 
     function testDeployShield() public {
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
         assertEq(keccak256(bytes(shield.name())) == keccak256(bytes("Shield")), true);
     }
 
     function testDeployDEG() public {
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         assertEq(keccak256(bytes(deg.name())) == keccak256(bytes("Degis")), true);
     }
 
     function testDeployVeDEG() public {
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         assertEq(keccak256(bytes(vedeg.name())) == keccak256(bytes("veDegis")), true);
     }
 
@@ -93,8 +93,8 @@ contract SecondaryContractDeploymentTest is Test {
     function setUp() public {
         // Policy Center, Factory and Insurrance Pool require deg, a third party token
         // and the reinsurancePool already deployed.
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         reinsurancePool = new ReinsurancePool();
     }
 

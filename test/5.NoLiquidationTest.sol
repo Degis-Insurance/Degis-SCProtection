@@ -50,9 +50,9 @@ contract NoLiquidationTest is Test {
     function setUp() public {
         shield = new MockSHIELD(10000000e18, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000000e18, "Degis", 18, "DEG");
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000e18);
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
@@ -114,8 +114,8 @@ contract NoLiquidationTest is Test {
         vedeg.transfer(bob, 2000e18);
         vedeg.transfer(carol, 3000e18);
          // mint and approve tokens for pool1 and pool2
-        ptp.approve(address(policyCenter), 10000e18);
-        yeti.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
+        yeti.approve(address(policyCenter), 10000 ether);
         // transfer ptp to users
         ptp.transfer(alice, 10e18);
         ptp.transfer(bob, 10e18);
@@ -127,12 +127,12 @@ contract NoLiquidationTest is Test {
         // provide liquidity by users
         // alice provides liquidity to pool 1
         vm.prank(alice);
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         vm.prank(alice);
         policyCenter.provideLiquidity(1, 10000);
         // bob provides liqudity to reinsurance pool
         vm.prank(bob);
-        deg.approve(address(policyCenter), 10000e18);
+        deg.approve(address(policyCenter), 10000 ether);
         vm.prank(bob);
         policyCenter.provideLiquidity(0, 10000);
         vm.prank(carol);
@@ -159,6 +159,9 @@ contract NoLiquidationTest is Test {
     function testClaimRewardsFromInsurancePool() public {
         // alice should receive rewards from pool 1
         vm.prank(alice);
+        (,address insuredToken ,,,) = policyCenter.getPoolInfo(1);
+        console.log(insuredToken);
+        assertEq(insuredToken == address(ptp), true);
         uint256 reward = policyCenter.calculateReward(1, alice);
         console.log("reward", reward);
         vm.prank(alice);
