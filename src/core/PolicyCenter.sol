@@ -221,16 +221,14 @@ contract PolicyCenter is ProtocolProtection {
             return
                 IInsurancePool(insurancePools[_poolId]).calculateReward(
                     liquidity.amount,
-                    liquidity.userDebt,
-                    _provider
+                    liquidity.userDebt
                 );
         } else {
             return
                 // gets reward from reinsurance pool
                 IReinsurancePool(reinsurancePool).calculateReward(
                     liquidity.amount,
-                    liquidity.userDebt,
-                    _provider
+                    liquidity.userDebt
                 );
         }
     }
@@ -355,7 +353,6 @@ contract PolicyCenter is ProtocolProtection {
         coverage.buyDate = block.timestamp + 7 days;
         coverage.length = _length;
         // updates pool distribution based on paid amount
-        IInsurancePool(insurancePools[_poolId]).updatePoolDistribution(_pay);
         IERC20(tokenByPoolId[_poolId]).transferFrom(
             msg.sender,
             address(this),
@@ -640,6 +637,8 @@ contract PolicyCenter is ProtocolProtection {
         totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
         totalRewardsByPoolId[0] += reinsuranceReceives;
+        IInsurancePool(insurancePools[_poolId]).updatePoolDistribution(toInsurancePool);
+        IReinsurancePool(reinsurancePool).updatePoolDistribution(reinsuranceReceives);
     }
 
     function _approvePoolToken(address _token) internal {

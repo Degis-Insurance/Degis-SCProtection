@@ -33,6 +33,13 @@ import "../util/ProtocolProtection.sol";
  *         will be able to provide the insurance to the user.
  */
 contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    uint256 public constant DISTRIBUTION_PERIOD = 30 days;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -57,6 +64,12 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
     uint256 public emissionRate;
+
+    uint256 public maxCapacity;
+    uint256 public startTime;
+    uint256 public policyPricePerShield;
+    //totalLiquidity is expressed in totalSupply()
+    uint256 public endLiquidationDate;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -194,5 +207,22 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
             "Only owner or proposalCenter can call this function"
         );
         paused = _paused;
+    }
+
+    /**
+    @notice called when a coverage is bought on PolicyCenter. Only callable through policyCenter
+    @param _paid amount paid to insure amount of tokens
+    */
+    function updatePoolDistribution(uint256 _paid) external {
+        require(
+            msg.sender == policyCenter,
+            "Only policyCenter can buy coverage"
+        );
+        require(_paid > 0, "paid should be greater than 0");
+        totalDistributedReward += emissionRate * (block.timestamp - startTime);
+        accumulatedRewardPerShare +=
+            (_paid * (block.timestamp - startTime)) /
+            (totalSupply() == 0 ? 1 : totalSupply());
+        emissionRate = (_paid - totalDistributedReward) / DISTRIBUTION_PERIOD;
     }
 }

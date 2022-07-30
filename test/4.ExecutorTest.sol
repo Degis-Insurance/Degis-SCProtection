@@ -50,9 +50,9 @@ contract ExecutorTest is Test {
     function setUp() public {
         shield = new MockSHIELD(10000000e18, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000000e18, "Degis", 18, "DEG");
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000e18);
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
         
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
@@ -113,15 +113,15 @@ contract ExecutorTest is Test {
         InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
         deg.transfer(address(this), 1000e18);
         deg.transfer(address(proposalCenter), 1000e18);
-        deg.approve(address(proposalCenter), 10000e18);
+        deg.approve(address(proposalCenter), 10000 ether);
         vedeg.transfer(alice, 3000e18);
         vedeg.transfer(bob, 2000e18);
         vedeg.transfer(carol, 3000e18);
         shield.transfer(address(this), 1000e18);
-        shield.approve(address(policyCenter), 10000e18);
+        shield.approve(address(policyCenter), 10000 ether);
         // mint and approve tokens for pool1 and pool2
-        ptp.approve(address(policyCenter), 10000e18);
-        yeti.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
+        yeti.approve(address(policyCenter), 10000 ether);
 
         policyCenter.provideLiquidity(1, 10000);
         proposalCenter.proposePool(address(yeti), "Yeti", 10000, 1);

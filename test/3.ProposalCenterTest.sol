@@ -48,16 +48,16 @@ contract ProposalCenterTest is Test {
 
 function setUp() public {
       // deploys tokens
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
         shield.approve(address(policyCenter), 20000);
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000e18);
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        deg.approve(address(policyCenter), 10000 ether);
         deg.transfer(address(this), 100e18);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000e18);
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
 
-        deg.approve(address(this), 10000e18);
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
+        deg.approve(address(this), 10000 ether);
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         vedeg.transfer(address(this), 100e18);
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
@@ -254,14 +254,14 @@ contract ProposalCenterVotingTest is Test {
     address public pool1;
 
     function setUp() public {
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
         shield.approve(address(policyCenter), 20000);
-        vedeg = new MockVeDEG(10000e18, "VeDEG", 18, "VEDEG");
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000e18);
+        vedeg = new MockVeDEG(10000 ether, "VeDEG", 18, "VEDEG");
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        deg.approve(address(policyCenter), 10000 ether);
         deg.transfer(address(this), 100e18);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000e18);
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
         // 
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
@@ -308,7 +308,7 @@ contract ProposalCenterVotingTest is Test {
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         // create insurance pool
-        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000e18, 1);
+        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000 ether, 1);
         console.log(pool1);
         // set insurance pool addresses
         InsurancePool(pool1).setDeg(address(deg));
@@ -319,7 +319,7 @@ contract ProposalCenterVotingTest is Test {
         InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
 
         deg.transfer(address(this), 1000e18);
-        deg.approve(address(proposalCenter), 10000e18);
+        deg.approve(address(proposalCenter), 10000 ether);
         vedeg.transfer(alice, 3000e18);
         vedeg.transfer(bob, 1500e18);
         vedeg.transfer(carol, 1600e18);

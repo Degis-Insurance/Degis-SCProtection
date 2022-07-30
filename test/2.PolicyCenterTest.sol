@@ -53,15 +53,23 @@ contract PostInsurancePoolDeploymentTest is Test {
     // pool1 address
     address public pool1;
 
+    uint256 constant public REINSURANCE_POOL_ID = 0;
+    uint256 constant public PTP_POOL_ID = 1;
+
+    uint256 constant public VOTING_START_TIME = 3 days;
+    uint256 constant public VOTING_END_TIME = 6 days;
+    uint256 constant public EXTENSION_TIME = 1 days;
+    uint256 constant public CLAIM_PERIOD_TIME = 7 days;
+
         function setUp() public {
         // deploys tokens
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
         shield.approve(address(policyCenter), 20000);
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        deg.transfer(address(this), 100e18);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
-        vedeg.transfer(address(this), 100e18);
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        deg.transfer(address(this), 100 ether);
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+        vedeg.transfer(address(this), 100 ether);
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
@@ -69,9 +77,9 @@ contract PostInsurancePoolDeploymentTest is Test {
         proposalCenter = new ProposalCenter();
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
-        deg.transfer(address(exchange), 1000e18);
-        shield.transfer(address(exchange), 1000e18);
-        ptp.transfer(address(exchange), 1000e18);
+        deg.transfer(address(exchange), 1000 ether);
+        shield.transfer(address(exchange), 1000 ether);
+        ptp.transfer(address(exchange), 1000 ether);
 
         // sets addresses needed to execute functions
         insurancePoolFactory.setDeg(address(deg));
@@ -137,74 +145,74 @@ contract PostInsurancePoolDeploymentTest is Test {
     // test approve transfer of tokens to policy center
     // it will handle all transfers from protocol to users and vice versa
     function testApproveDegPolicyCenter() public {
-        deg.approve(address(policyCenter), 10000e18);
-        assertEq(deg.allowance(address(this), address(policyCenter)) == 10000e18, true);
+        deg.approve(address(policyCenter), 10000 ether);
+        assertEq(deg.allowance(address(this), address(policyCenter)) == 10000 ether, true);
     }
 
     function testApprovePTPPolicyCenter() public {
         // approve ptp pool to policy center
-        ptp.approve(address(policyCenter), 10000e18);
-        assertEq(ptp.allowance(address(this), address(policyCenter)) == 10000e18, true);
+        ptp.approve(address(policyCenter), 10000 ether);
+        assertEq(ptp.allowance(address(this), address(policyCenter)) == 10000 ether, true);
     }
 
     function testTransferVeDEGPolicyCenter() public {
         vm.prank(alice);
-        vedeg.approve(address(policyCenter), 10000e18);
-        assertEq(vedeg.allowance(alice, address(policyCenter)) == 10000e18, true);
+        vedeg.approve(address(policyCenter), 10000 ether);
+        assertEq(vedeg.allowance(alice, address(policyCenter)) == 10000 ether, true);
         // user should not be able to transfer vedeg
         vm.prank(alice);
         vm.expectRevert("not whitelisted address");
-        vedeg.transfer(address(policyCenter), 10000e18);
+        vedeg.transfer(address(policyCenter), 10000 ether);
     }
 
     function testProvideLiquidityInsurancePool() public {
         // user should be able to provide liquidity to ptp pool in ptp
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
-        console.log(InsurancePool(pool1).totalSupply());
-        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
+        ptp.approve(address(policyCenter), 10000 ether);
+
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         
+        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityBeforeBufferTimeEndsnsurancePool() public {
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
+        ptp.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
-        policyCenter.removeLiquidity(1, 10000);
+        policyCenter.removeLiquidity(PTP_POOL_ID, 10000);
         // user should not be able to remove liquidity and liquidities should remain the same.
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityAfterBufferTimeEndsInsurancePool() public {
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
+        ptp.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         // change block timestamp to after buffer time
         vm.warp(604801);
         console.log(InsurancePool(pool1).totalSupply());
-        policyCenter.removeLiquidity(1, 10000);
+        policyCenter.removeLiquidity(PTP_POOL_ID, 10000);
     }
 
     function testExceedMaxCapacity() public {
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         InsurancePool(pool1).setMaxCapacity(1);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
-        policyCenter.buyCoverage(1, price, 10000 , 90);
+        policyCenter.buyCoverage(PTP_POOL_ID, price, 10000 , 90);
     }
     
     function testProvideLiqudityDirectlyToInsurancePool() public {
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         // user should not be able to provide liquidity directly to insurance pool
         vm.expectRevert("cannot provide liquidity directly to insurance pool");
         InsurancePool(pool1).provideLiquidity(10000, address(this));
     }
 
     function testRemoveLiquidityDirectlyFromInsurancePool() public {
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
+        ptp.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         vm.warp(604801);
         // user should not be able to provide liquidity directly to insurance pool
         vm.expectRevert("cannot remove liquidity directly from insurance pool");
@@ -214,23 +222,24 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
-        policyCenter.removeLiquidity(1, 1);
+        policyCenter.removeLiquidity(PTP_POOL_ID, 1);
     }
 
     
     function testGetCoveragePrice() public {
         // get coverage price and returns it
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
+        // aseert that price is correct    expressed in days      calculucate discount 
         assertEq(price == 10000 * 1 * 90 / uint256(1 days) * (1460 + 1 - 90) / 1460, true);
     }
 
     function testBuyCoverageWithoutSuppliedLiquidity() public {
         // expected behavior when coverage is bought and no liquidity has been provided
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         console.log(price);
-        policyCenter.buyCoverage(1, price, 10000, 90);
-        (uint256 amount,uint256 buyDate, uint256 length) = policyCenter.getCoverage(1, address(this));
+        policyCenter.buyCoverage(PTP_POOL_ID, price, 10000, 90);
+        (uint256 amount,uint256 buyDate, uint256 length) = policyCenter.getCoverage(PTP_POOL_ID, address(this));
         assertEq(amount == 10000, true);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
@@ -238,51 +247,51 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testBuyCoverageWithSuppliedLiquidity() public {
         // expected behavior when coverage is bough with liquidity provided by other users
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
+        ptp.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         shield.approve(address(policyCenter), 100e18);
-        policyCenter.buyCoverage(1, price, 10000, 90);
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.getCoverage(1, address(this));
+        policyCenter.buyCoverage(PTP_POOL_ID, price, 10000, 90);
+        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.getCoverage(PTP_POOL_ID, address(this));
         assertEq(amount == 10000, true);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
     }
 
     function testBuyWrongPaymentCoverage() public{
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         price--;
         // user should no be able to buy a coverage with wrong payment amount
         vm.expectRevert("pay does not correspond to price");
-        policyCenter.buyCoverage(1, price, 10000, 90);
+        policyCenter.buyCoverage(PTP_POOL_ID, price, 10000, 90);
     }
 
     function testProvideLiquidityReinsurancePool() public {
         // user should be able to provide liquidity to reinsurance pool
-        deg.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(0, 10000);
+        deg.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityBeforeBufferTimeReinsurancePool() public {
-        deg.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(0, 10000);
+        deg.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         // user should not be able to remove liquidity from reinsurance pool prior to buffer time
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
-        policyCenter.removeLiquidity(0, 10000);
+        policyCenter.removeLiquidity(REINSURANCE_POOL_ID, 10000);
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityAfterBufferTimeReinsurancePool() public {
         // user should be able to remove liquidity from reinsurance pool after buffer time
-        deg.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(0, 10000);
+        deg.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         uint256 initialBalance = ptp.balanceOf(address(this));
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
         vm.warp(604801);
-        policyCenter.removeLiquidity(0, 10000);
+        policyCenter.removeLiquidity(REINSURANCE_POOL_ID, 10000);
         assertEq(ptp.balanceOf(address(this)) == initialBalance, true);
     }
 
@@ -302,10 +311,10 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testFundsAreSplit() public {
         // test if funds end up being split properly among treasury, insurance pool and reinsurance pool
-        ptp.approve(address(policyCenter), 10000e18);
+        ptp.approve(address(policyCenter), 10000 ether);
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
-        policyCenter.buyCoverage(1, price, 10000, 90);
+        policyCenter.buyCoverage(PTP_POOL_ID, price, 10000, 90);
         console.log(ptp.balanceOf(address(policyCenter)));
         // assert that funds are split correctly, ptp balance is 45% of price
         assertEq(ptp.balanceOf(address(policyCenter)) == prevBalance + price * 45 / 100, true);
@@ -313,45 +322,47 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testRemoveLiquidityAfterReport() public {
         // user should not be able to remove liquidity if pool has been reported
-        ptp.approve(address(policyCenter), 10000e18);
-        policyCenter.provideLiquidity(1, 10000);
+        ptp.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 10000);
         deg.transfer(address(this), 1000);
-        deg.approve(address(proposalCenter), 10000e18);
+        deg.approve(address(proposalCenter), 10000 ether);
         vm.warp(1000000);
-        proposalCenter.reportPool(1);
+        proposalCenter.reportPool(PTP_POOL_ID);
+        // TODO
+        // incidentReport.reportPool(PTP_POOL_ID);
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         vm.expectRevert("cannot remove liquidity while paused");
-        policyCenter.removeLiquidity(1, 10000);
+        policyCenter.removeLiquidity(PTP_POOL_ID, 10000);
     }
 
     function testClaimRewardsFromLiquidityProvisionNoRewards() public {
         // claim rewards for liquidity provision in a non liquidated pool
         // no coverage bought, therefore no rewards are available
         vm.prank(alice);
-        ptp.approve(address(policyCenter), 20000e18);
+        ptp.approve(address(policyCenter), 20000 ether);
         vm.prank(alice);
-        policyCenter.provideLiquidity(1, 1000);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
         vm.prank(bob);
-        ptp.approve(address(policyCenter), 20000e18);
+        ptp.approve(address(policyCenter), 20000 ether);
         vm.prank(bob);
-        policyCenter.provideLiquidity(1, 1000);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
         vm.prank(carol);
-        ptp.approve(address(policyCenter), 1000e18);
+        ptp.approve(address(policyCenter), 1000 ether);
         vm.prank(carol);
-        policyCenter.provideLiquidity(1, 1000);
+        policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
         vm.warp(30 days);
         vm.prank(alice);
-        uint256 reward = policyCenter.calculateReward(1, alice);
+        uint256 reward = policyCenter.calculateReward(PTP_POOL_ID, alice);
         console.log("reward", reward);
         // no user should be able to claim rewards
         vm.prank(alice);
         vm.expectRevert("no rewards to claim");
-        policyCenter.claimReward(1);
+        policyCenter.claimReward(PTP_POOL_ID);
         vm.prank(bob);
         vm.expectRevert("no rewards to claim");
-        policyCenter.claimReward(1);
+        policyCenter.claimReward(PTP_POOL_ID);
         vm.prank(carol);
         vm.expectRevert("no rewards to claim");
-        policyCenter.claimReward(1);
+        policyCenter.claimReward(PTP_POOL_ID);
     }
 }
