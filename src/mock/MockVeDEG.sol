@@ -98,7 +98,7 @@ contract MockVeDEG is Ownable {
     }
 
     function unlockVeDEG(address _owner, uint256 _value) public {
-        lockedBalances[_owner] += _value;
+        lockedBalances[_owner] -= _value;
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {

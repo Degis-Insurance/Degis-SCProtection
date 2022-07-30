@@ -174,7 +174,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
     {
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
-        uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
+        uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply() == 0 ? 1 : totalSupply());
         uint256 reward = (_amount * acc) - _userDebt;
         return reward;
     }
@@ -275,7 +275,6 @@ contract InsurancePool is ERC20, ProtocolProtection {
         );
 
         _mint(_provider, _amount);
-        console.log(totalSupply());
         emit LiquidityProvision(_amount, _provider);
     }
 
@@ -359,7 +358,6 @@ contract InsurancePool is ERC20, ProtocolProtection {
             accumulatedRewardPerShare +
             (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
         lastRewardTimestamp = block.timestamp;
-        console.log("emission rate", emissionRate);
     }
 
     function _setLiquidationStatus(bool _liquidated) internal {

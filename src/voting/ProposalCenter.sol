@@ -640,19 +640,22 @@ contract ProposalCenter is ProtocolProtection {
                 }
             }
             // rewards for voting with majority
-            for (uint256 i = 0; i < voted.length; i++) {
+            if (reward > 0){
+                for (uint256 i = 0; i < voted.length; i++) {
                 if (confirmsReport[_reportId][voted[i]] == _veredict) {
                     // if voted with the decision, reward 50% of penalty to voters
                     // according to the amount of vedeg they hold
                     uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
                     uint256 toTransfer = (balance * reportIds[_reportId].yes) /
                         2;
-                    MockDEG(deg).transfer(voted[i], toTransfer);
-                    MockVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
+                    MockDEG(deg).mintDegis(voted[i], toTransfer);
+                    MockVeDEG(veDeg).unlockVeDEG(voted[i], balance * 4000 / 5000);
+                    console.log(reward);
                     reward -= toTransfer;
                 }
             }
             MockDEG(deg).transfer(policyCenter, reward);
+            }
         }
     }
 }

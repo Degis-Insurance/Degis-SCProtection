@@ -137,6 +137,7 @@ contract ClaimPayoutTest is Test {
     }
 
     function testClaimPayout() public {
+        vm.warp(4520000);
         uint256 amount = policyCenter.calculatePayout(1, address(this));
         policyCenter.claimPayout(1);
         console.log(amount);

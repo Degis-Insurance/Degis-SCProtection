@@ -421,13 +421,14 @@ contract PolicyCenter is ProtocolProtection {
         poolExists(_poolId)
     {
         require(_amount > 0, "Amount must be greater than 0");
-        require(
-            _amount <= liquidityByPoolId[_poolId],
-            "Amount must be less than liquidity"
-        );
+        
         require(
             _amount <= liquidities[_poolId][msg.sender].amount,
             "Amount must be less than provided liquidity"
+        );
+        require(
+            _amount <= liquidityByPoolId[_poolId],
+            "Amount must be less than liquidity"
         );
         require(
             block.timestamp >=
@@ -489,7 +490,7 @@ contract PolicyCenter is ProtocolProtection {
         );
         require(pool.liquidated(), "pool is not claimable");
         require(
-            pool.endLiquidationDate() <= block.timestamp,
+            pool.endLiquidationDate() >= block.timestamp,
             "claim period is over"
         );
         // buy date + length + liquidation date - 5 days buffer
@@ -502,6 +503,7 @@ contract PolicyCenter is ProtocolProtection {
         require(coverage.amount > 0, "no coverage to claim");
         // gets amount to give as payout
         uint256 amount = calculatePayout(_poolId, msg.sender);
+        console.log(amount);
         // registers removal of funds from pool
         fundsByPoolId[_poolId] -= coverage.amount;
         // coverage by user is removed
@@ -514,7 +516,7 @@ contract PolicyCenter is ProtocolProtection {
                 msg.sender,
                 fundsByPoolId[_poolId]
             );
-            _requestReinsurance(amount - fundsByPoolId[_poolId], msg.sender);
+            _reinsurePool(amount - fundsByPoolId[_poolId], msg.sender, tokenByPoolId[_poolId]);
         }
         emit Payout(amount, msg.sender);
     }
@@ -531,15 +533,6 @@ contract PolicyCenter is ProtocolProtection {
         treasury -= reward;
 
         IERC20(deg).transfer(_reporter, reward);
-    }
-
-    /**
-    @notice receive funds from ProposalCenter after it penalizes and rewards report voters
-     */
-
-    function receiveFunds(uint256 _amount, address _token) external {
-        require(msg.sender == proposalCenter, "not requested by Executor");
-        treasury += _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -579,31 +572,47 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
-     * @notice requests reinsurance from Reinsurance Pool
-     * @param _amount   amount of liquidity to request
-     * @param _address  address of the claimer
-     */
-    function _requestReinsurance(uint256 _amount, address _address) internal {
-        IReinsurancePool(reinsurancePool).reinsurePool(_amount, _address);
-    }
-
-    /**
      * @notice swaps tokens for deg
-     * @param _amount amount of liquidity to request
-     * @param _token address of token to exchange from
+     * 
+     * @param _amount       amount to swap for degis
+     * @param _fromToken    token address to exchange from
+     * @param _toToken      token address to exchange to
      */
-    function _swapForDEG(uint256 _amount, address _token)
+    function _swapTokens(uint256 _amount, address _fromToken, address _toToken)
         internal
         returns (uint256 receives)
     {
         address[] memory array = new address[](1);
-        array[0] = _token;
+        array[0] = _fromToken;
         // exchange tokens for deg and return amount of deg received
         receives = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * 99) / 100),
             array,
-            deg,
+            _toToken,
+            0
+        );
+    }
+
+    /**
+     * @notice swaps tokens for deg
+     * 
+     * @param _amount       amount of liquidity to request
+     * @param _fromToken    token address to exchange from
+     * @param _toToken      token address to exchange to
+     */
+    function _swapForExactTokens(uint256 _amount, address _fromToken, address _toToken)
+        internal
+        returns (uint256 receives)
+    {
+        address[] memory array = new address[](1);
+        array[0] = _fromToken;
+        // exchange tokens for deg and return amount of deg received
+        receives = IExchange(exchange).swapTokensForExactTokens(
+            _amount,
+            ((_amount * 99) / 100),
+            array,
+            _toToken,
             0
         );
     }
@@ -617,6 +626,7 @@ contract PolicyCenter is ProtocolProtection {
         poolExists(_poolId)
     {
         require(_amount > 0, "No funds to split");
+        address fromToken = tokenByPoolId[_poolId];
         uint256 totalSplit = _amount;
 
         uint256 toInsurancePool = (totalSplit * premiumSplits[0]) / 10000;
@@ -624,8 +634,8 @@ contract PolicyCenter is ProtocolProtection {
         // treasury receives left overs
         uint256 toTreasury = totalSplit - toInsurancePool - toReinsurancePool;
         // swap native for degis
-        uint256 treasuryReceives = _swapForDEG(toTreasury, deg);
-        uint256 reinsuranceReceives = _swapForDEG(toReinsurancePool, deg);
+        uint256 treasuryReceives = _swapTokens(toTreasury,fromToken, deg);
+        uint256 reinsuranceReceives = _swapTokens(toReinsurancePool, fromToken, deg);
         treasury += treasuryReceives;
         totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
@@ -636,5 +646,22 @@ contract PolicyCenter is ProtocolProtection {
         require(exchange != address(0), "Exchange address not set");
         // approve exchange to swap policy center tokens for deg
         IERC20(_token).approve(exchange, type(uint256).max);
+    }
+
+    /**
+    @notice provides liquidity to pools in need of it. Only callable by Pools
+     *
+    @param _amount      token being insured
+    @param _insured    address of the insured user
+    @param _token     address of covered wallet
+    */
+    function _reinsurePool(uint256 _amount, address _insured, address _token) internal {
+        require(_amount > 0, "amount should be greater than 0");
+        // msg.sender is the pool address, use it as reference to the pool info
+        liquidityByPoolId[0] -= _amount;
+        // swap tokens for deg
+        _swapForExactTokens(_amount, deg, _token);
+        
+        IERC20(_token).transfer(_insured, _amount);
     }
 }
