@@ -95,14 +95,14 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         deg = new MockDEG(10000e18, "Degis", 18, "DEG");
         deg.approve(address(policyCenter), 10000e18);
         deg.transfer(address(this), 100e18);
-        vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
+        vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
         vedeg.transfer(address(this), 100e18);
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000e18);
 
         vedeg.mint(alice, 100000 ether);
         vedeg.mint(bob, 100000 ether);
-        vedeg.mint(carol, 100000 ether);
+        vedeg.mint(carol, 10000 ether);
 
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(
@@ -288,5 +288,71 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         // Can not switch to another choice
         vm.expectRevert("Can not choose both sides");
         incidentReport.vote(1, VOTE_AGAINST, 2500 ether);
+
+        vm.stopPrank();
+    }
+
+    function testSettleReport() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 10000 ether);
+
+        // Can not settle before end voting
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD);
+        vm.expectRevert("Not reached settlement");
+        incidentReport.settle(1);
+
+        // Can not settle without reaching quorum
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        vm.expectRevert("Not reached quorum");
+        incidentReport.settle(1);
+
+        // Successfully settle the report
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 90000 ether);
+        incidentReport.settle(1);
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+
+        assertEq(report.status, SETTLED_STATUS);
+        assertEq(report.result, PASS_RESULT);
+        assertEq(report.numFor, 100000 ether);
+        assertEq(report.numAgainst, 0);
+    }
+
+    function testExtendRound() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 100000 ether);
+
+        vm.warp(
+            REPORT_START_TIME +
+                PENDING_PERIOD +
+                VOTING_PERIOD -
+                SAMPLE_PERIOD +
+                1
+        );
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+
+        vm.warp(
+            REPORT_START_TIME +
+                PENDING_PERIOD +
+                VOTING_PERIOD -
+                SAMPLE_PERIOD +
+                2
+        );
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        vm.expectEmit(false, false, false, true);
+        emit ReportExtended(1, 1);
+        incidentReport.settle(1);
     }
 }

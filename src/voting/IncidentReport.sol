@@ -402,7 +402,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      */
     function _checkQuorum(uint256 _totalVotes) internal view {
         require(
-            _totalVotes >= IVeDEG(veDeg).totalSupply() * QUORUM_RATIO,
+            _totalVotes >= (IVeDEG(veDeg).totalSupply() * QUORUM_RATIO) / 100,
             "Not reached quorum"
         );
     }
