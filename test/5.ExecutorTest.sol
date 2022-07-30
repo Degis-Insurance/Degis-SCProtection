@@ -26,7 +26,6 @@ import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ExecutorTest is Test {
-
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -54,10 +53,13 @@ contract ExecutorTest is Test {
         deg = new MockDEG(10000000e18, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000e18, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000e18);
-        
+        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000e18);
+
         reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(reinsurancePool),
+            address(deg)
+        );
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor = new Executor();
         proposalCenter = new ProposalCenter();
@@ -112,14 +114,21 @@ contract ExecutorTest is Test {
         executor.setProposalCenter(address(proposalCenter));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("insurance", address(ptp), uint256(10000), uint256(1));
+        pool1 = insurancePoolFactory.deployPool(
+            "insurance",
+            address(ptp),
+            uint256(10000),
+            uint256(1)
+        );
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setProposalCenter(address(proposalCenter));
-        InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
+        InsurancePool(pool1).setInsurancePoolFactory(
+            address(insurancePoolFactory)
+        );
         deg.transfer(address(this), 1000e18);
         deg.transfer(address(proposalCenter), 1000e18);
         deg.approve(address(proposalCenter), 10000e18);
@@ -142,11 +151,11 @@ contract ExecutorTest is Test {
         vm.prank(carol);
         proposalCenter.votePoolProposal(1, true);
         vm.prank(alice);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.prank(bob);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.prank(carol);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.warp(260000);
         proposalCenter.evaluateReportVotes(1);
         proposalCenter.evaluatePoolProposalVotes(1);
@@ -160,7 +169,8 @@ contract ExecutorTest is Test {
     function testGetPendingPools() public {
         // retrieves pending pool by id
         // should return its state
-        (uint256 poolId,, bool pending, bool approved) =executor.queuedReportsById(1);
+        (uint256 poolId, , bool pending, bool approved) = executor
+            .queuedReportsById(1);
         assertEq(poolId == 1, true);
         assertEq(pending == true, true);
         assertEq(approved == true, true);
@@ -169,20 +179,20 @@ contract ExecutorTest is Test {
     function testExecuteReportPriorToBuffer() public {
         // report should not be executable prior to time buffer
         vm.expectRevert("report not ready");
-       executor.executeReport(1);
+        executor.executeReport(1);
     }
 
     function testExecutePoolPriorToBuffer() public {
         // report should not be executable prior to time buffer
         vm.expectRevert("pool not ready");
-       executor.executeNewPool(1);
+        executor.executeNewPool(1);
     }
 
     function testExecuteReportAfterBuffer() public {
         // report should be executable after time buffer
         vm.warp(1000000);
         executor.executeReport(1);
-        assertEq(InsurancePool(pool1).liquidated()  == true, true);
+        assertEq(InsurancePool(pool1).liquidated() == true, true);
     }
 
     function testExecutePoolAfterBuffer() public {
@@ -199,7 +209,7 @@ contract ExecutorTest is Test {
         vm.warp(1000000);
         vm.prank(carol);
         vm.expectRevert("Ownable: caller is not the owner");
-       executor.executeReport(1);
+        executor.executeReport(1);
     }
 
     function testExecutePoolNotOwner() public {
@@ -207,14 +217,15 @@ contract ExecutorTest is Test {
         vm.warp(1209602);
         vm.prank(carol);
         vm.expectRevert("Ownable: caller is not the owner");
-       executor.executeNewPool(1);
+        executor.executeNewPool(1);
     }
 
     function testCancelReport() public {
         // owner should be able to cancel a report
         vm.warp(1000000);
-       executor.cancelReport(1);
-        (uint256 poolId,, bool pending, bool approved) =executor.queuedReportsById(1);
+        executor.cancelReport(1);
+        (uint256 poolId, , bool pending, bool approved) = executor
+            .queuedReportsById(1);
         bool truthy = InsurancePool(pool1).liquidated();
         assertEq(poolId == 1, true);
         assertEq(pending == false, true);
@@ -226,7 +237,7 @@ contract ExecutorTest is Test {
         // owner should be able to cancel a new pool proposal
         vm.warp(1209602);
         executor.cancelNewPool(1);
-        (,,,,, bool pending,) =executor.queuedPoolsById(1);
+        (, , , , , bool pending, ) = executor.queuedPoolsById(1);
         assertEq(pending == false, true);
     }
 
@@ -235,7 +246,7 @@ contract ExecutorTest is Test {
         vm.warp(1000000);
         vm.prank(carol);
         vm.expectRevert("Ownable: caller is not the owner");
-        executor.cancelReport(1);  
+        executor.cancelReport(1);
     }
 
     function testCancelPoolNotOwner() public {
@@ -246,4 +257,3 @@ contract ExecutorTest is Test {
         executor.cancelNewPool(1);
     }
 }
-

@@ -84,6 +84,30 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     );
 
     // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    function getReport(uint256 _id) external view returns (Report memory) {
+        return reports[_id];
+    }
+
+    function getTempResult(uint256 _id)
+        external
+        view
+        returns (TempResult memory)
+    {
+        return reportTempResults[_id];
+    }
+
+    function getUserVote(address _user, uint256 _id)
+        external
+        view
+        returns (UserVote memory)
+    {
+        return userReportVotes[_user][_id];
+    }
+
+    // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
@@ -205,6 +229,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         } else {
             userReportVote.choice = _isFor;
         }
+
+        userReportVote.amount += _amount;
 
         Report storage currentReport = reports[_reportId];
         // Record the vote for this report

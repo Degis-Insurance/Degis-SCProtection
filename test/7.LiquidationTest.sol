@@ -27,6 +27,8 @@ import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test {
 
+    
+
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -123,11 +125,11 @@ contract ClaimPayoutTest is Test {
         policyCenter.buyCoverage(1, price, 10000, 90);
         incidentReport.report(1);
         vm.prank(alice);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.prank(bob);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.prank(carol);
-        incidentReport.vote(1, true);
+        incidentReport.vote(1, 1, 1e18);
         vm.warp(260000);
         vm.prank(address(0x1abc));
         proposalCenter.evaluateReportVotes(1);
