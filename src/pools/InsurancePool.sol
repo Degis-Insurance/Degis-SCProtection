@@ -38,6 +38,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     uint256 public constant DISTRIBUTION_PERIOD = 30 days;
+
     // up to 25% discount if protection is bought for an entire year
     uint256 public constant DISCOUNT_DIVISOR = 1460;
     uint256 public constant PAY_COVER_PERIOD = 10 days;
@@ -54,7 +55,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     uint256 public maxLength;
     uint256 public startTime;
     uint256 public policyPricePerShield;
-    //totalLiquidity is expressed in totalSupply()
+    // totalLiquidity is expressed in totalSupply()
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
@@ -116,37 +117,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice returns information about the pool
-    @return name                    of the pool
-    @return insuredToken            address of the token insured by the pool
-    @return maxCapacity             max coverage bought
-    @return totalSupply             total amount of LP tokens
-    @return totalDistributedReward  how much has been distributed to liquidity providers
-     */
-    function poolInfo()
-        public
-        view
-        returns (
-            string memory,
-            address,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            name(),
-            insuredToken,
-            maxCapacity,
-            totalSupply(),
-            totalDistributedReward
-        );
-    }
-
-    /**
-    @notice returns cost to buy coverage for a given period of time and amount of tokens
-    @param _amount amount being covered
-    @param _length coverage length
+     * @notice returns cost to buy coverage for a given period of time and amount of tokens
+     *
+     * @param _amount Amount being covered
+     * @param _length Coverage length
      */
     function coveragePrice(uint256 _amount, uint256 _length)
         public
@@ -165,9 +139,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-    @notice returns the amount of reward a give amount and userDebt are allowed to claim
-    @param _amount      amount in provided liquidity
-    @param _userDebt    amount of debt the user has
+     * @notice Calculate your reward
+     *
+     * @param _amount   Amount in provided liquidity
+     * @param _userDebt Amount of debt the user
      */
     function calculateReward(uint256 _amount, uint256 _userDebt)
         public
@@ -235,8 +210,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-    @notice sets if pool is paused
-    @param _paused if true paused, else not paused
+     * @notice sets if pool is paused
+     * @param _paused if true paused, else not paused
      */
     function setPausedInsurancePool(bool _paused) external {
         _pause();
@@ -260,10 +235,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice provide liquidity from liquidity pool. Only callable through policyCenter
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
+     * @notice Provide liquidity from liquidity pool. Only callable through policyCenter
+     *
+     * @param _amount   Amount of liquidity to provide
+     * @param _provider Liquidity provider adress
+     */
     function provideLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
@@ -281,10 +257,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-    @notice remove liquidity from insurance pool. Only callable through policyCenter
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
+     * @notice Remove liquidity from insurance pool. Only callable through policyCenter
+     *
+     * @param _amount   Amount of liquidity to remove
+     * @param _provider Provider address
+     */
     function removeLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
@@ -304,9 +281,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-    @notice called when a coverage is bought on PolicyCenter. Only callable through policyCenter
-    @param _paid amount paid to insure amount of tokens
-    */
+     * @notice Called when a coverage is bought on PolicyCenter. Only callable through policyCenter
+     *
+     * @param _paid Amount paid to insure amount of tokens
+     */
     function updatePoolDistribution(uint256 _paid) external {
         require(
             msg.sender == policyCenter,
@@ -350,8 +328,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice updates local states to reflect current reward emission.
-    */
+     * @notice Update rewards
+     */
     function _updateRewards() internal {
         if (totalSupply() == 0) {
             lastRewardTimestamp = block.timestamp;
@@ -359,9 +337,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         }
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
+
         accumulatedRewardPerShare =
             accumulatedRewardPerShare +
             (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
+
         lastRewardTimestamp = block.timestamp;
     }
 

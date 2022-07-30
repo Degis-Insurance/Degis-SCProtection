@@ -286,7 +286,11 @@ contract PolicyCenter is ProtocolProtection {
      * @param _token address of token that a pool negotiates in
      * @param _poolId id of the pool
      */
-    function storePoolInformation(address _pool, address _token, uint256 _poolId) external {
+    function storePoolInformation(
+        address _pool,
+        address _token,
+        uint256 _poolId
+    ) external {
         require(
             msg.sender == owner() || msg.sender == insurancePoolFactory,
             "Only owner or insurancePoolFactory can set tokens"
@@ -504,7 +508,11 @@ contract PolicyCenter is ProtocolProtection {
                 msg.sender,
                 fundsByPoolId[_poolId]
             );
-            _reinsurePool(amount - fundsByPoolId[_poolId], msg.sender, tokenByPoolId[_poolId]);
+            _reinsurePool(
+                amount - fundsByPoolId[_poolId],
+                msg.sender,
+                tokenByPoolId[_poolId]
+            );
         }
         emit Payout(amount, msg.sender);
     }
@@ -570,15 +578,16 @@ contract PolicyCenter is ProtocolProtection {
 
     /**
      * @notice swaps tokens for deg
-     * 
+     *
      * @param _amount       amount of liquidity to request
      * @param _fromToken    token address to exchange from
      * @param _toToken      token address to exchange to
      */
-    function _swapTokens(uint256 _amount, address _fromToken, address _toToken)
-        internal
-        returns (uint256 receives)
-    {
+    function _swapTokens(
+        uint256 _amount,
+        address _fromToken,
+        address _toToken
+    ) internal returns (uint256 receives) {
         address[] memory array = new address[](1);
         array[0] = _fromToken;
         // exchange tokens for deg and return amount of deg received
@@ -593,17 +602,19 @@ contract PolicyCenter is ProtocolProtection {
 
     /**
      * @notice swaps tokens for deg
-     * 
-     * @param _amount       amount of liquidity to request
-     * @param _fromToken    token address to exchange from
-     * @param _toToken      token address to exchange to
+     *
+     * @param _amount       Amount of liquidity to request
+     * @param _fromToken    Token address to exchange from
+     * @param _toToken      Token address to exchange to
      */
-    function _swapForExactTokens(uint256 _amount, address _fromToken, address _toToken)
-        internal
-        returns (uint256 receives)
-    {
+    function _swapForExactTokens(
+        uint256 _amount,
+        address _fromToken,
+        address _toToken
+    ) internal returns (uint256 receives) {
         address[] memory array = new address[](1);
         array[0] = _fromToken;
+
         // exchange tokens for deg and return amount of deg received
         receives = IExchange(exchange).swapTokensForExactTokens(
             _amount,
@@ -628,11 +639,17 @@ contract PolicyCenter is ProtocolProtection {
 
         uint256 toInsurancePool = (totalSplit * premiumSplits[0]) / 10000;
         uint256 toReinsurancePool = (totalSplit * premiumSplits[1]) / 10000;
+
         // treasury receives left overs
         uint256 toTreasury = totalSplit - toInsurancePool - toReinsurancePool;
+
         // swap native for degis
         uint256 treasuryReceives = _swapTokens(fromToken, toTreasury, deg);
-        uint256 reinsuranceReceives = _swapTokens(fromToken, toReinsurancePool, deg);
+        uint256 reinsuranceReceives = _swapTokens(
+            fromToken,
+            toReinsurancePool,
+            deg
+        );
         treasury += treasuryReceives;
         totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
@@ -652,7 +669,11 @@ contract PolicyCenter is ProtocolProtection {
     @param _insured    address of the insured user
     @param _token     address of covered wallet
     */
-    function _reinsurePool(uint256 _amount, address _insured, address _token) internal {
+    function _reinsurePool(
+        uint256 _amount,
+        address _insured,
+        address _token
+    ) internal {
         require(_amount > 0, "amount should be greater than 0");
         // msg.sender is the pool address, use it as reference to the pool info
         liquidityByPoolId[0] -= _amount;

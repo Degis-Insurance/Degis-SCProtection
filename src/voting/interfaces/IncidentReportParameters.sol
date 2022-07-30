@@ -9,6 +9,7 @@ abstract contract IncidentReportParameters is VotingResultParameters {
     uint256 constant INIT_STATUS = 0;
     uint256 constant PENDING_STATUS = 1;
     uint256 constant VOTING_STATUS = 2;
+    uint256 constant SETTLED_STATUS = 3;
     uint256 constant CLOSE_STATUS = 404;
 
     // Cool down time parameter

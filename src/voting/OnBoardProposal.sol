@@ -35,6 +35,10 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public userProposalVotes;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event NewProposal(
         string name,
         address token,
@@ -51,6 +55,18 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
 
     event ProposalSettled(uint256 proposalId, uint256 result);
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Start a new proposal
+     *
+     * @param _name        New project name
+     * @param _token       Native token address
+     * @param _maxCapacity Max capacity for the project pool
+     * @param _priceRatio  Price ratio of the premium
+     */
     function propose(
         string calldata _name,
         address _token,
@@ -74,6 +90,13 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
         emit NewProposal(_name, _token, _maxCapacity, _priceRatio);
     }
 
+    /**
+     * @notice Vote for a proposal
+     *
+     * @param _proposalId Proposal id
+     * @param _isFor      Voting choice
+     * @param _amount     Amount to vote
+     */
     function vote(
         uint256 _proposalId,
         uint256 _isFor,
@@ -116,6 +139,11 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
         emit ProposalVoted(_proposalId, msg.sender, _isFor, _amount);
     }
 
+    /**
+     * @notice Settle the proposal
+     *
+     * @param _proposalId Proposal id
+     */
     function settle(uint256 _proposalId) external {
         Proposal storage currentProposal = proposals[_proposalId];
 
@@ -136,44 +164,27 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
             currentProposal.numAgainst
         );
 
-        _settleVotingReward(_proposalId);
+        currentProposal.result = res;
+        currentProposal.status = SETTLED_STATUS;
 
         emit ProposalSettled(_proposalId, res);
     }
 
     /**
-     * @notice Settle voting reward depending on the result
+     * @notice Claim back veDEG after voting result settled
      *
      * @param _proposalId Proposal id
      */
-    function _settleVotingReward(uint256 _proposalId) internal view {
+    function claim(uint256 _proposalId) external {
         Proposal storage currentProposal = proposals[_proposalId];
 
-        if (currentProposal.result == 1) {
-            // // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
-            // IDegisToken(deg).mintDegis(
-            //     currentProposal.proposer,
-            //     REPORTER_REWARD + REPORT_THRESHOLD
-            // );
-            // _distributeIncomeForWinner(currentReport.reporter);
-            // // Total deg reward
-            // uint256 totalRewardToVoters = REPORT_THRESHOLD +
-            //     currentReport.numAgainst /
-            //     100;
-            // // Update deg reward for those who vote for
-            // currentReport.votingReward =
-            //     (totalRewardToVoters * SCALE) /
-            //     currentReport.numFor;
-        } else if (currentProposal.result == 2) {
-            //     // Total deg reward
-            //     uint256 totalRewardToVoters = REPORT_THRESHOLD +
-            //         currentReport.numFor /
-            //         100;
-            //     // Update deg reward for those who vote against
-            //     currentReport.votingReward =
-            //         (totalRewardToVoters * SCALE) /
-            //         currentReport.numAgainst;
-        }
+        require(currentProposal.status == SETTLED_STATUS, "Not voting status");
+
+        UserVote storage userVote = userProposalVotes[msg.sender][_proposalId];
+
+        IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
+
+        userVote.claimed = true;
     }
 
     /**
