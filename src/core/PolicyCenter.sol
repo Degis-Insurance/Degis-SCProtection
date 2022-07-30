@@ -50,6 +50,7 @@ contract PolicyCenter is ProtocolProtection {
         uint256 length;
     }
     mapping(uint256 => mapping(address => Coverage)) public coverages;
+
     mapping(uint256 => uint256) public fundsByPoolId;
     // amount of rewards by pool Id paid by coverage buyers
     mapping(uint256 => uint256) public totalRewardsByPoolId;
@@ -644,10 +645,10 @@ contract PolicyCenter is ProtocolProtection {
         uint256 toTreasury = totalSplit - toInsurancePool - toReinsurancePool;
 
         // swap native for degis
-        uint256 treasuryReceives = _swapTokens(fromToken, toTreasury, deg);
+        uint256 treasuryReceives = _swapTokens(toTreasury, fromToken, deg);
         uint256 reinsuranceReceives = _swapTokens(
-            fromToken,
             toReinsurancePool,
+            fromToken,
             deg
         );
         treasury += treasuryReceives;
@@ -679,6 +680,6 @@ contract PolicyCenter is ProtocolProtection {
         liquidityByPoolId[0] -= _amount;
         // swap tokens for deg
         _swapForExactTokens(_amount, deg, _token);
-        IERC20(_token).transferFrom(_insured, _amount);
+        IERC20(_token).transfer(_insured, _amount);
     }
 }

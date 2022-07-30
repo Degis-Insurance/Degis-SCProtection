@@ -31,10 +31,6 @@ import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IExecutor.sol";
 
-import "../mock/MockSHIELD.sol";
-import "../mock/MockVeDEG.sol";
-import "../mock/MockDEG.sol";
-
 pragma solidity ^0.8.13;
 
 contract ProtocolProtection is Ownable {
