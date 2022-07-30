@@ -125,6 +125,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
     /**
      * @notice Start the voting process
+     *
+     * @param _reportId Report id
      */
     function startVoting(uint256 _reportId) external {
         Report storage currentReport = reports[_reportId];
@@ -232,7 +234,6 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         emit ReportVoted(_reportId, msg.sender, _isFor, _amount);
     }
 
-    
     /**
      * @notice Settle the final result for a report
      *
@@ -260,6 +261,9 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
         if (res > 0) {
             _settleVotingReward(_reportId);
+
+            currentReport.status = SETTLED_STATUS;
+
             emit ReportSettled(_reportId, res);
         } else {
             emit ReportExtended(_reportId, currentReport.round);
@@ -378,7 +382,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
-     * @notice Check veDEG to be enough 
+     * @notice Check veDEG to be enough
      *
      * @param _user   User address
      * @param _amount Amount to fulfill
@@ -388,7 +392,6 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
             IVeDEG(veDeg).locked(_user);
         require(unlockedBalance >= _amount, "Not enough veDEG");
     }
-
 
     /**
      * @notice Check whether has passed the pending time period

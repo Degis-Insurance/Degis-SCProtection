@@ -52,7 +52,7 @@ contract InsurancePoolFactory is ProtocolProtection {
     address public administrator;
 
     mapping(address => bool) public registered;
-    
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -90,9 +90,9 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Get the pool address for a given pool id
+     * @notice Get the pool address list
      *
-     * @return list of pool addresses
+     * @return List of pool addresses
      */
     function getPoolAddressList() external view returns (address[] memory) {
         address[] memory list = new address[](poolCounter + 1);
@@ -117,6 +117,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice Sets the administrator of the deployed Insurance pools
+     *
      * @param _administrator The address of the new administrator
      */
     function setAdministrator(address _administrator) external onlyOwner {
@@ -128,13 +129,14 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice                      Creates a new insurance pool
+     * @notice Creates a new insurance pool
      *
      * @param _name                 Name of the protocol
      * @param _protocolToken        Address of the token used for the protocol
      * @param _maxCapacity          Maximum capacity of the pool
-     * @param _policyPricePerToken Initial policy price per shield
-     * @return  address             of the new insurance pool
+     * @param _policyPricePerToken  Initial policy price per shield
+     *
+     * @return address Address of the new insurance pool
      */
     function deployPool(
         string calldata _name,
@@ -190,19 +192,20 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice gets bytecode for insurance pool creation according to parameters
+     * @notice Get bytecode for insurance pool creation according to parameters
      *
-     * @param _protocolToken        address of the protocol token to insure
-     * @param _maxCapacity          max coverage capacity
-     * @param _policyPricePerToken policy price per shield
-     * @param _tokenName            name for the new pool
-     * @param _symbol               symbol for new pool
-     * @return bytecode             for insurance pool creation
+     * @param _protocolToken Address of the protocol token to insure
+     * @param _maxCapacity   Max coverage capacity
+     * @param _policyPrice   Policy price
+     * @param _tokenName     Name for the new pool
+     * @param _symbol        Symbol for new pool
+     *
+     * @return bytecode Creation bytecode
      */
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPricePerToken,
+        uint256 _policyPrice,
         string memory _tokenName,
         string memory _symbol
     ) internal view virtual returns (bytes memory) {
@@ -218,7 +221,7 @@ contract InsurancePoolFactory is ProtocolProtection {
                     _maxCapacity,
                     _tokenName,
                     _symbol,
-                    _policyPricePerToken,
+                    _policyPrice,
                     administrator
                 )
             );
