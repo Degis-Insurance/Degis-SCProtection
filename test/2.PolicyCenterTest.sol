@@ -188,7 +188,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testExceedMaxCapacity() public {
         ptp.approve(address(policyCenter), 10000e18);
-        InsurancePool(pool1).setMaxCapacity(10);
+        InsurancePool(pool1).setMaxCapacity(1);
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
@@ -214,7 +214,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
-        InsurancePool(pool1).removeLiquidity(1, address(this));
+        policyCenter.removeLiquidity(1, 1);
     }
 
     
@@ -230,8 +230,10 @@ contract PostInsurancePoolDeploymentTest is Test {
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         console.log(price);
         policyCenter.buyCoverage(1, price, 10000, 90);
-        (uint256 amount,,) = policyCenter.getCoverage(1, address(this));
-        assertEq(amount == 1000, true);
+        (uint256 amount,uint256 buyDate, uint256 length) = policyCenter.getCoverage(1, address(this));
+        assertEq(amount == 10000, true);
+        assertEq(buyDate - block.timestamp < 604810, true);
+        assertEq(length == 90, true);
     }
 
     function testBuyCoverageWithSuppliedLiquidity() public {
@@ -242,8 +244,8 @@ contract PostInsurancePoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 100e18);
         policyCenter.buyCoverage(1, price, 10000, 90);
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.getCoverage(1, address(this));
-        assertEq(amount == 1000, true);
-        assertEq(buyDate - block.timestamp < 100, true);
+        assertEq(amount == 10000, true);
+        assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
     }
 
@@ -258,11 +260,13 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testProvideLiquidityReinsurancePool() public {
         // user should be able to provide liquidity to reinsurance pool
+        deg.approve(address(policyCenter), 10000e18);
         policyCenter.provideLiquidity(0, 10000);
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
     }
 
     function testRemoveLiquidityBeforeBufferTimeReinsurancePool() public {
+        deg.approve(address(policyCenter), 10000e18);
         policyCenter.provideLiquidity(0, 10000);
         // user should not be able to remove liquidity from reinsurance pool prior to buffer time
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
@@ -273,6 +277,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testRemoveLiquidityAfterBufferTimeReinsurancePool() public {
         // user should be able to remove liquidity from reinsurance pool after buffer time
+        deg.approve(address(policyCenter), 10000e18);
         policyCenter.provideLiquidity(0, 10000);
         uint256 initialBalance = ptp.balanceOf(address(this));
         assertEq(ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000, true);
@@ -301,8 +306,9 @@ contract PostInsurancePoolDeploymentTest is Test {
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
         policyCenter.buyCoverage(1, price, 10000, 90);
-        console.log(shield.balanceOf(address(policyCenter)));
-        assertEq(shield.balanceOf(address(policyCenter)) == prevBalance + price, true);
+        console.log(ptp.balanceOf(address(policyCenter)));
+        // assert that funds are split correctly, ptp balance is 45% of price
+        assertEq(ptp.balanceOf(address(policyCenter)) == prevBalance + price * 45 / 100, true);
     }
 
     function testRemoveLiquidityAfterReport() public {

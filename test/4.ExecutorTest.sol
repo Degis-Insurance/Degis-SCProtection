@@ -190,7 +190,7 @@ contract ExecutorTest is Test {
         vm.warp(1000000);
         vm.prank(carol);
         vm.expectRevert("Ownable: caller is not the owner");
-       executor.executeReport(1);
+        executor.executeReport(1);
     }
 
     function testExecutePoolNotOwner() public {

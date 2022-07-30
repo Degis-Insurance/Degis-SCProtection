@@ -10,6 +10,7 @@ contract Exchange {
     constructor () {
         name = "exchange";
     }
+
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -22,6 +23,21 @@ contract Exchange {
     {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
         amountOut = getAmountOut(amountIn, amountOutMin, amountOutMin);
+        IERC20(to).transfer(msg.sender, amountOut);
+    }
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    )
+       external
+       returns (uint256 amount)
+    {
+        IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
+        amount = getAmountOut(amountInMax, amountOut, amountOut);
         IERC20(to).transfer(msg.sender, amountOut);
     }
 

@@ -152,7 +152,7 @@ contract NoLiquidationTest is Test {
         uint256 reward = policyCenter.calculateReward(0, alice);
         console.log("reward", reward);
         vm.prank(bob);
-        policyCenter.claimReward(1);
+        policyCenter.claimReward(0);
         assertEq(reward > 0, true);
     }
 
