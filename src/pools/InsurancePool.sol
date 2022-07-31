@@ -52,7 +52,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
 
     bool public liquidated;
     uint256 public maxCapacity;
+
     uint256 public maxLength;
+    
+    
     uint256 public startTime;
     uint256 public policyPricePerShield;
     // totalLiquidity is expressed in totalSupply()

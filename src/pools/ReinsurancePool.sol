@@ -120,19 +120,21 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice mints liquidity tokens. Only callable through policyCenter
+     * @notice mints liquidity tokens. Only callable through policyCenter
      *
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
-    function provideLiquidity(uint256 _amount, address _provider) external {
+     * @param _amount Liquidity amount (shield)
+     */
+    function provideLiquidity(uint256 _amount) external {
         require(_amount > 0, "amount should be greater than 0");
         require(
             msg.sender == policyCenter,
             "cannot provide liquidity directly to insurance pool"
         );
-        _mint(_provider, _amount);
-        emit LiquidityProvision(_amount, _provider);
+
+        IERC20(shield).transferFrom(msg.sender, address(this), _amount);
+
+        _mint(msg.sender, _amount);
+        emit LiquidityProvision(_amount, msg.sender);
     }
 
     /**
@@ -156,8 +158,6 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
-
-    
 
     /**
      * @notice  Move liquidity to another pool to be used for reinsurance,
