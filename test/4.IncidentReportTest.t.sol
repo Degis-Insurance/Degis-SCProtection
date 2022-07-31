@@ -100,6 +100,8 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000e18);
 
+        deg.addMinter(address(this));
+
         vedeg.mint(alice, 100000 ether);
         vedeg.mint(bob, 100000 ether);
         vedeg.mint(carol, 10000 ether);
@@ -345,15 +347,8 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         IncidentReport.TempResult memory temp_1 = incidentReport.getTempResult(
             1
         );
-        assertEq(temp_1.result, PASS_RESULT);
-        assertEq(
-            temp_1.sampleTimestamp,
-            REPORT_START_TIME +
-                PENDING_PERIOD +
-                VOTING_PERIOD -
-                SAMPLE_PERIOD +
-                1
-        );
+        assertEq(temp_1.result, INIT_RESULT);
+        assertEq(temp_1.sampleTimestamp, 0);
         assertEq(temp_1.hasChanged, false);
 
         // Vote against twice in the last SAMPLE_PERIOD
@@ -366,17 +361,107 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
                 2
         );
         vm.prank(bob);
-        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+        incidentReport.vote(1, VOTE_AGAINST, 20000 ether);
 
         IncidentReport.TempResult memory temp_2 = incidentReport.getTempResult(
             1
         );
-        assertEq(temp_2.result, TIED_RESULT);
-        assertEq(temp_2.hasChanged, true);
+        assertEq(temp_2.result, PASS_RESULT);
+        assertEq(temp_2.hasChanged, false);
+
+        // Vote against twice in the last SAMPLE_PERIOD
+        // Result change to tied now
+        vm.warp(
+            REPORT_START_TIME +
+                PENDING_PERIOD +
+                VOTING_PERIOD -
+                SAMPLE_PERIOD +
+                3
+        );
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 30000 ether);
+
+        IncidentReport.TempResult memory temp_3 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_3.result, TIED_RESULT);
+        assertEq(temp_3.hasChanged, true);
 
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
         vm.expectEmit(false, false, false, true);
         emit ReportExtended(1, 1);
         incidentReport.settle(1);
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        assertEq(report.round, 1);
+        assertEq(report.result, INIT_RESULT);
+    }
+
+    function testClaimRewardAndPayDebtAfterPassed() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 100000 ether);
+
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+
+        uint256 balanceBefore = deg.balanceOf(address(this));
+
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        incidentReport.settle(1);
+
+        uint256 balanceAfter = deg.balanceOf(address(this));
+
+        // Get back 1000 deg and extra 1000 deg reward
+        assertEq(balanceAfter - balanceBefore, 2000 ether);
+
+        vm.prank(alice);
+        incidentReport.claimReward(1);
+
+        assertEq(vedeg.locked(alice), 0);
+        assertEq(deg.balanceOf(alice), 500 ether);
+
+        deg.mintDegis(bob, 500 ether);
+        vm.prank(bob);
+        incidentReport.payDebt(1, bob);
+
+        // Pay 400 deg for debt, left 100 deg
+        assertEq(deg.balanceOf(bob), 100 ether);
+    }
+
+    function testClaimRewardAndPayDebtAfterRejected() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 50000 ether);
+
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 100000 ether);
+
+        uint256 balanceBefore = deg.balanceOf(address(this));
+
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        incidentReport.settle(1);
+
+        uint256 balanceAfter = deg.balanceOf(address(this));
+
+        // Not passed, can not get back
+        assertEq(balanceAfter - balanceBefore, 0);
+
+        vm.prank(bob);
+        incidentReport.claimReward(1);
+
+        assertEq(vedeg.locked(bob), 0);
+        assertEq(deg.balanceOf(bob), 1500 ether);
+
+        deg.mintDegis(alice, 500 ether);
+        vm.prank(alice);
+        incidentReport.payDebt(1, alice);
+
+        // Pay 400 deg for debt, left 100 deg
+        assertEq(deg.balanceOf(alice), 100 ether);
     }
 }
