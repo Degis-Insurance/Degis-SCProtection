@@ -254,6 +254,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         ) {
             _recordTempResult(
                 _reportId,
+                currentReport.round,
                 currentReport.numFor,
                 currentReport.numAgainst
             );
@@ -524,22 +525,29 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      */
     function _recordTempResult(
         uint256 _reportId,
+        uint256 _round,
         uint256 _numFor,
         uint256 _numAgainst
     ) internal {
         TempResult storage temp = reportTempResults[_reportId];
 
+        // Only record when it has reached the last day (time uint)
         if (
             block.timestamp >
-            reports[_reportId].voteTimestamp + VOTING_PERIOD - SAMPLE_PERIOD
+            reports[_reportId].voteTimestamp +
+                VOTING_PERIOD +
+                _round *
+                EXTEND_PERIOD -
+                SAMPLE_PERIOD
         ) {
             uint256 currentResult = _getVotingResult(_numFor, _numAgainst);
 
-            // If this is the first time for sampling, not record change
+            // If this is the first time for sampling, not record hasChange state
             if (temp.result > 0) {
                 temp.hasChanged = currentResult != temp.result;
             }
 
+            // Store the current result and sample time
             temp.result = currentResult;
             temp.sampleTimestamp = block.timestamp;
         }
