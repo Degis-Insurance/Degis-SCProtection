@@ -530,10 +530,11 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
             // If this is the first time for sampling, not record change
             if (temp.result > 0) {
-                temp.hasChanged = currentResult == temp.result;
+                temp.hasChanged = currentResult != temp.result;
             }
 
             temp.result = currentResult;
+            temp.sampleTimestamp = block.timestamp;
         }
     }
 

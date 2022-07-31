@@ -330,6 +330,8 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 100000 ether);
 
+        // Vote against in the last SAMPLE_PERIOD
+        // Result still for now
         vm.warp(
             REPORT_START_TIME +
                 PENDING_PERIOD +
@@ -340,6 +342,22 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         vm.prank(bob);
         incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
 
+        IncidentReport.TempResult memory temp_1 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_1.result, PASS_RESULT);
+        assertEq(
+            temp_1.sampleTimestamp,
+            REPORT_START_TIME +
+                PENDING_PERIOD +
+                VOTING_PERIOD -
+                SAMPLE_PERIOD +
+                1
+        );
+        assertEq(temp_1.hasChanged, false);
+
+        // Vote against twice in the last SAMPLE_PERIOD
+        // Result change to tied now
         vm.warp(
             REPORT_START_TIME +
                 PENDING_PERIOD +
@@ -349,6 +367,12 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         );
         vm.prank(bob);
         incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+
+        IncidentReport.TempResult memory temp_2 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_2.result, TIED_RESULT);
+        assertEq(temp_2.hasChanged, true);
 
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
         vm.expectEmit(false, false, false, true);
