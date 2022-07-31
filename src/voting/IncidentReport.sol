@@ -6,6 +6,8 @@ import "../util/ProtocolProtection.sol";
 
 import "./interfaces/IncidentReportParameters.sol";
 
+import "forge-std/console.sol";
+
 contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -285,6 +287,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
         uint256 res = _checkRoundExtended(_reportId, currentReport.round);
 
+        console.log("Res", res);
+
         if (res > 0) {
             _settleVotingReward(_reportId);
 
@@ -314,6 +318,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
                 msg.sender,
                 (reports[_reportId].votingReward * userVote.amount) / SCALE
             );
+            IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
         } else if (finalResult == TIED_RESULT) {
             // Tied result, give back user's veDEG
             IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
@@ -337,7 +342,9 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         require(finalResult > 0, "Not settled");
         require(userVote.choice != finalResult, "Not wrong choice");
 
-        uint256 debt = (userVote.amount * DEBT_RATIO) / 100;
+        uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
+
+        console.log("debt", debt);
 
         // Pay the debt in DEG
         IDegisToken(deg).burnDegis(msg.sender, debt);
@@ -366,9 +373,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
             _distributeIncomeForWinner(currentReport.reporter);
 
             // Total deg reward
-            uint256 totalRewardToVoters = REPORT_THRESHOLD +
-                currentReport.numAgainst /
-                100;
+            uint256 totalRewardToVoters = currentReport.numAgainst / 100;
 
             // Update deg reward for those who vote for
             currentReport.votingReward =
@@ -467,6 +472,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         internal
         returns (uint256 result)
     {
+        console.log("has changed", reportTempResults[_reportId].hasChanged);
+
         if (!reportTempResults[_reportId].hasChanged) {
             result = _settleResult(
                 _reportId,
@@ -524,7 +531,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
 
         if (
             block.timestamp >
-            reports[_reportId].reportTimestamp + VOTING_PERIOD - SAMPLE_PERIOD
+            reports[_reportId].voteTimestamp + VOTING_PERIOD - SAMPLE_PERIOD
         ) {
             uint256 currentResult = _getVotingResult(_numFor, _numAgainst);
 
