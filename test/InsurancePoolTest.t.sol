@@ -52,6 +52,9 @@ contract InsurancePoolTest is BaseTest {
 
         assertEq(firstPool.protocolName, "ReinsurancePool");
         assertEq(firstPool.protocolToken, address(deg));
+
+        assertTrue(factory.tokenRegistered(address(deg)));
+        assertTrue(factory.poolRegistered(address(repool)));
     }
 
     function testDeployPool() public {
