@@ -109,6 +109,9 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         view
         returns (uint256)
     {
+        if (totalSupply() == 0) {
+            return 0;
+        }
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());

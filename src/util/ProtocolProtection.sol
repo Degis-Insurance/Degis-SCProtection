@@ -28,6 +28,8 @@ import "../interfaces/IInsurancePoolFactory.sol";
 import "../interfaces/IProposalCenter.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IExecutor.sol";
+import "../interfaces/IDegisToken.sol";
+import "../interfaces/IVeDEG.sol";
 
 import "../mock/MockSHIELD.sol";
 import "../mock/MockVeDEG.sol";

@@ -338,17 +338,10 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testClaimRewardsFromLiquidityProvisionNoRewards() public {
         // claim rewards for liquidity provision in a non liquidated pool
         // no coverage bought, therefore no rewards are available
+        ptp.transfer(alice, 1000);
         vm.prank(alice);
-        ptp.approve(address(policyCenter), 20000 ether);
-        vm.prank(alice);
-        policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
-        vm.prank(bob);
-        ptp.approve(address(policyCenter), 20000 ether);
-        vm.prank(bob);
-        policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
-        vm.prank(carol);
         ptp.approve(address(policyCenter), 1000 ether);
-        vm.prank(carol);
+        vm.prank(alice);
         policyCenter.provideLiquidity(PTP_POOL_ID, 1000);
         vm.warp(30 days);
         vm.prank(alice);
@@ -356,12 +349,6 @@ contract PostInsurancePoolDeploymentTest is Test {
         console.log("reward", reward);
         // no user should be able to claim rewards
         vm.prank(alice);
-        vm.expectRevert("no rewards to claim");
-        policyCenter.claimReward(PTP_POOL_ID);
-        vm.prank(bob);
-        vm.expectRevert("no rewards to claim");
-        policyCenter.claimReward(PTP_POOL_ID);
-        vm.prank(carol);
         vm.expectRevert("no rewards to claim");
         policyCenter.claimReward(PTP_POOL_ID);
     }
