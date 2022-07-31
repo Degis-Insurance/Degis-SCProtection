@@ -44,13 +44,25 @@ contract InsurancePool is ERC20, ProtocolProtection {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // address of insured token
     address public insuredToken;
+
+    // admin role. Performs set opearations on the contract.
     address public administrator;
+
     bool public paused;
     bool public liquidated;
+
+    // max amount of bought protection in native tokens.
     uint256 public maxCapacity;
+
+    // max time length in days of granted protection.
     uint256 public maxLength;
+
+    // timestamp of pool creation.
     uint256 public startTime;
+
+    //
     uint256 public policyPricePerShield;
     //totalLiquidity is expressed in totalSupply()
     uint256 public totalDistributedReward;
@@ -171,7 +183,10 @@ contract InsurancePool is ERC20, ProtocolProtection {
         external
         view
         returns (uint256)
-    {
+    {   
+        if (totalSupply() == 0) {
+            return 0;
+        }
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply() == 0 ? 1 : totalSupply());
@@ -356,7 +371,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
         uint256 rewards = time * emissionRate;
         accumulatedRewardPerShare =
             accumulatedRewardPerShare +
-            (rewards / (totalSupply() == 0 ? 1 : totalSupply()));
+            rewards / totalSupply();
         lastRewardTimestamp = block.timestamp;
     }
 
