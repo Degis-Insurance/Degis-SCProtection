@@ -2,18 +2,14 @@
 
 pragma solidity ^0.8.13;
 
-import "./VotingResultParameters.sol";
+import "./VotingParameters.sol";
 
-abstract contract OnBoardProposalParameters is VotingResultParameters {
-    // Status parameters for a report
-    uint256 constant INIT_STATUS = 0;
-    uint256 constant PENDING_STATUS = 1;
-    uint256 constant VOTING_STATUS = 2;
-    uint256 constant SETTLED_STATUS = 3;
-    uint256 constant CLOSE_STATUS = 404;
-
+abstract contract OnBoardProposalParameters is VotingParameters {
     uint256 constant VOTING_PERIOD = 3 days;
 
     // minimum 50% votes
     uint256 constant QUORUM_RATIO = 50;
+
+    // DEG threshold for starting a report
+    uint256 constant REPORT_THRESHOLD = 1000 ether;
 }

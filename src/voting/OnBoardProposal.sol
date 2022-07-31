@@ -78,6 +78,9 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
             "Already exist"
         );
 
+        // Burn degis tokens to start a proposal
+        IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
+
         uint256 currentProposalCounter = ++proposalCounter;
 
         Proposal storage proposal = proposals[currentProposalCounter];
