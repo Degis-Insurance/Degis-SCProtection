@@ -51,7 +51,9 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     address public administrator;
 
-    mapping(address => bool) public registered;
+    // Record whether a protocol token or pool address has been registered
+    mapping(address => bool) public poolRegistered;
+    mapping(address => bool) public tokenRegistered;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -75,6 +77,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         reinsurancePool = _reinsurancePool;
         deg = _degis;
         _setAdministrator(msg.sender);
+
         // stores information about reinsurance pool, first pool recorded
         poolInfoById[poolCounter] = PoolInfo(
             "ReinsurancePool",
@@ -83,6 +86,8 @@ contract InsurancePoolFactory is ProtocolProtection {
             100000e18,
             1
         );
+        poolRegistered[_reinsurancePool] = true;
+        tokenRegistered[_degis] = true;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -109,6 +114,10 @@ contract InsurancePoolFactory is ProtocolProtection {
      */
     function getPoolCounter() public view returns (uint256) {
         return poolCounter;
+    }
+
+    function getPoolInfo(uint256 _id) public view returns (PoolInfo memory) {
+        return poolInfoById[_id];
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -148,6 +157,8 @@ contract InsurancePoolFactory is ProtocolProtection {
             msg.sender == owner() || msg.sender == executor,
             "Only owner or executor contract can create a new insurance pool"
         );
+        require(!tokenRegistered[_protocolToken], "Already registered");
+
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
         bytes memory bytecode = _getInsurancePoolBytecode(
@@ -158,8 +169,11 @@ contract InsurancePoolFactory is ProtocolProtection {
             _name
         );
 
-        ++poolCounter;
+        uint256 currentPoolId = ++poolCounter;
         address newPoolAddress = _deploy(bytecode, salt);
+
+        tokenRegistered[_protocolToken] = true;
+        poolRegistered[newPoolAddress] = true;
 
         // Store pool information in Policy Center
         IPolicyCenter(policyCenter).storePoolInformation(
@@ -167,7 +181,7 @@ contract InsurancePoolFactory is ProtocolProtection {
             _protocolToken,
             poolCounter
         );
-        poolInfoById[poolCounter] = PoolInfo(
+        poolInfoById[currentPoolId] = PoolInfo(
             _name,
             newPoolAddress,
             _protocolToken,
@@ -177,7 +191,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
         emit PoolCreated(
             newPoolAddress,
-            poolCounter,
+            currentPoolId,
             _name,
             _protocolToken,
             _maxCapacity,
@@ -247,7 +261,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         }
     }
 
-    function _setAdministrator(address _administrator) internal onlyOwner {
+    function _setAdministrator(address _administrator) internal {
         administrator = _administrator;
     }
 }
