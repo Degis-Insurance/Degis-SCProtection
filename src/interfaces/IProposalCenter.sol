@@ -17,7 +17,7 @@ interface IProposalCenter {
     function evaluatePoolProposalVotes(uint256 _proposalId) external;
     function evaluateReportVotes(uint256 _reportId) external;
     function executor() view external returns (address);
-    function getPoolProposal(uint256 _proposalId) view external returns (string memory, address, address, address[] memory, uint256, uint256, uint256, uint256, uint256, bool, bool);
+    function getPoolProposal(uint256 _proposalId) view external returns (string memory, address, address[] memory, uint256, uint256, uint256, uint256, uint256, bool, bool);
     function getReport(uint256 _reportId) view external returns (uint256, uint256, address, uint256, uint256, bool, bool, address[] memory);
     function insurancePoolFactory() view external returns (address);
     function rewardByReportId(uint256 _reportId, bool _veredict) external;

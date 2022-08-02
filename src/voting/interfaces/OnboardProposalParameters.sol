@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import "./VotingParameters.sol";
 
-abstract contract OnBoardProposalParameters is VotingParameters {
+abstract contract OnboardProposalParameters is VotingParameters {
     uint256 constant VOTING_PERIOD = 3 days;
 
     // minimum 50% votes

@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 
 import "../util/ProtocolProtection.sol";
 
-import "./interfaces/OnBoardProposalParameters.sol";
+import "./interfaces/OnboardProposalParameters.sol";
 
-contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
+contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -54,6 +54,15 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
     );
 
     event ProposalSettled(uint256 proposalId, uint256 result);
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+    
+    function getProposal(uint256 _proposalId) public view returns (Proposal memory) {
+        Proposal memory proposal = proposals[_proposalId];
+        return proposal;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //

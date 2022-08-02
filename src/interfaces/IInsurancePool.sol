@@ -10,14 +10,13 @@ interface IInsurancePool {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    function DISCOUNT_DIVISOR() view external returns (uint256);
     function DISTRIBUTION_PERIOD() view external returns (uint256);
     function accumulatedRewardPerShare() view external returns (uint256);
     function administrator() view external returns (address);
     function allowance(address owner, address spender) view external returns (uint256);
     function approve(address spender, uint256 amount) external returns (bool);
     function balanceOf(address account) view external returns (uint256);
-    function calculateReward(uint256 _amount, uint256 _userDebt, address _provider) view external returns (uint256);
+    function calculateReward(uint256 _amount, uint256 _userDebt) view external returns (uint256);
     function coveragePrice(uint256 _amount, uint256 _length) view external returns (uint256);
     function decimals() view external returns (uint8);
     function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
@@ -49,6 +48,7 @@ interface IInsurancePool {
     function setDeg(address _deg) external;
     function setExecutor(address _executor) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setIncidentReport(address _incidentReport) external;
     function setMaxCapacity(uint256 _maxCapacity) external;
     function setMaxLength(uint256 _maxLength) external;
     function setPausedInsurancePool(bool _paused) external;
@@ -65,6 +65,7 @@ interface IInsurancePool {
     function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function transferOwnership(address newOwner) external;
+    function updateEmissionRate(uint256 _premium) external;
     function updateRewards() external;
     function veDeg() view external returns (address);
 }
