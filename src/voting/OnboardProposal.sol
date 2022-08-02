@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 
 import "../util/ProtocolProtection.sol";
 
-import "./interfaces/OnBoardProposalParameters.sol";
+import "./interfaces/OnboardProposalParameters.sol";
 
-contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
+contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -58,6 +58,15 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
+    
+    function getProposal(uint256 _proposalId) public view returns (Proposal memory) {
+        Proposal memory proposal = proposals[_proposalId];
+        return proposal;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Start a new proposal
@@ -77,6 +86,9 @@ contract OnBoardProposal is ProtocolProtection, OnBoardProposalParameters {
             !IInsurancePoolFactory(insurancePoolFactory).registered(_token),
             "Already exist"
         );
+
+        // Burn degis tokens to start a proposal
+        IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
 
         uint256 currentProposalCounter = ++proposalCounter;
 

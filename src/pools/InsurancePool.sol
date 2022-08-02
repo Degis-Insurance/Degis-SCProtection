@@ -20,6 +20,8 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/security/Pausable.sol";
+
 import "../util/ProtocolProtection.sol";
 
 /**
@@ -30,27 +32,28 @@ import "../util/ProtocolProtection.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePool is ERC20, ProtocolProtection {
+contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
+    
+    // Time to distribute premium payments to liquidity providers
     uint256 public constant DISTRIBUTION_PERIOD = 30 days;
-    // up to 25% discount if protection is bought for an entire year
-    uint256 public constant DISCOUNT_DIVISOR = 1460;
+
+    // Time users have to claim payout when pool is liquidated
     uint256 public constant PAY_COVER_PERIOD = 10 days;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // address of insured token
+    // Address of insured token
     address public insuredToken;
 
-    // admin role. Performs set opearations on the contract.
+    // Admin role. Performs set opearations on the contract.
     address public administrator;
 
-    bool public paused;
+    // if pool has been liquidated
     bool public liquidated;
 
     // max amount of bought protection in native tokens.
@@ -64,10 +67,11 @@ contract InsurancePool is ERC20, ProtocolProtection {
 
     //
     uint256 public policyPricePerShield;
-    //totalLiquidity is expressed in totalSupply()
+    // totalLiquidity is expressed in totalSupply()
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
+    uint256 public emssionEndTime;
     uint256 public emissionRate;
     uint256 public endLiquidationDate;
 
@@ -126,37 +130,10 @@ contract InsurancePool is ERC20, ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice returns information about the pool
-    @return name                    of the pool
-    @return insuredToken            address of the token insured by the pool
-    @return maxCapacity             max coverage bought
-    @return totalSupply             total amount of LP tokens
-    @return totalDistributedReward  how much has been distributed to liquidity providers
-     */
-    function poolInfo()
-        public
-        view
-        returns (
-            string memory,
-            address,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            name(),
-            insuredToken,
-            maxCapacity,
-            totalSupply(),
-            totalDistributedReward
-        );
-    }
-
-    /**
-    @notice returns cost to buy coverage for a given period of time and amount of tokens
-    @param _amount amount being covered
-    @param _length coverage length
+     * @notice returns cost to buy coverage for a given period of time and amount of tokens
+     *
+     * @param _amount Amount being covered
+     * @param _length Coverage length
      */
     function coveragePrice(uint256 _amount, uint256 _length)
         external
@@ -170,14 +147,14 @@ contract InsurancePool is ERC20, ProtocolProtection {
             "length cannot be greater than maxLength"
         );
         return
-            (((policyPricePerShield * _amount * _length) / 1 days) *
-                (DISCOUNT_DIVISOR + 1 - _length)) / DISCOUNT_DIVISOR;
+            (policyPricePerShield * _amount * _length) / 1 days;
     }
 
     /**
-    @notice returns the amount of reward a give amount and userDebt are allowed to claim
-    @param _amount      amount in provided liquidity
-    @param _userDebt    amount of debt the user has
+     * @notice Calculate your reward
+     *
+     * @param _amount   Amount in provided liquidity
+     * @param _userDebt Amount of debt the user
      */
     function calculateReward(uint256 _amount, uint256 _userDebt)
         external
@@ -189,7 +166,7 @@ contract InsurancePool is ERC20, ProtocolProtection {
         }
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
-        uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply() == 0 ? 1 : totalSupply());
+        uint256 acc = accumulatedRewardPerShare + rewards / totalSupply();
         uint256 reward = (_amount * acc) - _userDebt;
         return reward;
     }
@@ -219,6 +196,10 @@ contract InsurancePool is ERC20, ProtocolProtection {
         policyCenter = _policyCenter;
     }
 
+    function setIncidentReport(address _incidentReport) external override onlyRole {
+        incidentReport = _incidentReport;
+    }
+
     function setReinsurancePool(address _reinsurancePool)
         external
         override
@@ -227,12 +208,12 @@ contract InsurancePool is ERC20, ProtocolProtection {
         reinsurancePool = _reinsurancePool;
     }
 
-    function setProposalCenter(address _proposalCenter)
+    function setOnboardProposal(address _onboardProposal)
         external
         override
         onlyRole
     {
-        proposalCenter = _proposalCenter;
+        onboardProposal = _onboardProposal;
     }
 
     function setExecutor(address _executor) external override onlyRole {
@@ -248,15 +229,18 @@ contract InsurancePool is ERC20, ProtocolProtection {
     }
 
     /**
-    @notice sets if pool is paused
-    @param _paused if true paused, else not paused
+     * @notice sets if pool is paused
      */
     function setPausedInsurancePool(bool _paused) external {
         require(
-            (msg.sender == owner()) || (msg.sender == proposalCenter),
+            (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or proposalCenter can call this function"
         );
-        paused = _paused;
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
+        }
     }
 
     function setMaxCapacity(uint256 _maxCapacity) external onlyRole {
@@ -277,28 +261,35 @@ contract InsurancePool is ERC20, ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice provide liquidity from liquidity pool. Only callable through policyCenter
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
-    function provideLiquidity(uint256 _amount, address _provider) external {
+     * @notice Provide liquidity from liquidity pool. Only callable through policyCenter
+     *
+     * @param _amount   Amount of liquidity to provide
+     * @param _provider Liquidity provider adress
+     */
+    function provideLiquidity(uint256 _amount, address _provider)
+        external
+        whenNotPaused
+    {
         require(!liquidated, "cannot provide new liquidity");
         require(_amount > 0, "amount should be greater than 0");
         require(
             msg.sender == policyCenter,
             "cannot provide liquidity directly to insurance pool"
         );
-
         _mint(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
 
     /**
-    @notice remove liquidity from insurance pool. Only callable through policyCenter
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
-    function removeLiquidity(uint256 _amount, address _provider) external {
+     * @notice Remove liquidity from insurance pool. Only callable through policyCenter
+     *
+     * @param _amount   Amount of liquidity to remove
+     * @param _provider Provider address
+     */
+    function removeLiquidity(uint256 _amount, address _provider)
+        external
+        whenNotPaused
+    {
         require(
             !liquidated,
             "Pool has been liquidated, cannot remove liquidity"
@@ -307,31 +298,16 @@ contract InsurancePool is ERC20, ProtocolProtection {
             msg.sender == policyCenter,
             "cannot remove liquidity directly from insurance pool"
         );
-        require(!paused, "cannot remove liquidity while paused");
+
         require(_amount > 0, "amount should be greater than 0");
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
-    /**
-    @notice called when a coverage is bought on PolicyCenter. Only callable through policyCenter
-    @param _paid amount paid to insure amount of tokens
-    */
-    function updatePoolDistribution(uint256 _paid) external {
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can buy coverage"
-        );
-        require(_paid > 0, "paid should be greater than 0");
-        totalDistributedReward += emissionRate * (block.timestamp - startTime);
-        accumulatedRewardPerShare +=
-            (_paid * (block.timestamp - startTime)) /
-            (totalSupply() == 0 ? 1 : totalSupply());
-        emissionRate = (_paid - totalDistributedReward) / DISTRIBUTION_PERIOD;
-    }
+    
 
     /**
-    @notice called when liqudity is provided, removed or coverage is bought.
+    @notice Called when liqudity is provided, removed or coverage is bought.
     updates all state variables to reflect current reward emission.
     */
     function updateRewards() public {
@@ -340,6 +316,19 @@ contract InsurancePool is ERC20, ProtocolProtection {
             "Only pollicyCenter can update rewards"
         );
         _updateRewards();
+    }
+
+    /**
+    * @notice Update emission rate based on new premium comission to liquidity providers
+    *
+    * @param _premium premium given to liquidity providers
+     */
+    function updateEmissionRate(uint256 _premium) public {
+        require(
+            msg.sender == policyCenter,
+            "Only pollicyCenter can update emission rate"
+        );
+        _updateEmissionRate(_premium);
     }
 
     /**
@@ -360,20 +349,55 @@ contract InsurancePool is ERC20, ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice updates local states to reflect current reward emission.
-    */
+    * @notice Updates emission rate based on new incoming premium
+    *         
+    * @param _premium incoming new premium
+     */
+    function _updateEmissionRate(uint256 _premium) internal {
+        // Update current reward taking into account new emission rate
+        _updateRewards();
+        // Get time to complete current pool of tokens emission to liquidity providers
+        uint256 timeToFinishEmission = emssionEndTime > block.timestamp ?
+                                       emssionEndTime - block.timestamp : 0;
+        // Calculate new emission rate by adding new premium and redistributing previous emission
+        // Throughout the time it takes to complete emission.
+        uint256 newEmissionRate = (timeToFinishEmission * emissionRate + _premium)
+                                  / DISTRIBUTION_PERIOD;
+                                
+        // update emission rate and emission ends
+        emissionRate = newEmissionRate;
+        emssionEndTime = block.timestamp + DISTRIBUTION_PERIOD;
+    }
+
+    /**
+     * @notice Update rewards
+     */
     function _updateRewards() internal {
         if (totalSupply() == 0) {
+            // if totalSupply is 0, no rewards can be paid
+            // update last time rewards were claimed
             lastRewardTimestamp = block.timestamp;
             return;
         }
-        uint256 time = block.timestamp - lastRewardTimestamp;
-        uint256 rewards = time * emissionRate;
+        // if no coverages have been bought in over 30 days,
+        // discount time passed since the time that emission ends
+        uint256 claimTimestamp = emssionEndTime < block.timestamp ?
+                                 emssionEndTime : block.timestamp;
+        // Calculate difference between claim time and last time rewards were claimed
+        uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
+
+        // Calculate new reward
+        uint256 rewards = timeSinceLastReward * emissionRate;
+
+        // Update accumulated rewards given to each pool share
+        // accumulated 
         accumulatedRewardPerShare =
             accumulatedRewardPerShare +
             rewards / totalSupply();
         lastRewardTimestamp = block.timestamp;
     }
+
+    
 
     function _setLiquidationStatus(bool _liquidated) internal {
         liquidated = _liquidated;

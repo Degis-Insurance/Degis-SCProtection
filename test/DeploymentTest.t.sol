@@ -8,7 +8,8 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
-import "src/voting/ProposalCenter.sol";
+import "src/voting/OnboardProposal.sol";
+import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -19,7 +20,7 @@ import "src/interfaces/ReinsurancePoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/IProposalCenter.sol";
+import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -31,7 +32,8 @@ contract InitialContractDeploymentTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
-    ProposalCenter public proposalCenter;
+    OnboardProposal public onboardProposal;
+    IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -65,12 +67,15 @@ contract InitialContractDeploymentTest is Test {
         assertEq(executor.poolBuffer() == 1 days, true);
     }
 
-    function testDeployProposalCenter() public {
-        proposalCenter = new ProposalCenter();
-        assertEq(address(proposalCenter) == address(0), false);
+    function testDeployOnboardProposal() public {
+        onboardProposal = new OnboardProposal();
+        assertEq(address(onboardProposal) == address(0), false);
     }
 
-    
+    function testDeployIncidentReport() public {
+        incidentReport = new IncidentReport();
+        assertEq(address(incidentReport) == address(0), false);
+    }
 }
 
 /** 
@@ -81,7 +86,7 @@ contract SecondaryContractDeploymentTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
-    ProposalCenter public proposalCenter;
+    OnboardProposal public onboardProposal;
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
@@ -99,16 +104,23 @@ contract SecondaryContractDeploymentTest is Test {
     }
 
     function testDeployPolicyCenter() public {
+        // Policy center manages user interactions with insurance pools.
+        // It is dependent on deg and reinsurancePool being deployed.
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         assertEq(policyCenter.reinsurancePool() == address(reinsurancePool), true);
     }
 
     function testDeployFactory() public {
+        // Factory creates insurance pools.
+        // It is dependent on deg and reinsurancePool being deployed.
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         assertEq(insurancePoolFactory.poolCounter() == 0, true);
     }
 
     function testDeployInsurancePool() public {
+        // Insurance pools are created by the insurance pool factory.
+        // it is dependent on deg, reinsurancePool,
+        // policyCenter and insurancePoolFactory being deployed.
         insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         exchange = new Exchange();

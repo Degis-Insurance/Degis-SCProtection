@@ -2,16 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "./VotingResultParameters.sol";
+import "./VotingParameters.sol";
 
-abstract contract IncidentReportParameters is VotingResultParameters {
-    // Status parameters for a report
-    uint256 constant INIT_STATUS = 0;
-    uint256 constant PENDING_STATUS = 1;
-    uint256 constant VOTING_STATUS = 2;
-    uint256 constant SETTLED_STATUS = 3;
-    uint256 constant CLOSE_STATUS = 404;
-
+abstract contract IncidentReportParameters is VotingParameters {
     // Cool down time parameter
     // If you submitted a wrong report, you cannot start another within cooldown period
     uint256 public constant COOLDOWN_WRONGREPORT = 7 days;
@@ -35,5 +28,6 @@ abstract contract IncidentReportParameters is VotingResultParameters {
     uint256 constant PUNISHMENT_RATIO = 40; // 40% go to winners, 40% reserve
     uint256 constant DEBT_RATIO = 80; // 80% as the debt to unlock veDEG
 
+    // Scale when calculating rewards
     uint256 constant SCALE = 1e12;
 }

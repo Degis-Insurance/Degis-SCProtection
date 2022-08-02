@@ -43,13 +43,17 @@ contract InsurancePoolFactory is ProtocolProtection {
         uint256 maxCapacity;
         uint256 policyPricePerShield;
     }
+    // poolId => Pool Information
     mapping(uint256 => PoolInfo) public poolInfoById;
 
     uint256 public poolCounter;
     uint256 public maxCapacity;
 
     address public administrator;
-    address public insurancePool;
+
+    // Record whether a protocol token or pool address has been registered
+    mapping(address => bool) public poolRegistered;
+    mapping(address => bool) public tokenRegistered;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -73,6 +77,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         reinsurancePool = _reinsurancePool;
         deg = _degis;
         _setAdministrator(msg.sender);
+
         // stores information about reinsurance pool, first pool recorded
         poolInfoById[poolCounter] = PoolInfo(
             "ReinsurancePool",
@@ -81,6 +86,8 @@ contract InsurancePoolFactory is ProtocolProtection {
             100000e18,
             1
         );
+        poolRegistered[_reinsurancePool] = true;
+        tokenRegistered[_degis] = true;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -88,8 +95,9 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Get the pool address for a given pool id
-     * @return list of pool addresses
+     * @notice Get the pool address list
+     *
+     * @return List of pool addresses
      */
     function getPoolAddressList() external view returns (address[] memory) {
         address[] memory list = new address[](poolCounter + 1);
@@ -101,10 +109,15 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice gets the pool counter which indicates the latest pool id
+     *
      * @return PoolCounter pool id
      */
     function getPoolCounter() public view returns (uint256) {
         return poolCounter;
+    }
+
+    function getPoolInfo(uint256 _id) public view returns (PoolInfo memory) {
+        return poolInfoById[_id];
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -113,6 +126,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     /**
      * @notice Sets the administrator of the deployed Insurance pools
+     *
      * @param _administrator The address of the new administrator
      */
     function setAdministrator(address _administrator) external onlyOwner {
@@ -124,12 +138,14 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice                      Creates a new insurance pool
+     * @notice Creates a new insurance pool
+     *
      * @param _name                 Name of the protocol
      * @param _protocolToken        Address of the token used for the protocol
      * @param _maxCapacity          Maximum capacity of the pool
-     * @param _policyPricePerToken Initial policy price per shield
-     * @return  address             of the new insurance pool
+     * @param _policyPricePerToken  Initial policy price per shield
+     *
+     * @return address Address of the new insurance pool
      */
     function deployPool(
         string calldata _name,
@@ -141,6 +157,8 @@ contract InsurancePoolFactory is ProtocolProtection {
             msg.sender == owner() || msg.sender == executor,
             "Only owner or executor contract can create a new insurance pool"
         );
+        require(!tokenRegistered[_protocolToken], "Already registered");
+
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
         bytes memory bytecode = _getInsurancePoolBytecode(
@@ -151,16 +169,19 @@ contract InsurancePoolFactory is ProtocolProtection {
             _name
         );
 
-        ++poolCounter;
+        uint256 currentPoolId = ++poolCounter;
         address newPoolAddress = _deploy(bytecode, salt);
 
-        // Store the pool information
-        IPolicyCenter(policyCenter).setPoolId(poolCounter, newPoolAddress);
-        IPolicyCenter(policyCenter).setTokenByPoolId(
+        tokenRegistered[_protocolToken] = true;
+        poolRegistered[newPoolAddress] = true;
+
+        // Store pool information in Policy Center
+        IPolicyCenter(policyCenter).storePoolInformation(
+            newPoolAddress,
             _protocolToken,
             poolCounter
         );
-        poolInfoById[poolCounter] = PoolInfo(
+        poolInfoById[currentPoolId] = PoolInfo(
             _name,
             newPoolAddress,
             _protocolToken,
@@ -170,7 +191,7 @@ contract InsurancePoolFactory is ProtocolProtection {
 
         emit PoolCreated(
             newPoolAddress,
-            poolCounter,
+            currentPoolId,
             _name,
             _protocolToken,
             _maxCapacity,
@@ -185,19 +206,20 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice gets bytecode for insurance pool creation according to parameters
+     * @notice Get bytecode for insurance pool creation according to parameters
      *
-     * @param _protocolToken        address of the protocol token to insure
-     * @param _maxCapacity          max coverage capacity
-     * @param _policyPricePerToken policy price per shield
-     * @param _tokenName            name for the new pool
-     * @param _symbol               symbol for new pool
-     * @return bytecode             for insurance pool creation
+     * @param _protocolToken Address of the protocol token to insure
+     * @param _maxCapacity   Max coverage capacity
+     * @param _policyPrice   Policy price
+     * @param _tokenName     Name for the new pool
+     * @param _symbol        Symbol for new pool
+     *
+     * @return bytecode Creation bytecode
      */
     function _getInsurancePoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPricePerToken,
+        uint256 _policyPrice,
         string memory _tokenName,
         string memory _symbol
     ) internal view virtual returns (bytes memory) {
@@ -213,7 +235,7 @@ contract InsurancePoolFactory is ProtocolProtection {
                     _maxCapacity,
                     _tokenName,
                     _symbol,
-                    _policyPricePerToken,
+                    _policyPrice,
                     administrator
                 )
             );
@@ -239,7 +261,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         }
     }
 
-    function _setAdministrator(address _administrator) internal onlyOwner {
+    function _setAdministrator(address _administrator) internal {
         administrator = _administrator;
     }
 }

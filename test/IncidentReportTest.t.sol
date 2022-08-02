@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
-import "src/voting/ProposalCenter.sol";
+import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
@@ -21,7 +21,7 @@ import "src/interfaces/ReinsurancePoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/IProposalCenter.sol";
+import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -62,7 +62,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
-    ProposalCenter public proposalCenter;
+    OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -100,6 +100,8 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000e18);
 
+        deg.addMinter(address(this));
+
         vedeg.mint(alice, 100000 ether);
         vedeg.mint(bob, 100000 ether);
         vedeg.mint(carol, 10000 ether);
@@ -111,7 +113,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         );
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor = new Executor();
-        proposalCenter = new ProposalCenter();
+        onboardProposal = new OnboardProposal();
         exchange = new Exchange();
         incidentReport = new IncidentReport();
 
@@ -127,7 +129,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         policyCenter.setVeDeg(address(vedeg));
         policyCenter.setShield(address(shield));
         policyCenter.setExecutor(address(executor));
-        policyCenter.setProposalCenter(address(proposalCenter));
+        policyCenter.setOnboardProposal(address(onboardProposal));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
@@ -136,13 +138,15 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         insurancePoolFactory.setShield(address(shield));
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setProposalCenter(address(incidentReport));
+        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
+        insurancePoolFactory.setIncidentReport(address(incidentReport));
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         reinsurancePool.setDeg(address(deg));
         reinsurancePool.setVeDeg(address(vedeg));
         reinsurancePool.setShield(address(shield));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setProposalCenter(address(incidentReport));
+        reinsurancePool.setIncidentReport(address(incidentReport));
+        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
         incidentReport.setDeg(address(deg));
         incidentReport.setVeDeg(address(vedeg));
@@ -155,7 +159,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
         executor.setPolicyCenter(address(policyCenter));
-        executor.setProposalCenter(address(proposalCenter));
+        executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         //deploy ptp pool
@@ -169,12 +173,17 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
+        InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setProposalCenter(address(proposalCenter));
+        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
         InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
         InsurancePool(pool1).setInsurancePoolFactory(
             address(insurancePoolFactory)
         );
+        
+        // allow incident report to mint and burn tokens on behalf of users
+        // in the protocol's interest.
+        deg.addMinter(address(incidentReport));
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(POOLID);
@@ -330,6 +339,8 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 100000 ether);
 
+        // Vote against in the last SAMPLE_PERIOD
+        // Result still for now
         vm.warp(
             REPORT_START_TIME +
                 PENDING_PERIOD +
@@ -340,6 +351,15 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         vm.prank(bob);
         incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
 
+        IncidentReport.TempResult memory temp_1 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_1.result, INIT_RESULT);
+        assertEq(temp_1.sampleTimestamp, 0);
+        assertEq(temp_1.hasChanged, false);
+
+        // Vote against twice in the last SAMPLE_PERIOD
+        // Result change to tied now
         vm.warp(
             REPORT_START_TIME +
                 PENDING_PERIOD +
@@ -348,11 +368,107 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
                 2
         );
         vm.prank(bob);
-        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+        incidentReport.vote(1, VOTE_AGAINST, 20000 ether);
+
+        IncidentReport.TempResult memory temp_2 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_2.result, PASS_RESULT);
+        assertEq(temp_2.hasChanged, false);
+
+        // Vote against twice in the last SAMPLE_PERIOD
+        // Result change to tied now
+        vm.warp(
+            REPORT_START_TIME +
+                PENDING_PERIOD +
+                VOTING_PERIOD -
+                SAMPLE_PERIOD +
+                3
+        );
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 30000 ether);
+
+        IncidentReport.TempResult memory temp_3 = incidentReport.getTempResult(
+            1
+        );
+        assertEq(temp_3.result, TIED_RESULT);
+        assertEq(temp_3.hasChanged, true);
 
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
         vm.expectEmit(false, false, false, true);
         emit ReportExtended(1, 1);
         incidentReport.settle(1);
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        assertEq(report.round, 1);
+        assertEq(report.result, INIT_RESULT);
+    }
+
+    function testClaimRewardAndPayDebtAfterPassed() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 100000 ether);
+
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 50000 ether);
+
+        uint256 balanceBefore = deg.balanceOf(address(this));
+
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        incidentReport.settle(1);
+
+        uint256 balanceAfter = deg.balanceOf(address(this));
+
+        // Get back 1000 deg and extra 1000 deg reward
+        assertEq(balanceAfter - balanceBefore, 2000 ether);
+
+        vm.prank(alice);
+        incidentReport.claimReward(1);
+
+        assertEq(vedeg.locked(alice), 0);
+        assertEq(deg.balanceOf(alice), 500 ether);
+
+        deg.mintDegis(bob, 500 ether);
+        vm.prank(bob);
+        incidentReport.payDebt(1, bob);
+
+        // Pay 400 deg for debt, left 100 deg
+        assertEq(deg.balanceOf(bob), 100 ether);
+    }
+
+    function testClaimRewardAndPayDebtAfterRejected() public {
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        incidentReport.startVoting(1);
+
+        vm.prank(alice);
+        incidentReport.vote(1, VOTE_FOR, 50000 ether);
+
+        vm.prank(bob);
+        incidentReport.vote(1, VOTE_AGAINST, 100000 ether);
+
+        uint256 balanceBefore = deg.balanceOf(address(this));
+
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        incidentReport.settle(1);
+
+        uint256 balanceAfter = deg.balanceOf(address(this));
+
+        // Not passed, can not get back
+        assertEq(balanceAfter - balanceBefore, 0);
+
+        vm.prank(bob);
+        incidentReport.claimReward(1);
+
+        assertEq(vedeg.locked(bob), 0);
+        assertEq(deg.balanceOf(bob), 1500 ether);
+
+        deg.mintDegis(alice, 500 ether);
+        vm.prank(alice);
+        incidentReport.payDebt(1, alice);
+
+        // Pay 400 deg for debt, left 100 deg
+        assertEq(deg.balanceOf(alice), 100 ether);
     }
 }
