@@ -38,23 +38,31 @@ contract Executor is ProtocolProtection {
 
     // Reports struct to be executed.
     struct Report {
-        uint256 poolId;
-        uint256 queueEnds;
-        bool pending;
-        bool approved;
+        uint256 poolId; // Project pool id
+        uint256 reportTimestamp; // Time of starting report
+        address reporter; // Reporter address
+        uint256 voteTimestamp; // Voting start timestamp
+        uint256 numFor; // Votes voting for
+        uint256 numAgainst; // Votes voting against
+        uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
+        uint256 status;
+        uint256 result; // 1: Pass, 2: Reject, 3: Tied
+        uint256 votingReward; // Voting reward per veDEG if the report passed
     }
     uint256 public reportBuffer;
 
 
     // pool struct to be executed
-    struct Pool {
-        string protocolName;
-        address protocol;
+    struct Proposal {
+        uint256 proposeTimestamp;
+        address proposer;
+        uint256 numFor; // Votes voting for
+        uint256 numAgainst; // Votes voting against
         uint256 maxCapacity;
-        uint256 policyPricePerShield;
-        uint256 queueEnds;
-        bool pending;
-        bool approved;
+        uint256 priceRatio;
+        uint256 poolId;
+        uint256 status;
+        uint256 result;
     }
     uint256 public poolBuffer;
 
@@ -102,7 +110,7 @@ contract Executor is ProtocolProtection {
 
     function executePool(uint256 _poolId) public {
         // get the pool
-        Pool memory proposal = IOnboardProposal(onboardProposal).getPool(_poolId);
+        Proposal memory proposal = IOnboardProposal(onboardProposal).getPool(_poolId);
 
         address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(_poolId);
 
