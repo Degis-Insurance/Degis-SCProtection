@@ -27,9 +27,12 @@ import "../interfaces/IExchange.sol";
 import "../interfaces/IReinsurancePool.sol";
 import "../interfaces/IInsurancePool.sol";
 import "../interfaces/IInsurancePoolFactory.sol";
-import "../interfaces/IProposalCenter.sol";
+import "../interfaces/IOnboardProposal.sol";
+import "../interfaces/IIncidentReport.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../interfaces/IExecutor.sol";
+import "../interfaces/IDegisToken.sol";
+import "../interfaces/IVeDEG.sol";
 
 pragma solidity ^0.8.13;
 
@@ -39,7 +42,8 @@ contract ProtocolProtection is Ownable {
     address public shield;
     address public executor;
     address public policyCenter;
-    address public proposalCenter;
+    address public incidentReport;
+    address public onboardProposal;
     address public reinsurancePool;
     address public insurancePoolFactory;
 
@@ -63,12 +67,16 @@ contract ProtocolProtection is Ownable {
         policyCenter = _policyCenter;
     }
 
-    function setProposalCenter(address _proposalCenter)
+    function setIncidentReport(address _incidentReport) external virtual onlyOwner {
+        incidentReport = _incidentReport;
+    }
+
+    function setOnboardProposal(address _onboardProposal)
         external
         virtual
         onlyOwner
     {
-        proposalCenter = _proposalCenter;
+        onboardProposal = _onboardProposal;
     }
 
     function setReinsurancePool(address _reinsurancePool)

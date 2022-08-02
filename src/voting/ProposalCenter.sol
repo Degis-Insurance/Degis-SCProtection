@@ -59,7 +59,6 @@ contract ProposalCenter is ProtocolProtection {
     struct PoolProposal {
         string protocolName;
         address protocolAddress;
-        address proposerAddress;
         address[] voted;
         uint256 maxCapacity;
         // per year in bps 10000 == 100%
@@ -102,32 +101,30 @@ contract ProposalCenter is ProtocolProtection {
         uint256 _poolId,
         uint256 _timestamp,
         address _reporterAddress,
-        uint256 yes,
-        uint256 no
+        uint256 _yes,
+        uint256 _no
     );
 
     event PoolProposalCreated(
         uint256 indexed _proposalId,
         address _protocol,
         uint256 _maxCapacity,
-        uint256 _timestamp,
-        address _proposerAddress
+        uint256 _timestamp
     );
+
     event PoolProposalApproved(
         uint256 _proposalId,
         address _protocol,
         uint256 _timestamp,
-        address _proposerAddress,
-        uint256 yes,
-        uint256 no
+        uint256 _yes,
+        uint256 _no
     );
     event PoolProposalRejected(
         uint256 _proposalId,
         address _protocol,
         uint256 _timestamp,
-        address _proposerAddress,
-        uint256 yes,
-        uint256 no
+        uint256 _yes,
+        uint256 _no
     );
 
     // ---------------------------------------------------------------------------------------- //
@@ -161,7 +158,6 @@ contract ProposalCenter is ProtocolProtection {
      * @notice Returns the number of proposals in the proposal center.
      * @return protocolName     name of the protocol
      * @return protocolAddress  address of the protocol
-     * @return proposerAddress  address of the proposer
      * @return voted            list of addresses that have already voted
      * @return maxCapacity      maximum capacity of the pool
      * @return timestamp        timestamp of the proposal
@@ -178,7 +174,6 @@ contract ProposalCenter is ProtocolProtection {
         returns (
             string memory,
             address,
-            address,
             address[] memory,
             uint256,
             uint256,
@@ -193,7 +188,6 @@ contract ProposalCenter is ProtocolProtection {
         return (
             proposal.protocolName,
             proposal.protocolAddress,
-            proposal.proposerAddress,
             proposal.voted,
             proposal.maxCapacity,
             proposal.timestamp,
@@ -444,7 +438,6 @@ contract ProposalCenter is ProtocolProtection {
                     _proposalId,
                     protocol,
                     proposalIds[_proposalId].timestamp,
-                    proposalIds[_proposalId].proposerAddress,
                     proposalIds[_proposalId].yes,
                     proposalIds[_proposalId].no
                 );
@@ -466,7 +459,6 @@ contract ProposalCenter is ProtocolProtection {
                     _proposalId,
                     protocol,
                     proposalIds[_proposalId].timestamp,
-                    proposalIds[_proposalId].proposerAddress,
                     proposalIds[_proposalId].yes,
                     proposalIds[_proposalId].no
                 );
@@ -494,75 +486,65 @@ contract ProposalCenter is ProtocolProtection {
         );
         require(!poolReported[pool], "Pool already reported");
         require(pool != address(0), "Pool doesn't exist");
-        ++reportCounter;
+        uint256 counter = ++reportCounter;
         address[] memory initializeArray;
         poolReported[pool] = true;
         // registers new report
-        reportIds[reportCounter] = Report(
-            _poolId,
-            block.timestamp,
-            msg.sender,
-            0,
-            0,
-            0,
-            true,
-            false,
-            initializeArray
-        );
+        Report storage report = reportIds[counter];
+        report.poolId = _poolId;
+        report.timestamp = block.timestamp;
+        report.reporterAddress = msg.sender;
+        report.pending = true;
+        report.approved = false;
+        report.voted = initializeArray;
         // transfer back to deg address. another option is to burn it.
         IERC20(deg).transferFrom(msg.sender, deg, 1000);
         IInsurancePool(pool).setPausedInsurancePool(true);
         IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
 
         emit ReportCreated(
-            reportCounter,
-            reportIds[reportCounter].poolId,
-            reportIds[reportCounter].timestamp,
-            reportIds[reportCounter].reporterAddress
+            counter,
+            reportIds[counter].poolId,
+            reportIds[counter].timestamp,
+            reportIds[counter].reporterAddress
         );
     }
 
     /**
     @notice proposes a new protocol to be insured.
 
-    @param _protocol            address of token to receive have a new insurance pool.
-    @param _name                name of the protocol to be insured.
-    @param _maxCapacity         maximum capacity of the insurance pool in native token.
-    @param _policyPricePerToken price of the policy in native token.
+    @param _protocol             address of token to receive have a new insurance pool.
+    @param _name                 name of the protocol to be insured.
+    @param _maxCapacity          maximum capacity of the insurance pool in native token.
+    @param _policyPricePerShield price of the policy in native token.
     */
     function proposePool(
         address _protocol,
         string memory _name,
         uint256 _maxCapacity,
-        uint256 _policyPricePerToken
+        uint256 _policyPricePerShield
     ) public {
         require(!poolProposed[_protocol], "Protocol already proposed");
-        ++proposalCounter;
+        uint256 counter = ++proposalCounter;
         address[] memory emptyVoted;
         // registers new proposal
-        proposalIds[proposalCounter] = PoolProposal(
-            _name,
-            _protocol,
-            msg.sender,
-            emptyVoted,
-            _maxCapacity,
-            _policyPricePerToken,
-            block.timestamp,
-            0,
-            0,
-            0,
-            true,
-            false
-        );
+        PoolProposal storage pool = proposalIds[counter];
+        pool.protocolName = _name;
+        pool.protocolAddress = _protocol;
+        pool.voted = emptyVoted;
+        pool.maxCapacity = _maxCapacity;
+        pool.policyPricePerShield = _policyPricePerShield;
+        pool.timestamp = block.timestamp;
+        pool.pending = true;
+        pool.approved = false;
 
         // sets protocol to proposed so there are no cuncurrent duplicates
         poolProposed[_protocol] = true;
         emit PoolProposalCreated(
             proposalCounter,
             _protocol,
-            proposalIds[proposalCounter].maxCapacity,
-            proposalIds[proposalCounter].timestamp,
-            proposalIds[proposalCounter].proposerAddress
+            proposalIds[counter].maxCapacity,
+            proposalIds[counter].timestamp
         );
     }
 
@@ -604,7 +586,8 @@ contract ProposalCenter is ProtocolProtection {
                 }
             }
             // rewards for voting with majority
-            for (uint256 i = 0; i < voted.length; i++) {
+            if (reward > 0){
+                for (uint256 i = 0; i < voted.length; i++) {
                 if (confirmsReport[_reportId][voted[i]] == _veredict) {
                     // if voted with the decision, reward 50% of penalty to voters
                     // according to the amount of vedeg they hold
@@ -619,4 +602,5 @@ contract ProposalCenter is ProtocolProtection {
             IERC20(deg).transfer(policyCenter, reward);
         }
     }
+}
 }

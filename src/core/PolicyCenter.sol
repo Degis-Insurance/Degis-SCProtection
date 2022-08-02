@@ -34,6 +34,8 @@ import "../mock/MockExchange.sol";
  *
  */
 contract PolicyCenter is ProtocolProtection {
+
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -65,7 +67,7 @@ contract PolicyCenter is ProtocolProtection {
     // amount of liquidity by pool id given by liquidity providers
     mapping(uint256 => uint256) public liquidityByPoolId;
 
-    // bps distribution of premiums 0: treasury, 1: insurance pool, 2: reinsurance pool
+    // bps distribution of premiums 0: insurance pool, 1: reinsurance pool
     uint256[2] public premiumSplits;
     // amount of degis in treasury
     uint256 public treasury;
@@ -222,16 +224,14 @@ contract PolicyCenter is ProtocolProtection {
             return
                 IInsurancePool(insurancePools[_poolId]).calculateReward(
                     liquidity.amount,
-                    liquidity.userDebt,
-                    _provider
+                    liquidity.userDebt
                 );
         } else {
             return
                 // gets reward from reinsurance pool
                 IReinsurancePool(reinsurancePool).calculateReward(
                     liquidity.amount,
-                    liquidity.userDebt,
-                    _provider
+                    liquidity.userDebt
                 );
         }
     }
@@ -350,7 +350,6 @@ contract PolicyCenter is ProtocolProtection {
         coverage.buyDate = block.timestamp + 7 days;
         coverage.length = _length;
         // updates pool distribution based on paid amount
-        IInsurancePool(insurancePools[_poolId]).updatePoolDistribution(_pay);
         IERC20(tokenByPoolId[_poolId]).transferFrom(
             msg.sender,
             address(this),
@@ -381,7 +380,12 @@ contract PolicyCenter is ProtocolProtection {
         _claimReward(_poolId, msg.sender);
         // adds liquidity to insurance or reinsurance pool
         liquidityByPoolId[_poolId] += _amount;
+
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
+        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+
+        
+
         if (_poolId > 0) {
             // emits tokens to user from insurnace pool
             IInsurancePool(insurancePools[_poolId]).provideLiquidity(
@@ -399,7 +403,7 @@ contract PolicyCenter is ProtocolProtection {
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
 
-        IERC20(tokenByPoolId[_poolId]).transferFrom(
+        IERC20(shield).transferFrom(
             msg.sender,
             address(this),
             _amount
@@ -416,13 +420,14 @@ contract PolicyCenter is ProtocolProtection {
         poolExists(_poolId)
     {
         require(_amount > 0, "Amount must be greater than 0");
-        require(
-            _amount <= liquidityByPoolId[_poolId],
-            "Amount must be less than liquidity"
-        );
+        
         require(
             _amount <= liquidities[_poolId][msg.sender].amount,
             "Amount must be less than provided liquidity"
+        );
+        require(
+            _amount <= liquidityByPoolId[_poolId],
+            "Amount must be less than liquidity"
         );
         require(
             block.timestamp >=
@@ -436,36 +441,24 @@ contract PolicyCenter is ProtocolProtection {
         // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= _amount;
 
-        // new amount owned by caller
-        uint256 newAmount = liquidity.amount - _amount;
-        liquidity.amount = newAmount;
-        liquidity.lastClaim = block.timestamp;
-        uint256 totalSupply;
-        // transfer rewards
-        if (_poolId == 0) {
-            IReinsurancePool pool = IReinsurancePool(reinsurancePool);
-            // updates user debt based on accumulated rewards per share
-            liquidity.userDebt =
-                liquidity.amount *
-                pool.accumulatedRewardPerShare();
-            totalSupply = pool.totalSupply();
-            // burns tokens owner by caller
-            pool.removeLiquidity(_amount, msg.sender);
+        if (_poolId > 0) {
+            // burns liquidity tokens in users account from insurance pool
+            IInsurancePool(insurancePools[_poolId]).removeLiquidity(
+                _amount,
+                msg.sender
+            );
         } else {
-            IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
-            // updates user debt based on accumulated rewards per share
-            liquidity.userDebt =
-                liquidity.amount *
-                pool.accumulatedRewardPerShare();
-            totalSupply = pool.totalSupply();
-            // burns tokens owner by caller
-            pool.removeLiquidity(_amount, msg.sender);
+            // burns liquidity tokens in users account from reinsurance pool
+            IReinsurancePool(reinsurancePool).removeLiquidity(
+                _amount,
+                msg.sender
+            );
         }
-        // calculates amount to transfer to caller in native token
-        uint256 amountToTransfer = (liquidityByPoolId[_poolId] / totalSupply) *
-            _amount;
-        // transfers tokens used to provide liquidity
-        IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amountToTransfer);
+        // new amount owned by caller
+        liquidity.amount -= _amount;
+        liquidity.lastClaim = block.timestamp;
+
+        IERC20(shield).transfer(msg.sender, _amount);
     }
 
     /**
@@ -484,11 +477,11 @@ contract PolicyCenter is ProtocolProtection {
         );
         require(pool.liquidated(), "pool is not claimable");
         require(
-            pool.endLiquidationDate() <= block.timestamp,
+            pool.endLiquidationDate() >= block.timestamp,
             "claim period is over"
         );
         // buy date + length + liquidation date - 5 days buffer
-        // so that people that were covered during report process are covered
+        // intended to fullfil valid coverages accounting for voting period
         require(
             coverage.buyDate + (coverage.length * 1 days) >=
                 pool.endLiquidationDate() - 20 days,
@@ -524,21 +517,12 @@ contract PolicyCenter is ProtocolProtection {
      * @param _reporter address of the reporter
      */
     function rewardTreasuryToReporter(address _reporter) external {
-        require(msg.sender == proposalCenter, "not requested by Executor");
+        require(msg.sender == executor, "not requested by Executor");
         // 10% of treasury + 2000 DEG
         uint256 reward = (treasury * 1000) / 10000;
         treasury -= reward;
 
         IDegisToken(deg).transfer(_reporter, reward);
-    }
-
-    /**
-    @notice receive funds from ProposalCenter after it penalizes and rewards report voters
-     */
-
-    function receiveFunds(uint256 _amount, address _token) external {
-        require(msg.sender == proposalCenter, "not requested by Executor");
-        treasury += _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -563,18 +547,25 @@ contract PolicyCenter is ProtocolProtection {
                 "a pool has been liquidated, unable to remove liquidity"
             );
         }
+        // retrieve a user's liquidity from a pool
         Liquidity storage liquidity = liquidities[_poolId][_provider];
+        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+
+        // Calculate reward amount based on user's liquidity and acc reward per share.
         uint256 reward = (liquidity.amount *
-            IInsurancePool(insurancePools[_poolId])
-                .accumulatedRewardPerShare()) - liquidity.userDebt;
+            pool.accumulatedRewardPerShare()) - liquidity.userDebt;
+        totalRewardsByPoolId[_poolId] -= reward;
+
         if (reward == 0) {
             liquidity.userDebt =
                 liquidity.amount *
-                IInsurancePool(insurancePools[_poolId])
-                    .accumulatedRewardPerShare();
+                pool.accumulatedRewardPerShare();
             return;
         }
+        
+        liquidity.userDebt = liquidity.amount * pool.accumulatedRewardPerShare();
         IERC20(tokenByPoolId[_poolId]).transfer(_provider, reward);
+        emit Reward(reward, _provider);
     }
 
     /**
@@ -655,6 +646,8 @@ contract PolicyCenter is ProtocolProtection {
         totalRewardsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
         totalRewardsByPoolId[0] += reinsuranceReceives;
+        IInsurancePool(insurancePools[_poolId]).updateEmissionRate(toInsurancePool);
+        IReinsurancePool(reinsurancePool).updateEmissionRate(reinsuranceReceives);
     }
 
     function _approvePoolToken(address _token) internal {

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
 import "src/pools/ReinsurancePool.sol";
 import "src/core/PolicyCenter.sol";
-import "src/voting/ProposalCenter.sol";
+import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
@@ -21,7 +21,7 @@ import "src/interfaces/ReinsurancePoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/IProposalCenter.sol";
+import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -62,7 +62,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
-    ProposalCenter public proposalCenter;
+    OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -113,7 +113,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         );
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor = new Executor();
-        proposalCenter = new ProposalCenter();
+        onboardProposal = new OnboardProposal();
         exchange = new Exchange();
         incidentReport = new IncidentReport();
 
@@ -129,7 +129,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         policyCenter.setVeDeg(address(vedeg));
         policyCenter.setShield(address(shield));
         policyCenter.setExecutor(address(executor));
-        policyCenter.setProposalCenter(address(proposalCenter));
+        policyCenter.setOnboardProposal(address(onboardProposal));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
@@ -138,13 +138,15 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         insurancePoolFactory.setShield(address(shield));
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setProposalCenter(address(incidentReport));
+        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
+        insurancePoolFactory.setIncidentReport(address(incidentReport));
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         reinsurancePool.setDeg(address(deg));
         reinsurancePool.setVeDeg(address(vedeg));
         reinsurancePool.setShield(address(shield));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setProposalCenter(address(incidentReport));
+        reinsurancePool.setIncidentReport(address(incidentReport));
+        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
         incidentReport.setDeg(address(deg));
         incidentReport.setVeDeg(address(vedeg));
@@ -157,7 +159,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
         executor.setPolicyCenter(address(policyCenter));
-        executor.setProposalCenter(address(proposalCenter));
+        executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         //deploy ptp pool
@@ -171,12 +173,17 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
+        InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setProposalCenter(address(proposalCenter));
+        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
         InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
         InsurancePool(pool1).setInsurancePoolFactory(
             address(insurancePoolFactory)
         );
+        
+        // allow incident report to mint and burn tokens on behalf of users
+        // in the protocol's interest.
+        deg.addMinter(address(incidentReport));
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(POOLID);
