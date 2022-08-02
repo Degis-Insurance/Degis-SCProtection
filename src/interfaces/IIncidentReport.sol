@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+pragma solidity ^0.8.13;
+
 interface IIncidentReport {
     event DebtPaid(address payer, address user, uint256 debt, uint256 unlockAmount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
