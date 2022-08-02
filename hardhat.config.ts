@@ -2,13 +2,15 @@ import fs from "fs";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
-import "../node_modules/hardhat/console.sol";
 import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
 import { HardhatUserConfig, task } from "hardhat/config";
 
 import example from "./tasks/example";
+
+import * as dotenv from "dotenv";
+dotenv.config();
 
 function getRemappings() {
   return fs
@@ -41,8 +43,23 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     localhost: {},
-    fuji: {},
-    avax: {},
+    fuji: {
+      url: process.env.FUJI_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
+        count: 20,
+      },
+      timeout: 60000,
+    },
+    avax: {
+      url: process.env.AVAX_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
+        count: 20,
+      },
+    },
   },
   paths: {
     sources: "./src", // Use ./src rather than ./contracts as Hardhat expects

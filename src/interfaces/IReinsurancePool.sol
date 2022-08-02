@@ -56,6 +56,7 @@ interface IReinsurancePool {
     function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function transferOwnership(address newOwner) external;
-    function updatePoolDistribution(uint256 _paid) external;
+    function updateEmissionRate(uint256 _premium) external;
+    function updateRewards() external;
     function veDeg() view external returns (address);
 }

@@ -19,7 +19,7 @@ contract MockVeDEG is Ownable {
     uint8 public decimals; //How many decimals to show.
     string public symbol; //An identifier: eg SBX
     mapping(address => bool) public whitelist;
-    mapping(address => uint256) public lockedBalances;
+    mapping(address => uint256) public locked;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(
@@ -51,12 +51,20 @@ contract MockVeDEG is Ownable {
         whitelist[_address] = _status;
     }
 
+    function mint(address user, uint256 amount) public {
+        totalSupply += amount;
+        unchecked {
+            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
+            balances[user] += amount;
+        }
+    }
+
     function users(uint256 input, address _address)
         public
         view
         returns (uint256, uint256)
     {
-        return (balances[_address], lockedBalances[_address]);
+        return (balances[_address], locked[_address]);
     }
 
     function transfer(address _to, uint256 _value)
@@ -94,11 +102,11 @@ contract MockVeDEG is Ownable {
     }
 
     function lockVeDEG(address _owner, uint256 _value) public {
-        lockedBalances[_owner] += _value;
+        locked[_owner] += _value;
     }
 
     function unlockVeDEG(address _owner, uint256 _value) public {
-        lockedBalances[_owner] -= _value;
+        locked[_owner] -= _value;
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {

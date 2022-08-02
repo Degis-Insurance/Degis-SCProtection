@@ -34,7 +34,7 @@ interface IPolicyCenter {
     function setProposalCenter(address _proposalCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
     function setShield(address _shield) external;
-    function setTokenByPoolId(address _token, uint256 _poolId) external;
+    function storePoolInformation(address _pool, address _token, uint256 _poolId) external;
     function setVeDeg(address _veDeg) external;
     function shield() view external returns (address);
     function toInsuranceByPoolId(uint256) view external returns (uint256);

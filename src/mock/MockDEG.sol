@@ -107,4 +107,9 @@ contract MockDEG is Ownable {
         balances[_account] += _amount;
         totalSupply += _amount;
     }
+
+    function burnDegis(address _account, uint256 _amount) external validMinter {
+        balances[_account] -= _amount;
+        totalSupply -= _amount;
+    }
 }
