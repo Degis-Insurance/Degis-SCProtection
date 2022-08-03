@@ -1,9 +1,11 @@
 {
-  "fuji": {},
-  "avax": {},
-  "avaxTest": {},
-  "localhost": {},
-  "rinkeby": {},
-  "fujiTest": {},
-  "reserve": {}
+	"fuji": {
+		"ProxyAdmin": "0x959D4a9B2a4574F3f8E374Db19b75bc91695eDe2"
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {},
+	"fujiTest": {},
+	"reserve": {}
 }
