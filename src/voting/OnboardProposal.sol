@@ -6,8 +6,6 @@ import "../util/ProtocolProtection.sol";
 
 import "./interfaces/OnboardProposalParameters.sol";
 
-
-
 contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -63,10 +61,13 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
-    
-    function getProposal(uint256 _proposalId) public view returns (string memory, address, uint256, uint256, uint256, uint256) {
-        Proposal memory proposal = proposals[_proposalId];
-        return (proposal.name, proposal.protocolToken, proposal.maxCapacity, proposal.priceRatio, proposal.status, proposal.result);
+
+    function getProposal(uint256 _proposalId)
+        public
+        view
+        returns (Proposal memory)
+    {
+        return proposals[_proposalId];
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -88,7 +89,9 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         uint256 _priceRatio // 10000 == 100% premium anual cost
     ) external {
         require(
-            !IInsurancePoolFactory(insurancePoolFactory).tokenRegistered(_token),
+            !IInsurancePoolFactory(insurancePoolFactory).tokenRegistered(
+                _token
+            ),
             "Protocol already protected"
         );
 
@@ -189,13 +192,15 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     }
 
     function closeProposal(uint256 _proposalId) external onlyOwner {
-
         require(msg.sender == executor, "Only executor can close proposal");
 
         Proposal storage currentProposal = proposals[_proposalId];
 
         // require current proposal to be settled
-        require(currentProposal.status == PENDING_STATUS, "Not pending or settled status");
+        require(
+            currentProposal.status == PENDING_STATUS,
+            "Not pending or settled status"
+        );
 
         // Must close the report before pending period ends
         require(
@@ -284,7 +289,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
      */
     function _checkQuorum(uint256 _totalVotes) internal view {
         require(
-            _totalVotes >= IVeDEG(veDeg).totalSupply() * QUORUM_RATIO / 100,
+            _totalVotes >= (IVeDEG(veDeg).totalSupply() * QUORUM_RATIO) / 100,
             "Not reached quorum"
         );
     }
