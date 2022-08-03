@@ -163,10 +163,10 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         //deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
-            "PTP",
+            "Platypus",
             address(ptp),
-            uint256(10000),
-            uint256(1)
+            10000,
+            100
         );
         // set addreses for ptp pool
         InsurancePool(pool1).setDeg(address(deg));

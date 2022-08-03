@@ -62,7 +62,7 @@ contract InsurancePoolTest is BaseTest {
             "gmx pool",
             address(gmx),
             1000 ether,
-            1
+            100
         );
 
         uint256 allowance = gmx.allowance(

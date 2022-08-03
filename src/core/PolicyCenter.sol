@@ -338,7 +338,7 @@ contract PolicyCenter is ProtocolProtection {
         require(_poolId > 0, "PoolId must be greater than 0");
         require(_pay > 0, "Pay must be greater than 0");
         require(
-            IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
+            IInsurancePool(insurancePools[_poolId]).maxCapacity() * SCALE >=
                 _pay + fundsByPoolId[_poolId],
             "exceeds max capacity"
         );
@@ -358,7 +358,7 @@ contract PolicyCenter is ProtocolProtection {
         IERC20(tokenByPoolId[_poolId]).transferFrom(
             msg.sender,
             address(this),
-            price
+            price / SCALE
         );
         _splitPremium(_poolId, _pay);
     }

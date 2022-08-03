@@ -63,7 +63,7 @@ contract setAddressesTest is Test {
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), uint256(10000), uint256(1));
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
     }
 
     function testSetPolicyCenterAddress() public {

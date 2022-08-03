@@ -123,7 +123,7 @@ contract ClaimPayoutTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), uint256(10000), uint256(1));
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));

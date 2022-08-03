@@ -106,7 +106,7 @@ function setUp() public {
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         //deploy ptp pool
-        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 100 ether, 1);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 100 ether, 100);
          // set addreses for ptp pool
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
@@ -142,7 +142,6 @@ contract OnboardProposalVotingTest is Test {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
     Executor public executor;
     Exchange public exchange;
     ERC20 public ptp;
@@ -201,6 +200,7 @@ contract OnboardProposalVotingTest is Test {
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor =new Executor();
         onboardProposal = new OnboardProposal();
+        incidentReport = new IncidentReport();
         exchange = new Exchange();
 
         vm.label(address(onboardProposal), "Proposal Center");
@@ -242,7 +242,7 @@ contract OnboardProposalVotingTest is Test {
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         // create insurance pool
-        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000 ether, 1);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000 ether, 100);
         console.log(pool1);
         // set insurance pool addresses
         InsurancePool(pool1).setDeg(address(deg));
@@ -264,7 +264,7 @@ contract OnboardProposalVotingTest is Test {
         // allow onboardProposal to mint and burn degis tokens
         // in the protocol interest and on users' behalf
         deg.addMinter(address(onboardProposal));
-
+        vm.warp(0);
         onboardProposal.propose("Yeti", address(yeti), 10000, 1);
 
         shield.transfer(alice, 3000 ether);
@@ -272,7 +272,7 @@ contract OnboardProposalVotingTest is Test {
 
     function testExecuteReportBeforeBeingQueued() public {
         // a report should only be executable once its queued in the executor
-        vm.expectRevert("report not pending or not found");
+        vm.expectRevert("Report is not ready to be executed");
         executor.executeReport(1);
     }
 
@@ -284,7 +284,7 @@ contract OnboardProposalVotingTest is Test {
         vm.prank(alice);
         onboardProposal.vote(1, VOTE_FOR, 3000 ether);
         vm.prank(bob);
-        onboardProposal.vote(1, VOTE_FOR,  3000 ether);
+        onboardProposal.vote(1, VOTE_AGAINST,  3000 ether);
         vm.prank(carol);
         onboardProposal.vote(1, VOTE_FOR, 3000 ether);
         
@@ -305,6 +305,8 @@ contract OnboardProposalVotingTest is Test {
     function testVoteMoreThanOnceOnPoolProposal() public {
         // user should not be able to vote with morethan 
         // how much they have committed to the proposal
+        vm.warp(3 days + 1);
+        onboardProposal.startVoting(PROPOSAL_ID);
         vm.prank(alice);
         // votes with maximum amount of veDeg to proposal
         onboardProposal.vote(1, VOTE_FOR, 3000 ether);
@@ -319,6 +321,7 @@ contract OnboardProposalVotingTest is Test {
     function testEvaluatePoolProposalTrue() public {
         // pool proposal should be truthy if majority of votes are true
         vm.warp(3 days + 1);
+        onboardProposal.startVoting(PROPOSAL_ID);
         vm.prank(alice);
         onboardProposal.vote(1, VOTE_FOR, 3000 ether);
         vm.prank(bob);
@@ -357,6 +360,7 @@ contract OnboardProposalVotingTest is Test {
     }
 
    function testVoteProposalNotEnoughQuorum() public {
+
         vm.warp(3 days + 1);
         onboardProposal.startVoting(1);
         // vote with 3 participants 
@@ -368,15 +372,17 @@ contract OnboardProposalVotingTest is Test {
         onboardProposal.vote(1, VOTE_FOR, 500 ether);
 
         vm.warp(6 days + 2);
-        vm.expectRevert("Not enough quorum");
+        vm.expectRevert("Not reached quorum");
         onboardProposal.settle(1);
         (,,,,uint256 status,) = onboardProposal.getProposal(1);
-        assertEq(status == PENDING_STATUS, true);
+        assertEq(status == VOTING_STATUS, true);
 
     }
 
 
     function testProposePooolAlreadyDeployed() public {
+
+        vm.warp(3 days + 1);        
         // pool proposal should not be proposed twice
         vm.prank(alice);
         vm.expectRevert("Protocol already protected");
@@ -392,24 +398,25 @@ contract OnboardProposalVotingTest is Test {
 
    
     function testProposePoolAfterFailedProposal() public {
-        vm.warp(3 days);
+
+        vm.warp(3 days + 1);
         onboardProposal.startVoting(1);
         // after a failed proposal, a new proposal should be possible
         vm.prank(alice);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
+        onboardProposal.vote(1, VOTE_AGAINST, 3000 ether);
         vm.prank(bob);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
+        onboardProposal.vote(1, VOTE_AGAINST, 3000 ether);
         vm.prank(carol);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
-        vm.warp(6 days);
-  
-        // evaluate proposal round 0
+        onboardProposal.vote(1, VOTE_AGAINST, 3000 ether);
+
+        vm.warp(6 days + 2);
+        // settle proposal after voting period
         onboardProposal.settle(1);
         (,,,,uint256 status1,) = onboardProposal.getProposal(1);
         assertEq(status1 == SETTLED_STATUS, true);
 
 
-        // evaluate proposal round 1: approval did not change, proposal moves on.
+        // propose new pool after settling proposal
         onboardProposal.propose("Yeti", address(yeti), 10000, 1);
         // pool proposal is not pending and was false.
         (,,,,uint256 status2,) = onboardProposal.getProposal(2);
@@ -420,26 +427,26 @@ contract OnboardProposalVotingTest is Test {
 
     function testProposePoolAfterSuccessfulProposal() public {
 
-        vm.warp(3 days);
+        vm.warp(3 days + 1);
         onboardProposal.startVoting(1);
 
          vm.prank(alice);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
+        onboardProposal.vote(1, VOTE_FOR, 3000 ether);
         vm.prank(bob);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
+        onboardProposal.vote(1, VOTE_FOR, 3000 ether);
         vm.prank(carol);
-        onboardProposal.vote(1, VOTE_AGAINST, 1000 ether);
+        onboardProposal.vote(1, VOTE_FOR, 3000 ether);
 
 
-        vm.warp(6 days);
-        // evaluate proposal round 0
+        vm.warp(6 days + 2);
+        // settle proposal after voting period
         onboardProposal.settle(1);
         (,,,,uint256 status,) = onboardProposal.getProposal(1);
         assertEq(status == SETTLED_STATUS, true);
 
         executor.executeProposal(1);
 
-        vm.expectRevert("Protocol already proposed");
+        vm.expectRevert("Protocol already protected");
         onboardProposal.propose("Yeti", address(yeti), 10000, 1);
     }
 }

@@ -150,10 +150,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             _length <= maxLength,
             "length cannot be greater than maxLength"
         );
-        return
+        
         // price in bps per year * amount of tokens to receive when pool is liquidated 
         // * lenght of coverage in days / year and 100 to get bps to percentage
-            (priceRatio * _amount * _length) / (365 * 100);
+        return priceRatio * _amount * _length * SCALE / 36500;
     }
 
     /**

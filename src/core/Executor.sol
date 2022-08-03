@@ -76,6 +76,10 @@ contract Executor is ProtocolProtection, VotingParameters {
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice executes a report already settled by vote
+     * @param _reportId _id of the report to be executed
+     */
     function executeReport(uint256 _reportId) public {
         // get the report
         (uint256 poolId,,,,,,,
@@ -94,7 +98,7 @@ contract Executor is ProtocolProtection, VotingParameters {
             poolId
         );
         IInsurancePool(poolAddress).liquidatePool();
-        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(poolAddress);
+        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(tokenAddress);
         // IInsurancePoolFactory(poolAddress).deregisterToken()
         // emit the event
         emit ReportExecuted(poolAddress, poolId, _reportId);

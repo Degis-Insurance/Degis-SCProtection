@@ -36,6 +36,9 @@ import "../interfaces/IVeDEG.sol";
 pragma solidity ^0.8.13;
 
 contract ProtocolProtection is Ownable {
+
+    uint256 constant SCALE = 1e12;
+
     address public deg;
     address public veDeg;
     address public shield;
