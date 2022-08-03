@@ -23,7 +23,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test, IncidentReportParameters {
@@ -155,7 +154,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         incidentReport.report(1);
 
          vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 2500 ether);
@@ -180,7 +179,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         console.log(amount);
     }
     
-    function testClaimPayoutUnexsistentpool() public {
+    function testClaimPayoutUnexsistentPool() public {
         vm.expectRevert("Pool not found");
         policyCenter.claimPayout(2);
     }

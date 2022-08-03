@@ -20,6 +20,8 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "../util/ProtocolProtection.sol";
 import "./InsurancePool.sol";
 
@@ -108,7 +110,7 @@ contract InsurancePoolFactory is ProtocolProtection {
     }
 
     /**
-     * @notice gets the pool counter which indicates the latest pool id
+     * @notice Get the pool counter which indicates the latest pool id
      *
      * @return PoolCounter pool id
      */
@@ -116,8 +118,13 @@ contract InsurancePoolFactory is ProtocolProtection {
         return poolCounter;
     }
 
-    function getPoolInfo(uint256 _id) public view returns (PoolInfo memory) {
-        return poolInfoById[_id];
+    /**
+     * @notice Get the pool information by pool id
+     *
+     * @param _poolId Pool id
+     */
+    function getPoolInfo(uint256 _poolId) public view returns (PoolInfo memory) {
+        return poolInfoById[_poolId];
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -143,7 +150,7 @@ contract InsurancePoolFactory is ProtocolProtection {
      * @param _name                 Name of the protocol
      * @param _protocolToken        Address of the token used for the protocol
      * @param _maxCapacity          Maximum capacity of the pool
-     * @param _policyPricePerToken  Initial policy price per shield
+     * @param _priceRatio  Initial policy price per shield
      *
      * @return address Address of the new insurance pool
      */
@@ -151,7 +158,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPricePerToken
+        uint256 _priceRatio
     ) public returns (address) {
         require(
             msg.sender == owner() || msg.sender == executor,
@@ -164,7 +171,7 @@ contract InsurancePoolFactory is ProtocolProtection {
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
             _maxCapacity,
-            _policyPricePerToken,
+            _priceRatio,
             _name,
             _name
         );
@@ -186,7 +193,7 @@ contract InsurancePoolFactory is ProtocolProtection {
             newPoolAddress,
             _protocolToken,
             _maxCapacity,
-            _policyPricePerToken
+            _priceRatio
         );
 
         emit PoolCreated(
@@ -195,7 +202,7 @@ contract InsurancePoolFactory is ProtocolProtection {
             _name,
             _protocolToken,
             _maxCapacity,
-            _policyPricePerToken
+            _priceRatio
         );
 
         return newPoolAddress;
@@ -263,5 +270,11 @@ contract InsurancePoolFactory is ProtocolProtection {
 
     function _setAdministrator(address _administrator) internal {
         administrator = _administrator;
+    }
+
+    function deregisterAddress(address _tokenAddress) external {
+        require(msg.sender == owner() || msg.sender == executor, "Only owner or executor contract can deregister an address");
+        require(tokenRegistered[_tokenAddress], "Address is not registered");
+        tokenRegistered[_tokenAddress] = false;
     }
 }

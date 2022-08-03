@@ -6,6 +6,8 @@ import "../util/ProtocolProtection.sol";
 
 import "./interfaces/OnboardProposalParameters.sol";
 
+
+
 contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -15,8 +17,10 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     uint256 public proposalCounter;
 
     struct Proposal {
-        uint256 proposeTimestamp;
+        string name;
+        address protocolToken;
         address proposer;
+        uint256 proposeTimestamp;
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 maxCapacity;
@@ -25,6 +29,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         uint256 status;
         uint256 result;
     }
+    // Proposal ID => Proposal
     mapping(uint256 => Proposal) public proposals;
 
     struct UserVote {
@@ -56,12 +61,12 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     event ProposalSettled(uint256 proposalId, uint256 result);
 
     // ---------------------------------------------------------------------------------------- //
-    // ************************************ Main Functions ************************************ //
+    // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
     
-    function getProposal(uint256 _proposalId) public view returns (Proposal memory) {
+    function getProposal(uint256 _proposalId) public view returns (string memory, address, uint256, uint256, uint256, uint256) {
         Proposal memory proposal = proposals[_proposalId];
-        return proposal;
+        return (proposal.name, proposal.protocolToken, proposal.maxCapacity, proposal.priceRatio, proposal.status, proposal.result);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -80,11 +85,11 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         string calldata _name,
         address _token,
         uint256 _maxCapacity,
-        uint256 _priceRatio
+        uint256 _priceRatio // 10000 == 100% premium anual cost
     ) external {
         require(
-            !IInsurancePoolFactory(insurancePoolFactory).registered(_token),
-            "Already exist"
+            !IInsurancePoolFactory(insurancePoolFactory).tokenRegistered(_token),
+            "Protocol already protected"
         );
 
         // Burn degis tokens to start a proposal
@@ -93,6 +98,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         uint256 currentProposalCounter = ++proposalCounter;
 
         Proposal storage proposal = proposals[currentProposalCounter];
+        proposal.protocolToken = _token;
         proposal.proposer = msg.sender;
         proposal.proposeTimestamp = block.timestamp;
         proposal.status = PENDING_STATUS;
@@ -182,6 +188,24 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         emit ProposalSettled(_proposalId, res);
     }
 
+    function closeProposal(uint256 _proposalId) external onlyOwner {
+
+        require(msg.sender == executor, "Only executor can close proposal");
+
+        Proposal storage currentProposal = proposals[_proposalId];
+
+        // require current proposal to be settled
+        require(currentProposal.status == PENDING_STATUS, "Not pending or settled status");
+
+        // Must close the report before pending period ends
+        require(
+            !_passedVotingPeriod(currentProposal.proposeTimestamp),
+            "Already passed pending period"
+        );
+
+        currentProposal.status = CLOSE_STATUS;
+    }
+
     /**
      * @notice Claim back veDEG after voting result settled
      *
@@ -190,13 +214,31 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     function claim(uint256 _proposalId) external {
         Proposal storage currentProposal = proposals[_proposalId];
 
-        require(currentProposal.status == SETTLED_STATUS, "Not voting status");
+        require(currentProposal.status == SETTLED_STATUS, "Not settled status");
 
         UserVote storage userVote = userProposalVotes[msg.sender][_proposalId];
 
         IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
 
         userVote.claimed = true;
+    }
+
+    /**
+     * @notice Check if the proposal is settled
+     *
+     * @param _proposalId Proposal id
+     */
+    function startVoting(uint256 _proposalId) external {
+        Proposal storage currentProposal = proposals[_proposalId];
+
+        require(currentProposal.status == PENDING_STATUS, "Not pending status");
+
+        require(
+            _passedVotingPeriod(currentProposal.proposeTimestamp),
+            "Not reached voting period"
+        );
+
+        currentProposal.status = VOTING_STATUS;
     }
 
     /**
@@ -242,7 +284,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
      */
     function _checkQuorum(uint256 _totalVotes) internal view {
         require(
-            _totalVotes >= IVeDEG(veDeg).totalSupply() * QUORUM_RATIO,
+            _totalVotes >= IVeDEG(veDeg).totalSupply() * QUORUM_RATIO / 100,
             "Not reached quorum"
         );
     }

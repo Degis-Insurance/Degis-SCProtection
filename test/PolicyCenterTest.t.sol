@@ -22,7 +22,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 import "forge-std/console.sol";
@@ -195,11 +194,15 @@ contract PostInsurancePoolDeploymentTest is Test {
     }
 
     function testRemoveLiquidityAfterBufferTimeEndsInsurancePool() public {
+
+        // provide liquidity
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(POOL_ID, 10000);
+
         assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
         // change block timestamp to after buffer time
-        vm.warp(604801);
+        vm.warp(7 days + 1);
+
         console.log(InsurancePool(pool1).totalSupply());
         policyCenter.removeLiquidity(POOL_ID, 10000);
     }
@@ -207,10 +210,10 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testExceedMaxCapacity() public {
         shield.approve(address(policyCenter), 10000 ether);
         InsurancePool(pool1).setMaxCapacity(1);
-        uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
+        uint256 price = InsurancePool(pool1).coveragePrice(1000 ether, 90);
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
-        policyCenter.buyCoverage(POOL_ID, price, 10000 , 90);
+        policyCenter.buyCoverage(POOL_ID, price, 1000 ether, 90);
     }
     
     function testProvideLiqudityDirectlyToInsurancePool() public {
@@ -345,10 +348,11 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testRemoveLiquidityAfterReport() public {
         // user should not be able to remove liquidity if pool has been reported
-        ptp.approve(address(policyCenter), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(POOL_ID, 10000);
 
         vm.warp(7 days);
+        ptp.approve(address(policyCenter), 10000 ether);
         incidentReport.report(1);
 
         vm.expectRevert("cannot remove liquidity while paused");

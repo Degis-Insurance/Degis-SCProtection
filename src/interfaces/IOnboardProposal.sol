@@ -3,6 +3,21 @@
 pragma solidity ^0.8.13;
 
 interface IOnboardProposal {
+
+    struct Proposal {
+        string name;
+        address protocolAddress;
+        address proposer;
+        uint256 proposeTimestamp;
+        uint256 numFor; // Votes voting for
+        uint256 numAgainst; // Votes voting against
+        uint256 maxCapacity;
+        uint256 priceRatio;
+        uint256 poolId;
+        uint256 status;
+        uint256 result;
+    }
+
     event NewProposal(string name, address token, uint256 maxCapacity, uint256 priceRatio);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event ProposalSettled(uint256 proposalId, uint256 result);
@@ -11,13 +26,15 @@ interface IOnboardProposal {
     function claim(uint256 _proposalId) external;
     function deg() view external returns (address);
     function executor() view external returns (address);
+    function executeProposal(uint256 _proposalId) external returns (address);
     function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);
+    function getProposal(uint256 _proposalId) external view returns (string memory, address, uint256, uint256, uint256, uint256);
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
     function proposalCenter() view external returns (address);
     function proposalCounter() view external returns (uint256);
-    function proposals(uint256) view external returns (uint256 proposeTimestamp, address proposer, uint256 numFor, uint256 numAgainst, uint256 maxCapacity, uint256 priceRatio, uint256 poolId, uint256 status, uint256 result);
+    function proposals(uint256) view external returns (string memory name,address protocolAddress, address proposer,uint256 proposeTimestamp, uint256 numFor, uint256 numAgainst, uint256 maxCapacity, uint256 priceRatio, uint256 poolId, uint256 status, uint256 result);
     function propose(string memory _name, address _token, uint256 _maxCapacity, uint256 _priceRatio) external;
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;

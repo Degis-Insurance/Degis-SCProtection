@@ -22,7 +22,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract setAddressesTest is Test {

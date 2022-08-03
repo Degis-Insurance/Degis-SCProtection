@@ -21,7 +21,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 /** 
@@ -37,6 +36,7 @@ contract InitialContractDeploymentTest is Test {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
+    ERC20Mock public ptp;
     InsurancePool public insurancePool;
     Executor public executor;
 
@@ -57,14 +57,20 @@ contract InitialContractDeploymentTest is Test {
         assertEq(keccak256(bytes(vedeg.name())) == keccak256(bytes("veDegis")), true);
     }
 
+    function testDeployPTP() public {
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+
+        assertEq(keccak256(bytes(ptp.name())) == keccak256(bytes("Platypus")), true);
+    }
+
     function testDeployReinsurancePool() public {
         reinsurancePool = new ReinsurancePool();
         assertEq(keccak256(bytes(reinsurancePool.name())) == keccak256(bytes("ReinsurancePool")), true);
     }
 
     function testDeployExecutor() public {
-       executor =new Executor();
-        assertEq(executor.poolBuffer() == 1 days, true);
+       executor = new Executor();
+        assertEq(executor.poolBuffer() == 0 days, true);
     }
 
     function testDeployOnboardProposal() public {
@@ -84,15 +90,17 @@ contract InitialContractDeploymentTest is Test {
 contract SecondaryContractDeploymentTest is Test {
 
     InsurancePoolFactory public insurancePoolFactory;
+    OnboardProposal public onboardProposal;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
-    OnboardProposal public onboardProposal;
+    Executor public executor;
+    Exchange public exchange;
+    
+    // tokens
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
-    Executor public executor;
-    Exchange public exchange;
+
     ERC20 public ptp;
 
     function setUp() public {
