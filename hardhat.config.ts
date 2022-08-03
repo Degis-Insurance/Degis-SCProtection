@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
     },
   },
   namedAccounts: {
-    delpoyer: {
+    deployer: {
       default: 0,
       localhost: 0,
       fuji: 0,

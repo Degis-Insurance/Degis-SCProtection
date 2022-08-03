@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
+// import "forge-std/Test.sol";
+import "./utils/BaseTest.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
@@ -57,7 +58,7 @@ abstract contract Events {
     );
 }
 
-contract IncidentReportTest is Test, IncidentReportParameters, Events {
+contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -114,7 +115,13 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         executor = new Executor();
         onboardProposal = new OnboardProposal();
         exchange = new Exchange();
+
         incidentReport = new IncidentReport();
+        // Set incident report
+        incidentReport.setDeg(address(deg));
+        incidentReport.setVeDeg(address(vedeg));
+        incidentReport.setPolicyCenter(address(policyCenter));
+        incidentReport.setReinsurancePool(address(reinsurancePool));
 
         deg.addMinter(address(incidentReport));
 
@@ -147,13 +154,9 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        incidentReport.setDeg(address(deg));
-        incidentReport.setVeDeg(address(vedeg));
-        incidentReport.setShield(address(shield));
-        incidentReport.setExecutor(address(executor));
-        incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
-        incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
+
+        
+      
         executor.setDeg(address(deg));
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
@@ -179,7 +182,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         InsurancePool(pool1).setInsurancePoolFactory(
             address(insurancePoolFactory)
         );
-        
+
         // allow incident report to mint and burn tokens on behalf of users
         // in the protocol's interest.
         deg.addMinter(address(incidentReport));

@@ -37,7 +37,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
-    
+
     // Time to distribute premium payments to liquidity providers
     uint256 public constant DISTRIBUTION_PERIOD = 30 days;
 
@@ -150,10 +150,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             _length <= maxLength,
             "length cannot be greater than maxLength"
         );
-        
-        // price in bps per year * amount of tokens to receive when pool is liquidated 
+
+        // price in bps per year * amount of tokens to receive when pool is liquidated
         // * lenght of coverage in days / year and 100 to get bps to percentage
-        return priceRatio * _amount * _length * SCALE / 36500;
+        return (priceRatio * _amount * _length * SCALE) / 36500;
     }
 
     /**
@@ -166,7 +166,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         external
         view
         returns (uint256)
-    {   
+    {
         if (totalSupply() == 0) {
             return 0;
         }
@@ -202,7 +202,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         policyCenter = _policyCenter;
     }
 
-    function setIncidentReport(address _incidentReport) external override onlyRole {
+    function setIncidentReport(address _incidentReport)
+        external
+        override
+        onlyRole
+    {
         incidentReport = _incidentReport;
     }
 
@@ -310,8 +314,6 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         emit LiquidityRemoved(_amount, _provider);
     }
 
-    
-
     /**
     @notice Called when liqudity is provided, removed or coverage is bought.
     updates all state variables to reflect current reward emission.
@@ -324,12 +326,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         _updateRewards();
     }
 
-
-
     /**
-    * @notice Update emission rate based on new premium comission to liquidity providers
-    *
-    * @param _premium premium given to liquidity providers
+     * @notice Update emission rate based on new premium comission to liquidity providers
+     *
+     * @param _premium premium given to liquidity providers
      */
     function updateEmissionRate(uint256 _premium) public {
         require(
@@ -339,13 +339,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         _updateEmissionRate(_premium);
     }
 
-
-
     /**
-    @notice sets this insurance pool to liquidated. Only callable by executor
-    */
+     * @notice sets this insurance pool to liquidated. Only callable by executor
+     */
     function liquidatePool() external onlyExecutor {
-
         // changes the status of the insurance pool to liquidated and allows payout claims
         _setLiquidationStatus(true);
 
@@ -360,12 +357,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         emit Liquidation(amount, endLiquidationDate);
     }
 
-
     function verifyLiquidationEnded() external {
-        require(
-            liquidated,
-            "Pool has not been liquidated"
-        );
+        require(liquidated, "Pool has not been liquidated");
         require(
             block.timestamp > endLiquidationDate,
             "Pool has not ended liquidation"
@@ -375,35 +368,37 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         _setLiquidationStatus(false);
 
         emit LiquidationEnded(block.timestamp);
-
     }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    * @notice Updates emission rate based on new incoming premium
-    *         
-    * @param _premium incoming new premium
+     * @notice Updates emission rate based on new incoming premium
+     *
+     * @param _premium incoming new premium
      */
     function _updateEmissionRate(uint256 _premium) internal {
         // Update current reward taking into account new emission rate
         _updateRewards();
         // Get time to complete current pool of tokens emission to liquidity providers
-        uint256 timeToFinishEmission = emssionEndTime > block.timestamp ?
-                                       emssionEndTime - block.timestamp : 0;
+        uint256 timeToFinishEmission = emssionEndTime > block.timestamp
+            ? emssionEndTime - block.timestamp
+            : 0;
 
         // Calculate new emission rate by adding new premium and redistributing previous emission
         // Throughout the time it takes to complete emission.
         if (timeToFinishEmission > 0) {
-            emissionRate = ((emissionRate * timeToFinishEmission) + _premium) /
-                                      DISTRIBUTION_PERIOD;
+            emissionRate =
+                ((emissionRate * timeToFinishEmission) + _premium) /
+                DISTRIBUTION_PERIOD;
             // Update emission rate
         } else {
             // Update emission rate
             emissionRate = _premium / DISTRIBUTION_PERIOD;
         }
-                                
+
         // update emission rate and emission ends
         emssionEndTime = block.timestamp + DISTRIBUTION_PERIOD;
 
@@ -422,8 +417,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         }
         // if no coverages have been bought in over 30 days,
         // discount time passed since the time that emission ends
-        uint256 claimTimestamp = emssionEndTime < block.timestamp ?
-                                 emssionEndTime : block.timestamp;
+        uint256 claimTimestamp = emssionEndTime < block.timestamp
+            ? emssionEndTime
+            : block.timestamp;
         // Calculate difference between claim time and last time rewards were claimed
         uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
 
@@ -431,10 +427,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         uint256 rewards = timeSinceLastReward * emissionRate;
 
         // Update accumulated rewards given to each pool share
-        // accumulated 
+        // accumulated
         accumulatedRewardPerShare =
             accumulatedRewardPerShare +
-            rewards / totalSupply();
+            rewards /
+            totalSupply();
         lastRewardTimestamp = block.timestamp;
 
         // emit event to notify users that rewards have been updated
