@@ -34,7 +34,6 @@ pragma solidity ^0.8.13;
  *
  */
 contract Executor is ProtocolProtection, VotingParameters {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -48,7 +47,6 @@ contract Executor is ProtocolProtection, VotingParameters {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
 
     event NewPoolEecuted(
@@ -56,7 +54,6 @@ contract Executor is ProtocolProtection, VotingParameters {
         uint256 proposalId,
         address protocol
     );
-    
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -82,13 +79,22 @@ contract Executor is ProtocolProtection, VotingParameters {
      */
     function executeReport(uint256 _reportId) public {
         // get the report
-        (uint256 poolId,,,,,,,
-        uint256 status,
-        uint256 result,) = IIncidentReport(incidentReport).reports(_reportId);
-        
-        require (status == SETTLED_STATUS, "Report is not ready to be executed");
+        (
+            uint256 poolId,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            uint256 status,
+            uint256 result,
 
-        require (result == 1, "Report is not passed");
+        ) = IIncidentReport(incidentReport).reports(_reportId);
+
+        require(status == SETTLED_STATUS, "Report is not ready to be executed");
+
+        require(result == 1, "Report is not passed");
 
         // execute the pool
         address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
@@ -98,13 +104,13 @@ contract Executor is ProtocolProtection, VotingParameters {
             poolId
         );
         IInsurancePool(poolAddress).liquidatePool();
-        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(tokenAddress);
+        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(
+            tokenAddress
+        );
         // IInsurancePoolFactory(poolAddress).deregisterToken()
         // emit the event
         emit ReportExecuted(poolAddress, poolId, _reportId);
     }
-
-
 
     /**
      * @notice Settle the proposal
@@ -112,27 +118,26 @@ contract Executor is ProtocolProtection, VotingParameters {
      * @param _proposalId Proposal id
      */
     function executeProposal(uint256 _proposalId) external returns (address) {
-        (string memory name,
-         address protocolAddress,
-         uint256 maxCapacity,
-         uint256 priceRatio,
-         uint256 status, 
-         uint256 result) = IOnboardProposal(onboardProposal).getProposal(_proposalId);
+        IOnboardProposal.Proposal memory proposal = IOnboardProposal(
+            onboardProposal
+        ).getProposal(_proposalId);
 
-        require(status == SETTLED_STATUS, "Not voting status");
+        require(proposal.status == SETTLED_STATUS, "Not settled");
 
-        require(result == 1, "Has not been approved");
+        require(proposal.result == 1, "Has not been approved");
 
-        
         // execute the proposal
         address newPool = IInsurancePoolFactory(insurancePoolFactory)
-        .deployPool(name, protocolAddress, maxCapacity, priceRatio);
-        
+            .deployPool(
+                proposal.name,
+                proposal.protocolAddress,
+                proposal.maxCapacity,
+                proposal.priceRatio
+            );
+
         // emit the event
-        emit NewPoolEecuted(newPool, _proposalId, protocolAddress);
+        emit NewPoolEecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
-        
     }
-    
 }
