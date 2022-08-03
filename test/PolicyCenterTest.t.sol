@@ -56,6 +56,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     uint256 constant public REINSURANCE_POOL_ID = 0;
     uint256 constant public POOL_ID = 1;
+    uint256 constant SCALE = 1e12;
 
     uint256 constant public VOTING_START_TIME = 3 days;
     uint256 constant public VOTING_END_TIME = 6 days;
@@ -128,7 +129,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         // deploy ptp pool
-        pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 1000 ether, 1);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 100);
         // set addreses for ptp pool
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
@@ -242,8 +243,9 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testGetCoveragePrice() public {
         // get coverage price and returns it
         uint256 price = InsurancePool(pool1).coveragePrice(10000, 90);
+        uint256 expectedPrice = 90000000 * SCALE / 36500;
         // aseert that price is correct    expressed in days      calculucate discount 
-        assertEq(price == 10000 * 1 * 90 / uint256(1 days) * (1460 + 1 - 90) / 1460, true);
+        assertEq(price == expectedPrice, true);
     }
 
     function testBuyCoverageWithoutSuppliedLiquidity() public {
@@ -351,7 +353,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(POOL_ID, 10000);
 
-        vm.warp(7 days);
+        vm.warp(7 days + 1);
         ptp.approve(address(policyCenter), 10000 ether);
         incidentReport.report(1);
 

@@ -125,14 +125,15 @@ contract ExecutorTest is Test,IncidentReportParameters {
         executor.setShield(address(shield));
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
+        executor.setIncidentReport(address(incidentReport));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
 
         pool1 = insurancePoolFactory.deployPool(
-            "insurance",
+            "Platypus",
             address(ptp),
             1000 ether,
-            POOL_ID
+            100
         );
 
         // set addresses for pool1

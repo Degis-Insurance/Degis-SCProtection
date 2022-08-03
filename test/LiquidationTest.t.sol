@@ -126,7 +126,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 1);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 100);
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
