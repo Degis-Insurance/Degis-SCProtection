@@ -8,7 +8,7 @@ import "./interfaces/IncidentReportParameters.sol";
 
 import "forge-std/console.sol";
 
-contract IncidentReport is ProtocolProtection, IncidentReportParameters {
+contract IncidentReport is ProtocolProtection, IncidentReportParameters{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -28,7 +28,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
         uint256 votingReward; // Voting reward per veDEG if the report passed
     }
-    // Report id => report info
+    // Report id => Report
     mapping(uint256 => Report) public reports;
 
     struct TempResult {
@@ -89,7 +89,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getReport(uint256 _id) external view returns (Report memory) {
+    function getReport(uint256 _id) public view returns (Report memory) {
         return reports[_id];
     }
 
@@ -182,7 +182,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         // Must close the report before pending period ends
         require(
             !_passedPendingPeriod(currentReport.reportTimestamp),
-            "Already pass pending period"
+            "Already passed pending period"
         );
 
         currentReport.status = CLOSE_STATUS;

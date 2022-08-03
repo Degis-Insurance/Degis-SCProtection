@@ -71,7 +71,7 @@ contract InsurancePoolTest is BaseTest {
         );
         assertEq(allowance, type(uint256).max);
 
-        InsurancePool pool = InsurancePool(newPoolAddress);
+        pool = InsurancePool(newPoolAddress);
 
         uint256 price = pool.coveragePrice(10 ether, 90);
         console.log("price", price);

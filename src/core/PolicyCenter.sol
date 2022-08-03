@@ -304,6 +304,10 @@ contract PolicyCenter is ProtocolProtection {
         _approvePoolToken(_token);
     }
 
+    /**
+     * @notice approves exchange to swap tokens in control of policy center
+     * @param _token        address of the approved token
+     */
     function approvePoolToken(address _token) external {
         require(
             msg.sender == owner() || msg.sender == insurancePoolFactory,
@@ -332,6 +336,7 @@ contract PolicyCenter is ProtocolProtection {
         require(_coverAmount > 0, "Amount must be greater than 0");
         require(_length > 0, "Length must be greater than 0");
         require(_poolId > 0, "PoolId must be greater than 0");
+        require(_pay > 0, "Pay must be greater than 0");
         require(
             IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
                 _pay + fundsByPoolId[_poolId],
@@ -382,9 +387,6 @@ contract PolicyCenter is ProtocolProtection {
         liquidityByPoolId[_poolId] += _amount;
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
-
-        
 
         if (_poolId > 0) {
             // emits tokens to user from insurnace pool

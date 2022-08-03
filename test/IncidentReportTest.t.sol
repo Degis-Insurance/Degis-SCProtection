@@ -22,7 +22,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 import "src/voting/interfaces/IncidentReportParameters.sol";
@@ -83,22 +82,22 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
     uint256 constant VOTE_FOR = 1;
     uint256 constant VOTE_AGAINST = 2;
 
-    uint256 constant POOLID = 1;
+    uint256 constant POOL_ID = 1;
 
     uint256 constant REPORT_START_TIME = 1000;
 
     function setUp() public {
         // deploys tokens
-        shield = new MockSHIELD(10000e18, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
         shield.approve(address(policyCenter), 20000);
 
-        deg = new MockDEG(10000e18, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000e18);
-        deg.transfer(address(this), 100e18);
+        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        deg.approve(address(policyCenter), 10000 ether);
+        deg.transfer(address(this), 100 ether);
         vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
-        vedeg.transfer(address(this), 100e18);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000e18);
-        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000e18);
+        vedeg.transfer(address(this), 100 ether);
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
 
         deg.addMinter(address(this));
 
@@ -120,9 +119,9 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         deg.addMinter(address(incidentReport));
 
         // approve incident report interaction
-        deg.approve(address(incidentReport), 10000e18);
-        vedeg.approve(address(incidentReport), 10000e18);
-        ptp.approve(address(incidentReport), 10000e18);
+        deg.approve(address(incidentReport), 10000 ether);
+        vedeg.approve(address(incidentReport), 10000 ether);
+        ptp.approve(address(incidentReport), 10000 ether);
 
         // sets addresses needed to execute functions
         policyCenter.setDeg(address(deg));
@@ -186,7 +185,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         deg.addMinter(address(incidentReport));
 
         vm.warp(REPORT_START_TIME);
-        incidentReport.report(POOLID);
+        incidentReport.report(POOL_ID);
     }
 
     function _report(uint256 _id) public {
@@ -198,7 +197,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
             1
         );
 
-        assertEq(currentReport.poolId, POOLID);
+        assertEq(currentReport.poolId, POOL_ID);
         assertEq(currentReport.reportTimestamp, 1000);
         assertEq(currentReport.reporter, address(this));
     }
@@ -206,7 +205,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
     function testStartVoting() public {
         // Can not start report before passing the pending period
         vm.expectRevert("Not passed pending period");
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         // Time setup
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
@@ -215,7 +214,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
         vm.expectEmit(true, true, false, true);
         emit VotingStart(1, REPORT_START_TIME + PENDING_PERIOD + 1);
 
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         IncidentReport.Report memory report = incidentReport.getReport(1);
 
@@ -226,7 +225,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
     function testCloseReport() public {
         // Can not close a report after pending period
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        vm.expectRevert("Already pass pending period");
+        vm.expectRevert("Already passed pending period");
         incidentReport.closeReport(1);
 
         // Can close a report before pending period
@@ -240,7 +239,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testVoteReport() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         // Alice vote for
         vm.prank(alice);
@@ -279,7 +278,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testVoteMoreThanOnceOnReport() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.startPrank(alice);
         incidentReport.vote(1, VOTE_FOR, 2500 ether);
@@ -303,7 +302,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testSettleReport() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 10000 ether);
@@ -334,7 +333,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testExtendRound() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 100000 ether);
@@ -406,7 +405,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testClaimRewardAndPayDebtAfterPassed() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 100000 ether);
@@ -440,7 +439,7 @@ contract IncidentReportTest is Test, IncidentReportParameters, Events {
 
     function testClaimRewardAndPayDebtAfterRejected() public {
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, 50000 ether);

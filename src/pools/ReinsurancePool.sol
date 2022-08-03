@@ -20,6 +20,8 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "../util/ProtocolProtection.sol";
 
 /**
@@ -49,13 +51,6 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         uint256 proportion;
     }
     mapping(address => PoolInfo) public pools;
-
-    struct Liquidity {
-        uint256 amount;
-        uint256 userDebt;
-        uint256 lastClaim;
-    }
-    mapping(address => Liquidity) public liquidities;
 
     bool public insurancePoolLiquidated;
     bool public paused;
@@ -159,10 +154,6 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     */
     function removeLiquidity(uint256 _amount, address _provider) external {
         require(_amount <= totalSupply(), "amount exceeds totalSupply");
-        require(
-            block.timestamp >= liquidities[_provider].lastClaim + 604800,
-            "cannot remove liquidity within 7 days of last claim"
-        );
         require(_amount > 0, "amount should be greater than 0");
         require(
             msg.sender == policyCenter,
@@ -254,5 +245,9 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
             accumulatedRewardPerShare +
             rewards / totalSupply();
         lastRewardTimestamp = block.timestamp;
+    }
+
+    function deregisterAddress(address tokenAddress) external {
+        
     }
 }

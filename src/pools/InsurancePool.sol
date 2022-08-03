@@ -21,6 +21,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../util/ProtocolProtection.sol";
 
@@ -66,7 +67,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     uint256 public startTime;
 
     //
-    uint256 public policyPricePerShield;
+    uint256 public priceRatio;
     // totalLiquidity is expressed in totalSupply()
     uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
@@ -82,6 +83,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 endDate);
+    event EmissionRateUpdated(uint256 rate);
+    event RewardsUpdated(uint256 amount);
+    event LiquidationEnded(uint256 timestamp);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -92,14 +96,14 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         uint256 _maxCapacity,
         string memory _name,
         string memory _symbol,
-        uint256 _policyPricePerToken,
+        uint256 _priceRatio,
         address _administrator
     ) ERC20(_name, _symbol) {
         // token address insured by pool
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
-        policyPricePerShield = _policyPricePerToken;
+        priceRatio = _priceRatio;
         administrator = _administrator;
         maxLength = 90;
     }
@@ -133,7 +137,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
      * @notice returns cost to buy coverage for a given period of time and amount of tokens
      *
      * @param _amount Amount being covered
-     * @param _length Coverage length
+     * @param _length Coverage length in days
      */
     function coveragePrice(uint256 _amount, uint256 _length)
         external
@@ -147,7 +151,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             "length cannot be greater than maxLength"
         );
         return
-            (policyPricePerShield * _amount * _length) / 1 days;
+        // price in bps per year * amount of tokens to receive when pool is liquidated 
+        // * lenght of coverage in days / year and 100 to get bps to percentage
+            (priceRatio * _amount * _length) / (365 * 100);
     }
 
     /**
@@ -318,6 +324,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         _updateRewards();
     }
 
+
+
     /**
     * @notice Update emission rate based on new premium comission to liquidity providers
     *
@@ -331,19 +339,44 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         _updateEmissionRate(_premium);
     }
 
+
+
     /**
     @notice sets this insurance pool to liquidated. Only callable by executor
     */
     function liquidatePool() external onlyExecutor {
+
         // changes the status of the insurance pool to liquidated and allows payout claims
         _setLiquidationStatus(true);
+
         // when liquidated, totalSupply does not change. liquidity providers keep LP tokens.
         // LP tokens represent their share of remaining liquidity after payout is done.
         uint256 amount = totalSupply();
+
+        // set end liquidation date. users will have PAY_COVER_PERIOD days to claim payout.
         endLiquidationDate = block.timestamp + PAY_COVER_PERIOD;
+
+        // emit event to notify users that pool has been liquidated.
         emit Liquidation(amount, endLiquidationDate);
     }
 
+
+    function verifyLiquidationEnded() external {
+        require(
+            liquidated,
+            "Pool has not been liquidated"
+        );
+        require(
+            block.timestamp > endLiquidationDate,
+            "Pool has not ended liquidation"
+        );
+
+        // liquidation has ended. payout claims cannot be made.
+        _setLiquidationStatus(false);
+
+        emit LiquidationEnded(block.timestamp);
+
+    }
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -359,14 +392,22 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         // Get time to complete current pool of tokens emission to liquidity providers
         uint256 timeToFinishEmission = emssionEndTime > block.timestamp ?
                                        emssionEndTime - block.timestamp : 0;
+
         // Calculate new emission rate by adding new premium and redistributing previous emission
         // Throughout the time it takes to complete emission.
-        uint256 newEmissionRate = (timeToFinishEmission * emissionRate + _premium)
-                                  / DISTRIBUTION_PERIOD;
+        if (timeToFinishEmission > 0) {
+            emissionRate = ((emissionRate * timeToFinishEmission) + _premium) /
+                                      DISTRIBUTION_PERIOD;
+            // Update emission rate
+        } else {
+            // Update emission rate
+            emissionRate = _premium / DISTRIBUTION_PERIOD;
+        }
                                 
         // update emission rate and emission ends
-        emissionRate = newEmissionRate;
         emssionEndTime = block.timestamp + DISTRIBUTION_PERIOD;
+
+        emit EmissionRateUpdated(emissionRate);
     }
 
     /**
@@ -395,9 +436,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             accumulatedRewardPerShare +
             rewards / totalSupply();
         lastRewardTimestamp = block.timestamp;
-    }
 
-    
+        // emit event to notify users that rewards have been updated
+        emit RewardsUpdated(rewards);
+    }
 
     function _setLiquidationStatus(bool _liquidated) internal {
         liquidated = _liquidated;

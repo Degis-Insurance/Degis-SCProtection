@@ -19,6 +19,8 @@
 */
 import "../util/ProtocolProtection.sol";
 
+import "../voting/interfaces/VotingParameters.sol";
+
 pragma solidity ^0.8.13;
 
 /**
@@ -31,39 +33,15 @@ pragma solidity ^0.8.13;
  *         Both administrators or users can execute proposals and reports out of self interest
  *
  */
-contract Executor is ProtocolProtection {
+contract Executor is ProtocolProtection, VotingParameters {
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Reports struct to be executed.
-    struct Report {
-        uint256 poolId; // Project pool id
-        uint256 reportTimestamp; // Time of starting report
-        address reporter; // Reporter address
-        uint256 voteTimestamp; // Voting start timestamp
-        uint256 numFor; // Votes voting for
-        uint256 numAgainst; // Votes voting against
-        uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
-        uint256 status;
-        uint256 result; // 1: Pass, 2: Reject, 3: Tied
-        uint256 votingReward; // Voting reward per veDEG if the report passed
-    }
+    // if chosen to, executor report could have a buffer timer to prevent abuse of the system
+    // from team or organization members
     uint256 public reportBuffer;
-
-
-    // pool struct to be executed
-    struct Proposal {
-        uint256 proposeTimestamp;
-        address proposer;
-        uint256 numFor; // Votes voting for
-        uint256 numAgainst; // Votes voting against
-        uint256 maxCapacity;
-        uint256 priceRatio;
-        uint256 poolId;
-        uint256 status;
-        uint256 result;
-    }
     uint256 public poolBuffer;
 
     // ---------------------------------------------------------------------------------------- //
@@ -78,7 +56,7 @@ contract Executor is ProtocolProtection {
         uint256 proposalId,
         address protocol
     );
-
+    
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -100,24 +78,57 @@ contract Executor is ProtocolProtection {
 
     function executeReport(uint256 _reportId) public {
         // get the report
-        Report memory report = IIncidentReport(incidentReport).getReport(_reportId);
+        (uint256 poolId,,,,,,,
+        uint256 status,
+        uint256 result,) = IIncidentReport(incidentReport).reports(_reportId);
+        
+        require (status == SETTLED_STATUS, "Report is not ready to be executed");
+
+        require (result == 1, "Report is not passed");
+
         // execute the pool
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(report.poolId);
+        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+            poolId
+        );
+        address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(
+            poolId
+        );
         IInsurancePool(poolAddress).liquidatePool();
+        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(poolAddress);
+        // IInsurancePoolFactory(poolAddress).deregisterToken()
         // emit the event
-        ReportExecuted(poolAddress, report.poolId, _reportId);
+        emit ReportExecuted(poolAddress, poolId, _reportId);
     }
 
-    function executePool(uint256 _poolId) public {
-        // get the pool
-        Proposal memory proposal = IOnboardProposal(onboardProposal).getPool(_poolId);
 
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(_poolId);
 
-        IInsurancePoolFactory(insurancePoolFactory)
-        .deployPool(proposal.name, proposal.protocolToken, proposal.maxCapacity, proposal.policyPricePerShield);
+    /**
+     * @notice Settle the proposal
+     *
+     * @param _proposalId Proposal id
+     */
+    function executeProposal(uint256 _proposalId) external returns (address) {
+        (string memory name,
+         address protocolAddress,
+         uint256 maxCapacity,
+         uint256 priceRatio,
+         uint256 status, 
+         uint256 result) = IOnboardProposal(onboardProposal).getProposal(_proposalId);
+
+        require(status == SETTLED_STATUS, "Not voting status");
+
+        require(result == 1, "Has not been approved");
+
+        
+        // execute the proposal
+        address newPool = IInsurancePoolFactory(insurancePoolFactory)
+        .deployPool(name, protocolAddress, maxCapacity, priceRatio);
+        
         // emit the event
-        NewPoolEecuted(poolAddress, _poolId, proposal.protocolToken);
+        emit NewPoolEecuted(newPool, _proposalId, protocolAddress);
+
+        return newPool;
+        
     }
     
 }

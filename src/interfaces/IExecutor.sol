@@ -30,10 +30,10 @@ interface IExecutor {
     function cancelNewPool(uint256 _proposalId) external;
     function cancelReport(uint256 _reportId) external;
     function deg() view external returns (address);
-    function executeNewPool(uint256 _proposalId) external returns (address newPool);
+    function executeProposal(uint256 _proposalId) external returns (address newPool);
     function executeReport(uint256 _reportId) external;
     function executor() view external returns (address);
-    function getQueuedReportById(uint256 _reportId) view external returns (uint256, uint256, bool, bool);
+    function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
@@ -49,6 +49,7 @@ interface IExecutor {
     function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) external;
     function setDeg(address _deg) external;
     function setExecutor(address _executor) external;
+    function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setPolicyCenter(address _policyCenter) external;
     function setProposalCenter(address _proposalCenter) external;

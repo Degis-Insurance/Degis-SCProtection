@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 interface IIncidentReport {
+
     event DebtPaid(address payer, address user, uint256 debt, uint256 unlockAmount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event ReportClosed(uint256 reportId, uint256 closeTimestamp);
@@ -16,7 +17,7 @@ interface IIncidentReport {
     struct UserVote { uint256 a; uint256 b; bool c; }
     struct Report { uint256 a; uint256 b; address c; uint256 d; uint256 e; uint256 f; uint256 g; uint256 h; uint256 i; uint256 j; }
 
-    function COOLDOWN_WRONGREPORT() view external returns (uint256);
+    function COOLDOWN_WRONG_REPORT() view external returns (uint256);
     function claimReward(uint256 _reportId) external;
     function closeReport(uint256 _reportId) external;
     function deg() view external returns (address);

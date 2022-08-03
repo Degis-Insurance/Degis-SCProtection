@@ -16,7 +16,6 @@ import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
-import "src/voting/interfaces/IncidentReportParameters.sol";
 
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/ReinsurancePoolErrors.sol";
@@ -24,7 +23,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ExecutorTest is Test,IncidentReportParameters {
@@ -158,13 +156,12 @@ contract ExecutorTest is Test,IncidentReportParameters {
         // report pool
         deg.transfer(address(this), 10000 ether);
 
-        // TODO:
         deg.transfer(address(onboardProposal), 1000 ether);
         deg.approve(address(onboardProposal), 10000 ether);
 
         // vote on proposals and reports
         vedeg.transfer(alice, 3000 ether);
-        vedeg.transfer(bob, 2000 ether);
+        vedeg.transfer(bob, 3000 ether);
         vedeg.transfer(carol, 3000 ether);
 
         // have shield on main contract
@@ -175,127 +172,53 @@ contract ExecutorTest is Test,IncidentReportParameters {
         yeti.approve(address(policyCenter), 10000 ether);
 
         policyCenter.provideLiquidity(POOL_ID, 10000);
-        onboardProposal.proposePool(address(yeti), "Yeti", 10000, 1);
-        deg.approve(address(incidentReport), 1000 ether);
+
+        // approve deg usage to report and propose pools
+        deg.approve(address(incidentReport), 100000 ether);
+
         vm.warp(REPORT_START_TIME);
+
+        // propose pool
+        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        
+        // report pool
         incidentReport.report(1);
-        vm.prank(alice);
-        onboardProposal.vote(PROPOSAL_ID, true);
-        vm.prank(bob);
-        onboardProposal.vote(PROPOSAL_ID, true);
-        vm.prank(carol);
-        onboardProposal.vote(PROPOSAL_ID, true);
         
         // start voting
-        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        vm.warp(REPORT_START_TIME + VOTING_PERIOD + 1);
+        onboardProposal.startVoting(PROPOSAL_ID);
         incidentReport.startVoting(POOL_ID);
+
+         // Vote on proposals
+        vm.prank(alice);
+        onboardProposal.vote(PROPOSAL_ID, VOTE_FOR, 1500 ether);
+        vm.prank(bob);
+        onboardProposal.vote(PROPOSAL_ID, VOTE_FOR, 1500 ether);
+        vm.prank(carol);
+        onboardProposal.vote(PROPOSAL_ID, VOTE_FOR, 2000 ether);
 
         // vote on report
         vm.prank(alice);
-        incidentReport.vote(POOL_ID, VOTE_FOR, 1000 ether);
+        incidentReport.vote(POOL_ID, VOTE_FOR, 1500 ether);
         vm.prank(bob);
-        incidentReport.vote(POOL_ID, VOTE_FOR, 1000 ether);
+        incidentReport.vote(POOL_ID, VOTE_FOR, 1500 ether);
         vm.prank(carol);
         incidentReport.vote(POOL_ID, VOTE_FOR, 1000 ether);
+
         vm.warp( REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
 
         incidentReport.settle(POOL_ID);
 
-        //TODO: test onboardProposal
-        onboardProposal.evaluatePoolProposalVotes(PROPOSAL_ID);
-
-        // pass yeti pool proposal to executor
-        onboardProposal.evaluatePoolProposalVotes(PROPOSAL_ID);
+        onboardProposal.settle(PROPOSAL_ID);
     }
 
-    function testGetPendingPools() public {
-        // retrieves pending pool by id
-        // should return its state
-        (uint256 poolId, , bool pending, bool approved) = executor
-            .queuedReportsById(1);
-        assertEq(poolId == POOL_ID, true);
-        assertEq(pending == true, true);
-        assertEq(approved == true, true);
-    }
+    function testExecuteReport() public {
 
-    // function testExecuteReportPriorToBuffer() public {
-    //     // report should not be executable prior to time buffer
-    //     vm.expectRevert("report not ready");
-    //     executor.executeReport(1);
-    // }
+        vm.warp(8 days);
+        // execute report
+        executor.executeReport(POOL_ID);
 
-    function testExecutePoolPriorToBuffer() public {
-        // report should not be executable prior to time buffer
-        vm.expectRevert("pool not ready");
-        executor.executeNewPool(PROPOSAL_ID);
-    }
-
-    // function testExecuteReportAfterBuffer() public {
-    //     // report should be executable after time buffer
-    //     vm.warp(1000000);
-    //     executor.executeReport(1);
-    //     assertEq(InsurancePool(pool1).liquidated() == true, true);
-    // }
-
-    function testExecutePoolAfterBuffer() public {
-        // pool should be executable after time buffer
-        vm.warp(1000000);
-        address newPool = executor.executeNewPool(1);
-        address[] memory addresses = insurancePoolFactory.getPoolAddressList();
-        address registeredNewPool = addresses[addresses.length - 1];
-        assertEq(newPool == registeredNewPool, true);
-    }
-
-    // function testExecuteReportNotOwner() public {
-    //     // only owner aka manager can execute a report
-    //     vm.warp(1000000);
-    //     vm.prank(carol);
-    //     vm.expectRevert("Ownable: caller is not the owner");
-    //     executor.executeReport(1);
-    // }
-
-    function testExecutePoolNotOwner() public {
-        // only owner aka manager can execute a new pool
-        vm.warp(1209602);
-        vm.prank(carol);
-        vm.expectRevert("Ownable: caller is not the owner");
-        executor.executeNewPool(1);
-    }
-
-    // function testCancelReport() public {
-    //     // owner should be able to cancel a report
-    //     vm.warp(1000000);
-    //     executor.cancelReport(1);
-    //     (uint256 poolId, , bool pending, bool approved) = executor
-    //         .queuedReportsById(1);
-    //     bool truthy = InsurancePool(pool1).liquidated();
-    //     assertEq(poolId == 1, true);
-    //     assertEq(pending == false, true);
-    //     assertEq(approved == true, true);
-    //     assertEq(truthy == false, true);
-    // }
-
-    function testCancelPool() public {
-        // owner should be able to cancel a new pool proposal
-        vm.warp(1209602);
-        executor.cancelNewPool(1);
-        (, , , , , bool pending, ) = executor.queuedPoolsById(1);
-        assertEq(pending == false, true);
-    }
-
-    // function testCancelReportNotOwner() public {
-    //     // users should not be able to cancel a report
-    //     vm.warp(1000000);
-    //     vm.prank(carol);
-    //     vm.expectRevert("Ownable: caller is not the owner");
-    //     executor.cancelReport(1);
-    // }
-
-    function testCancelPoolNotOwner() public {
-        // users should not be able to cancel a prposal
-        vm.warp(1209602);
-        vm.prank(carol);
-        vm.expectRevert("Ownable: caller is not the owner");
-        executor.cancelNewPool(1);
+        // expect that pool1 is now in the liquidation state
+        assertEq(InsurancePool(pool1).liquidated() == true, true);
     }
 }

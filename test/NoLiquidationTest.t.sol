@@ -22,7 +22,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract NoLiquidationTest is Test {
@@ -50,8 +49,8 @@ contract NoLiquidationTest is Test {
     address public pool2;
 
     function setUp() public {
-        shield = new MockSHIELD(10000000e18, "Shield", 18, "SHIELD");
-        deg = new MockDEG(10000000e18, "Degis", 18, "DEG");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
+        deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
@@ -71,9 +70,9 @@ contract NoLiquidationTest is Test {
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
-        deg.transfer(address(exchange), 1000e18);
-        shield.transfer(address(exchange), 1000e18);
-        ptp.transfer(address(exchange), 1000e18);
+        deg.transfer(address(exchange), 1000 ether);
+        shield.transfer(address(exchange), 1000 ether);
+        ptp.transfer(address(exchange), 1000 ether);
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
         insurancePoolFactory.setShield(address(shield));
@@ -126,11 +125,11 @@ contract NoLiquidationTest is Test {
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
         InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
-        deg.transfer(address(this), 1000e18);
+        deg.transfer(address(this), 1000 ether);
         deg.transfer(address(policyCenter), 100);
-        vedeg.transfer(alice, 3000e18);
-        vedeg.transfer(bob, 2000e18);
-        vedeg.transfer(carol, 3000e18);
+        vedeg.transfer(alice, 3000 ether);
+        vedeg.transfer(bob, 2000 ether);
+        vedeg.transfer(carol, 3000 ether);
          // mint and approve tokens for pool1 and pool2
         ptp.approve(address(policyCenter), 10000 ether);
         yeti.approve(address(policyCenter), 10000 ether);
@@ -141,9 +140,9 @@ contract NoLiquidationTest is Test {
         shield.transfer(carol, 100 ether);
 
         // transfer deg to users
-        deg.transfer(alice, 10e18);
-        deg.transfer(bob, 10e18);
-        deg.transfer(carol, 10e18);
+        deg.transfer(alice, 10 ether);
+        deg.transfer(bob, 10 ether);
+        deg.transfer(carol, 10 ether);
 
         // transfer ptp to carol
         // to buy coverage
@@ -165,12 +164,12 @@ contract NoLiquidationTest is Test {
         vm.prank(bob);
         policyCenter.provideLiquidity(0, 1 ether);
         vm.prank(carol);
-        shield.approve(address(policyCenter), 1000000e18);
+        shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
         uint256 price = InsurancePool(pool1).coveragePrice(10 ether, 90);
         vm.prank(carol);
-        ptp.approve(address(policyCenter), 1000000e18);
+        ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);
         policyCenter.buyCoverage(1, price, 10 ether, 90);
         vm.warp(30 days);

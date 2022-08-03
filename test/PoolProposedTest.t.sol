@@ -22,7 +22,6 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IReinsurancePool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/IComittee.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test {
@@ -41,6 +40,15 @@ contract ClaimPayoutTest is Test {
     ERC20 public ptp;
     ERC20 public yeti;
 
+    uint256 constant public VOTE_FOR = 1;
+    uint256 constant public VOTE_AGAINST = 2;
+    uint256 constant public POOL_ID = 1;
+    uint256 constant public PROPOSAL_ID = 1;
+    
+    uint256 constant public START_TIME = 1;
+    uint256 constant public VOTE_PERIOD = 3 days;
+    uint256 constant public EXECUTE_PERIOD = 6 days;
+
     // defines users
     address public alice = address(0x1337);
     address public bob = address(0x133702);
@@ -50,8 +58,8 @@ contract ClaimPayoutTest is Test {
     address public pool2;
 
     function setUp() public {
-        shield = new MockSHIELD(10000000e18, "Shield", 18, "SHIELD");
-        deg = new MockDEG(10000000e18, "Degis", 18, "DEG");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
+        deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
@@ -66,9 +74,9 @@ contract ClaimPayoutTest is Test {
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
-        deg.transfer(address(exchange), 1000e18);
-        shield.transfer(address(exchange), 1000e18);
-        ptp.transfer(address(exchange), 1000e18);
+        deg.transfer(address(exchange), 1000 ether);
+        shield.transfer(address(exchange), 1000 ether);
+        ptp.transfer(address(exchange), 1000 ether);
         deg.addMinter(address(onboardProposal));
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
@@ -123,32 +131,40 @@ contract ClaimPayoutTest is Test {
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
         InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
-        deg.transfer(address(this), 1000e18);
-        deg.transfer(address(onboardProposal), 1000e18);
+        deg.transfer(address(this), 1000 ether);
+        deg.transfer(address(onboardProposal), 1000 ether);
         deg.approve(address(onboardProposal), 10000 ether);
-        vedeg.transfer(alice, 3000e18);
-        vedeg.transfer(bob, 2000e18);
-        vedeg.transfer(carol, 3000e18);
+
+        vedeg.transfer(alice, 3000 ether);
+        vedeg.transfer(bob, 3000 ether);
+        vedeg.transfer(carol, 3000 ether);
+
+        console.log("alice", vedeg.balanceOf(alice));
 
         // owner provides liquidity
         shield.transfer(address(this), 10000);
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(1, 10000);
-        onboardProposal.proposePool(address(yeti), "Yeti", 10000, 1);
-        vm.warp(350000);
+
+        vm.warp(0);
+        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+
+        vm.warp(START_TIME + VOTE_PERIOD);
+        onboardProposal.startVoting(PROPOSAL_ID);
+
         vm.prank(alice);
-        onboardProposal.vote(1, true);
+        onboardProposal.vote(POOL_ID, VOTE_FOR, 3000 ether);
         vm.prank(bob);
-        onboardProposal.vote(1, true);
+        onboardProposal.vote(POOL_ID, VOTE_FOR, 3000 ether);
         vm.prank(carol);
-        onboardProposal.vote(1, true);
-        vm.warp(500000);
-        vm.prank(address(0x1abc));
-        onboardProposal.evaluatePoolProposalVotes(1);
-        vm.warp(590000);
-        onboardProposal.evaluatePoolProposalVotes(1);
-        vm.warp(1000000);
-        pool2 =executor.executeNewPool(1);
+        onboardProposal.vote(POOL_ID, VOTE_FOR, 3000 ether);
+
+
+        vm.warp(START_TIME + VOTE_PERIOD + VOTE_PERIOD + 1);
+        onboardProposal.settle(1);
+
+        vm.warp(START_TIME + VOTE_PERIOD + EXECUTE_PERIOD + 2);
+        pool2 = executor.executeProposal(1);
         InsurancePool(pool2).setDeg(address(deg));
         InsurancePool(pool2).setVeDeg(address(vedeg));
         InsurancePool(pool2).setShield(address(shield));
