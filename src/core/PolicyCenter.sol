@@ -494,29 +494,21 @@ contract PolicyCenter is ProtocolProtection {
         // coverage by user is removed
         coverage.amount = 0;
         if (liquidityByPoolId[_poolId] >= amount) {
-
+            // Insurance doesn't need reinsurance
             // Registers removal of funds from insurance pool
             // if its enough to cover all funds
-            fundsByPoolId[_poolId] -= coverage.amount;
-
-            IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amount);
+            fundsByPoolId[_poolId] -= coverage.amount;  
         } else {
-            // registers removal of funds from insurance pool
-            // and from reinsurance pool
-            liquidityByPoolId[_poolId] -= coverage.amount;
-            liquidityByPoolId[0] -= (amount - liquidityByPoolId[_poolId]);
+            // Insurance pool needs reinsurance
+            // registers removel of funds from insurance and reinsurance pools
+            // effectively reinsuring insurance pools
+            liquidityByPoolId[_poolId] -= amount;
 
-            // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
-            IERC20(tokenByPoolId[_poolId]).transfer(
-                msg.sender,
-                fundsByPoolId[_poolId]
-            );
-            _reinsurePool(
-                amount - fundsByPoolId[_poolId],
-                msg.sender,
-                tokenByPoolId[_poolId]
-            );
+            // remove from reinsurance pool
+            liquidityByPoolId[0] -= (amount - liquidityByPoolId[_poolId]);
         }
+        // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
+        IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amount);
         emit Payout(amount, msg.sender);
     }
 
@@ -670,24 +662,5 @@ contract PolicyCenter is ProtocolProtection {
         require(exchange != address(0), "Exchange address not set");
         // approve exchange to swap policy center tokens for deg
         IERC20(_token).approve(exchange, type(uint256).max);
-    }
-
-    /**
-    @notice provides liquidity to pools in need of it. Only callable by Pools
-     *
-    @param _amount      token being insured
-    @param _insured    address of the insured user
-    @param _token     address of covered wallet
-    */
-    function _reinsurePool(
-        uint256 _amount,
-        address _insured,
-        address _token
-    ) internal {
-        require(_amount > 0, "amount should be greater than 0");
-        // msg.sender is the pool address, use it as reference to the pool info
-        // swap tokens for deg
-        _swapForExactTokens(_amount, deg, _token);
-        IERC20(_token).transfer(_insured, _amount);
     }
 }
