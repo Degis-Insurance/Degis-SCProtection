@@ -174,8 +174,9 @@ contract NoLiquidationTest is Test {
     function testClaimRewardsFromReinsurancePool() public {
         // bob should receive rewards from reinsurance pool
         vm.prank(bob);
-        uint256 reward = policyCenter.calculateReward(0, alice);
+        uint256 reward = policyCenter.calculateReward(0, bob);
         console.log("reward", reward);
+
         vm.prank(bob);
         policyCenter.claimReward(0);
         assertEq(reward > 0, true);
