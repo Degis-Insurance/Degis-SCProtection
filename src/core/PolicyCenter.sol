@@ -341,8 +341,8 @@ contract PolicyCenter is ProtocolProtection {
         require(_poolId > 0, "PoolId must be greater than 0");
         require(_pay > 0, "Pay must be greater than 0");
         require(
-            IInsurancePool(insurancePools[_poolId]).maxCapacity() * SCALE >=
-                _pay + fundsByPoolId[_poolId] * SCALE,
+            IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
+                _pay + fundsByPoolId[_poolId],
             "exceeds max capacity"
         );
         uint256 price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
@@ -353,13 +353,15 @@ contract PolicyCenter is ProtocolProtection {
         require(price == _pay, "pay does not correspond to price");
         //register coverage
 
-        totalRewardsByPoolId[_poolId] += _pay / SCALE;
+        totalRewardsByPoolId[_poolId] += _pay;
         Coverage storage coverage = coverages[_poolId][msg.sender];
         coverage.amount += _coverAmount;
         // initial 7 days buffer so pool cannot be exploited
         coverage.buyDate = block.timestamp + 7 days;
         coverage.length = _length;
-        uint256 toTransfer = _pay / SCALE;
+
+        uint256 toTransfer = _pay;
+
         // updates pool distribution based on paid amount
         IERC20(tokenByPoolId[_poolId]).transferFrom(
             msg.sender,
@@ -447,8 +449,11 @@ contract PolicyCenter is ProtocolProtection {
         );
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
+        console.log("Start");
         // claim rewards for caller by pool id. user debt is updated in claim reward
         _claimReward(_poolId, msg.sender);
+        console.log("End");
+        console.log("liquidity by pool id", liquidityByPoolId[_poolId]);
         // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= _amount;
 
@@ -465,6 +470,7 @@ contract PolicyCenter is ProtocolProtection {
                 msg.sender
             );
         }
+
         // new amount owned by caller
         liquidity.amount -= _amount;
         liquidity.lastClaim = block.timestamp;
@@ -495,7 +501,7 @@ contract PolicyCenter is ProtocolProtection {
             pool.endLiquidationDate() >= block.timestamp,
             "claim period is over"
         );
-        console.log("hello");
+
         // buy date + length + liquidation date - 5 days buffer
         // intended to fullfil valid coverages accounting for voting period
         require(
@@ -503,12 +509,10 @@ contract PolicyCenter is ProtocolProtection {
                 pool.endLiquidationDate() - 20 days,
             "coverage has expired"
         );
-         console.log("he");
+
         require(coverage.amount > 0, "no coverage to claim");
         // gets amount to give as payout
         uint256 amount = calculatePayout(_poolId, msg.sender);
-
-        console.log("hello");
 
         // coverage by user is removed
         coverage.amount = 0;
@@ -572,22 +576,22 @@ contract PolicyCenter is ProtocolProtection {
         Liquidity storage liquidity = liquidities[_poolId][_provider];
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
 
+        console.log("pool acc:", pool.accumulatedRewardPerShare());
+        console.log("amount", liquidity.amount);
+        console.log("Debt", liquidity.userDebt);
         // Calculate reward amount based on user's liquidity and acc reward per share.
         uint256 reward = (liquidity.amount * pool.accumulatedRewardPerShare()) -
             liquidity.userDebt;
-        fundsByPoolId[_poolId] -= reward;
 
-        if (reward == 0) {
-            liquidity.userDebt =
-                liquidity.amount *
-                pool.accumulatedRewardPerShare();
-            emit Reward(reward, _provider);
-        }
+        console.log("funds", fundsByPoolId[_poolId]);
+        fundsByPoolId[_poolId] -= reward;
 
         liquidity.userDebt =
             liquidity.amount *
             pool.accumulatedRewardPerShare();
+
         IERC20(tokenByPoolId[_poolId]).transfer(_provider, reward);
+
         emit Reward(reward, _provider);
     }
 
@@ -669,6 +673,9 @@ contract PolicyCenter is ProtocolProtection {
         fundsByPoolId[_poolId] += toInsurancePool;
         // reinsurance pool is pool 0
         fundsByPoolId[0] += reinsuranceReceives;
+
+        console.log("to insurancepool", toInsurancePool);
+
         IInsurancePool(insurancePools[_poolId]).updateEmissionRate(
             toInsurancePool
         );

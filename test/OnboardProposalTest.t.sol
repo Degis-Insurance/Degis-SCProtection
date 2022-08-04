@@ -25,121 +25,120 @@ import "src/interfaces/IOnboardProposal.sol";
 
 import "src/interfaces/IExecutor.sol";
 
-contract OnboardProposalTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
-    PolicyCenter public policyCenter;
-    OnboardProposal public onboardProposal;
-    IncidentReport public incidentReport;
-    MockSHIELD public shield;
-    MockDEG public deg;
-    MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
-    Executor public executor;
-    ERC20 public ptp;
-    ERC20 public yeti;
-    Exchange public exchange;
+// contract OnboardProposalTest is Test {
+//     InsurancePoolFactory public insurancePoolFactory;
+//     ReinsurancePool public reinsurancePool;
+//     PolicyCenter public policyCenter;
+//     OnboardProposal public onboardProposal;
+//     IncidentReport public incidentReport;
+//     MockSHIELD public shield;
+//     MockDEG public deg;
+//     MockVeDEG public vedeg;
+//     InsurancePool public insurancePool;
+//     Executor public executor;
+//     ERC20 public ptp;
+//     ERC20 public yeti;
+//     Exchange public exchange;
 
-    // defines users
-    address public alice = address(0x1337);
-    address public bob = address(0x133702);
-    address public carol = address(0x133703);
-    // pool1 address
-    address public pool1;
+//     // defines users
+//     address public alice = address(0x1337);
+//     address public bob = address(0x133702);
+//     address public carol = address(0x133703);
+//     // pool1 address
+//     address public pool1;
 
-    function setUp() public {
-        // deploys tokens
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
-        shield.approve(address(policyCenter), 20000);
-        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000 ether);
-        deg.transfer(address(this), 100 ether);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
+//     function setUp() public {
+//         // deploys tokens
+//         shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
 
-        deg.approve(address(this), 10000 ether);
-        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
-        vedeg.transfer(address(this), 100 ether);
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
-        );
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
-        executor = new Executor();
-        onboardProposal = new OnboardProposal();
-        exchange = new Exchange();
+//         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+//         deg.approve(address(policyCenter), 10000 ether);
+//         deg.transfer(address(this), 100 ether);
+//         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+//         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
 
-        // sets addresses needed to execute functions
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
-        policyCenter.setExecutor(address(executor));
-        policyCenter.setOnboardProposal(address(onboardProposal));
-        policyCenter.setReinsurancePool(address(reinsurancePool));
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
-        policyCenter.setExchange(address(exchange));
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
-        insurancePoolFactory.setExecutor(address(executor));
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
-        reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        onboardProposal.setDeg(address(deg));
-        onboardProposal.setVeDeg(address(vedeg));
-        onboardProposal.setShield(address(shield));
-        onboardProposal.setExecutor(address(executor));
-        onboardProposal.setPolicyCenter(address(policyCenter));
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
-        executor.setPolicyCenter(address(policyCenter));
-        executor.setOnboardProposal(address(onboardProposal));
-        executor.setReinsurancePool(address(reinsurancePool));
-        executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        //deploy ptp pool
-        pool1 = insurancePoolFactory.deployPool(
-            "Platypus",
-            address(ptp),
-            10000 ether,
-            100
-        );
-        // set addreses for ptp pool
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
-    }
+//         deg.approve(address(this), 10000 ether);
+//         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+//         vedeg.transfer(address(this), 100 ether);
+//         reinsurancePool = new ReinsurancePool();
+//         insurancePoolFactory = new InsurancePoolFactory(
+//             address(reinsurancePool),
+//             address(deg)
+//         );
+//         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+//         executor = new Executor();
+//         onboardProposal = new OnboardProposal();
+//         exchange = new Exchange();
 
-    function testProposePool() public {
-        // add onboardProposal to mint and burn tokens
-        deg.addMinter(address(onboardProposal));
+//           shield.approve(address(policyCenter), 20000);
 
-        // propose a yeti pool
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
-            1
-        );
+//         // sets addresses needed to execute functions
+//         policyCenter.setDeg(address(deg));
+//         policyCenter.setVeDeg(address(vedeg));
+//         policyCenter.setShield(address(shield));
+//         policyCenter.setExecutor(address(executor));
+//         policyCenter.setOnboardProposal(address(onboardProposal));
+//         policyCenter.setReinsurancePool(address(reinsurancePool));
+//         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+//         policyCenter.setExchange(address(exchange));
+//         insurancePoolFactory.setDeg(address(deg));
+//         insurancePoolFactory.setVeDeg(address(vedeg));
+//         insurancePoolFactory.setShield(address(shield));
+//         insurancePoolFactory.setExecutor(address(executor));
+//         insurancePoolFactory.setPolicyCenter(address(policyCenter));
+//         insurancePoolFactory.setOnboardProposal(address(onboardProposal));
+//         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
+//         reinsurancePool.setDeg(address(deg));
+//         reinsurancePool.setVeDeg(address(vedeg));
+//         reinsurancePool.setShield(address(shield));
+//         reinsurancePool.setPolicyCenter(address(policyCenter));
+//         reinsurancePool.setOnboardProposal(address(onboardProposal));
+//         reinsurancePool.setIncidentReport(address(incidentReport));
+//         reinsurancePool.setPolicyCenter(address(policyCenter));
+//         onboardProposal.setDeg(address(deg));
+//         onboardProposal.setVeDeg(address(vedeg));
+//         onboardProposal.setShield(address(shield));
+//         onboardProposal.setExecutor(address(executor));
+//         onboardProposal.setPolicyCenter(address(policyCenter));
+//         onboardProposal.setReinsurancePool(address(reinsurancePool));
+//         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+//         executor.setDeg(address(deg));
+//         executor.setVeDeg(address(vedeg));
+//         executor.setShield(address(shield));
+//         executor.setPolicyCenter(address(policyCenter));
+//         executor.setOnboardProposal(address(onboardProposal));
+//         executor.setReinsurancePool(address(reinsurancePool));
+//         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+//         //deploy ptp pool
+//         pool1 = insurancePoolFactory.deployPool(
+//             "Platypus",
+//             address(ptp),
+//             10000 ether,
+//             100
+//         );
+//         // set addreses for ptp pool
+//         InsurancePool(pool1).setDeg(address(deg));
+//         InsurancePool(pool1).setVeDeg(address(vedeg));
+//         InsurancePool(pool1).setShield(address(shield));
+//         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+//         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
+//         InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
+//         InsurancePool(pool1).setInsurancePoolFactory(
+//             address(insurancePoolFactory)
+//         );
+//     }
 
-        // proposal is recorded
-        assertEq(proposal.protocolToken == address(yeti), true);
-    }
-}
+//     function testProposePool() public {
+//         // propose a yeti pool
+//         onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+//         OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+//             1
+//         );
+
+//         // proposal is recorded
+//         assertEq(proposal.protocolToken == address(yeti), true);
+//     }
+// }
 
 contract OnboardProposalVotingTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
@@ -195,13 +194,15 @@ contract OnboardProposalVotingTest is Test {
 
     function setUp() public {
         shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
-        shield.approve(address(policyCenter), 20000);
+
         vedeg = new MockVeDEG(10000 ether, "VeDEG", 18, "VEDEG");
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000 ether);
+
         deg.transfer(address(this), 100 ether);
+
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         vm.label(address(ptp), "ptp");
+
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
         vm.label(address(yeti), "yeti");
 
@@ -217,7 +218,9 @@ contract OnboardProposalVotingTest is Test {
         incidentReport = new IncidentReport();
         exchange = new Exchange();
 
-        
+        shield.approve(address(policyCenter), 20000 ether);
+        deg.approve(address(policyCenter), 10000 ether);
+
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
         insurancePoolFactory.setShield(address(shield));
@@ -274,7 +277,7 @@ contract OnboardProposalVotingTest is Test {
         );
 
         deg.transfer(address(this), 1000 ether);
-        deg.approve(address(onboardProposal), 10000 ether);
+
         vedeg.transfer(alice, 3000 ether);
         vedeg.transfer(bob, 3000 ether);
         vedeg.transfer(carol, 3000 ether);
@@ -282,9 +285,7 @@ contract OnboardProposalVotingTest is Test {
 
         // approve deg to propose a new pool on onboard proposal
         deg.approve(address(onboardProposal), 10000 ether);
-        // allow onboardProposal to mint and burn degis tokens
-        // in the protocol interest and on users' behalf
-        deg.addMinter(address(onboardProposal));
+
         vm.warp(0);
         onboardProposal.propose("Yeti", address(yeti), 10000, 1);
 

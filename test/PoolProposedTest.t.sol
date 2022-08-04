@@ -25,7 +25,6 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test {
-
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -40,14 +39,14 @@ contract ClaimPayoutTest is Test {
     ERC20 public ptp;
     ERC20 public yeti;
 
-    uint256 constant public VOTE_FOR = 1;
-    uint256 constant public VOTE_AGAINST = 2;
-    uint256 constant public POOL_ID = 1;
-    uint256 constant public PROPOSAL_ID = 1;
-    
-    uint256 constant public START_TIME = 1;
-    uint256 constant public VOTE_PERIOD = 3 days;
-    uint256 constant public EXECUTE_PERIOD = 6 days;
+    uint256 public constant VOTE_FOR = 1;
+    uint256 public constant VOTE_AGAINST = 2;
+    uint256 public constant POOL_ID = 1;
+    uint256 public constant PROPOSAL_ID = 1;
+
+    uint256 public constant START_TIME = 1;
+    uint256 public constant VOTE_PERIOD = 3 days;
+    uint256 public constant EXECUTE_PERIOD = 6 days;
 
     // defines users
     address public alice = address(0x1337);
@@ -62,15 +61,18 @@ contract ClaimPayoutTest is Test {
         deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
         vm.label(address(yeti), "yeti");
         console.log(yeti.balanceOf(address(this)));
 
         // deploy contracts
         reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(reinsurancePool),
+            address(deg)
+        );
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
-        executor =new Executor();
+        executor = new Executor();
         incidentReport = new IncidentReport();
         onboardProposal = new OnboardProposal();
 
@@ -79,7 +81,7 @@ contract ClaimPayoutTest is Test {
         deg.transfer(address(exchange), 1000 ether);
         shield.transfer(address(exchange), 1000 ether);
         ptp.transfer(address(exchange), 1000 ether);
-        deg.addMinter(address(onboardProposal));
+
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
         insurancePoolFactory.setShield(address(shield));
@@ -125,14 +127,21 @@ contract ClaimPayoutTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
+        pool1 = insurancePoolFactory.deployPool(
+            "Platypus",
+            address(ptp),
+            1000 ether,
+            260
+        );
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
+        InsurancePool(pool1).setInsurancePoolFactory(
+            address(insurancePoolFactory)
+        );
 
         // fund exchange
         deg.transfer(address(exchange), 1000 ether);
@@ -167,7 +176,6 @@ contract ClaimPayoutTest is Test {
         vm.prank(carol);
         onboardProposal.vote(POOL_ID, VOTE_FOR, 3000 ether);
 
-
         vm.warp(START_TIME + VOTE_PERIOD + VOTE_PERIOD + 1);
         onboardProposal.settle(1);
 
@@ -179,11 +187,12 @@ contract ClaimPayoutTest is Test {
         InsurancePool(pool2).setExecutor(address(executor));
         InsurancePool(pool2).setPolicyCenter(address(policyCenter));
         InsurancePool(pool2).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool2).setInsurancePoolFactory(address(insurancePoolFactory));
+        InsurancePool(pool2).setInsurancePoolFactory(
+            address(insurancePoolFactory)
+        );
     }
 
     function testPresenceNewPool() public {
-
         // check if pool is created
         string memory name = InsurancePool(pool2).name();
         uint256 maxCapacity = InsurancePool(pool2).maxCapacity();
@@ -192,7 +201,6 @@ contract ClaimPayoutTest is Test {
     }
 
     function testProvideLiquidityNewPool() public {
-
         // approve shield usage for new pool
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(2, 10000);
@@ -206,13 +214,13 @@ contract ClaimPayoutTest is Test {
     function testBuyCoverageNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
 
-        uint256 price  = InsurancePool(pool2).coveragePrice(100 ether, 90);
+        uint256 price = InsurancePool(pool2).coveragePrice(100 ether, 90);
 
         policyCenter.buyCoverage(2, price, 100 ether, 90);
-        (uint256 amount,,) = policyCenter.getCoverage(2, address(this));
+        (uint256 amount, , ) = policyCenter.getCoverage(2, address(this));
         assertEq(amount == 100 ether, true);
     }
-    
+
     function testSetAdministratorProposedPool() public {
         InsurancePool(pool1).setAdministrator(alice);
         assertEq(InsurancePool(pool1).administrator() == alice, true);
@@ -223,7 +231,9 @@ contract ClaimPayoutTest is Test {
 
     function testWrongSetAdministrator() public {
         vm.prank(alice);
-        vm.expectRevert("Only owner, executor or administrator can call this function");
+        vm.expectRevert(
+            "Only owner, executor or administrator can call this function"
+        );
         InsurancePool(pool1).setAdministrator(alice);
     }
 

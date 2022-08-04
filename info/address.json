@@ -1,6 +1,9 @@
 {
 	"fuji": {
-		"ProxyAdmin": "0x959D4a9B2a4574F3f8E374Db19b75bc91695eDe2"
+		"ProxyAdmin": "0x959D4a9B2a4574F3f8E374Db19b75bc91695eDe2",
+		"MockDEG": "0x17fBE750c756397ef40871ea345aafB25CD2dA75",
+		"MockShield": "0x9D185E58c4D2195B82d1D78cb4a19dB3c5e54f4d",
+		"MockVeDEG": "0xb487B6c53c45bF9ae2C0541cb5655738C08a2A83"
 	},
 	"avax": {},
 	"avaxTest": {},
