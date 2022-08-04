@@ -361,7 +361,10 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     function unpausePools(address _pool) external {
-        require(IInsurancePool(_pool).endLiquidationDate() < block.timestamp, "pool is still in payout period");
+        require(
+            IInsurancePool(_pool).endLiquidationDate() < block.timestamp,
+            "pool is still in payout period"
+        );
         _unpausePools(_pool);
     }
 
@@ -412,7 +415,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      * @param _winner Winner address
      */
     function _distributeIncomeForWinner(address _winner) internal {
-        IDegisToken(deg).mintDegis(_winner, REPORT_THRESHOLD);
+        // IDegisToken(deg).mintDegis(_winner, REPORT_THRESHOLD);
     }
 
     /**
@@ -593,8 +596,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      * @param _pool Project pool address
      */
     function _pausePools(address _pool) internal {
-        IInsurancePool(_pool).setPausedInsurancePool(true);
-        IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
+        IInsurancePool(_pool).pauseInsurancePool(true);
+        IReinsurancePool(reinsurancePool).pauseReinsurancePool(true);
     }
 
     /**
@@ -604,7 +607,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      * @param _pool Project pool address
      */
     function _unpausePools(address _pool) internal {
-        IInsurancePool(_pool).setPausedInsurancePool(false);
-        IReinsurancePool(reinsurancePool).setPausedReinsurancePool(false);
+        IInsurancePool(_pool).pauseInsurancePool(false);
+        IReinsurancePool(reinsurancePool).pauseReinsurancePool(false);
     }
 }

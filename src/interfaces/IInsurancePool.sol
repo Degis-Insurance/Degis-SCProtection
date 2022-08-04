@@ -59,7 +59,7 @@ interface IInsurancePool {
     function setMaxCapacity(uint256 _maxCapacity) external;
     function setMaxLength(uint256 _maxLength) external;
     function setOnboardProposal(address _onboardProposal) external;
-    function setPausedInsurancePool(bool _paused) external;
+    function pauseInsurancePool(bool _paused) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
     function setShield(address _shield) external;

@@ -23,6 +23,8 @@ pragma solidity ^0.8.13;
 import "../util/ProtocolProtection.sol";
 import "../mock/MockExchange.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Policy Center
  *
@@ -78,7 +80,13 @@ contract PolicyCenter is ProtocolProtection {
 
     event Reward(uint256 _amount, address _address);
     event Payout(uint256 _amount, address _address);
-    event CoverageBought(uint256 paid, address buyer, uint256 poolId, uint256 length, uint256 amount);
+    event CoverageBought(
+        uint256 paid,
+        address buyer,
+        uint256 poolId,
+        uint256 length,
+        uint256 amount
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -132,20 +140,22 @@ contract PolicyCenter is ProtocolProtection {
         view
         poolExists(_poolId)
         returns (
-                bool paused,
-                uint256 accumulatedRewardPerShare,
-                uint256 lastRewardTimestamp,
-                uint256 emissionEndTime,
-                uint256 emissionRate,
-                uint256 maxCapacity
-                )
+            bool paused,
+            uint256 accumulatedRewardPerShare,
+            uint256 lastRewardTimestamp,
+            uint256 emissionEndTime,
+            uint256 emissionRate,
+            uint256 maxCapacity
+        )
     {
-            (paused, 
-            accumulatedRewardPerShare, 
+        (
+            paused,
+            accumulatedRewardPerShare,
             lastRewardTimestamp,
             emissionEndTime,
             emissionRate,
-            maxCapacity) = IInsurancePool(insurancePools[_poolId]).poolInfo();
+            maxCapacity
+        ) = IInsurancePool(insurancePools[_poolId]).poolInfo();
     }
 
     /**
@@ -356,9 +366,14 @@ contract PolicyCenter is ProtocolProtection {
             address(this),
             toTransfer
         );
-         emit CoverageBought(toTransfer, msg.sender, _pay, _length, _coverAmount);
+        emit CoverageBought(
+            toTransfer,
+            msg.sender,
+            _pay,
+            _length,
+            _coverAmount
+        );
         _splitPremium(_poolId, toTransfer);
-       
     }
 
     /**
@@ -469,7 +484,7 @@ contract PolicyCenter is ProtocolProtection {
 
         Coverage storage coverage = coverages[_poolId][msg.sender];
         //the user can only claim a payout 7 days after the coverage was bought
-        
+
         // exploit protection
         require(
             coverage.buyDate < block.timestamp,
@@ -480,6 +495,7 @@ contract PolicyCenter is ProtocolProtection {
             pool.endLiquidationDate() >= block.timestamp,
             "claim period is over"
         );
+        console.log("hello");
         // buy date + length + liquidation date - 5 days buffer
         // intended to fullfil valid coverages accounting for voting period
         require(
@@ -487,17 +503,20 @@ contract PolicyCenter is ProtocolProtection {
                 pool.endLiquidationDate() - 20 days,
             "coverage has expired"
         );
+         console.log("he");
         require(coverage.amount > 0, "no coverage to claim");
         // gets amount to give as payout
         uint256 amount = calculatePayout(_poolId, msg.sender);
-        
+
+        console.log("hello");
+
         // coverage by user is removed
         coverage.amount = 0;
         if (liquidityByPoolId[_poolId] >= amount) {
             // Insurance doesn't need reinsurance
             // Registers removal of funds from insurance pool
             // if its enough to cover all funds
-            fundsByPoolId[_poolId] -= coverage.amount;  
+            fundsByPoolId[_poolId] -= coverage.amount;
         } else {
             // Insurance pool needs reinsurance
             // registers removel of funds from insurance and reinsurance pools

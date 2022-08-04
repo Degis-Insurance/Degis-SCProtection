@@ -43,7 +43,8 @@ interface IReinsurancePool {
     function setDeg(address _deg) external;
     function setExecutor(address _executor) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
-    function setPausedReinsurancePool(bool _paused) external;
+    function pauseReinsurancePool(bool _paused) external;
+    
     function setPolicyCenter(address _policyCenter) external;
     function setProposalCenter(address _proposalCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;

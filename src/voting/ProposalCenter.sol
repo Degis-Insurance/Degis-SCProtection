@@ -499,8 +499,8 @@ contract ProposalCenter is ProtocolProtection {
         report.voted = initializeArray;
         // transfer back to deg address. another option is to burn it.
         IERC20(deg).transferFrom(msg.sender, deg, 1000);
-        IInsurancePool(pool).setPausedInsurancePool(true);
-        IReinsurancePool(reinsurancePool).setPausedReinsurancePool(true);
+        IInsurancePool(pool).pauseInsurancePool(true);
+        IReinsurancePool(reinsurancePool).pauseReinsurancePool(true);
 
         emit ReportCreated(
             counter,

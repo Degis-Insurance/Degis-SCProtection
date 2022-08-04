@@ -42,7 +42,17 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     uint256 public constant DISTRIBUTION_PERIOD = 30;
 
     // Time users have to claim payout when pool is liquidated
-    uint256 public constant PAY_COVER_PERIOD = 10;
+    uint256 public constant CLAIM_PERIOD = 10;
+
+    uint256 public constant MIN_COVER_AMOUNT = 1e18;
+
+    // Max time length in days of granted protection
+    uint256 public immutable maxLength;
+
+    // Min time length in days
+    uint256 public immutable minLength;
+
+    uint256 public immutable premiumRatio;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -51,28 +61,27 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // Address of insured token
     address public insuredToken;
 
-    // Admin role. Performs set opearations on the contract.
+    // Admin role. Performs set opearations on the contract
     address public administrator;
 
-    // if pool has been liquidated
+    // If the pool has been liquidated
     bool public liquidated;
 
-    // max amount of bought protection in native tokens.
+    // Max amount of bought protection in shield
     uint256 public maxCapacity;
 
-    // max time length in days of granted protection.
-    uint256 public maxLength;
-
-    // timestamp of pool creation.
+    // Timestamp of pool creation
     uint256 public startTime;
 
-    //
-    uint256 public priceRatio;
-    // totalLiquidity is expressed in totalSupply()
+    // Accumulated reward per lp token
     uint256 public accumulatedRewardPerShare;
+
     uint256 public lastRewardTimestamp;
+
     uint256 public emissionEndTime;
+
     uint256 public emissionRate;
+
     uint256 public endLiquidationDate;
 
     // ---------------------------------------------------------------------------------------- //
@@ -82,7 +91,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 endDate);
-    event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);
+    event EmissionRateUpdated(
+        uint256 newEmissionRate,
+        uint256 newEmissionEndTime
+    );
     event AccRewardsPerShareUpdated(uint256 amount);
     event LiquidationEnded(uint256 timestamp);
 
@@ -95,16 +107,18 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         uint256 _maxCapacity,
         string memory _name,
         string memory _symbol,
-        uint256 _priceRatio,
+        uint256 _premiumRatio,
         address _administrator
     ) ERC20(_name, _symbol) {
         // token address insured by pool
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
-        priceRatio = _priceRatio;
+        premiumRatio = _premiumRatio;
         administrator = _administrator;
+
         maxLength = 90;
+        minLength = 7;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -143,16 +157,16 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         view
         returns (uint256)
     {
-        require(_amount > 0, "amount cannot be zero");
-        require(_length > 0, "length cannot be zero");
-        require(
-            _length <= maxLength,
-            "length cannot be greater than maxLength"
-        );
+        require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
+        require(_withinLength(_length), "Wrong cover length");
 
         // price in bps per year * amount of tokens to receive when pool is liquidated
         // * lenght of coverage in days / year and 100 to get bps to percentage
-        return (priceRatio * _amount * _length * SCALE) / 3650000;
+        return (premiumRatio * _amount * _length) / 3650000;
+    }
+
+    function _withinLength(uint256 _length) internal view returns (bool) {
+        return _length >= minLength && _length <= maxLength;
     }
 
     /**
@@ -169,8 +183,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         if (totalSupply() == 0) {
             return 0;
         }
-        uint256 time = block.timestamp - lastRewardTimestamp;
-        uint256 rewards = time * emissionRate;
+        uint256 timePassed = block.timestamp - lastRewardTimestamp;
+        uint256 rewards = timePassed * emissionRate;
+
         uint256 acc = accumulatedRewardPerShare + rewards / totalSupply();
         uint256 reward = (_amount * acc) - _userDebt;
         return reward;
@@ -179,23 +194,31 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     /**
      * @notice returns pool information
      */
-    function poolInfo() external view returns (bool, uint256, uint256, uint256, uint256, uint256) {
-        return (paused(), 
-                accumulatedRewardPerShare,
-                lastRewardTimestamp,
-                emissionEndTime,
-                emissionRate,
-                maxCapacity);
+    function poolInfo()
+        external
+        view
+        returns (
+            bool,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            paused(),
+            accumulatedRewardPerShare,
+            lastRewardTimestamp,
+            emissionEndTime,
+            emissionRate,
+            maxCapacity
+        );
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    // overriden set functions to allow special roles to change set addresses
-    function setMaxLength(uint256 _maxLength) external onlyRole {
-        maxLength = _maxLength;
-    }
 
     function setDeg(address _deg) external override onlyRole {
         deg = _deg;
@@ -250,9 +273,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-     * @notice sets if pool is paused
+     * @notice Pause this pool
+     *
+     * @param _paused True to pause, false to unpause
      */
-    function setPausedInsurancePool(bool _paused) external {
+    function pauseInsurancePool(bool _paused) external {
         require(
             (msg.sender == administrator) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"
@@ -351,7 +376,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     }
 
     /**
-     * @notice sets this insurance pool to liquidated. Only callable by executor
+     * @notice Sets this insurance pool status to liquidated
+     *         Only callable by executor
+     *         Only after the report has passed the voting
      */
     function liquidatePool() external onlyExecutor {
         // changes the status of the insurance pool to liquidated and allows payout claims
@@ -361,13 +388,17 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         // LP tokens represent their share of remaining liquidity after payout is done.
         uint256 amount = totalSupply();
 
-        // set end liquidation date. users will have PAY_COVER_PERIOD days to claim payout.
-        endLiquidationDate = block.timestamp + (PAY_COVER_PERIOD * 1 days);
+        // Set end liquidation date
+        // Users will have CLAIM_PERIOD days to claim payout.
+        endLiquidationDate = block.timestamp + CLAIM_PERIOD * 1 days;
 
         // emit event to notify users that pool has been liquidated.
         emit Liquidation(amount, endLiquidationDate);
     }
 
+    /**
+     * @notice End the liquidation period
+     */
     function verifyLiquidationEnded() external {
         require(liquidated, "Pool has not been liquidated");
         require(
@@ -425,7 +456,6 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             // update last time rewards were claimed
             lastRewardTimestamp = block.timestamp;
         } else {
-
             // if no coverages have been bought in over 30 days,
             // discount time passed since the time that emission ends.
 
