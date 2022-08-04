@@ -39,10 +39,10 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     // Time to distribute premium payments to liquidity providers
-    uint256 public constant DISTRIBUTION_PERIOD = 30 days;
+    uint256 public constant DISTRIBUTION_PERIOD = 30;
 
     // Time users have to claim payout when pool is liquidated
-    uint256 public constant PAY_COVER_PERIOD = 10 days;
+    uint256 public constant PAY_COVER_PERIOD = 10;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -69,10 +69,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     //
     uint256 public priceRatio;
     // totalLiquidity is expressed in totalSupply()
-    uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
-    uint256 public emssionEndTime;
+    uint256 public emissionEndTime;
     uint256 public emissionRate;
     uint256 public endLiquidationDate;
 
@@ -83,8 +82,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 endDate);
-    event EmissionRateUpdated(uint256 rate);
-    event RewardsUpdated(uint256 amount);
+    event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);
+    event AccRewardsPerShareUpdated(uint256 amount);
     event LiquidationEnded(uint256 timestamp);
 
     // ---------------------------------------------------------------------------------------- //
@@ -153,7 +152,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
 
         // price in bps per year * amount of tokens to receive when pool is liquidated
         // * lenght of coverage in days / year and 100 to get bps to percentage
-        return (priceRatio * _amount * _length * SCALE) / 36500;
+        return (priceRatio * _amount * _length * SCALE) / 3650000;
     }
 
     /**
@@ -175,6 +174,18 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         uint256 acc = accumulatedRewardPerShare + rewards / totalSupply();
         uint256 reward = (_amount * acc) - _userDebt;
         return reward;
+    }
+
+    /**
+     * @notice returns pool information
+     */
+    function poolInfo() external view returns (bool, uint256, uint256, uint256, uint256, uint256) {
+        return (paused(), 
+                accumulatedRewardPerShare,
+                lastRewardTimestamp,
+                emissionEndTime,
+                emissionRate,
+                maxCapacity);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -243,8 +254,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
      */
     function setPausedInsurancePool(bool _paused) external {
         require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or proposalCenter can call this function"
+            (msg.sender == administrator) || (msg.sender == incidentReport),
+            "Only owner or Incident Report can call this function"
         );
         if (_paused) {
             _pause();
@@ -351,7 +362,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         uint256 amount = totalSupply();
 
         // set end liquidation date. users will have PAY_COVER_PERIOD days to claim payout.
-        endLiquidationDate = block.timestamp + PAY_COVER_PERIOD;
+        endLiquidationDate = block.timestamp + (PAY_COVER_PERIOD * 1 days);
 
         // emit event to notify users that pool has been liquidated.
         emit Liquidation(amount, endLiquidationDate);
@@ -383,8 +394,8 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         // Update current reward taking into account new emission rate
         _updateRewards();
         // Get time to complete current pool of tokens emission to liquidity providers
-        uint256 timeToFinishEmission = emssionEndTime > block.timestamp
-            ? emssionEndTime - block.timestamp
+        uint256 timeToFinishEmission = emissionEndTime > block.timestamp
+            ? emissionEndTime - block.timestamp
             : 0;
 
         // Calculate new emission rate by adding new premium and redistributing previous emission
@@ -400,42 +411,44 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         }
 
         // update emission rate and emission ends
-        emssionEndTime = block.timestamp + DISTRIBUTION_PERIOD;
+        emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
 
-        emit EmissionRateUpdated(emissionRate);
+        emit EmissionRateUpdated(emissionRate, emissionEndTime);
     }
 
     /**
      * @notice Update rewards
      */
     function _updateRewards() internal {
-        if (totalSupply() == 0) {
+        if (totalSupply() == 0 || emissionEndTime == 0) {
             // if totalSupply is 0, no rewards can be paid
             // update last time rewards were claimed
             lastRewardTimestamp = block.timestamp;
-            return;
+        } else {
+
+            // if no coverages have been bought in over 30 days,
+            // discount time passed since the time that emission ends.
+
+            uint256 claimTimestamp = emissionEndTime < block.timestamp
+                ? emissionEndTime
+                : block.timestamp;
+            // Calculate difference between claim time and last time rewards were claimed
+            uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
+
+            // Calculate new reward
+            uint256 rewards = timeSinceLastReward * 1 days * emissionRate;
+
+            // Update accumulated rewards given to each pool share
+            // accumulated
+            accumulatedRewardPerShare =
+                accumulatedRewardPerShare +
+                rewards /
+                totalSupply();
+            lastRewardTimestamp = block.timestamp;
+
+            // emit event to notify users that rewards have been updated
+            emit AccRewardsPerShareUpdated(accumulatedRewardPerShare);
         }
-        // if no coverages have been bought in over 30 days,
-        // discount time passed since the time that emission ends
-        uint256 claimTimestamp = emssionEndTime < block.timestamp
-            ? emssionEndTime
-            : block.timestamp;
-        // Calculate difference between claim time and last time rewards were claimed
-        uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
-
-        // Calculate new reward
-        uint256 rewards = timeSinceLastReward * emissionRate;
-
-        // Update accumulated rewards given to each pool share
-        // accumulated
-        accumulatedRewardPerShare =
-            accumulatedRewardPerShare +
-            rewards /
-            totalSupply();
-        lastRewardTimestamp = block.timestamp;
-
-        // emit event to notify users that rewards have been updated
-        emit RewardsUpdated(rewards);
     }
 
     function _setLiquidationStatus(bool _liquidated) internal {

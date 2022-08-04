@@ -360,6 +360,15 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
 
+    function unpausePools(address _pool) external {
+        require(IInsurancePool(_pool).endLiquidationDate() < block.timestamp, "pool is still in payout period");
+        _unpausePools(_pool);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @notice Settle voting reward depending on the result
      *
@@ -402,7 +411,9 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      *
      * @param _winner Winner address
      */
-    function _distributeIncomeForWinner(address _winner) internal {}
+    function _distributeIncomeForWinner(address _winner) internal {
+        IDegisToken(deg).mintDegis(_winner, REPORT_THRESHOLD);
+    }
 
     /**
      * @notice Check quorum requirement

@@ -63,7 +63,7 @@ contract setAddressesTest is Test {
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
     }
 
     function testSetPolicyCenterAddress() public {
@@ -158,7 +158,7 @@ contract setAddressesTest is Test {
     // it has a administrator role initially set during deployment.
     function testSetInsurancePoolAdministrator() public {
         InsurancePool(pool1).setAdministrator(alice);
-        assertEq(InsurancePool(pool1).administrator() == address(alice), true);
+        assertEq(InsurancePool(pool1).administrator() == alice, true);
         vm.prank(alice);
         InsurancePool(pool1).setAdministrator(bob);
         assertEq(InsurancePool(pool1).administrator() == address(bob), true);
@@ -166,7 +166,7 @@ contract setAddressesTest is Test {
 
     function testSetPoolFactoryAdministratorNotOwner() public {
         insurancePoolFactory.setAdministrator(alice);
-        assertEq(insurancePoolFactory.administrator() == address(alice), true);
+        assertEq(insurancePoolFactory.administrator() == alice, true);
         vm.prank(alice);
         vm.expectRevert("Ownable: caller is not the owner");
         insurancePoolFactory.setAdministrator(bob);
@@ -179,7 +179,7 @@ contract setAddressesTest is Test {
     }
 
     function testGetMaxCapacity() public {
-        assertEq(InsurancePool(pool1).maxCapacity() == 10000, true);
+        assertEq(InsurancePool(pool1).maxCapacity() == 1000 ether, true);
     }
 
     function testSetDEGInsurancePool() public {

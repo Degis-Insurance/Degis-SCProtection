@@ -135,7 +135,7 @@ contract SecondaryContractDeploymentTest is Test {
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        address pool1 = insurancePoolFactory.deployPool("PTP", address(ptp), 10000, 100);
+        address pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
         console.log(pool1);
     }
 }

@@ -20,7 +20,7 @@ interface IPolicyCenter {
     function fundsByPoolId(uint256) view external returns (uint256);
     function getCoverage(uint256 _poolId, address _covered) view external returns (uint256, uint256, uint256);
     function getInsurancePoolById(uint256 _poolId) view external returns (address);
-    function getPoolInfo(uint256 _poolId) view external returns (string memory, address, uint256, uint256, uint256);
+    function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);
     function getPremiumSplits() view external returns (uint256, uint256);
     function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);
