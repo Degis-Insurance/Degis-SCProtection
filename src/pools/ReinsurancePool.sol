@@ -46,26 +46,15 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    struct PoolInfo {
-        address protocolAddress;
-        uint256 proportion;
-    }
-    mapping(address => PoolInfo) public pools;
-
     bool public insurancePoolLiquidated;
     bool public paused;
 
-    uint256 public totalDistributedReward;
     uint256 public accumulatedRewardPerShare;
     uint256 public lastRewardTimestamp;
-    uint256 public emssionEndTime;
+    uint256 public emissionEndTime;
     uint256 public emissionRate;
-
     uint256 public maxCapacity;
     uint256 public startTime;
-    uint256 public policyPricePerShield;
-    //totalLiquidity is expressed in totalSupply()
-    uint256 public endLiquidationDate;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -76,6 +65,17 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     event MoveLiquidity(uint256 poolId, uint256 amount);
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
+    event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);
+    event AccRewardsPerShareUpdated(uint256 amount);
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    constructor(){
+        // Register time that pool was deployed
+        startTime = block.timestamp;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
@@ -116,6 +116,17 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         return reward;
     }
 
+    /**
+     * @notice returns pool information
+     */
+    function poolInfo() external view returns (bool, uint256, uint256, uint256, uint256, uint256) {
+        return (paused, 
+                accumulatedRewardPerShare,
+                lastRewardTimestamp,
+                emissionEndTime,
+                emissionRate,
+                maxCapacity);
+    }
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -193,61 +204,104 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     function setPausedReinsurancePool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or proposalCenter can call this function"
+            "Only owner or Incident Report can call this function"
         );
         paused = _paused;
     }
 
     /**
-    * @notice Updates emission rate based on new incoming premium
-    *         
-    * @param _premium incoming new premium
+    @notice Called when liqudity is provided, removed or coverage is bought.
+    updates all state variables to reflect current reward emission.
+    */
+    function updateRewards() public {
+        require(
+            msg.sender == policyCenter,
+            "Only pollicyCenter can update rewards"
+        );
+        _updateRewards();
+    }
+
+    /**
+     * @notice Update emission rate based on new premium comission to liquidity providers
+     *
+     * @param _premium premium given to liquidity providers
+     */
+    function updateEmissionRate(uint256 _premium) public {
+        require(
+            msg.sender == policyCenter,
+            "Only pollicyCenter can update emission rate"
+        );
+        _updateEmissionRate(_premium);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Updates emission rate based on new incoming premium
+     *
+     * @param _premium incoming new premium
      */
     function _updateEmissionRate(uint256 _premium) internal {
         // Update current reward taking into account new emission rate
         _updateRewards();
         // Get time to complete current pool of tokens emission to liquidity providers
-        uint256 timeToFinishEmission = emssionEndTime > block.timestamp ?
-                                       emssionEndTime - block.timestamp : 0;
+        uint256 timeToFinishEmission = emissionEndTime > block.timestamp
+            ? emissionEndTime - block.timestamp
+            : 0;
+
         // Calculate new emission rate by adding new premium and redistributing previous emission
         // Throughout the time it takes to complete emission.
-        uint256 newEmissionRate = (timeToFinishEmission * emissionRate + _premium)
-                                  / DISTRIBUTION_PERIOD;
-                                
+        if (timeToFinishEmission > 0) {
+            emissionRate =
+                ((emissionRate * timeToFinishEmission) + _premium) /
+                DISTRIBUTION_PERIOD;
+            // Update emission rate
+        } else {
+            // Update emission rate
+            emissionRate = _premium / DISTRIBUTION_PERIOD;
+        }
+
         // update emission rate and emission ends
-        emissionRate = newEmissionRate;
-        emssionEndTime = block.timestamp + DISTRIBUTION_PERIOD;
+        emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
+
+        emit EmissionRateUpdated(emissionRate, emissionEndTime);
     }
 
     /**
      * @notice Update rewards
      */
     function _updateRewards() internal {
-        if (totalSupply() == 0) {
+        if (totalSupply() == 0 || emissionEndTime == 0) {
             // if totalSupply is 0, no rewards can be paid
             // update last time rewards were claimed
             lastRewardTimestamp = block.timestamp;
-            return;
+        } else {
+
+            // if no coverages have been bought in over 30 days,
+            // discount time passed since the time that emission ends.
+
+            
+            uint256 claimTimestamp = emissionEndTime < block.timestamp
+                ? emissionEndTime
+                : block.timestamp;
+            // Calculate difference between claim time and last time rewards were claimed
+            uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
+
+            // Calculate new reward
+            uint256 rewards = timeSinceLastReward * 1 days * emissionRate;
+
+            // Update accumulated rewards given to each pool share
+            // accumulated
+            accumulatedRewardPerShare =
+                accumulatedRewardPerShare +
+                rewards /
+                totalSupply();
+            lastRewardTimestamp = block.timestamp;
+
+            // emit event to notify users that rewards have been updated
+            emit AccRewardsPerShareUpdated(accumulatedRewardPerShare);
         }
-        // if no coverages have been bought in over 30 days,
-        // discount time passed since the time that emission ends
-        uint256 claimTimestamp = emssionEndTime < block.timestamp ?
-                                 emssionEndTime : block.timestamp;
-        // Calculate difference between claim time and last time rewards were claimed
-        uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
-
-        // Calculate new reward
-        uint256 rewards = timeSinceLastReward * emissionRate;
-
-        // Update accumulated rewards given to each pool share
-        // accumulated 
-        accumulatedRewardPerShare =
-            accumulatedRewardPerShare +
-            rewards / totalSupply();
-        lastRewardTimestamp = block.timestamp;
-    }
-
-    function deregisterAddress(address tokenAddress) external {
-        
     }
 }

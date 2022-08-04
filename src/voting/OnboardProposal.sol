@@ -29,6 +29,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     }
     // Proposal ID => Proposal
     mapping(uint256 => Proposal) public proposals;
+    mapping(address => bool) public poolProposed;
 
     struct UserVote {
         uint256 choice; // 1: vote for, 2: vote against
@@ -95,8 +96,12 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
             "Protocol already protected"
         );
 
+        require(poolProposed[_token] == false, "Protocol already proposed");
+
         // Burn degis tokens to start a proposal
         IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
+
+        poolProposed[_token] = true;
 
         uint256 currentProposalCounter = ++proposalCounter;
 
@@ -188,6 +193,8 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         currentProposal.result = res;
         currentProposal.status = SETTLED_STATUS;
 
+        // allow for new proposals to be proposed for this protocol
+        poolProposed[currentProposal.protocolToken] = false;
         emit ProposalSettled(_proposalId, res);
     }
 

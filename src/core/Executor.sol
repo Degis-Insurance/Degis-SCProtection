@@ -82,7 +82,7 @@ contract Executor is ProtocolProtection, VotingParameters {
         (
             uint256 poolId,
             ,
-            ,
+            address reporter,
             ,
             ,
             ,
@@ -103,7 +103,15 @@ contract Executor is ProtocolProtection, VotingParameters {
         address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(
             poolId
         );
+
+        // reward 10% of treasury to reporter
+        IPolicyCenter(policyCenter).rewardTreasuryToReporter(reporter);
+
+        // liquidate the pool
         IInsurancePool(poolAddress).liquidatePool();
+
+        // remove pool from protocol registry in insurance pool factory
+        // that allows the creation of newe pools for that protocol
         IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(
             tokenAddress
         );

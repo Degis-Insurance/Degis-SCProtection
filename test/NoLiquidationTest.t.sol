@@ -117,7 +117,7 @@ contract NoLiquidationTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 100);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
@@ -188,9 +188,8 @@ contract NoLiquidationTest is Test {
     function testClaimRewardsFromInsurancePool() public {
         // alice should receive rewards from pool 1
         vm.prank(alice);
-        (,address insuredToken ,,,) = policyCenter.getPoolInfo(1);
-        console.log(insuredToken);
-        assertEq(insuredToken == address(ptp), true);
+        (bool paused,,,,,) = policyCenter.getPoolInfo(1);
+        assertEq(paused, false);
         uint256 reward = policyCenter.calculateReward(1, alice);
         console.log("reward", reward);
         vm.prank(alice);

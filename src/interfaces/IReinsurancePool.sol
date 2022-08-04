@@ -32,6 +32,7 @@ interface IReinsurancePool {
     function owner() view external returns (address);
     function paused() view external returns (bool);
     function policyCenter() view external returns (address);
+    function poolInfo() external view returns (bool,uint256,uint256,uint256,uint256,uint256);
     function pools(address) view external returns (address protocolAddress, uint256 proportion);
     function proposalCenter() view external returns (address);
     function provideLiquidity(uint256 _amount, address _provider) external;

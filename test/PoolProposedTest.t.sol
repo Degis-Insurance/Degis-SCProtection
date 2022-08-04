@@ -63,6 +63,8 @@ contract ClaimPayoutTest is Test {
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
+        vm.label(address(yeti), "yeti");
+        console.log(yeti.balanceOf(address(this)));
 
         // deploy contracts
         reinsurancePool = new ReinsurancePool();
@@ -123,7 +125,7 @@ contract ClaimPayoutTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
+        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
@@ -131,6 +133,12 @@ contract ClaimPayoutTest is Test {
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
         InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
+
+        // fund exchange
+        deg.transfer(address(exchange), 1000 ether);
+        yeti.transfer(address(exchange), 1000 ether);
+        ptp.transfer(address(exchange), 1000 ether);
+
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(onboardProposal), 1000 ether);
         deg.approve(address(onboardProposal), 10000 ether);
@@ -147,7 +155,7 @@ contract ClaimPayoutTest is Test {
         policyCenter.provideLiquidity(1, 10000);
 
         vm.warp(0);
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        onboardProposal.propose("Yeti", address(yeti), 10000 ether, 1);
 
         vm.warp(START_TIME + VOTE_PERIOD);
         onboardProposal.startVoting(PROPOSAL_ID);
@@ -175,29 +183,39 @@ contract ClaimPayoutTest is Test {
     }
 
     function testPresenceNewPool() public {
+
+        // check if pool is created
         string memory name = InsurancePool(pool2).name();
         uint256 maxCapacity = InsurancePool(pool2).maxCapacity();
         console.log(name);
-        assertEq(maxCapacity == 10000, true);
+        assertEq(maxCapacity == 10000 ether, true);
     }
 
     function testProvideLiquidityNewPool() public {
-        yeti.approve(address(policyCenter), 10000 ether);
+
+        // approve shield usage for new pool
+        shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(2, 10000);
+
+        // check if pool has received tokens
         assertEq(InsurancePool(pool2).totalSupply() == 10000, true);
+        // check if owner has receive minted tokens
+        assertEq(InsurancePool(pool2).balanceOf(address(this)) == 10000, true);
     }
 
     function testBuyCoverageNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-        uint256 price  = InsurancePool(pool2).coveragePrice(10000, 90);
-        policyCenter.buyCoverage(2, price, 10000, 90);
+
+        uint256 price  = InsurancePool(pool2).coveragePrice(100 ether, 90);
+
+        policyCenter.buyCoverage(2, price, 100 ether, 90);
         (uint256 amount,,) = policyCenter.getCoverage(2, address(this));
-        assertEq(amount == 10000, true);
+        assertEq(amount == 100 ether, true);
     }
     
     function testSetAdministratorProposedPool() public {
         InsurancePool(pool1).setAdministrator(alice);
-        assertEq(InsurancePool(pool1).administrator() == address(alice), true);
+        assertEq(InsurancePool(pool1).administrator() == alice, true);
         vm.prank(alice);
         InsurancePool(pool1).setAdministrator(bob);
         assertEq(InsurancePool(pool1).administrator() == address(bob), true);

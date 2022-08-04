@@ -111,7 +111,7 @@ contract OnboardProposalTest is Test {
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),
-            100 ether,
+            10000 ether,
             100
         );
         // set addreses for ptp pool
@@ -201,7 +201,10 @@ contract OnboardProposalVotingTest is Test {
         deg.approve(address(policyCenter), 10000 ether);
         deg.transfer(address(this), 100 ether);
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        vm.label(address(ptp), "ptp");
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
+        vm.label(address(yeti), "yeti");
+
         //
         reinsurancePool = new ReinsurancePool();
         insurancePoolFactory = new InsurancePoolFactory(
@@ -214,7 +217,7 @@ contract OnboardProposalVotingTest is Test {
         incidentReport = new IncidentReport();
         exchange = new Exchange();
 
-        vm.label(address(onboardProposal), "Proposal Center");
+        
         insurancePoolFactory.setDeg(address(deg));
         insurancePoolFactory.setVeDeg(address(vedeg));
         insurancePoolFactory.setShield(address(shield));
@@ -402,7 +405,7 @@ contract OnboardProposalVotingTest is Test {
         assertEq(proposal.status == VOTING_STATUS, true);
     }
 
-    function testProposePooolAlreadyDeployed() public {
+    function testProposePoolAlreadyDeployed() public {
         vm.warp(3 days + 1);
         // pool proposal should not be proposed twice
         vm.prank(alice);
@@ -410,8 +413,13 @@ contract OnboardProposalVotingTest is Test {
         onboardProposal.propose("Platypus", address(ptp), 100 ether, 1);
     }
 
-    function testProposePooolAlreadyProposed() public {
+    function testProposePoolAlreadyProposed() public {
         // pool proposal should not be proposed twice
+        deg.transfer(alice, 1000 ether);
+        vm.prank(alice);
+        deg.approve(address(onboardProposal), 10000 ether);
+        vm.prank(alice);
+        vedeg.approve(address(onboardProposal), 10000 ether);
         vm.prank(alice);
         vm.expectRevert("Protocol already proposed");
         onboardProposal.propose("Yeti", address(yeti), 100 ether, 1);
