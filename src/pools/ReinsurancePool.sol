@@ -23,6 +23,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../util/ProtocolProtection.sol";
+import "forge-std/console.sol";
 
 /**
  * @title Reinsurance Pool
@@ -112,9 +113,14 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
             return 0;
         }
         uint256 time = block.timestamp - lastRewardTimestamp;
+
         uint256 rewards = time * emissionRate;
-        uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
-        uint256 reward = (_amount * acc) - _userDebt;
+
+        uint256 acc = accumulatedRewardPerShare +
+            ((rewards * SCALE) / totalSupply());
+        uint256 reward = (_amount * acc) / SCALE - _userDebt;
+
+
         return reward;
     }
 
@@ -304,7 +310,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
             uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
 
             // Calculate new reward
-            uint256 rewards = timeSinceLastReward * 1 days * emissionRate;
+            uint256 rewards = (timeSinceLastReward * emissionRate) / 1 days;
 
             // Update accumulated rewards given to each pool share
             // accumulated
