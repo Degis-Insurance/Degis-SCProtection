@@ -25,6 +25,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../util/ProtocolProtection.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Insurance Pool Factory
  *
@@ -42,7 +44,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     uint256 public constant DISTRIBUTION_PERIOD = 30;
 
     // Time users have to claim payout when pool is liquidated
-    uint256 public constant CLAIM_PERIOD = 10;
+    uint256 public constant CLAIM_PERIOD = 90;
 
     uint256 public constant MIN_COVER_AMOUNT = 1e18;
 
@@ -429,6 +431,9 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
             ? emissionEndTime - block.timestamp
             : 0;
 
+        console.log("Timetofinish emission", timeToFinishEmission);
+        console.log("premium comes in", _premium);
+
         // Calculate new emission rate by adding new premium and redistributing previous emission
         // Throughout the time it takes to complete emission.
         if (timeToFinishEmission > 0) {
@@ -458,22 +463,26 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         } else {
             // if no coverages have been bought in over 30 days,
             // discount time passed since the time that emission ends.
-
+            console.log("emmission end", emissionEndTime);
             uint256 claimTimestamp = emissionEndTime < block.timestamp
                 ? emissionEndTime
                 : block.timestamp;
             // Calculate difference between claim time and last time rewards were claimed
             uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
 
+            console.log("time passed", timeSinceLastReward);
+            console.log("claimTime", claimTimestamp);
+            console.log("lastRewardTimestamp", lastRewardTimestamp);
+
             // Calculate new reward
-            uint256 rewards = timeSinceLastReward * 1 days * emissionRate;
+            uint256 rewards = (timeSinceLastReward * emissionRate) / 1 days;
+
+            console.log("emission rate:", emissionRate);
+            console.log("new rewards", rewards);
 
             // Update accumulated rewards given to each pool share
             // accumulated
-            accumulatedRewardPerShare =
-                accumulatedRewardPerShare +
-                rewards /
-                totalSupply();
+            accumulatedRewardPerShare += rewards / totalSupply();
             lastRewardTimestamp = block.timestamp;
 
             // emit event to notify users that rewards have been updated

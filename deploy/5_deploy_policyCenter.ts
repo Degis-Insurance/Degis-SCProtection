@@ -9,11 +9,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
-  if (network.name == "avax") {
-    console.log("You are deploying mock tokens on mainnet!!!");
-    return;
-  }
-
   const { deployer } = await getNamedAccounts();
 
   console.log("\n-----------------------------------------------------------");
@@ -25,39 +20,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   // Proxy Admin contract artifact
-  const mockDEG = await deploy("MockDEG", {
-    contract: "MockDEG",
+  const policyCenter = await deploy("PolicyCenter", {
+    contract: "PolicyCenter",
     from: deployer,
-    args: [0, "DegisToken", 18, "DEG"],
+    args: [],
     log: true,
   });
-  addressList[network.name].MockDEG = mockDEG.address;
+  addressList[network.name].PolicyCenter = policyCenter.address;
 
-  console.log("\nmock degis token deployed to address: ", mockDEG.address);
-
-  const mockShield = await deploy("MockSHIELD", {
-    contract: "MockSHIELD",
-    from: deployer,
-    args: [0, "Shield", 18, "SHD"],
-    log: true,
-  });
-  addressList[network.name].MockShield = mockShield.address;
-
-  console.log("\nmock shield token deployed to address: ", mockShield.address);
-
-  // Proxy Admin contract artifact
-  const mockVeDEG = await deploy("MockVeDEG", {
-    contract: "MockVeDEG",
-    from: deployer,
-    args: [0, "VoteEscrowedDegis", 18, "VeDEG"],
-    log: true,
-  });
-  addressList[network.name].MockVeDEG = mockVeDEG.address;
-
-  console.log(
-    "\nmock vote escrowed degis token deployed to address: ",
-    mockVeDEG.address
-  );
+  console.log("\npolicy center deployed to address: ", policyCenter.address);
 
   //   await hre.run("verify:verify", {
   //     address: insurancePoolFactory.address,
@@ -68,5 +39,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["MockTokens"];
+func.tags = ["PolicyCenter"];
 export default func;

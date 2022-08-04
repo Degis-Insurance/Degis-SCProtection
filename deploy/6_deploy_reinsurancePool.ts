@@ -9,11 +9,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
-  if (network.name == "avax") {
-    console.log("You are deploying mock tokens on mainnet!!!");
-    return;
-  }
-
   const { deployer } = await getNamedAccounts();
 
   console.log("\n-----------------------------------------------------------");
@@ -25,38 +20,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   // Proxy Admin contract artifact
-  const mockDEG = await deploy("MockDEG", {
-    contract: "MockDEG",
+  const reinsurancePool = await deploy("ReinsurancePool", {
+    contract: "ReinsurancePool",
     from: deployer,
-    args: [0, "DegisToken", 18, "DEG"],
+    args: [],
     log: true,
   });
-  addressList[network.name].MockDEG = mockDEG.address;
-
-  console.log("\nmock degis token deployed to address: ", mockDEG.address);
-
-  const mockShield = await deploy("MockSHIELD", {
-    contract: "MockSHIELD",
-    from: deployer,
-    args: [0, "Shield", 18, "SHD"],
-    log: true,
-  });
-  addressList[network.name].MockShield = mockShield.address;
-
-  console.log("\nmock shield token deployed to address: ", mockShield.address);
-
-  // Proxy Admin contract artifact
-  const mockVeDEG = await deploy("MockVeDEG", {
-    contract: "MockVeDEG",
-    from: deployer,
-    args: [0, "VoteEscrowedDegis", 18, "VeDEG"],
-    log: true,
-  });
-  addressList[network.name].MockVeDEG = mockVeDEG.address;
+  addressList[network.name].ReinsurancePool = reinsurancePool.address;
 
   console.log(
-    "\nmock vote escrowed degis token deployed to address: ",
-    mockVeDEG.address
+    "\nreinsurance pool deployed to address: ",
+    reinsurancePool.address
   );
 
   //   await hre.run("verify:verify", {
@@ -68,5 +42,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["MockTokens"];
+func.tags = ["ReinsurancePool"];
 export default func;

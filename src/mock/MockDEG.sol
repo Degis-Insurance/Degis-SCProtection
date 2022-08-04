@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockDEG is ERC20 {
     uint256 public constant MAX_UINT256 = type(uint256).max;
@@ -20,11 +19,11 @@ contract MockDEG is ERC20 {
         _decimals = _decimalUnits; // Amount of decimals for display purposes
     }
 
-    function mintDegis(address _account, uint256 _amount) external validMinter {
+    function mintDegis(address _account, uint256 _amount) external {
         _mint(_account, _amount);
     }
 
-    function burnDegis(address _account, uint256 _amount) external validMinter {
+    function burnDegis(address _account, uint256 _amount) external {
         _burn(_account, _amount);
     }
 

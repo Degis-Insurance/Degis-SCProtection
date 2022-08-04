@@ -64,10 +64,6 @@ contract NoLiquidationTest is Test {
         incidentReport = new IncidentReport();
         
 
-        // add incident report as minter to burn and mint tokens
-        // on the ecosystem's behalf
-        deg.addMinter(address(incidentReport));
-
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
         deg.transfer(address(exchange), 1000 ether);

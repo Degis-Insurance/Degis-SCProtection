@@ -74,7 +74,7 @@ contract ExecutorTest is Test,IncidentReportParameters {
         executor = new Executor();
         onboardProposal = new OnboardProposal();
         incidentReport = new IncidentReport();
-        deg.addMinter(address(onboardProposal));
+
         // deploy exchange and supply tokens so that they 
         // can be swapped when coverage is bought and split among pools
         exchange = new Exchange();
@@ -147,10 +147,6 @@ contract ExecutorTest is Test,IncidentReportParameters {
         InsurancePool(pool1).setInsurancePoolFactory(
             address(insurancePoolFactory)
         );
-
-        // allow incident report to mint and burn tokens
-        // on behalf of users
-        deg.addMinter(address(incidentReport));
 
         // transfer tokens to users
 

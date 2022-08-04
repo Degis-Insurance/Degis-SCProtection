@@ -26,9 +26,6 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test, IncidentReportParameters {
-
-    
-
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -39,8 +36,9 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     MockVeDEG public vedeg;
     Exchange public exchange;
     Executor public executor;
-    ERC20 public ptp;
-    ERC20 public yeti;
+
+    ERC20Mock public ptp;
+    ERC20Mock public yeti;
 
     uint256 constant VOTE_FOR = 1;
     uint256 constant VOTE_AGAINST = 2;
@@ -62,19 +60,20 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        yeti = new ERC20Mock("Yeti","YETI", address(this), 10000 ether);
+        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
 
         // deploy contracts
         reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(reinsurancePool),
+            address(deg)
+        );
         incidentReport = new IncidentReport();
         policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
         executor = new Executor();
         onboardProposal = new OnboardProposal();
-
-        // add incident report as a deg minter
-        deg.addMinter(address(incidentReport));
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
@@ -101,7 +100,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         policyCenter.setShield(address(shield));
         policyCenter.setExecutor(address(executor));
         policyCenter.setOnboardProposal(address(onboardProposal));
-        
+
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
@@ -127,7 +126,14 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         executor.setIncidentReport(address(incidentReport));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
+
+        pool1 = insurancePoolFactory.deployPool(
+            "Platypus",
+            address(ptp),
+            1000 ether,
+            260
+        );
+
         InsurancePool(pool1).setDeg(address(deg));
         InsurancePool(pool1).setVeDeg(address(vedeg));
         InsurancePool(pool1).setShield(address(shield));
@@ -135,11 +141,14 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
         InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
+        InsurancePool(pool1).setInsurancePoolFactory(
+            address(insurancePoolFactory)
+        );
 
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(onboardProposal), 1000 ether);
         deg.approve(address(onboardProposal), 10000 ether);
+
         vedeg.transfer(alice, 3000 ether);
         vedeg.transfer(bob, 2000 ether);
         vedeg.transfer(carol, 3000 ether);
@@ -150,15 +159,18 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         // owner provides liquidity to pool 1
         shield.transfer(address(this), 1000);
         shield.approve(address(policyCenter), 10000 ether);
+
         policyCenter.provideLiquidity(1, 10000 ether);
 
         uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);
+        ptp.mint(address(policyCenter), 100000 ether);
 
         vm.prank(alice);
         ptp.approve(address(policyCenter), 100000 ether);
+
         // Alice buys coverage for 100 ether
         vm.prank(alice);
         policyCenter.buyCoverage(1, price, 100 ether, 90);
@@ -166,7 +178,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);
 
-         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
         incidentReport.startVoting(POOL_ID);
 
         vm.prank(alice);
@@ -176,10 +188,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.prank(carol);
         incidentReport.vote(1, VOTE_FOR, 1500 ether);
 
-        vm.warp( REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
 
         incidentReport.settle(POOL_ID);
-        
+
         // execute pool
         executor.executeReport(1);
     }
@@ -188,25 +200,30 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         // claim payout during claiming period
         vm.warp(15 days);
         uint256 amount = policyCenter.calculatePayout(1, address(this));
+
         vm.prank(alice);
         policyCenter.claimPayout(1);
     }
-    
+
     function testClaimPayoutUnexsistentPool() public {
         vm.expectRevert("Pool not found");
         policyCenter.claimPayout(2);
     }
 
     function testUnpauseLiquidatedPool() public {
-
         vm.warp(1383402);
         InsurancePool(pool1).pauseInsurancePool(false);
 
         // pool remains liquidated but unpaused
-        assertEq(IInsurancePool(pool1).liquidated() == true, true);
-        assertEq(IInsurancePool(pool1).paused() == false, true);
+        assertTrue(IInsurancePool(pool1).liquidated());
+        assertTrue(!IInsurancePool(pool1).paused());
+
         uint256 endDate = IInsurancePool(pool1).endLiquidationDate();
         console.log(endDate);
+
+        vm.warp(
+            REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+        );
         IInsurancePool(pool1).verifyLiquidationEnded();
 
         assertEq(IInsurancePool(pool1).liquidated() == false, true);
@@ -216,18 +233,29 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         // claim payout during claiming period
         vm.warp(15 days);
         uint256 amount = policyCenter.calculatePayout(1, address(this));
+
         vm.prank(alice);
         policyCenter.claimPayout(1);
+
         uint256 lpBalance = IInsurancePool(pool1).balanceOf(address(this));
         uint256 shieldBalance = shield.balanceOf(address(this));
-        vm.warp(30 days);
-        incidentReport.unpausePools(address(ptp));
-        policyCenter.removeLiquidity(lpBalance, 1);
+
+        vm.warp(
+            REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+        );
+        incidentReport.unpausePools(address(pool1));
+
+        IInsurancePool(pool1).verifyLiquidationEnded();
+        policyCenter.removeLiquidity(1, lpBalance);
 
         assertEq(InsurancePool(pool1).liquidated() == false, true);
 
         // Liquidity provider is able to remove left over liquidity proportional to
         // how much liquidity they provided and how much is left in the pool
-        assertEq(shieldBalance + (lpBalance - amount) == shield.balanceOf(address(this)), true);
+        assertEq(
+            shieldBalance + (lpBalance - amount) ==
+                shield.balanceOf(address(this)),
+            true
+        );
     }
 }

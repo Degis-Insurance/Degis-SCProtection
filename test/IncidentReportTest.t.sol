@@ -90,17 +90,14 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     function setUp() public {
         // deploys tokens
         shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
-        shield.approve(address(policyCenter), 20000);
 
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
-        deg.approve(address(policyCenter), 10000 ether);
+
         deg.transfer(address(this), 100 ether);
         vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
         vedeg.transfer(address(this), 100 ether);
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
-
-        deg.addMinter(address(this));
 
         vedeg.mint(alice, 100000 ether);
         vedeg.mint(bob, 100000 ether);
@@ -116,14 +113,15 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         onboardProposal = new OnboardProposal();
         exchange = new Exchange();
 
+        shield.approve(address(policyCenter), 20000);
+        deg.approve(address(policyCenter), 10000 ether);
+
         incidentReport = new IncidentReport();
         // Set incident report
         incidentReport.setDeg(address(deg));
         incidentReport.setVeDeg(address(vedeg));
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
-
-        deg.addMinter(address(incidentReport));
 
         // approve incident report interaction
         deg.approve(address(incidentReport), 10000 ether);
@@ -155,8 +153,6 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
 
-        
-      
         executor.setDeg(address(deg));
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
@@ -182,10 +178,6 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         InsurancePool(pool1).setInsurancePoolFactory(
             address(insurancePoolFactory)
         );
-
-        // allow incident report to mint and burn tokens on behalf of users
-        // in the protocol's interest.
-        deg.addMinter(address(incidentReport));
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(POOL_ID);

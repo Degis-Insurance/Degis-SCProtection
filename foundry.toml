@@ -3,6 +3,6 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 solc_version = "0.8.15"
-verbosity = 2
+verbosity = 1
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
