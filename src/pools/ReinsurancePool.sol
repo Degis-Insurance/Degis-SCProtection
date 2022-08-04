@@ -35,7 +35,6 @@ import "../util/ProtocolProtection.sol";
  *         will be able to provide the insurance to the user.
  */
 contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -65,14 +64,17 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     event MoveLiquidity(uint256 poolId, uint256 amount);
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
-    event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);
+    event EmissionRateUpdated(
+        uint256 newEmissionRate,
+        uint256 newEmissionEndTime
+    );
     event AccRewardsPerShareUpdated(uint256 amount);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(){
+    constructor() {
         // Register time that pool was deployed
         startTime = block.timestamp;
     }
@@ -112,21 +114,35 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         uint256 time = block.timestamp - lastRewardTimestamp;
         uint256 rewards = time * emissionRate;
         uint256 acc = accumulatedRewardPerShare + (rewards / totalSupply());
-        uint256 reward = (_amount * acc ) - _userDebt;
+        uint256 reward = (_amount * acc) - _userDebt;
         return reward;
     }
 
     /**
      * @notice returns pool information
      */
-    function poolInfo() external view returns (bool, uint256, uint256, uint256, uint256, uint256) {
-        return (paused, 
-                accumulatedRewardPerShare,
-                lastRewardTimestamp,
-                emissionEndTime,
-                emissionRate,
-                maxCapacity);
+    function poolInfo()
+        external
+        view
+        returns (
+            bool,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            paused,
+            accumulatedRewardPerShare,
+            lastRewardTimestamp,
+            emissionEndTime,
+            emissionRate,
+            maxCapacity
+        );
     }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -201,7 +217,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
      *
      * @param _paused true if paused, false if not.
      */
-    function setPausedReinsurancePool(bool _paused) external {
+    function pauseReinsurancePool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"
@@ -278,11 +294,9 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
             // update last time rewards were claimed
             lastRewardTimestamp = block.timestamp;
         } else {
-
             // if no coverages have been bought in over 30 days,
             // discount time passed since the time that emission ends.
 
-            
             uint256 claimTimestamp = emissionEndTime < block.timestamp
                 ? emissionEndTime
                 : block.timestamp;

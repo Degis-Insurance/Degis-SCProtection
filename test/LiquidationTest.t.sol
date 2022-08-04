@@ -200,7 +200,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     function testUnpauseLiquidatedPool() public {
 
         vm.warp(1383402);
-        InsurancePool(pool1).setPausedInsurancePool(false);
+        InsurancePool(pool1).pauseInsurancePool(false);
 
         // pool remains liquidated but unpaused
         assertEq(IInsurancePool(pool1).liquidated() == true, true);
