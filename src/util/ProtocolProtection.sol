@@ -36,18 +36,22 @@ import "../interfaces/IVeDEG.sol";
 pragma solidity ^0.8.13;
 
 contract ProtocolProtection is Ownable {
-
     uint256 constant SCALE = 1e12;
 
+    // External Address
     address public deg;
     address public veDeg;
     address public shield;
+
+    //
     address public executor;
     address public policyCenter;
     address public incidentReport;
     address public onboardProposal;
     address public reinsurancePool;
     address public insurancePoolFactory;
+
+    constructor() {}
 
     function setDeg(address _deg) external virtual onlyOwner {
         deg = _deg;
@@ -69,7 +73,11 @@ contract ProtocolProtection is Ownable {
         policyCenter = _policyCenter;
     }
 
-    function setIncidentReport(address _incidentReport) external virtual onlyOwner {
+    function setIncidentReport(address _incidentReport)
+        external
+        virtual
+        onlyOwner
+    {
         incidentReport = _incidentReport;
     }
 

@@ -20,8 +20,13 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
+
 import "../mock/MockExchange.sol";
+
+import "./interfaces/PolicyCenterDependencies.sol";
+
+import "../interfaces/ExternalTokenDependencies.sol";
 
 import "forge-std/console.sol";
 
@@ -35,7 +40,11 @@ import "forge-std/console.sol";
  *         Sellers can provide liquidity and choose the pools to cover
  *
  */
-contract PolicyCenter is ProtocolProtection {
+contract PolicyCenter is
+    PolicyCenterDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -69,10 +78,9 @@ contract PolicyCenter is ProtocolProtection {
 
     // bps distribution of premiums 0: insurance pool, 1: reinsurance pool
     uint256[2] public premiumSplits;
+
     // amount of degis in treasury
     uint256 public treasury;
-    // exchange used to trade native tokens for degis
-    address public exchange;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -92,12 +100,21 @@ contract PolicyCenter is ProtocolProtection {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _reinsurancePool, address _degis) {
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield,
+        address _reinsurancePool
+    )
+        ExternalTokenDependencies(_deg, _veDeg, _shield)
+        OwnableWithoutContext(msg.sender)
+    {
         // initializes required reinsurance address and degis token as reinsurance token
         insurancePools[0] = _reinsurancePool;
-        tokenByPoolId[0] = _degis;
-        reinsurancePool = _reinsurancePool;
-        deg = _degis;
+        tokenByPoolId[0] = _shield;
+
+        _setReinsurancePool(_reinsurancePool);
+
         // initializes premium split standard in bps
         premiumSplits = [4500, 5000];
     }
@@ -159,24 +176,6 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
-     * @notice returns true if given pool address is a valid pool
-     * @param _poolAddress pool address
-     * @return bool true if pool address is valid
-     */
-    function isPoolAddress(address _poolAddress) public view returns (bool) {
-        // gets the amount of deployed pools by Insurance Pool Factory
-        uint256 length = IInsurancePoolFactory(insurancePoolFactory)
-            .getPoolCounter();
-        // iterates through all pools. If not found, returns false
-        for (uint256 i = 0; i < length; i++) {
-            if (insurancePools[i] == _poolAddress) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * @notice returns insurance pool address given a pool id
      * @param _poolId pool id generated on Policy Center
      * @return address of insurance pool
@@ -190,30 +189,28 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
-    @notice returns information about the coverage of a given user
-    @param _poolId      address of the covered wallet
-    @return _covered    address of covered wallet
-    @return buyDate     date bought
-    @return length      length of coverage
+     * @notice returns information about the coverage of a given user
+     *
+     * @param _poolId Pool id
+     * @param _user   User address
+     *
+     * @return coverage Coverage info
      */
-    function getCoverage(uint256 _poolId, address _covered)
+    function getCoverage(uint256 _poolId, address _user)
         public
         view
         poolExists(_poolId)
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (Coverage memory)
     {
-        Coverage memory coverage = coverages[_poolId][_covered];
-        return (coverage.amount, coverage.buyDate, coverage.length);
+        return coverages[_poolId][_user];
     }
 
     /**
-     * @notice returns reward to liquidity providers
-     * @param _poolId pool id to claim from. 0 if reinsurance pool
-     * @return uint256 amount of reward
+     * @notice Reward for liquidity providers
+     *
+     * @param _poolId Pool id (0 for reinsurance pool)
+     *
+     * @return uint256 Reward
      */
     function calculateReward(uint256 _poolId, address _provider)
         public
@@ -284,6 +281,21 @@ contract PolicyCenter is ProtocolProtection {
         exchange = _exchange;
     }
 
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
     /**
      * @notice sets the insurance pool factory address
      * @param _pool  address of the insurance pool
@@ -303,7 +315,7 @@ contract PolicyCenter is ProtocolProtection {
         tokenByPoolId[_poolId] = _token;
         // maps pool address to pool id
         insurancePools[_poolId] = _pool;
-        // approve token swapping for internal fudns management
+        // approve token swapping for internal funds management
         _approvePoolToken(_token);
     }
 
@@ -342,9 +354,10 @@ contract PolicyCenter is ProtocolProtection {
         require(_pay > 0, "Pay must be greater than 0");
         require(
             IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
-                _pay + fundsByPoolId[_poolId],
+                _coverAmount + fundsByPoolId[_poolId],
             "exceeds max capacity"
         );
+        
         uint256 price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
             _coverAmount,
             _length

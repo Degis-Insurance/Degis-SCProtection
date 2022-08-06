@@ -47,15 +47,14 @@ interface IExecutor {
     function renounceOwnership() external;
     function reportBuffer() view external returns (uint256);
     function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) external;
-    function setDeg(address _deg) external;
+   
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setPolicyCenter(address _policyCenter) external;
     function setProposalCenter(address _proposalCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+    
     function shield() view external returns (address);
     function transferOwnership(address newOwner) external;
     function veDeg() view external returns (address);

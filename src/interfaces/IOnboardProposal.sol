@@ -88,8 +88,6 @@ interface IOnboardProposal {
 
     function renounceOwnership() external;
 
-    function setDeg(address _deg) external;
-
     function setExecutor(address _executor) external;
 
     function setIncidentReport(address _incidentReport) external;
@@ -102,9 +100,7 @@ interface IOnboardProposal {
 
     function setReinsurancePool(address _reinsurancePool) external;
 
-    function setShield(address _shield) external;
 
-    function setVeDeg(address _veDeg) external;
 
     function settle(uint256 _proposalId) external;
 

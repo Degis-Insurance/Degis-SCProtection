@@ -5,22 +5,9 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IDegisToken is IERC20 {
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Functions ************************************** //
-    // ---------------------------------------------------------------------------------------- //
-    function CAP() external view returns (uint256);
-
-    /**
-     * @notice Mint degis tokens
-     * @param  _account Receiver's address
-     * @param  _amount Amount to be minted
-     */
+    // Mint degis token
     function mintDegis(address _account, uint256 _amount) external;
 
-    /**
-     * @notice Burn degis tokens
-     * @param  _account Receiver's address
-     * @param  _amount Amount to be burned
-     */
+    // Burn degis token
     function burnDegis(address _account, uint256 _amount) external;
 }

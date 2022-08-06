@@ -207,52 +207,54 @@ contract OnboardProposalVotingTest is Test {
         vm.label(address(yeti), "yeti");
 
         //
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
         );
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        onboardProposal = new OnboardProposal();
-        incidentReport = new IncidentReport();
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
         exchange = new Exchange();
 
         shield.approve(address(policyCenter), 20000 ether);
         deg.approve(address(policyCenter), 10000 ether);
 
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
-        reinsurancePool.setExecutor(address(executor));
+
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setInsurancePoolFactory(address(insurancePoolFactory));
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
+
         policyCenter.setExecutor(address(executor));
         policyCenter.setExchange(address(exchange));
-        policyCenter.setOnboardProposal(address(onboardProposal));
+      
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
-        onboardProposal.setDeg(address(deg));
-        onboardProposal.setVeDeg(address(vedeg));
-        onboardProposal.setShield(address(shield));
+
         onboardProposal.setExecutor(address(executor));
-        onboardProposal.setPolicyCenter(address(policyCenter));
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
+
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
@@ -267,14 +269,9 @@ contract OnboardProposalVotingTest is Test {
         );
         console.log(pool1);
         // set insurance pool addresses
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
+
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
+       
 
         deg.transfer(address(this), 1000 ether);
 
