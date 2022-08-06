@@ -2,11 +2,19 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
 
 import "./interfaces/OnboardProposalParameters.sol";
+import "./interfaces/OnboardProposalDependencies.sol";
 
-contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
+import "../interfaces/ExternalTokenDependencies.sol";
+
+contract OnboardProposal is
+    OnboardProposalParameters,
+    OnboardProposalDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -60,6 +68,16 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     event ProposalSettled(uint256 proposalId, uint256 result);
 
     // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield
+    ) ExternalTokenDependencies(_deg, _veDeg, _shield) OwnableWithoutContext(msg.sender) {}
+
+    // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
@@ -69,6 +87,21 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         returns (Proposal memory)
     {
         return proposals[_proposalId];
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -198,7 +231,7 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
         emit ProposalSettled(_proposalId, res);
     }
 
-    function closeProposal(uint256 _proposalId) external onlyOwner {
+    function closeProposal(uint256 _proposalId) external {
         require(msg.sender == executor, "Only executor can close proposal");
 
         Proposal storage currentProposal = proposals[_proposalId];

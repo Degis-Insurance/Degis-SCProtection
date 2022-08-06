@@ -65,62 +65,67 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
 
         // deploy contracts
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
         );
-        incidentReport = new IncidentReport();
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        onboardProposal = new OnboardProposal();
+        onboardProposal = new OnboardProposal(address(deg),
+            address(vedeg),
+            address(shield));
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
         deg.transfer(address(exchange), 1000 ether);
         shield.transfer(address(exchange), 1000 ether);
         ptp.transfer(address(exchange), 1000 ether);
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
+
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         insurancePoolFactory.setExecutor(address(executor));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
+
         reinsurancePool.setPolicyCenter(address(policyCenter));
         reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
+
         policyCenter.setExecutor(address(executor));
-        policyCenter.setOnboardProposal(address(onboardProposal));
+        
 
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-        onboardProposal.setDeg(address(deg));
-        onboardProposal.setVeDeg(address(vedeg));
-        onboardProposal.setShield(address(shield));
+
         onboardProposal.setExecutor(address(executor));
-        onboardProposal.setPolicyCenter(address(policyCenter));
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
+
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-        incidentReport.setDeg(address(deg));
-        incidentReport.setVeDeg(address(vedeg));
-        incidentReport.setShield(address(shield));
-        incidentReport.setExecutor(address(executor));
+
+  
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
+
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
@@ -134,16 +139,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             260
         );
 
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
+        
 
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(onboardProposal), 1000 ether);

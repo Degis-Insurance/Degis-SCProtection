@@ -18,14 +18,14 @@ interface IPolicyCenter {
     function exchange() view external returns (address);
     function executor() view external returns (address);
     function fundsByPoolId(uint256) view external returns (uint256);
-    function getCoverage(uint256 _poolId, address _covered) view external returns (uint256, uint256, uint256);
+
     function getInsurancePoolById(uint256 _poolId) view external returns (address);
     function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);
     function getPremiumSplits() view external returns (uint256, uint256);
     function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);
     function insurancePools(uint256) view external returns (address);
-    function isPoolAddress(address _poolAddress) view external returns (bool);
+
     function liquidities(uint256, address) view external returns (uint256 amount, uint256 userDebt, uint256 lastClaim);
     function liquidityByPoolId(uint256) view external returns (uint256);
     function onboardProposal() view external returns (address);
@@ -37,7 +37,7 @@ interface IPolicyCenter {
     function removeLiquidity(uint256 _poolId, uint256 _amount) external;
     function renounceOwnership() external;
     function rewardTreasuryToReporter(address _reporter) external;
-    function setDeg(address _deg) external;
+    
     function setExchange(address _exchange) external;
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
@@ -46,8 +46,7 @@ interface IPolicyCenter {
     function setPolicyCenter(address _policyCenter) external;
     function setPremiumSplit(uint256 _insurance, uint256 _reinsurance) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+    
     function shield() view external returns (address);
     function storePoolInformation(address _pool, address _token, uint256 _poolId) external;
     function tokenByPoolId(uint256) view external returns (address);

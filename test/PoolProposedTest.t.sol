@@ -66,15 +66,34 @@ contract ClaimPayoutTest is Test {
         console.log(yeti.balanceOf(address(this)));
 
         // deploy contracts
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
         );
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        incidentReport = new IncidentReport();
-        onboardProposal = new OnboardProposal();
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
@@ -82,47 +101,30 @@ contract ClaimPayoutTest is Test {
         shield.transfer(address(exchange), 1000 ether);
         ptp.transfer(address(exchange), 1000 ether);
 
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
+       
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         insurancePoolFactory.setExecutor(address(executor));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
+
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setExecutor(address(executor));
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
+ 
+
         policyCenter.setExecutor(address(executor));
-        policyCenter.setOnboardProposal(address(onboardProposal));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-        onboardProposal.setDeg(address(deg));
-        onboardProposal.setVeDeg(address(vedeg));
-        onboardProposal.setShield(address(shield));
-        onboardProposal.setExecutor(address(executor));
-        onboardProposal.setPolicyCenter(address(policyCenter));
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
+
+        onboardProposal.setExecutor(address(executor));     
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-        incidentReport.setDeg(address(deg));
-        incidentReport.setVeDeg(address(vedeg));
-        incidentReport.setShield(address(shield));
-        incidentReport.setExecutor(address(executor));
+
+       
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
+
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
@@ -133,15 +135,10 @@ contract ClaimPayoutTest is Test {
             1000 ether,
             260
         );
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
+
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
+       
 
         // fund exchange
         deg.transfer(address(exchange), 1000 ether);
@@ -181,15 +178,10 @@ contract ClaimPayoutTest is Test {
 
         vm.warp(START_TIME + VOTE_PERIOD + EXECUTE_PERIOD + 2);
         pool2 = executor.executeProposal(1);
-        InsurancePool(pool2).setDeg(address(deg));
-        InsurancePool(pool2).setVeDeg(address(vedeg));
-        InsurancePool(pool2).setShield(address(shield));
+
         InsurancePool(pool2).setExecutor(address(executor));
         InsurancePool(pool2).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool2).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool2).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
+        
     }
 
     function testPresenceNewPool() public {
@@ -217,27 +209,7 @@ contract ClaimPayoutTest is Test {
         uint256 price = InsurancePool(pool2).coveragePrice(100 ether, 90);
 
         policyCenter.buyCoverage(2, price, 100 ether, 90);
-        (uint256 amount, , ) = policyCenter.getCoverage(2, address(this));
+        (uint256 amount, , ) = policyCenter.coverages(2, address(this));
         assertEq(amount == 100 ether, true);
     }
-
-    function testSetAdministratorProposedPool() public {
-        InsurancePool(pool1).setAdministrator(alice);
-        assertEq(InsurancePool(pool1).administrator() == alice, true);
-        vm.prank(alice);
-        InsurancePool(pool1).setAdministrator(bob);
-        assertEq(InsurancePool(pool1).administrator() == address(bob), true);
-    }
-
-    function testWrongSetAdministrator() public {
-        vm.prank(alice);
-        vm.expectRevert(
-            "Only owner, executor or administrator can call this function"
-        );
-        InsurancePool(pool1).setAdministrator(alice);
-    }
-
-    // function claimRewardsReinsurancePoolMultiplePools() public {
-
-    // }
 }

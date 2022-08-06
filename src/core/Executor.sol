@@ -17,7 +17,9 @@
  \\======================================================================//
  \\======================================================================//
 */
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
+
+import "./interfaces/ExecutorDependencies.sol";
 
 import "../voting/interfaces/VotingParameters.sol";
 
@@ -33,7 +35,11 @@ pragma solidity ^0.8.13;
  *         Both administrators or users can execute proposals and reports out of self interest
  *
  */
-contract Executor is ProtocolProtection, VotingParameters {
+contract Executor is
+    ExecutorDependencies,
+    VotingParameters,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -55,6 +61,8 @@ contract Executor is ProtocolProtection, VotingParameters {
         address protocol
     );
 
+    constructor() OwnableWithoutContext(msg.sender) {}
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -67,6 +75,29 @@ contract Executor is ProtocolProtection, VotingParameters {
     function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) public {
         poolBuffer = _poolBuffer;
         reportBuffer = _reportBuffer;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
+    function setOnboardProposal(address _onboardProposal) external onlyOwner {
+        _setOnboardProposal(_onboardProposal);
     }
 
     // ---------------------------------------------------------------------------------------- //

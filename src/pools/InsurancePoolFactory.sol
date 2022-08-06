@@ -22,7 +22,12 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "../util/ProtocolProtection.sol";
+import "./interfaces/InsurancePoolFactoryDependencies.sol";
+
+import "../util/OwnableWithoutContext.sol";
+
+import "../interfaces/ExternalTokenDependencies.sol";
+
 import "./InsurancePool.sol";
 
 /**
@@ -33,7 +38,11 @@ import "./InsurancePool.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePoolFactory is ProtocolProtection {
+contract InsurancePoolFactory is
+    InsurancePoolFactoryDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -51,8 +60,6 @@ contract InsurancePoolFactory is ProtocolProtection {
     uint256 public poolCounter;
     uint256 public maxCapacity;
 
-    address public administrator;
-
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
     mapping(address => bool) public tokenRegistered;
@@ -62,8 +69,8 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     event PoolCreated(
-        address poolAddress,
         uint256 poolId,
+        address poolAddress,
         string protocolName,
         address protocolToken,
         uint256 maxCapacity,
@@ -74,22 +81,30 @@ contract InsurancePoolFactory is ProtocolProtection {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _reinsurancePool, address _degis) {
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield,
+        address _reinsurancePool
+    )
+        ExternalTokenDependencies(_deg, _veDeg, _shield)
+        OwnableWithoutContext(msg.sender)
+    {
         // stores addresses of the reinsurance pool and degis token
         reinsurancePool = _reinsurancePool;
-        deg = _degis;
-        _setAdministrator(msg.sender);
 
         // stores information about reinsurance pool, first pool recorded
         poolInfoById[poolCounter] = PoolInfo(
             "ReinsurancePool",
             _reinsurancePool,
-            _degis,
+            _shield,
             100000e18,
             1
         );
+
+        // Register reinsurance pool and degis token
         poolRegistered[_reinsurancePool] = true;
-        tokenRegistered[_degis] = true;
+        tokenRegistered[_shield] = true;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -102,20 +117,20 @@ contract InsurancePoolFactory is ProtocolProtection {
      * @return List of pool addresses
      */
     function getPoolAddressList() external view returns (address[] memory) {
-        address[] memory list = new address[](poolCounter + 1);
-        for (uint256 i = 0; i < poolCounter + 1; i++) {
-            list[i] = poolInfoById[i].poolAddress;
-        }
-        return list;
-    }
+        uint256 poolAmount = poolCounter + 1;
 
-    /**
-     * @notice Get the pool counter which indicates the latest pool id
-     *
-     * @return PoolCounter pool id
-     */
-    function getPoolCounter() public view returns (uint256) {
-        return poolCounter;
+        address[] memory list = new address[](poolAmount);
+
+        for (uint256 i; i < poolAmount; ) {
+            list[i] = poolInfoById[i].poolAddress;
+
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        return list;
     }
 
     /**
@@ -123,21 +138,24 @@ contract InsurancePoolFactory is ProtocolProtection {
      *
      * @param _poolId Pool id
      */
-    function getPoolInfo(uint256 _poolId) public view returns (PoolInfo memory) {
+    function getPoolInfo(uint256 _poolId)
+        public
+        view
+        returns (PoolInfo memory)
+    {
         return poolInfoById[_poolId];
     }
 
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
 
-    /**
-     * @notice Sets the administrator of the deployed Insurance pools
-     *
-     * @param _administrator The address of the new administrator
-     */
-    function setAdministrator(address _administrator) external onlyOwner {
-        _setAdministrator(_administrator);
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -176,17 +194,19 @@ contract InsurancePoolFactory is ProtocolProtection {
             _name
         );
 
-        uint256 currentPoolId = ++poolCounter;
+        // Finish deployment and get the address
         address newPoolAddress = _deploy(bytecode, salt);
 
         tokenRegistered[_protocolToken] = true;
         poolRegistered[newPoolAddress] = true;
 
+        uint256 currentPoolId = ++poolCounter;
+
         // Store pool information in Policy Center
         IPolicyCenter(policyCenter).storePoolInformation(
             newPoolAddress,
             _protocolToken,
-            poolCounter
+            currentPoolId
         );
         poolInfoById[currentPoolId] = PoolInfo(
             _name,
@@ -197,8 +217,8 @@ contract InsurancePoolFactory is ProtocolProtection {
         );
 
         emit PoolCreated(
-            newPoolAddress,
             currentPoolId,
+            newPoolAddress,
             _name,
             _protocolToken,
             _maxCapacity,
@@ -243,7 +263,7 @@ contract InsurancePoolFactory is ProtocolProtection {
                     _tokenName,
                     _symbol,
                     _policyPrice,
-                    administrator
+                    owner()
                 )
             );
     }
@@ -268,12 +288,11 @@ contract InsurancePoolFactory is ProtocolProtection {
         }
     }
 
-    function _setAdministrator(address _administrator) internal {
-        administrator = _administrator;
-    }
-
     function deregisterAddress(address _tokenAddress) external {
-        require(msg.sender == owner() || msg.sender == executor, "Only owner or executor contract can deregister an address");
+        require(
+            msg.sender == owner() || msg.sender == executor,
+            "Only owner or executor contract can deregister an address"
+        );
         require(tokenRegistered[_tokenAddress], "Address is not registered");
         tokenRegistered[_tokenAddress] = false;
     }

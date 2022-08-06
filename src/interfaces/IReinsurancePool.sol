@@ -40,16 +40,15 @@ interface IReinsurancePool {
     function reinsurePool(uint256 _amount, address _address) external;
     function removeLiquidity(uint256 _amount, address _provider) external;
     function renounceOwnership() external;
-    function setDeg(address _deg) external;
+    
     function setExecutor(address _executor) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function pauseReinsurancePool(bool _paused) external;
-    
+
     function setPolicyCenter(address _policyCenter) external;
     function setProposalCenter(address _proposalCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+    
     function shield() view external returns (address);
     function symbol() view external returns (string memory);
     function totalDistributedReward() view external returns (uint256);

@@ -37,7 +37,7 @@ interface IProposalCenter {
     function reportIds(uint256) view external returns (uint256 poolId, uint256 timestamp, address reporterAddress, uint256 yes, uint256 no, uint256 round, bool pending, bool approved);
     function reportPool(uint256 _poolId) external;
     function setBuffers(uint256 _reportBuffer, uint256 _proposalBuffer) external;
-    function setDeg(address _deg) external;
+  
     function setExecutor(address _executor) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setPolicyCenter(address _policyCenter) external;
@@ -45,8 +45,7 @@ interface IProposalCenter {
     function setProposal(uint256 _proposalId, bool _decision) external;
     function setProposalCenter(address _proposalCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+   
     function shield() view external returns (address);
     function transferOwnership(address newOwner) external;
     function veDeg() view external returns (address);
