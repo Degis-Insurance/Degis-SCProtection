@@ -172,7 +172,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         // Alice buys coverage for 100 ether
         vm.prank(alice);
-        policyCenter.buyCoverage(1, price, 100 ether, 90);
+        policyCenter.buyCover(1, 100 ether, 90);
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);

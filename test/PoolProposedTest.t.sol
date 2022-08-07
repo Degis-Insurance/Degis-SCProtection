@@ -102,7 +102,7 @@ contract ClaimPayoutTest is Test {
         ptp.transfer(address(exchange), 1000 ether);
 
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-       
+
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         insurancePoolFactory.setExecutor(address(executor));
@@ -110,17 +110,15 @@ contract ClaimPayoutTest is Test {
         reinsurancePool.setPolicyCenter(address(policyCenter));
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setPolicyCenter(address(policyCenter));
- 
 
         policyCenter.setExecutor(address(executor));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        onboardProposal.setExecutor(address(executor));     
+        onboardProposal.setExecutor(address(executor));
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
 
-       
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
@@ -138,7 +136,6 @@ contract ClaimPayoutTest is Test {
 
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-       
 
         // fund exchange
         deg.transfer(address(exchange), 1000 ether);
@@ -181,7 +178,6 @@ contract ClaimPayoutTest is Test {
 
         InsurancePool(pool2).setExecutor(address(executor));
         InsurancePool(pool2).setPolicyCenter(address(policyCenter));
-        
     }
 
     function testPresenceNewPool() public {
@@ -203,13 +199,13 @@ contract ClaimPayoutTest is Test {
         assertEq(InsurancePool(pool2).balanceOf(address(this)) == 10000, true);
     }
 
-    function testBuyCoverageNewPool() public {
+    function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
 
         uint256 price = InsurancePool(pool2).coveragePrice(100 ether, 90);
 
-        policyCenter.buyCoverage(2, price, 100 ether, 90);
-        (uint256 amount, , ) = policyCenter.coverages(2, address(this));
+        policyCenter.buyCover(2, 100 ether, 90);
+        (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);
     }
 }

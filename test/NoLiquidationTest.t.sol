@@ -171,7 +171,7 @@ contract NoLiquidationTest is Test {
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);
-        policyCenter.buyCoverage(1, price, 10 ether, 90);
+        policyCenter.buyCover(1, 10 ether, 90);
         vm.warp(30 days);
     }
 

@@ -236,7 +236,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
-        policyCenter.buyCoverage(POOL_ID, price, 10000 ether, 90);
+        policyCenter.buyCover(POOL_ID, 10000 ether, 90);
     }
 
     function testProvideLiqudityDirectlyToInsurancePool() public {
@@ -261,7 +261,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         policyCenter.removeLiquidity(POOL_ID, 1);
     }
 
-    function testGetCoveragePrice() public {
+    function testGetCoverPrice() public {
         uint256 amount = 100 ether;
         uint256 length = 90;
         // get coverage price and returns it
@@ -271,7 +271,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         assertEq(price == expectedPrice, true);
     }
 
-    function testBuyCoverageWithoutSuppliedLiquidity() public {
+    function testBuyCoverWithoutSuppliedLiquidity() public {
         // expected behavior when coverage is bough with
         // liquidity provided by other users
 
@@ -296,17 +296,17 @@ contract PostInsurancePoolDeploymentTest is Test {
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 1000 ether, 90);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 90);
 
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .coverages(POOL_ID, alice);
+            .covers(POOL_ID, alice);
 
         assertEq(amount,1000 ether);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
     }
 
-    function testBuyCoverageWithSuppliedLiquidity() public {
+    function testBuyCoverWithSuppliedLiquidity() public {
         // expected behavior when coverage is bough with
         // liquidity provided by other users
 
@@ -334,21 +334,12 @@ contract PostInsurancePoolDeploymentTest is Test {
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 100 ether, 90);
+        policyCenter.buyCover(POOL_ID, 100 ether, 90);
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .coverages(POOL_ID, alice);
+            .covers(POOL_ID, alice);
         assertEq(amount == 100 ether, true);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
-    }
-
-    function testBuyWrongPaymentCoverage() public {
-        shield.approve(address(policyCenter), 10000 ether);
-        uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
-        price--;
-        // user should no be able to buy a coverage with wrong payment amount
-        vm.expectRevert("pay does not correspond to price");
-        policyCenter.buyCoverage(POOL_ID, price, 100 ether, 90);
     }
 
     function testProvideLiquidityReinsurancePool() public {
@@ -415,7 +406,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         uint256 price = InsurancePool(pool1).coveragePrice(1000 ether, 90);
 
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 1000 ether, 90);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 90);
 
         console.log(ptp.balanceOf(address(policyCenter)));
 

@@ -255,7 +255,7 @@ contract ReinsurancePool is
         onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
             _poolId
         );
         require(poolAddress != address(0), "Pool not found");
