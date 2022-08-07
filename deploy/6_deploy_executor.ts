@@ -20,18 +20,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   // Proxy Admin contract artifact
-  const reinsurancePool = await deploy("ReinsurancePool", {
-    contract: "ReinsurancePool",
+  const executor = await deploy("Executor", {
+    contract: "Executor",
     from: deployer,
     args: [],
     log: true,
   });
-  addressList[network.name].ReinsurancePool = reinsurancePool.address;
+  addressList[network.name].Executor = executor.address;
 
-  console.log(
-    "\nreinsurance pool deployed to address: ",
-    reinsurancePool.address
-  );
+  console.log("executor deployed to address: ", executor.address, "\n");
 
   //   await hre.run("verify:verify", {
   //     address: insurancePoolFactory.address,
@@ -42,5 +39,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["ReinsurancePool"];
+func.tags = ["Executor"];
 export default func;

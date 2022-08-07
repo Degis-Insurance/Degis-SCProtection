@@ -1,0 +1,484 @@
+{
+  "address": "0x8E1A63d1e0163Aa0C469Ae6DFA0D425eC2cf4529",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proposalId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "protocol",
+          "type": "address"
+        }
+      ],
+      "name": "NewPoolEecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "reportId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ReportExecuted",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_proposalId",
+          "type": "uint256"
+        }
+      ],
+      "name": "executeProposal",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_reportId",
+          "type": "uint256"
+        }
+      ],
+      "name": "executeReport",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "incidentReport",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "insurancePoolFactory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "onboardProposal",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "policyCenter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolBuffer",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "reinsurancePool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "reportBuffer",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolBuffer",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_reportBuffer",
+          "type": "uint256"
+        }
+      ],
+      "name": "setBuffers",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_incidentReport",
+          "type": "address"
+        }
+      ],
+      "name": "setIncidentReport",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_insurancePoolFactory",
+          "type": "address"
+        }
+      ],
+      "name": "setInsurancePoolFactory",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_onboardProposal",
+          "type": "address"
+        }
+      ],
+      "name": "setOnboardProposal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_policyCenter",
+          "type": "address"
+        }
+      ],
+      "name": "setPolicyCenter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_reinsurancePool",
+          "type": "address"
+        }
+      ],
+      "name": "setReinsurancePool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x1c2b3eb19fd8f47e5c6ebf5265f52a976711a58f42bffcbd2998f253d99f3b38",
+  "receipt": {
+    "to": null,
+    "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
+    "contractAddress": "0x8E1A63d1e0163Aa0C469Ae6DFA0D425eC2cf4529",
+    "transactionIndex": 0,
+    "gasUsed": "819974",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000800000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001000000000010000000000000000000000000120000000000000000000800000000000040000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000400000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x96ea4b86edfeb0756254a811453ab681d0cb96678451eaf8f87374d3e7919ee4",
+    "transactionHash": "0x1c2b3eb19fd8f47e5c6ebf5265f52a976711a58f42bffcbd2998f253d99f3b38",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 12299682,
+        "transactionHash": "0x1c2b3eb19fd8f47e5c6ebf5265f52a976711a58f42bffcbd2998f253d99f3b38",
+        "address": "0x8E1A63d1e0163Aa0C469Ae6DFA0D425eC2cf4529",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000001be1a151ba3d24f594ee971dc9b843f23b5ba80e"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0x96ea4b86edfeb0756254a811453ab681d0cb96678451eaf8f87374d3e7919ee4"
+      }
+    ],
+    "blockNumber": 12299682,
+    "cumulativeGasUsed": "819974",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "3b142f385c2d196ab672870bff51b77b",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"poolAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"proposalId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"protocol\",\"type\":\"address\"}],\"name\":\"NewPoolEecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"reportId\",\"type\":\"uint256\"}],\"name\":\"ReportExecuted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_proposalId\",\"type\":\"uint256\"}],\"name\":\"executeProposal\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_reportId\",\"type\":\"uint256\"}],\"name\":\"executeReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"incidentReport\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"insurancePoolFactory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"onboardProposal\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"policyCenter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolBuffer\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reinsurancePool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"reportBuffer\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolBuffer\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_reportBuffer\",\"type\":\"uint256\"}],\"name\":\"setBuffers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_incidentReport\",\"type\":\"address\"}],\"name\":\"setIncidentReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_insurancePoolFactory\",\"type\":\"address\"}],\"name\":\"setInsurancePoolFactory\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_onboardProposal\",\"type\":\"address\"}],\"name\":\"setOnboardProposal\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_policyCenter\",\"type\":\"address\"}],\"name\":\"setPolicyCenter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_reinsurancePool\",\"type\":\"address\"}],\"name\":\"setReinsurancePool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)\",\"kind\":\"dev\",\"methods\":{\"executeProposal(uint256)\":{\"params\":{\"_proposalId\":\"Proposal id\"}},\"executeReport(uint256)\":{\"params\":{\"_reportId\":\"_id of the report to be executed\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"setBuffers(uint256,uint256)\":{\"params\":{\"_poolBuffer\":\"time in unix\",\"_reportBuffer\":\"time in unix\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"title\":\"Executor\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"executeProposal(uint256)\":{\"notice\":\"Settle the proposal\"},\"executeReport(uint256)\":{\"notice\":\"executes a report already settled by vote\"},\"setBuffers(uint256,uint256)\":{\"notice\":\"sets pool and report time buffers\"}},\"notice\":\"This is the executor for degis Protocol Protection         The executor is responsible for the execution of the reports and pool proposals         Both administrators or users can execute proposals and reports out of self interest\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/core/Executor.sol\":\"Executor\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363539383834303737313130\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"src/core/Executor.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\n/*\\n //======================================================================\\\\\\\\\\n //======================================================================\\\\\\\\\\n  *******         **********     ***********     *****     ***********\\n  *      *        *              *                 *       *\\n  *        *      *              *                 *       *\\n  *         *     *              *                 *       *\\n  *         *     *              *                 *       *\\n  *         *     **********     *       *****     *       ***********\\n  *         *     *              *         *       *                 *\\n  *         *     *              *         *       *                 *\\n  *        *      *              *         *       *                 *\\n  *      *        *              *         *       *                 *\\n  *******         **********     ***********     *****     ***********\\n \\\\\\\\======================================================================//\\n \\\\\\\\======================================================================//\\n*/\\nimport \\\"../util/OwnableWithoutContext.sol\\\";\\n\\nimport \\\"./interfaces/ExecutorDependencies.sol\\\";\\n\\nimport \\\"../voting/interfaces/VotingParameters.sol\\\";\\n\\npragma solidity ^0.8.13;\\n\\n/**\\n * @title Executor\\n *\\n * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)\\n *\\n * @notice This is the executor for degis Protocol Protection\\n *         The executor is responsible for the execution of the reports and pool proposals\\n *         Both administrators or users can execute proposals and reports out of self interest\\n *\\n */\\ncontract Executor is\\n    ExecutorDependencies,\\n    VotingParameters,\\n    OwnableWithoutContext\\n{\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Variables **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    // if chosen to, executor report could have a buffer timer to prevent abuse of the system\\n    // from team or organization members\\n    uint256 public reportBuffer;\\n    uint256 public poolBuffer;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    event ReportExecuted(address pool, uint256 poolId, uint256 reportId);\\n\\n    event NewPoolEecuted(\\n        address poolAddress,\\n        uint256 proposalId,\\n        address protocol\\n    );\\n\\n    constructor() OwnableWithoutContext(msg.sender) {}\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Set Functions ************************************* //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice              sets pool and report time buffers\\n     * @param _poolBuffer   time in unix\\n     * @param _reportBuffer time in unix\\n     */\\n    function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) public {\\n        poolBuffer = _poolBuffer;\\n        reportBuffer = _reportBuffer;\\n    }\\n\\n    function setPolicyCenter(address _policyCenter) external onlyOwner {\\n        _setPolicyCenter(_policyCenter);\\n    }\\n\\n    function setInsurancePoolFactory(address _insurancePoolFactory)\\n        external\\n        onlyOwner\\n    {\\n        _setInsurancePoolFactory(_insurancePoolFactory);\\n    }\\n\\n    function setReinsurancePool(address _reinsurancePool) external onlyOwner {\\n        _setReinsurancePool(_reinsurancePool);\\n    }\\n\\n    function setIncidentReport(address _incidentReport) external onlyOwner {\\n        _setIncidentReport(_incidentReport);\\n    }\\n\\n    function setOnboardProposal(address _onboardProposal) external onlyOwner {\\n        _setOnboardProposal(_onboardProposal);\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Main Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice executes a report already settled by vote\\n     * @param _reportId _id of the report to be executed\\n     */\\n    function executeReport(uint256 _reportId) public {\\n        // get the report\\n        (\\n            uint256 poolId,\\n            ,\\n            address reporter,\\n            ,\\n            ,\\n            ,\\n            ,\\n            uint256 status,\\n            uint256 result,\\n\\n        ) = IIncidentReport(incidentReport).reports(_reportId);\\n\\n        require(status == SETTLED_STATUS, \\\"Report is not ready to be executed\\\");\\n\\n        require(result == 1, \\\"Report is not passed\\\");\\n\\n        // execute the pool\\n        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(\\n            poolId\\n        );\\n        address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(\\n            poolId\\n        );\\n\\n        // reward 10% of treasury to reporter\\n        IPolicyCenter(policyCenter).rewardTreasuryToReporter(reporter);\\n\\n        // liquidate the pool\\n        IInsurancePool(poolAddress).liquidatePool();\\n\\n        // remove pool from protocol registry in insurance pool factory\\n        // that allows the creation of newe pools for that protocol\\n        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(\\n            tokenAddress\\n        );\\n        // IInsurancePoolFactory(poolAddress).deregisterToken()\\n        // emit the event\\n        emit ReportExecuted(poolAddress, poolId, _reportId);\\n    }\\n\\n    /**\\n     * @notice Settle the proposal\\n     *\\n     * @param _proposalId Proposal id\\n     */\\n    function executeProposal(uint256 _proposalId) external returns (address) {\\n        IOnboardProposal.Proposal memory proposal = IOnboardProposal(\\n            onboardProposal\\n        ).getProposal(_proposalId);\\n\\n        require(proposal.status == SETTLED_STATUS, \\\"Not settled\\\");\\n\\n        require(proposal.result == 1, \\\"Has not been approved\\\");\\n\\n        // execute the proposal\\n        address newPool = IInsurancePoolFactory(insurancePoolFactory)\\n            .deployPool(\\n                proposal.name,\\n                proposal.protocolAddress,\\n                proposal.maxCapacity,\\n                proposal.priceRatio\\n            );\\n\\n        // emit the event\\n        emit NewPoolEecuted(newPool, _proposalId, proposal.protocolAddress);\\n\\n        return newPool;\\n    }\\n}\\n\",\"keccak256\":\"0x092873f70997cce2c848057009bf7dc3e8c4bd84b6ba4cbd707ee0d793b3b58c\",\"license\":\"GPL-3.0-or-later\"},\"src/core/interfaces/ExecutorDependencies.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"../../interfaces/IInsurancePool.sol\\\";\\nimport \\\"../../interfaces/IReinsurancePool.sol\\\";\\nimport \\\"../../interfaces/IInsurancePoolFactory.sol\\\";\\nimport \\\"../../interfaces/IOnboardProposal.sol\\\";\\nimport \\\"../../interfaces/IPolicyCenter.sol\\\";\\nimport \\\"../../interfaces/IIncidentReport.sol\\\";\\n\\nabstract contract ExecutorDependencies {\\n    address public policyCenter;\\n    address public reinsurancePool;\\n    address public insurancePoolFactory;\\n    address public incidentReport;\\n    address public onboardProposal;\\n\\n    function _setPolicyCenter(address _policyCenter) internal virtual {\\n        policyCenter = _policyCenter;\\n    }\\n\\n    function _setReinsurancePool(address _reinsurancePool) internal virtual {\\n        reinsurancePool = _reinsurancePool;\\n    }\\n\\n    function _setInsurancePoolFactory(address _insurancePoolFactory)\\n        internal\\n        virtual\\n    {\\n        insurancePoolFactory = _insurancePoolFactory;\\n    }\\n\\n    function _setIncidentReport(address _incidentReport) internal virtual {\\n        incidentReport = _incidentReport;\\n    }\\n\\n    function _setOnboardProposal(address _onboardProposal) internal virtual {\\n        onboardProposal = _onboardProposal;\\n    }\\n}\\n\",\"keccak256\":\"0x7f1060b0d814f077ecdcf6f9a2e39b1afc9a7c0e2b93a6bd3e845bbfed5f5197\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IIncidentReport.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IIncidentReport {\\n\\n    event DebtPaid(address payer, address user, uint256 debt, uint256 unlockAmount);\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n    event ReportClosed(uint256 reportId, uint256 closeTimestamp);\\n    event ReportCreated(uint256 reportId, uint256 indexed poolId, uint256 reportTimestamp, address indexed reporter);\\n    event ReportExtended(uint256 reportId, uint256 round);\\n    event ReportSettled(uint256 reportId, uint256 result);\\n    event ReportVoted(uint256 reportId, address indexed user, uint256 voteFor, uint256 amount);\\n    event VotingStart(uint256 reportId, uint256 startTimestamp);\\n\\n    struct TempResult { uint256 a; uint256 b; bool c; }\\n    struct UserVote { uint256 a; uint256 b; bool c; }\\n    struct Report { uint256 a; uint256 b; address c; uint256 d; uint256 e; uint256 f; uint256 g; uint256 h; uint256 i; uint256 j; }\\n\\n    function COOLDOWN_WRONG_REPORT() view external returns (uint256);\\n    function claimReward(uint256 _reportId) external;\\n    function closeReport(uint256 _reportId) external;\\n    function deg() view external returns (address);\\n    function executor() view external returns (address);\\n    function getReport(uint256 _id) view external returns (Report memory);\\n    function getTempResult(uint256 _id) view external returns (TempResult memory);\\n    function getUserVote(address _user, uint256 _id) view external returns (UserVote memory);\\n    function incidentReport() view external returns (address);\\n    function insurancePoolFactory() view external returns (address);\\n    function owner() view external returns (address);\\n    function payDebt(uint256 _reportId, address _user) external;\\n    function policyCenter() view external returns (address);\\n    function poolReported(address) view external returns (bool);\\n    function proposalCenter() view external returns (address);\\n    function reinsurancePool() view external returns (address);\\n    function renounceOwnership() external;\\n    function report(uint256 _poolId) external;\\n    function reportCounter() view external returns (uint256);\\n    function reportTempResults(uint256) view external returns (uint256 result, uint256 sampleTimestamp, bool hasChanged);\\n    function reports(uint256) view external returns (uint256 poolId, uint256 reportTimestamp, address reporter, uint256 voteTimestamp, uint256 numFor, uint256 numAgainst, uint256 round, uint256 status, uint256 result, uint256 votingReward);\\n    \\n    function setExecutor(address _executor) external;\\n    function setIncidentReport(address _incidentReport) external;\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n    function setPolicyCenter(address _policyCenter) external;\\n    function setProposalCenter(address _proposalCenter) external;\\n    function setReinsurancePool(address _reinsurancePool) external;\\n \\n    function settle(uint256 _reportId) external;\\n    function shield() view external returns (address);\\n    function startVoting(uint256 _reportId) external;\\n    function transferOwnership(address newOwner) external;\\n    function userCoolDownUntil(address) view external returns (uint256);\\n    function userReportVotes(address, uint256) view external returns (uint256 choice, uint256 amount, bool claimed);\\n    function veDeg() view external returns (address);\\n    function vote(uint256 _reportId, uint256 _isFor, uint256 _amount) external;\\n}\",\"keccak256\":\"0xa3765f4be3bf3f9182eabc64813bcda012b632e93434287eefc94f7554c9ec5c\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IInsurancePool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IInsurancePool {\\n    event AccRewardsPerShareUpdated(uint256 amount);\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n    event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);\\n    event Liquidation(uint256 amount, uint256 endDate);\\n    event LiquidationEnded(uint256 timestamp);\\n    event LiquidityProvision(uint256 amount, address sender);\\n    event LiquidityRemoved(uint256 amount, address sender);\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n    event Paused(address account);\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n    event Unpaused(address account);\\n\\n    function DISTRIBUTION_PERIOD() view external returns (uint256);\\n    function PAY_COVER_PERIOD() view external returns (uint256);\\n    function accumulatedRewardPerShare() view external returns (uint256);\\n    function administrator() view external returns (address);\\n    function allowance(address owner, address spender) view external returns (uint256);\\n    function approve(address spender, uint256 amount) external returns (bool);\\n    function balanceOf(address account) view external returns (uint256);\\n    function calculateReward(uint256 _amount, uint256 _userDebt) view external returns (uint256);\\n    function coveragePrice(uint256 _amount, uint256 _length) view external returns (uint256);\\n    function decimals() view external returns (uint8);\\n    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);\\n    function deg() view external returns (address);\\n    function emissionEndTime() view external returns (uint256);\\n    function emissionRate() view external returns (uint256);\\n    function endLiquidationDate() view external returns (uint256);\\n    function executor() view external returns (address);\\n    function incidentReport() view external returns (address);\\n    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);\\n    function insurancePoolFactory() view external returns (address);\\n    function insuredToken() view external returns (address);\\n    function lastRewardTimestamp() view external returns (uint256);\\n    function liquidatePool() external;\\n    function liquidated() view external returns (bool);\\n    function maxCapacity() view external returns (uint256);\\n    function maxLength() view external returns (uint256);\\n    function name() view external returns (string memory);\\n    function onboardProposal() view external returns (address);\\n    function owner() view external returns (address);\\n    function paused() view external returns (bool);\\n    function policyCenter() view external returns (address);\\n\\n    function poolInfo() view external returns (bool, uint256, uint256, uint256, uint256, uint256);\\n\\n    function priceRatio() view external returns (uint256);\\n    function provideLiquidity(uint256 _amount, address _provider) external;\\n    function reinsurancePool() view external returns (address);\\n    function removeLiquidity(uint256 _amount, address _provider) external;\\n    function renounceOwnership() external;\\n   \\n    \\n    function setExecutor(address _executor) external;\\n    function setIncidentReport(address _incidentReport) external;\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n    function setMaxCapacity(uint256 _maxCapacity) external;\\n    function setMaxLength(uint256 _maxLength) external;\\n    function setOnboardProposal(address _onboardProposal) external;\\n    function pauseInsurancePool(bool _paused) external;\\n    function setPolicyCenter(address _policyCenter) external;\\n    function setReinsurancePool(address _reinsurancePool) external;\\n    \\n    function shield() view external returns (address);\\n    function startTime() view external returns (uint256);\\n    function symbol() view external returns (string memory);\\n    function totalSupply() view external returns (uint256);\\n    function transfer(address to, uint256 amount) external returns (bool);\\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\\n    function transferOwnership(address newOwner) external;\\n    function updateEmissionRate(uint256 _premium) external;\\n    function updateRewards() external;\\n    function veDeg() view external returns (address);\\n    function verifyLiquidationEnded() external;\\n}\",\"keccak256\":\"0x6ee79cd221cb252e053405300d7adb40509824d509036bde5ecec9f6901a1235\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IInsurancePoolFactory.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IInsurancePoolFactory {\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n    event PoolCreated(\\n        address poolAddress,\\n        uint256 poolId,\\n        string protocolName,\\n        address protocolToken,\\n        uint256 maxCapacity,\\n        uint256 policyPricePerShield\\n    );\\n\\n    struct PoolInfo {\\n        string a;\\n        address b;\\n        address c;\\n        uint256 d;\\n        uint256 e;\\n    }\\n\\n    function administrator() external view returns (address);\\n\\n    function deg() external view returns (address);\\n\\n    function deregisterAddress(address _tokenAddress) external;\\n\\n    function deployPool(\\n        string memory _name,\\n        address _protocolToken,\\n        uint256 _maxCapacity,\\n        uint256 _policyPricePerToken\\n    ) external returns (address);\\n\\n    function executor() external view returns (address);\\n\\n    function getPoolAddressList() external view returns (address[] memory);\\n\\n    function getPoolInfo(uint256 _id) external view returns (PoolInfo memory);\\n\\n    function incidentReport() external view returns (address);\\n\\n    function insurancePoolFactory() external view returns (address);\\n\\n    function maxCapacity() external view returns (uint256);\\n\\n    function owner() external view returns (address);\\n\\n    function policyCenter() external view returns (address);\\n\\n    function poolCounter() external view returns (uint256);\\n\\n    function poolInfoById(uint256)\\n        external\\n        view\\n        returns (\\n            string memory protocolName,\\n            address poolAddress,\\n            address protocolToken,\\n            uint256 maxCapacity,\\n            uint256 policyPricePerShield\\n        );\\n\\n    function poolRegistered(address) external view returns (bool);\\n\\n    function proposalCenter() external view returns (address);\\n\\n    function reinsurancePool() external view returns (address);\\n\\n    function renounceOwnership() external;\\n\\n\\n    function setExecutor(address _executor) external;\\n\\n    function setIncidentReport(address _incidentReport) external;\\n\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n\\n    function setPolicyCenter(address _policyCenter) external;\\n\\n    function setProposalCenter(address _proposalCenter) external;\\n\\n    function setReinsurancePool(address _reinsurancePool) external;\\n\\n    function shield() external view returns (address);\\n\\n    function tokenRegistered(address) external view returns (bool);\\n\\n    function transferOwnership(address newOwner) external;\\n\\n    function veDeg() external view returns (address);\\n}\\n\",\"keccak256\":\"0x90a2f328cf8124955127c1351288ead9265b760fbcc18915d3922877973ca49a\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IOnboardProposal.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IOnboardProposal {\\n    struct Proposal {\\n        string name;\\n        address protocolAddress;\\n        address proposer;\\n        uint256 proposeTimestamp;\\n        uint256 numFor; // Votes voting for\\n        uint256 numAgainst; // Votes voting against\\n        uint256 maxCapacity;\\n        uint256 priceRatio;\\n        uint256 poolId;\\n        uint256 status;\\n        uint256 result;\\n    }\\n\\n    event NewProposal(\\n        string name,\\n        address token,\\n        uint256 maxCapacity,\\n        uint256 priceRatio\\n    );\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n    event ProposalSettled(uint256 proposalId, uint256 result);\\n    event ProposalVoted(\\n        uint256 proposalId,\\n        address indexed user,\\n        uint256 voteFor,\\n        uint256 amount\\n    );\\n\\n    function claim(uint256 _proposalId) external;\\n\\n    function deg() external view returns (address);\\n\\n    function executor() external view returns (address);\\n\\n    function executeProposal(uint256 _proposalId) external returns (address);\\n\\n    function incidentReport() external view returns (address);\\n\\n    function insurancePoolFactory() external view returns (address);\\n\\n    function getProposal(uint256 _proposalId)\\n        external\\n        view\\n        returns (Proposal memory);\\n\\n    function owner() external view returns (address);\\n\\n    function policyCenter() external view returns (address);\\n\\n    function proposalCenter() external view returns (address);\\n\\n    function proposalCounter() external view returns (uint256);\\n\\n    function proposals(uint256)\\n        external\\n        view\\n        returns (\\n            string memory name,\\n            address protocolAddress,\\n            address proposer,\\n            uint256 proposeTimestamp,\\n            uint256 numFor,\\n            uint256 numAgainst,\\n            uint256 maxCapacity,\\n            uint256 priceRatio,\\n            uint256 poolId,\\n            uint256 status,\\n            uint256 result\\n        );\\n\\n    function propose(\\n        string memory _name,\\n        address _token,\\n        uint256 _maxCapacity,\\n        uint256 _priceRatio\\n    ) external;\\n\\n    function reinsurancePool() external view returns (address);\\n\\n    function renounceOwnership() external;\\n\\n    function setExecutor(address _executor) external;\\n\\n    function setIncidentReport(address _incidentReport) external;\\n\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n\\n    function setPolicyCenter(address _policyCenter) external;\\n\\n    function setProposalCenter(address _proposalCenter) external;\\n\\n    function setReinsurancePool(address _reinsurancePool) external;\\n\\n\\n\\n    function settle(uint256 _proposalId) external;\\n\\n    function shield() external view returns (address);\\n\\n    function transferOwnership(address newOwner) external;\\n\\n    function userProposalVotes(address, uint256)\\n        external\\n        view\\n        returns (\\n            uint256 choice,\\n            uint256 amount,\\n            bool claimed\\n        );\\n\\n    function veDeg() external view returns (address);\\n\\n    function vote(\\n        uint256 _proposalId,\\n        uint256 _isFor,\\n        uint256 _amount\\n    ) external;\\n}\\n\",\"keccak256\":\"0x179250fdb1940eb4ec59a6d5b616e23adc95219978030853f91ce4d90463386a\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IPolicyCenter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IPolicyCenter {\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n    event Payout(uint256 _amount, address _address);\\n    event Reward(uint256 _amount, address _address);\\n\\n    function approvePoolToken(address _token) external;\\n    function buyCoverage(uint256 _poolId, uint256 _pay, uint256 _coverAmount, uint256 _length) external;\\n    function calculatePayout(uint256 _poolId, address _insured) view external returns (uint256);\\n    function calculateReward(uint256 _poolId, address _provider) view external returns (uint256);\\n    function claimPayout(uint256 _poolId) external;\\n    function claimReward(uint256 _poolId) external;\\n    function coverages(uint256, address) view external returns (uint256 amount, uint256 buyDate, uint256 length);\\n    function deg() view external returns (address);\\n    function exchange() view external returns (address);\\n    function executor() view external returns (address);\\n    function fundsByPoolId(uint256) view external returns (uint256);\\n\\n    function getInsurancePoolById(uint256 _poolId) view external returns (address);\\n    function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);\\n    function getPremiumSplits() view external returns (uint256, uint256);\\n    function incidentReport() view external returns (address);\\n    function insurancePoolFactory() view external returns (address);\\n    function insurancePools(uint256) view external returns (address);\\n\\n    function liquidities(uint256, address) view external returns (uint256 amount, uint256 userDebt, uint256 lastClaim);\\n    function liquidityByPoolId(uint256) view external returns (uint256);\\n    function onboardProposal() view external returns (address);\\n    function owner() view external returns (address);\\n    function policyCenter() view external returns (address);\\n    function premiumSplits(uint256) view external returns (uint256);\\n    function provideLiquidity(uint256 _poolId, uint256 _amount) external;\\n    function reinsurancePool() view external returns (address);\\n    function removeLiquidity(uint256 _poolId, uint256 _amount) external;\\n    function renounceOwnership() external;\\n    function rewardTreasuryToReporter(address _reporter) external;\\n    \\n    function setExchange(address _exchange) external;\\n    function setExecutor(address _executor) external;\\n    function setIncidentReport(address _incidentReport) external;\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n    function setOnboardProposal(address _onboardProposal) external;\\n    function setPolicyCenter(address _policyCenter) external;\\n    function setPremiumSplit(uint256 _insurance, uint256 _reinsurance) external;\\n    function setReinsurancePool(address _reinsurancePool) external;\\n    \\n    function shield() view external returns (address);\\n    function storePoolInformation(address _pool, address _token, uint256 _poolId) external;\\n    function tokenByPoolId(uint256) view external returns (address);\\n    function totalRewardsByPoolId(uint256) view external returns (uint256);\\n    function transferOwnership(address newOwner) external;\\n    function treasury() view external returns (uint256);\\n    function veDeg() view external returns (address);\\n}\\n\",\"keccak256\":\"0x6d2fde19584ddc992ab6d86a7300a928c49d2cbea390228e5c6fa762fc57a2cf\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IReinsurancePool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IReinsurancePool {\\n    event Approval(address indexed owner, address indexed spender, uint256 value);\\n    event Deposit(address indexed user, uint256 amount);\\n    event MoveLiquidity(uint256 poolId, uint256 amount);\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n    event Withdraw(address indexed user, uint256 amount);\\n\\n    function accumulatedRewardPerShare() view external returns (uint256);\\n    function addPremium(uint256 _amount) external;\\n    function allowance(address owner, address spender) view external returns (uint256);\\n    function approve(address spender, uint256 amount) external returns (bool);\\n    function balanceOf(address account) view external returns (uint256);\\n    function calculateReward(uint256 _amount, uint256 _userDebt) view external returns (uint256);\\n    function claimReward(address _provider) external;\\n    function decimals() view external returns (uint8);\\n    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);\\n    function deg() view external returns (address);\\n    function emissionRate() view external returns (uint256);\\n    function endLiquidationPeriod() external;\\n    function executor() view external returns (address);\\n    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);\\n    function insurancePoolFactory() view external returns (address);\\n    function insurancePoolLiquidated() view external returns (bool);\\n    function liquidities(address) view external returns (uint256 amount, uint256 userDebt, uint256 lastClaim);\\n    function moveLiquidity(uint256 _poolId, uint256 _amount) external;\\n    function name() view external returns (string memory);\\n    function owner() view external returns (address);\\n    function paused() view external returns (bool);\\n    function policyCenter() view external returns (address);\\n    function poolInfo() external view returns (bool,uint256,uint256,uint256,uint256,uint256);\\n    function pools(address) view external returns (address protocolAddress, uint256 proportion);\\n    function proposalCenter() view external returns (address);\\n    function provideLiquidity(uint256 _amount, address _provider) external;\\n    function reinsurancePool() view external returns (address);\\n    function reinsurePool(uint256 _amount, address _address) external;\\n    function removeLiquidity(uint256 _amount, address _provider) external;\\n    function renounceOwnership() external;\\n    \\n    function setExecutor(address _executor) external;\\n    function setInsurancePoolFactory(address _insurancePoolFactory) external;\\n    function pauseReinsurancePool(bool _paused) external;\\n\\n    function setPolicyCenter(address _policyCenter) external;\\n    function setProposalCenter(address _proposalCenter) external;\\n    function setReinsurancePool(address _reinsurancePool) external;\\n    \\n    function shield() view external returns (address);\\n    function symbol() view external returns (string memory);\\n    function totalDistributedReward() view external returns (uint256);\\n    function totalReward() view external returns (uint256);\\n    function totalSupply() view external returns (uint256);\\n    function transfer(address to, uint256 amount) external returns (bool);\\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\\n    function transferOwnership(address newOwner) external;\\n    function updateEmissionRate(uint256 _premium) external;\\n    function updateRewards() external;\\n    function veDeg() view external returns (address);\\n}\\n\",\"keccak256\":\"0x52cb0505c04ccbb2fa5ac187478c3491ad3b37493869fc5ae29467bd180dc215\",\"license\":\"GPL-3.0-or-later\"},\"src/util/OwnableWithoutContext.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.13;\\n\\nabstract contract OwnableWithoutContext {\\n    address private _owner;\\n\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n\\n    /**\\n     * @dev Initializes the contract setting a customized initial owner.\\n     */\\n    constructor(address _initOwner) {\\n        _transferOwnership(_initOwner);\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        require(owner() == msg.sender, \\\"Ownable: caller is not the owner\\\");\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        require(\\n            newOwner != address(0),\\n            \\\"Ownable: new owner is the zero address\\\"\\n        );\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n}\\n\",\"keccak256\":\"0x0cf3a1968613bb036219db76df7643df085878ed42beb669c9803037c0396c75\",\"license\":\"MIT\"},\"src/voting/interfaces/VotingParameters.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nabstract contract VotingParameters {\\n    // Status parameters for a voting\\n    uint256 constant INIT_STATUS = 0;\\n    uint256 constant PENDING_STATUS = 1;\\n    uint256 constant VOTING_STATUS = 2;\\n    uint256 constant SETTLED_STATUS = 3;\\n    uint256 constant CLOSE_STATUS = 404;\\n\\n    // Result parameters for a voting\\n    uint256 constant INIT_RESULT = 0;\\n    uint256 constant PASS_RESULT = 1;\\n    uint256 constant REJECT_RESULT = 2;\\n    uint256 constant TIED_RESULT = 3;\\n}\\n\",\"keccak256\":\"0xee54f6c7ecf6b46e3b04c29213587d77138369682f7e68737a9624d8a4f0514b\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b503361001b81610021565b50610073565b600580546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b610d69806100826000396000f3fe608060405234801561001057600080fd5b50600436106101165760003560e01c80634d658ef0116100a25780638da5cb5b116100715780638da5cb5b14610230578063a0ba213014610241578063e3356ccf1461024a578063e8adbf2f1461025d578063f2fde38b1461027057600080fd5b80634d658ef0146101e95780635e0403e1146101fc578063715018a61461020f578063763a32811461021757600080fd5b806313070d00116100e957806313070d0014610186578063250c4dc61461019d5780632dd57bb0146101b05780632fbac6d7146101c357806345ac7890146101d657600080fd5b8063084b97631461011b5780630a2c433d1461014b5780630d61b519146101605780630f89b77d14610173575b600080fd5b60045461012e906001600160a01b031681565b6040516001600160a01b0390911681526020015b60405180910390f35b61015e6101593660046109fb565b610283565b005b61012e61016e366004610a1f565b6102ac565b60035461012e906001600160a01b031681565b61018f60065481565b604051908152602001610142565b60025461012e906001600160a01b031681565b61015e6101be3660046109fb565b61049a565b60015461012e906001600160a01b031681565b61015e6101e43660046109fb565b6104c0565b61015e6101f73660046109fb565b6104e6565b61015e61020a366004610a1f565b61050c565b61015e61087b565b61015e610225366004610a38565b600791909155600655565b6005546001600160a01b031661012e565b61018f60075481565b61015e6102583660046109fb565b61088f565b60005461012e906001600160a01b031681565b61015e61027e3660046109fb565b6108b5565b61028b61092b565b600180546001600160a01b0319166001600160a01b03831617905550565b50565b600480546040516318feeb1560e31b815291820183905260009182916001600160a01b03169063c7f758a890602401600060405180830381865afa1580156102f8573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526103209190810190610b62565b905060038161012001511461036a5760405162461bcd60e51b815260206004820152600b60248201526a139bdd081cd95d1d1b195960aa1b60448201526064015b60405180910390fd5b8061014001516001146103b75760405162461bcd60e51b815260206004820152601560248201527412185cc81b9bdd081899595b88185c1c1c9bdd9959605a1b6044820152606401610361565b6002548151602083015160c084015160e085015160405163bb9febaf60e01b81526000956001600160a01b03169463bb9febaf946103fb9491939092600401610c47565b6020604051808303816000875af115801561041a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061043e9190610c97565b602080840151604080516001600160a01b03808616825293810189905292909116908201529091507f5ba6f852ab306370a8a63b95dcf9bc10b95f07520935a8d307e72d75551f61279060600160405180910390a19392505050565b6104a261092b565b600080546001600160a01b0319166001600160a01b03831617905550565b6104c861092b565b600480546001600160a01b0319166001600160a01b03831617905550565b6104ee61092b565b600280546001600160a01b0319166001600160a01b03831617905550565b60035460405163c942adf760e01b8152600481018390526000918291829182916001600160a01b039091169063c942adf79060240161014060405180830381865afa15801561055f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105839190610cb4565b5098509850505050509450509350600382146105ec5760405162461bcd60e51b815260206004820152602260248201527f5265706f7274206973206e6f7420726561647920746f20626520657865637574604482015261195960f21b6064820152608401610361565b806001146106335760405162461bcd60e51b815260206004820152601460248201527314995c1bdc9d081a5cc81b9bdd081c185cdcd95960621b6044820152606401610361565b6000805460405163502dd62160e11b8152600481018790526001600160a01b039091169063a05bac4290602401602060405180830381865afa15801561067d573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106a19190610c97565b60008054604051637815de2960e11b81526004810189905292935090916001600160a01b039091169063f02bbc5290602401602060405180830381865afa1580156106f0573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107149190610c97565b6000546040516306a7a8d360e31b81526001600160a01b03888116600483015292935091169063353d469890602401600060405180830381600087803b15801561075d57600080fd5b505af1158015610771573d6000803e3d6000fd5b50505050816001600160a01b031663908078076040518163ffffffff1660e01b8152600401600060405180830381600087803b1580156107b057600080fd5b505af11580156107c4573d6000803e3d6000fd5b505060025460405163292a03b560e11b81526001600160a01b0385811660048301529091169250635254076a9150602401600060405180830381600087803b15801561080f57600080fd5b505af1158015610823573d6000803e3d6000fd5b5050604080516001600160a01b0386168152602081018a90529081018a90527f8fa9381fba721fd6948edce4a010404fc0032dc4dc0c1602636306c4965f5cf69250606001905060405180910390a150505050505050565b61088361092b565b61088d6000610994565b565b61089761092b565b600380546001600160a01b0319166001600160a01b03831617905550565b6108bd61092b565b6001600160a01b0381166109225760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608401610361565b6102a981610994565b3361093e6005546001600160a01b031690565b6001600160a01b03161461088d5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152606401610361565b600580546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6001600160a01b03811681146102a957600080fd5b600060208284031215610a0d57600080fd5b8135610a18816109e6565b9392505050565b600060208284031215610a3157600080fd5b5035919050565b60008060408385031215610a4b57600080fd5b50508035926020909101359150565b634e487b7160e01b600052604160045260246000fd5b604051610160810167ffffffffffffffff81118282101715610a9457610a94610a5a565b60405290565b60005b83811015610ab5578181015183820152602001610a9d565b83811115610ac4576000848401525b50505050565b600082601f830112610adb57600080fd5b815167ffffffffffffffff80821115610af657610af6610a5a565b604051601f8301601f19908116603f01168101908282118183101715610b1e57610b1e610a5a565b81604052838152866020858801011115610b3757600080fd5b610b48846020830160208901610a9a565b9695505050505050565b8051610b5d816109e6565b919050565b600060208284031215610b7457600080fd5b815167ffffffffffffffff80821115610b8c57600080fd5b908301906101608286031215610ba157600080fd5b610ba9610a70565b825182811115610bb857600080fd5b610bc487828601610aca565b825250610bd360208401610b52565b6020820152610be460408401610b52565b6040820152606083810151908201526080808401519082015260a0808401519082015260c0808401519082015260e08084015190820152610100808401519082015261012080840151908201526101409283015192810192909252509392505050565b6080815260008551806080840152610c668160a0850160208a01610a9a565b6001600160a01b03959095166020830152506040810192909252606082015260a0601f909201601f19160101919050565b600060208284031215610ca957600080fd5b8151610a18816109e6565b6000806000806000806000806000806101408b8d031215610cd457600080fd5b8a51995060208b0151985060408b0151610ced816109e6565b8098505060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea26469706673582212206d936fa20b407cc30db3899db057a08189ddd9af6759c60d798655d24733d96464736f6c634300080d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101165760003560e01c80634d658ef0116100a25780638da5cb5b116100715780638da5cb5b14610230578063a0ba213014610241578063e3356ccf1461024a578063e8adbf2f1461025d578063f2fde38b1461027057600080fd5b80634d658ef0146101e95780635e0403e1146101fc578063715018a61461020f578063763a32811461021757600080fd5b806313070d00116100e957806313070d0014610186578063250c4dc61461019d5780632dd57bb0146101b05780632fbac6d7146101c357806345ac7890146101d657600080fd5b8063084b97631461011b5780630a2c433d1461014b5780630d61b519146101605780630f89b77d14610173575b600080fd5b60045461012e906001600160a01b031681565b6040516001600160a01b0390911681526020015b60405180910390f35b61015e6101593660046109fb565b610283565b005b61012e61016e366004610a1f565b6102ac565b60035461012e906001600160a01b031681565b61018f60065481565b604051908152602001610142565b60025461012e906001600160a01b031681565b61015e6101be3660046109fb565b61049a565b60015461012e906001600160a01b031681565b61015e6101e43660046109fb565b6104c0565b61015e6101f73660046109fb565b6104e6565b61015e61020a366004610a1f565b61050c565b61015e61087b565b61015e610225366004610a38565b600791909155600655565b6005546001600160a01b031661012e565b61018f60075481565b61015e6102583660046109fb565b61088f565b60005461012e906001600160a01b031681565b61015e61027e3660046109fb565b6108b5565b61028b61092b565b600180546001600160a01b0319166001600160a01b03831617905550565b50565b600480546040516318feeb1560e31b815291820183905260009182916001600160a01b03169063c7f758a890602401600060405180830381865afa1580156102f8573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526103209190810190610b62565b905060038161012001511461036a5760405162461bcd60e51b815260206004820152600b60248201526a139bdd081cd95d1d1b195960aa1b60448201526064015b60405180910390fd5b8061014001516001146103b75760405162461bcd60e51b815260206004820152601560248201527412185cc81b9bdd081899595b88185c1c1c9bdd9959605a1b6044820152606401610361565b6002548151602083015160c084015160e085015160405163bb9febaf60e01b81526000956001600160a01b03169463bb9febaf946103fb9491939092600401610c47565b6020604051808303816000875af115801561041a573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061043e9190610c97565b602080840151604080516001600160a01b03808616825293810189905292909116908201529091507f5ba6f852ab306370a8a63b95dcf9bc10b95f07520935a8d307e72d75551f61279060600160405180910390a19392505050565b6104a261092b565b600080546001600160a01b0319166001600160a01b03831617905550565b6104c861092b565b600480546001600160a01b0319166001600160a01b03831617905550565b6104ee61092b565b600280546001600160a01b0319166001600160a01b03831617905550565b60035460405163c942adf760e01b8152600481018390526000918291829182916001600160a01b039091169063c942adf79060240161014060405180830381865afa15801561055f573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906105839190610cb4565b5098509850505050509450509350600382146105ec5760405162461bcd60e51b815260206004820152602260248201527f5265706f7274206973206e6f7420726561647920746f20626520657865637574604482015261195960f21b6064820152608401610361565b806001146106335760405162461bcd60e51b815260206004820152601460248201527314995c1bdc9d081a5cc81b9bdd081c185cdcd95960621b6044820152606401610361565b6000805460405163502dd62160e11b8152600481018790526001600160a01b039091169063a05bac4290602401602060405180830381865afa15801561067d573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906106a19190610c97565b60008054604051637815de2960e11b81526004810189905292935090916001600160a01b039091169063f02bbc5290602401602060405180830381865afa1580156106f0573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107149190610c97565b6000546040516306a7a8d360e31b81526001600160a01b03888116600483015292935091169063353d469890602401600060405180830381600087803b15801561075d57600080fd5b505af1158015610771573d6000803e3d6000fd5b50505050816001600160a01b031663908078076040518163ffffffff1660e01b8152600401600060405180830381600087803b1580156107b057600080fd5b505af11580156107c4573d6000803e3d6000fd5b505060025460405163292a03b560e11b81526001600160a01b0385811660048301529091169250635254076a9150602401600060405180830381600087803b15801561080f57600080fd5b505af1158015610823573d6000803e3d6000fd5b5050604080516001600160a01b0386168152602081018a90529081018a90527f8fa9381fba721fd6948edce4a010404fc0032dc4dc0c1602636306c4965f5cf69250606001905060405180910390a150505050505050565b61088361092b565b61088d6000610994565b565b61089761092b565b600380546001600160a01b0319166001600160a01b03831617905550565b6108bd61092b565b6001600160a01b0381166109225760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608401610361565b6102a981610994565b3361093e6005546001600160a01b031690565b6001600160a01b03161461088d5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152606401610361565b600580546001600160a01b038381166001600160a01b0319831681179093556040519116919082907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a35050565b6001600160a01b03811681146102a957600080fd5b600060208284031215610a0d57600080fd5b8135610a18816109e6565b9392505050565b600060208284031215610a3157600080fd5b5035919050565b60008060408385031215610a4b57600080fd5b50508035926020909101359150565b634e487b7160e01b600052604160045260246000fd5b604051610160810167ffffffffffffffff81118282101715610a9457610a94610a5a565b60405290565b60005b83811015610ab5578181015183820152602001610a9d565b83811115610ac4576000848401525b50505050565b600082601f830112610adb57600080fd5b815167ffffffffffffffff80821115610af657610af6610a5a565b604051601f8301601f19908116603f01168101908282118183101715610b1e57610b1e610a5a565b81604052838152866020858801011115610b3757600080fd5b610b48846020830160208901610a9a565b9695505050505050565b8051610b5d816109e6565b919050565b600060208284031215610b7457600080fd5b815167ffffffffffffffff80821115610b8c57600080fd5b908301906101608286031215610ba157600080fd5b610ba9610a70565b825182811115610bb857600080fd5b610bc487828601610aca565b825250610bd360208401610b52565b6020820152610be460408401610b52565b6040820152606083810151908201526080808401519082015260a0808401519082015260c0808401519082015260e08084015190820152610100808401519082015261012080840151908201526101409283015192810192909252509392505050565b6080815260008551806080840152610c668160a0850160208a01610a9a565b6001600160a01b03959095166020830152506040810192909252606082015260a0601f909201601f19160101919050565b600060208284031215610ca957600080fd5b8151610a18816109e6565b6000806000806000806000806000806101408b8d031215610cd457600080fd5b8a51995060208b0151985060408b0151610ced816109e6565b8098505060608b0151965060808b0151955060a08b0151945060c08b0151935060e08b015192506101008b015191506101208b015190509295989b9194979a509295985056fea26469706673582212206d936fa20b407cc30db3899db057a08189ddd9af6759c60d798655d24733d96464736f6c634300080d0033",
+  "devdoc": {
+    "author": "Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)",
+    "kind": "dev",
+    "methods": {
+      "executeProposal(uint256)": {
+        "params": {
+          "_proposalId": "Proposal id"
+        }
+      },
+      "executeReport(uint256)": {
+        "params": {
+          "_reportId": "_id of the report to be executed"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "setBuffers(uint256,uint256)": {
+        "params": {
+          "_poolBuffer": "time in unix",
+          "_reportBuffer": "time in unix"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      }
+    },
+    "title": "Executor",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "executeProposal(uint256)": {
+        "notice": "Settle the proposal"
+      },
+      "executeReport(uint256)": {
+        "notice": "executes a report already settled by vote"
+      },
+      "setBuffers(uint256,uint256)": {
+        "notice": "sets pool and report time buffers"
+      }
+    },
+    "notice": "This is the executor for degis Protocol Protection         The executor is responsible for the execution of the reports and pool proposals         Both administrators or users can execute proposals and reports out of self interest",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 11691,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "policyCenter",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 11693,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "reinsurancePool",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 11695,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "insurancePoolFactory",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_address"
+      },
+      {
+        "astId": 11697,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "incidentReport",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_address"
+      },
+      {
+        "astId": 11699,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "onboardProposal",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_address"
+      },
+      {
+        "astId": 16364,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_address"
+      },
+      {
+        "astId": 9975,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "reportBuffer",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 9977,
+        "contract": "src/core/Executor.sol:Executor",
+        "label": "poolBuffer",
+        "offset": 0,
+        "slot": "7",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

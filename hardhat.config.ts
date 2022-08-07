@@ -12,6 +12,8 @@ import example from "./tasks/example";
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import "./tasks/setAddress";
+
 function getRemappings() {
   return fs
     .readFileSync("remappings.txt", "utf8")

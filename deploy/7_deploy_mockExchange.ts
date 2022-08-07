@@ -1,11 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import {
-  getExternalTokenAddress,
-  readAddressList,
-  storeAddressList,
-} from "../scripts/contractAddress";
+import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -23,24 +19,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
-
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
-
-  const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
-
   // Proxy Admin contract artifact
-  const policyCenter = await deploy("PolicyCenter", {
-    contract: "PolicyCenter",
+  const exchange = await deploy("Exchange", {
+    contract: "Exchange",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, reinsurancePoolAddress],
+    args: [],
     log: true,
   });
-  addressList[network.name].PolicyCenter = policyCenter.address;
+  addressList[network.name].MockExchange = exchange.address;
 
-  console.log("\npolicy center deployed to address: ", policyCenter.address);
+  console.log("mock exchange deployed to address: ", exchange.address, "\n");
 
   //   await hre.run("verify:verify", {
   //     address: insurancePoolFactory.address,
@@ -51,5 +39,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["PolicyCenter"];
+func.tags = ["MockExchange"];
 export default func;
