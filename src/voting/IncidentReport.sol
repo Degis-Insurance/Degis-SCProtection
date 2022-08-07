@@ -162,9 +162,7 @@ contract IncidentReport is
      * @param _poolId Pool id to report incident
      */
     function report(uint256 _poolId) external {
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
-            _poolId
-        );
+        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
         require(pool != address(0), "Pool doesn't exist");
         require(!poolReported[pool], "Pool already reported");
 

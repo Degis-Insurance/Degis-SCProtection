@@ -129,7 +129,7 @@ contract Executor is
         require(result == 1, "Report is not passed");
 
         // execute the pool
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
             poolId
         );
         address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(

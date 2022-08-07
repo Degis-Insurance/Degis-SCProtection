@@ -152,7 +152,6 @@ contract ProposalCenter is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
-   
 
     /**
      * @notice Returns the number of proposals in the proposal center.
@@ -352,7 +351,7 @@ contract ProposalCenter is ProtocolProtection {
             total > (IERC20(veDeg).totalSupply() * 3) / 10,
             "Not enough votes"
         );
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
+        address pool = IPolicyCenter(policyCenter).insurancePools(
             reportIds[_reportId].poolId
         );
         bool result = reportIds[_reportId].yes > reportIds[_reportId].no;
@@ -481,9 +480,7 @@ contract ProposalCenter is ProtocolProtection {
     @param _poolId id of the pool to be reported
     */
     function reportPool(uint256 _poolId) public {
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
-            _poolId
-        );
+        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
         require(!poolReported[pool], "Pool already reported");
         require(pool != address(0), "Pool doesn't exist");
         uint256 counter = ++reportCounter;
@@ -563,14 +560,14 @@ contract ProposalCenter is ProtocolProtection {
             IPolicyCenter(policyCenter).rewardTreasuryToReporter(
                 reportIds[_reportId].reporterAddress
             );
-            IDegisToken(deg).mintDegis(reportIds[_reportId].reporterAddress, 2000);
+            IDegisToken(deg).mintDegis(
+                reportIds[_reportId].reporterAddress,
+                2000
+            );
             // punishment for voting against majority
             for (uint256 i = 0; i < voted.length; i++) {
                 if (confirmsReport[_reportId][voted[i]] != _veredict) {
-                    (uint256 veDegBalance, ) = IVeDEG(deg).users(
-                        1,
-                        voted[i]
-                    );
+                    (uint256 veDegBalance, ) = IVeDEG(deg).users(1, voted[i]);
                     uint256 stakedDegPenalty = (veDegBalance * 4) / 500;
                     reward += stakedDegPenalty;
                     IERC20(deg).transferFrom(
@@ -579,28 +576,25 @@ contract ProposalCenter is ProtocolProtection {
                         stakedDegPenalty
                     );
                     // unlock vedeg balance
-                    IVeDEG(veDeg).unlockVeDEG(
-                        voted[i],
-                        (veDegBalance * 4) / 5
-                    );
+                    IVeDEG(veDeg).unlockVeDEG(voted[i], (veDegBalance * 4) / 5);
                 }
             }
             // rewards for voting with majority
-            if (reward > 0){
+            if (reward > 0) {
                 for (uint256 i = 0; i < voted.length; i++) {
-                if (confirmsReport[_reportId][voted[i]] == _veredict) {
-                    // if voted with the decision, reward 50% of penalty to voters
-                    // according to the amount of vedeg they hold
-                    uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
-                    uint256 toTransfer = (balance * reportIds[_reportId].yes) /
-                        2;
-                    IERC20(deg).transfer(voted[i], toTransfer);
-                    IVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
-                    reward -= toTransfer;
+                    if (confirmsReport[_reportId][voted[i]] == _veredict) {
+                        // if voted with the decision, reward 50% of penalty to voters
+                        // according to the amount of vedeg they hold
+                        uint256 balance = IERC20(veDeg).balanceOf(voted[i]);
+                        uint256 toTransfer = (balance *
+                            reportIds[_reportId].yes) / 2;
+                        IERC20(deg).transfer(voted[i], toTransfer);
+                        IVeDEG(veDeg).unlockVeDEG(voted[i], (balance * 4) / 5);
+                        reward -= toTransfer;
+                    }
                 }
+                IERC20(deg).transfer(policyCenter, reward);
             }
-            IERC20(deg).transfer(policyCenter, reward);
         }
     }
-}
 }
