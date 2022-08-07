@@ -555,6 +555,7 @@ contract PolicyCenter is
      */
     function rewardTreasuryToReporter(address _reporter) external {
         require(msg.sender == executor, "not requested by Executor");
+
         // 10% of treasury + 2000 DEG
         uint256 reward = (treasury * 1000) / 10000;
         treasury -= reward;
@@ -682,12 +683,14 @@ contract PolicyCenter is
             fromToken,
             deg
         );
+
         treasury += treasuryReceives;
+        
         fundsByPoolId[_poolId] += toInsurancePool;
+
         // reinsurance pool is pool 0
         fundsByPoolId[0] += reinsuranceReceives;
 
-        console.log("to insurancepool", toInsurancePool);
 
         IInsurancePool(insurancePools[_poolId]).updateEmissionRate(
             toInsurancePool

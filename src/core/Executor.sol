@@ -68,7 +68,8 @@ contract Executor is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice              sets pool and report time buffers
+     * @notice              Set pool and report time buffers
+     *
      * @param _poolBuffer   time in unix
      * @param _reportBuffer time in unix
      */
@@ -105,8 +106,9 @@ contract Executor is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice executes a report already settled by vote
-     * @param _reportId _id of the report to be executed
+     * @notice Execute a report already settled
+     *
+     * @param _reportId Id of the report to be executed
      */
     function executeReport(uint256 _reportId) public {
         // get the report
@@ -124,7 +126,6 @@ contract Executor is
         ) = IIncidentReport(incidentReport).reports(_reportId);
 
         require(status == SETTLED_STATUS, "Report is not ready to be executed");
-
         require(result == 1, "Report is not passed");
 
         // execute the pool

@@ -55,7 +55,7 @@ contract InsurancePoolFactory is
         uint256 policyPricePerShield;
     }
     // poolId => Pool Information
-    mapping(uint256 => PoolInfo) public poolInfoById;
+    mapping(uint256 => PoolInfo) public pools;
 
     uint256 public poolCounter;
     uint256 public maxCapacity;
@@ -94,7 +94,7 @@ contract InsurancePoolFactory is
         reinsurancePool = _reinsurancePool;
 
         // stores information about reinsurance pool, first pool recorded
-        poolInfoById[poolCounter] = PoolInfo(
+        pools[poolCounter] = PoolInfo(
             "ReinsurancePool",
             _reinsurancePool,
             _shield,
@@ -122,7 +122,7 @@ contract InsurancePoolFactory is
         address[] memory list = new address[](poolAmount);
 
         for (uint256 i; i < poolAmount; ) {
-            list[i] = poolInfoById[i].poolAddress;
+            list[i] = pools[i].poolAddress;
 
             unchecked {
                 ++i;
@@ -142,7 +142,7 @@ contract InsurancePoolFactory is
         view
         returns (PoolInfo memory)
     {
-        return poolInfoById[_poolId];
+        return pools[_poolId];
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
@@ -207,7 +207,7 @@ contract InsurancePoolFactory is
             _protocolToken,
             currentPoolId
         );
-        poolInfoById[currentPoolId] = PoolInfo(
+        pools[currentPoolId] = PoolInfo(
             _name,
             newPoolAddress,
             _protocolToken,
