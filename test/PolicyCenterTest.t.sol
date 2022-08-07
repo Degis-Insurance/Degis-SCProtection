@@ -115,11 +115,11 @@ contract PostInsurancePoolDeploymentTest is Test {
         policyCenter.setVeDeg(address(vedeg));
         policyCenter.setShield(address(shield));
         policyCenter.setExecutor(address(executor));
+        policyCenter.setIncidentReport(address(incidentReport));
         policyCenter.setOnboardProposal(address(onboardProposal));
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-        onboardProposal.setDeg(address(deg));
         reinsurancePool.setDeg(address(deg));
         reinsurancePool.setVeDeg(address(vedeg));
         reinsurancePool.setShield(address(shield));
@@ -127,6 +127,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setPolicyCenter(address(policyCenter));
+        onboardProposal.setDeg(address(deg));
         onboardProposal.setVeDeg(address(vedeg));
         onboardProposal.setShield(address(shield));
         onboardProposal.setExecutor(address(executor));
@@ -187,6 +188,21 @@ contract PostInsurancePoolDeploymentTest is Test {
             deg.allowance(address(this), address(policyCenter)) == 10000 ether,
             true
         );
+    }
+
+    function testIsPoolAddress() public {
+        assertEq(policyCenter.isPoolAddress(pool1), true);
+        assertEq(policyCenter.isPoolAddress(address(reinsurancePool)), true);
+        assertEq(policyCenter.isPoolAddress(address(this)), false);
+    }
+
+    function testGetInsurancePoolById() public {
+        // get pool by id
+        address pool = policyCenter.getInsurancePoolById(1);
+        assertEq(pool == pool1, true);
+        // get pool by id that does not exist
+        pool = policyCenter.getInsurancePoolById(2);
+        assertEq(pool == address(0), true);
     }
 
     function testApprovePTPPolicyCenter() public {

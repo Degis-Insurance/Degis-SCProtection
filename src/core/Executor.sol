@@ -41,7 +41,7 @@ contract Executor is ProtocolProtection, VotingParameters {
     // if chosen to, executor report could have a buffer timer to prevent abuse of the system
     // from team or organization members
     uint256 public reportBuffer;
-    uint256 public poolBuffer;
+    uint256 public proposalBuffer;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -61,11 +61,11 @@ contract Executor is ProtocolProtection, VotingParameters {
 
     /**
      * @notice              sets pool and report time buffers
-     * @param _poolBuffer   time in unix
+     * @param _proposalBuffer   time in unix
      * @param _reportBuffer time in unix
      */
-    function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) public {
-        poolBuffer = _poolBuffer;
+    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) public {
+        proposalBuffer = _proposalBuffer;
         reportBuffer = _reportBuffer;
     }
 

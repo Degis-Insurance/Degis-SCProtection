@@ -156,6 +156,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setDeg(address(deg));
         executor.setVeDeg(address(vedeg));
         executor.setShield(address(shield));
+        executor.setIncidentReport(address(incidentReport));
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
@@ -185,6 +186,12 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
     function _report(uint256 _id) public {
         incidentReport.report(_id);
+    }
+
+    function testExecuteReportBeforeBeingQueued() public {
+        // a report should only be executable once its queued in the executor
+        vm.expectRevert("Report is not ready to be executed");
+        executor.executeReport(1);
     }
 
     function testStartReport() public {

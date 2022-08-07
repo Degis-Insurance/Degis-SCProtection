@@ -117,6 +117,50 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     }
 
     /**
+     * @notice Start a new proposal from proposal center
+     *
+     * @param _name        New project name
+     * @param _token       Native token address
+     * @param _maxCapacity Max capacity for the project pool
+     * @param _priceRatio  Price ratio of the premium
+     */
+    function propose(
+        string calldata _name,
+        address _token,
+        uint256 _maxCapacity,
+        uint256 _priceRatio, // 10000 == 100% premium anual cost
+        address _msgsender
+    ) external {
+        require(msg.sender == proposalCenter, "not sent from proposal center");
+
+        require(
+            !IInsurancePoolFactory(insurancePoolFactory).tokenRegistered(
+                _token
+            ),
+            "Protocol already protected"
+        );
+
+        require(poolProposed[_token] == false, "Protocol already proposed");
+
+        // Burn degis tokens to start a proposal
+        IDegisToken(deg).burnDegis(_msgsender, REPORT_THRESHOLD);
+
+        poolProposed[_token] = true;
+
+        uint256 currentProposalCounter = ++proposalCounter;
+
+        Proposal storage proposal = proposals[currentProposalCounter];
+        proposal.protocolToken = _token;
+        proposal.proposer = _msgsender;
+        proposal.proposeTimestamp = block.timestamp;
+        proposal.status = PENDING_STATUS;
+        proposal.maxCapacity = _maxCapacity;
+        proposal.priceRatio = _priceRatio;
+
+        emit NewProposal(_name, _token, _maxCapacity, _priceRatio);
+    }
+
+    /**
      * @notice Vote for a proposal
      *
      * @param _proposalId Proposal id
@@ -166,6 +210,57 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     }
 
     /**
+     * @notice Vote for a proposal
+     *
+     * @param _proposalId Proposal id
+     * @param _isFor      Voting choice
+     * @param _amount     Amount to vote
+     */
+    function vote(
+        uint256 _proposalId,
+        uint256 _isFor,
+        uint256 _amount,
+        address _msgsender
+    ) external {
+        require(msg.sender == proposalCenter, "not sent from proposal center");
+        // Should be manually switched on the voting process
+        require(
+            proposals[_proposalId].status == VOTING_STATUS,
+            "Not voting status"
+        );
+
+        require(_isFor == 1 || _isFor == 2, "Wrong choice");
+
+        _enoughVeDEG(_msgsender, _amount);
+
+        // Lock vedeg until this report is settled
+        IVeDEG(veDeg).lockVeDEG(_msgsender, _amount);
+
+        // Record the user's choice
+        UserVote storage userProposalVote = userProposalVotes[_msgsender][
+            _proposalId
+        ];
+        if (userProposalVote.amount > 0) {
+            require(
+                userProposalVote.choice == _isFor,
+                "Can not choose both sides"
+            );
+        } else {
+            userProposalVote.choice = _isFor;
+        }
+
+        Proposal storage currentProposal = proposals[_proposalId];
+        // Record the vote for this report
+        if (_isFor == 1) {
+            currentProposal.numFor += _amount;
+        } else {
+            currentProposal.numAgainst += _amount;
+        }
+
+        emit ProposalVoted(_proposalId, _msgsender, _isFor, _amount);
+    }
+
+    /**
      * @notice Settle the proposal
      *
      * @param _proposalId Proposal id
@@ -199,7 +294,6 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
     }
 
     function closeProposal(uint256 _proposalId) external onlyOwner {
-        require(msg.sender == executor, "Only executor can close proposal");
 
         Proposal storage currentProposal = proposals[_proposalId];
 
@@ -234,6 +328,26 @@ contract OnboardProposal is ProtocolProtection, OnboardProposalParameters {
 
         userVote.claimed = true;
     }
+
+    /**
+     * @notice Claim back veDEG after voting result settled
+     *
+     * @param _proposalId Proposal id
+     */
+    function claim(uint256 _proposalId, address _msgsender) external {
+        require(msg.sender == proposalCenter, "Only proposal center can claim");
+        Proposal storage currentProposal = proposals[_proposalId];
+
+        require(currentProposal.status == SETTLED_STATUS, "Not settled status");
+
+        UserVote storage userVote = userProposalVotes[_msgsender][_proposalId];
+
+        IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
+
+        userVote.claimed = true;
+    }
+
+    
 
     /**
      * @notice Check if the proposal is settled
