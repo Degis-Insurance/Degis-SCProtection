@@ -2,13 +2,21 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
 
 import "./interfaces/IncidentReportParameters.sol";
+import "./interfaces/IncidentReportDependencies.sol";
+
+import "../interfaces/ExternalTokenDependencies.sol";
 
 import "forge-std/console.sol";
 
-contract IncidentReport is ProtocolProtection, IncidentReportParameters {
+contract IncidentReport is
+    IncidentReportParameters,
+    IncidentReportDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -88,29 +96,56 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield
+    )
+        ExternalTokenDependencies(_deg, _veDeg, _shield)
+        OwnableWithoutContext(msg.sender)
+    {}
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getReport(uint256 _id) public view returns (Report memory) {
-        return reports[_id];
-    }
-
-    function getTempResult(uint256 _id)
-        external
-        view
-        returns (TempResult memory)
-    {
-        return reportTempResults[_id];
-    }
-
-    function getUserVote(address _user, uint256 _id)
+    function getUserVote(address _user, uint256 _poolId)
         external
         view
         returns (UserVote memory)
     {
-        return userReportVotes[_user][_id];
+        return userReportVotes[_user][_poolId];
+    }
+
+    function getTempResult(uint256 _poolId)
+        external
+        view
+        returns (TempResult memory)
+    {
+        return reportTempResults[_poolId];
+    }
+
+    function getReport(uint256 _id) public view returns (Report memory) {
+        return reports[_id];
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -127,9 +162,7 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
      * @param _poolId Pool id to report incident
      */
     function report(uint256 _poolId) external {
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
-            _poolId
-        );
+        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
         require(pool != address(0), "Pool doesn't exist");
         require(!poolReported[pool], "Pool already reported");
 

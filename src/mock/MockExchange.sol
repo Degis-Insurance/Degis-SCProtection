@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Exchange {
     string public name;
@@ -20,7 +20,7 @@ contract Exchange {
     ) external returns (uint256 amountOut) {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
         amountOut = getAmountOut(amountIn, amountOutMin, amountOutMin);
-        IERC20(to).transfer(msg.sender, amountOut);
+        IERC20(path[1]).transfer(msg.sender, amountOut);
     }
 
     function swapTokensForExactTokens(
@@ -32,7 +32,7 @@ contract Exchange {
     ) external returns (uint256 amount) {
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountInMax);
         amount = getAmountOut(amountInMax, amountOut, amountOut);
-        IERC20(to).transfer(msg.sender, amountOut);
+        IERC20(path[1]).transfer(msg.sender, amountOut);
     }
 
     function getAmountOut(

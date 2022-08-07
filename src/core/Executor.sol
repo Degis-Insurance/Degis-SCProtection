@@ -17,7 +17,9 @@
  \\======================================================================//
  \\======================================================================//
 */
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
+
+import "./interfaces/ExecutorDependencies.sol";
 
 import "../voting/interfaces/VotingParameters.sol";
 
@@ -33,7 +35,11 @@ pragma solidity ^0.8.13;
  *         Both administrators or users can execute proposals and reports out of self interest
  *
  */
-contract Executor is ProtocolProtection, VotingParameters {
+contract Executor is
+    ExecutorDependencies,
+    VotingParameters,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -49,19 +55,27 @@ contract Executor is ProtocolProtection, VotingParameters {
 
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
 
-    event NewPoolEecuted(
+    event NewPoolExecuted(
         address poolAddress,
         uint256 proposalId,
         address protocol
     );
+
+    constructor() OwnableWithoutContext(msg.sender) {}
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
+<<<<<<< HEAD
      * @notice              sets pool and report time buffers
      * @param _proposalBuffer   time in unix
+=======
+     * @notice              Set pool and report time buffers
+     *
+     * @param _poolBuffer   time in unix
+>>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
      * @param _reportBuffer time in unix
      */
     function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) public {
@@ -69,13 +83,37 @@ contract Executor is ProtocolProtection, VotingParameters {
         reportBuffer = _reportBuffer;
     }
 
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
+    function setOnboardProposal(address _onboardProposal) external onlyOwner {
+        _setOnboardProposal(_onboardProposal);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice executes a report already settled by vote
-     * @param _reportId _id of the report to be executed
+     * @notice Execute a report already settled
+     *
+     * @param _reportId Id of the report to be executed
      */
     function executeReport(uint256 _reportId) public {
         // get the report
@@ -93,11 +131,10 @@ contract Executor is ProtocolProtection, VotingParameters {
         ) = IIncidentReport(incidentReport).reports(_reportId);
 
         require(status == SETTLED_STATUS, "Report is not ready to be executed");
-
         require(result == 1, "Report is not passed");
 
         // execute the pool
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
             poolId
         );
         address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(
@@ -144,7 +181,7 @@ contract Executor is ProtocolProtection, VotingParameters {
             );
 
         // emit the event
-        emit NewPoolEecuted(newPool, _proposalId, proposal.protocolAddress);
+        emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
     }

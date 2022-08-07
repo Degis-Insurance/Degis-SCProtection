@@ -103,23 +103,41 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         vedeg.mint(bob, 100000 ether);
         vedeg.mint(carol, 10000 ether);
 
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
         );
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        onboardProposal = new OnboardProposal();
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
         exchange = new Exchange();
 
         shield.approve(address(policyCenter), 20000);
         deg.approve(address(policyCenter), 10000 ether);
 
-        incidentReport = new IncidentReport();
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
         // Set incident report
-        incidentReport.setDeg(address(deg));
-        incidentReport.setVeDeg(address(vedeg));
+
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
 
@@ -129,34 +147,21 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         ptp.approve(address(incidentReport), 10000 ether);
 
         // sets addresses needed to execute functions
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
+
         policyCenter.setExecutor(address(executor));
-        policyCenter.setOnboardProposal(address(onboardProposal));
+
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
+
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
-        insurancePoolFactory.setIncidentReport(address(incidentReport));
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
+
         reinsurancePool.setPolicyCenter(address(policyCenter));
         reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setPolicyCenter(address(policyCenter));
 
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
-        executor.setIncidentReport(address(incidentReport));
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
@@ -169,17 +174,10 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             100
         );
         // set addreses for ptp pool
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
+
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
-        InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
-
+       
         vm.warp(REPORT_START_TIME);
         incidentReport.report(POOL_ID);
     }

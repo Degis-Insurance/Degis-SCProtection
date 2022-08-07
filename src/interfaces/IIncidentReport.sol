@@ -50,15 +50,14 @@ interface IIncidentReport {
     function reportCounter() view external returns (uint256);
     function reportTempResults(uint256) view external returns (uint256 result, uint256 sampleTimestamp, bool hasChanged);
     function reports(uint256) view external returns (uint256 poolId, uint256 reportTimestamp, address reporter, uint256 voteTimestamp, uint256 numFor, uint256 numAgainst, uint256 round, uint256 status, uint256 result, uint256 votingReward);
-    function setDeg(address _deg) external;
+    
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+ 
     function settle(uint256 _reportId) external;
     function shield() view external returns (address);
     function startVoting(uint256 _reportId) external;

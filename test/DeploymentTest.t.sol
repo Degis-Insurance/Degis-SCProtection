@@ -27,7 +27,6 @@ import "src/interfaces/IExecutor.sol";
 @notice Tests initial deployment for most contracts.
  */
 contract InitialContractDeploymentTest is Test {
-
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -44,42 +43,66 @@ contract InitialContractDeploymentTest is Test {
 
     function testDeployShield() public {
         shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
-        assertEq(keccak256(bytes(shield.name())) == keccak256(bytes("Shield")), true);
+        assertEq(
+            keccak256(bytes(shield.name())) == keccak256(bytes("Shield")),
+            true
+        );
     }
 
     function testDeployDEG() public {
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
-        assertEq(keccak256(bytes(deg.name())) == keccak256(bytes("Degis")), true);
+        assertEq(
+            keccak256(bytes(deg.name())) == keccak256(bytes("Degis")),
+            true
+        );
     }
 
     function testDeployVeDEG() public {
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
-        assertEq(keccak256(bytes(vedeg.name())) == keccak256(bytes("veDegis")), true);
+        assertEq(
+            keccak256(bytes(vedeg.name())) == keccak256(bytes("veDegis")),
+            true
+        );
     }
 
     function testDeployPTP() public {
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
 
-        assertEq(keccak256(bytes(ptp.name())) == keccak256(bytes("Platypus")), true);
+        assertEq(
+            keccak256(bytes(ptp.name())) == keccak256(bytes("Platypus")),
+            true
+        );
     }
 
     function testDeployReinsurancePool() public {
-        reinsurancePool = new ReinsurancePool();
-        assertEq(keccak256(bytes(reinsurancePool.name())) == keccak256(bytes("ReinsurancePool")), true);
+        reinsurancePool = new ReinsurancePool(
+            address(0),
+            address(0),
+            address(0)
+        );
+        assertEq(
+            keccak256(bytes(reinsurancePool.name())) ==
+                keccak256(bytes("ReinsurancePool")),
+            true
+        );
     }
 
     function testDeployExecutor() public {
-       executor = new Executor();
-        assertEq(executor.proposalBuffer() == 0 days, true);
+        executor = new Executor();
+        assertEq(executor.poolBuffer() == 0 days, true);
     }
 
     function testDeployOnboardProposal() public {
-        onboardProposal = new OnboardProposal();
+        onboardProposal = new OnboardProposal(
+            address(0),
+            address(0),
+            address(0)
+        );
         assertEq(address(onboardProposal) == address(0), false);
     }
 
     function testDeployIncidentReport() public {
-        incidentReport = new IncidentReport();
+        incidentReport = new IncidentReport(address(0), address(0), address(0));
         assertEq(address(incidentReport) == address(0), false);
     }
 }
@@ -88,14 +111,13 @@ contract InitialContractDeploymentTest is Test {
 @notice Tests secondary deployment for most contracts since they are dependent on other contracts.
  */
 contract SecondaryContractDeploymentTest is Test {
-
     InsurancePoolFactory public insurancePoolFactory;
     OnboardProposal public onboardProposal;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
     Executor public executor;
     Exchange public exchange;
-    
+
     // tokens
     MockSHIELD public shield;
     MockDEG public deg;
@@ -108,20 +130,37 @@ contract SecondaryContractDeploymentTest is Test {
         // and the reinsurancePool already deployed.
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        reinsurancePool = new ReinsurancePool();
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(0),
+            address(0)
+        );
     }
 
     function testDeployPolicyCenter() public {
         // Policy center manages user interactions with insurance pools.
         // It is dependent on deg and reinsurancePool being deployed.
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
-        assertEq(policyCenter.reinsurancePool() == address(reinsurancePool), true);
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(0),
+            address(0),
+            address(reinsurancePool)
+        );
+        assertEq(
+            policyCenter.reinsurancePool() == address(reinsurancePool),
+            true
+        );
     }
 
     function testDeployFactory() public {
         // Factory creates insurance pools.
         // It is dependent on deg and reinsurancePool being deployed.
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(0),
+            address(0),
+            address(deg),
+            address(reinsurancePool)
+        );
         assertEq(insurancePoolFactory.poolCounter() == 0, true);
     }
 
@@ -129,13 +168,29 @@ contract SecondaryContractDeploymentTest is Test {
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, reinsurancePool,
         // policyCenter and insurancePoolFactory being deployed.
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(0),
+            address(0),
+            address(deg),
+            address(reinsurancePool)
+        );
+
+        policyCenter = new PolicyCenter(
+            address(0),
+            address(0),
+            address(deg),
+            address(reinsurancePool)
+        );
         exchange = new Exchange();
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        address pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 10000, 100);
+        address pool1 = insurancePoolFactory.deployPool(
+            "Platypus",
+            address(ptp),
+            10000,
+            100
+        );
         console.log(pool1);
     }
 }

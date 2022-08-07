@@ -23,7 +23,9 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "../util/ProtocolProtection.sol";
+import "./interfaces/InsurancePoolDependencies.sol";
+
+import "../util/OwnableWithoutContext.sol";
 
 import "forge-std/console.sol";
 
@@ -35,7 +37,12 @@ import "forge-std/console.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Smart Contract Protection
  */
-contract InsurancePool is ERC20, ProtocolProtection, Pausable {
+contract InsurancePool is
+    ERC20,
+    InsurancePoolDependencies,
+    OwnableWithoutContext,
+    Pausable
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -60,11 +67,11 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Admin address, set to be the owner of factory
+    address public admin;
+
     // Address of insured token
     address public insuredToken;
-
-    // Admin role. Performs set opearations on the contract
-    address public administrator;
 
     // If the pool has been liquidated
     bool public liquidated;
@@ -110,14 +117,13 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         string memory _name,
         string memory _symbol,
         uint256 _premiumRatio,
-        address _administrator
-    ) ERC20(_name, _symbol) {
+        address _admin
+    ) ERC20(_name, _symbol) OwnableWithoutContext(_admin) {
         // token address insured by pool
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
         premiumRatio = _premiumRatio;
-        administrator = _administrator;
 
         maxLength = 90;
         minLength = 7;
@@ -126,17 +132,6 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // allows owner, executor contract or administrator
-    modifier onlyRole() {
-        require(
-            (msg.sender == owner()) ||
-                (msg.sender == executor) ||
-                (msg.sender == administrator),
-            "Only owner, executor or administrator can call this function"
-        );
-        _;
-    }
 
     // allows executor contract
     modifier onlyExecutor() {
@@ -222,58 +217,6 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setDeg(address _deg) external override onlyRole {
-        deg = _deg;
-    }
-
-    function setVeDeg(address _veDeg) external override onlyRole {
-        veDeg = _veDeg;
-    }
-
-    function setShield(address _shield) external override onlyRole {
-        shield = _shield;
-    }
-
-    function setPolicyCenter(address _policyCenter) external override onlyRole {
-        policyCenter = _policyCenter;
-    }
-
-    function setIncidentReport(address _incidentReport)
-        external
-        override
-        onlyRole
-    {
-        incidentReport = _incidentReport;
-    }
-
-    function setReinsurancePool(address _reinsurancePool)
-        external
-        override
-        onlyRole
-    {
-        reinsurancePool = _reinsurancePool;
-    }
-
-    function setOnboardProposal(address _onboardProposal)
-        external
-        override
-        onlyRole
-    {
-        onboardProposal = _onboardProposal;
-    }
-
-    function setExecutor(address _executor) external override onlyRole {
-        executor = _executor;
-    }
-
-    function setInsurancePoolFactory(address _insurancePoolFactory)
-        external
-        override
-        onlyRole
-    {
-        insurancePoolFactory = _insurancePoolFactory;
-    }
-
     /**
      * @notice Pause this pool
      *
@@ -281,7 +224,7 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
      */
     function pauseInsurancePool(bool _paused) external {
         require(
-            (msg.sender == administrator) || (msg.sender == incidentReport),
+            (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"
         );
         if (_paused) {
@@ -291,17 +234,20 @@ contract InsurancePool is ERC20, ProtocolProtection, Pausable {
         }
     }
 
-    function setMaxCapacity(uint256 _maxCapacity) external onlyRole {
+    function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {
         maxCapacity = _maxCapacity;
     }
 
-    /**
-    @notice pools receive an administrator (address that deployed the Insurance Pool Factory)
-    and passes it forward to the Insurance Pools the Factory deploys.
-    @param _administrator address of the administrator
-     */
-    function setAdministrator(address _administrator) external onlyRole {
-        administrator = _administrator;
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
+    }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
     }
 
     // ---------------------------------------------------------------------------------------- //

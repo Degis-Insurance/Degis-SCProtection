@@ -26,16 +26,20 @@ interface IProposalCenter {
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;
     function reportPool(uint256 _poolId) external;
+<<<<<<< HEAD
     function rewardByReportId(uint256 _reportId, bool _vote) external;
     function setDeg(address _deg) external;
+=======
+    function setBuffers(uint256 _reportBuffer, uint256 _proposalBuffer) external;
+  
+>>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+   
     function shield() view external returns (address);
     function transferOwnership(address newOwner) external;
     function veDeg() view external returns (address);

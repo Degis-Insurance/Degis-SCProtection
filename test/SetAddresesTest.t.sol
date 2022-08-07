@@ -25,7 +25,6 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract setAddressesTest is Test {
-
     InsurancePoolFactory public insurancePoolFactory;
     ReinsurancePool public reinsurancePool;
     PolicyCenter public policyCenter;
@@ -53,55 +52,77 @@ contract setAddressesTest is Test {
 
         // deploy contracts
         exchange = new Exchange();
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(address(reinsurancePool), address(deg));
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        incidentReport = new IncidentReport();
-        onboardProposal = new OnboardProposal();
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        pool1 = insurancePoolFactory.deployPool("Platypus", address(ptp), 1000 ether, 260);
+        pool1 = insurancePoolFactory.deployPool(
+            "Platypus",
+            address(ptp),
+            1000 ether,
+            260
+        );
     }
 
     function testSetPolicyCenterAddress() public {
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         console.log(insurancePoolFactory.policyCenter());
-        assertEq(insurancePoolFactory.policyCenter() == address(policyCenter), true);
+        assertEq(
+            insurancePoolFactory.policyCenter() == address(policyCenter),
+            true
+        );
     }
 
     function testSetInsurancePoolFactoryAddress() public {
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         console.log(policyCenter.insurancePoolFactory());
-        assertEq(policyCenter.insurancePoolFactory() == address(insurancePoolFactory), true);
+        assertEq(
+            policyCenter.insurancePoolFactory() ==
+                address(insurancePoolFactory),
+            true
+        );
     }
 
-    function testSetDEG() public {
-        onboardProposal.setDeg(address(deg));
-         assertEq(onboardProposal.deg() == address(deg), true);
-    }
-
-     function testSetVeDEG() public {
-        onboardProposal.setVeDeg(address(vedeg));
-        assertEq(onboardProposal.veDeg() == address(vedeg), true);
-    }
-     function testSetSHIELD() public {
-        onboardProposal.setShield(address(shield));
-        assertEq(onboardProposal.shield() == address(shield), true);
-    }
-     function testSetReinsurancePool() public {
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
-        assertEq(onboardProposal.reinsurancePool() == address(reinsurancePool), true);
-    }
+   
 
     function testSetInsurancePoolFactory() public {
-         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-         assertEq(onboardProposal.insurancePoolFactory() == address(insurancePoolFactory), true);
+        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+        assertEq(
+            onboardProposal.insurancePoolFactory() ==
+                address(insurancePoolFactory),
+            true
+        );
     }
-    
-     function testSetExecutor() public {
+
+    function testSetExecutor() public {
         onboardProposal.setExecutor(address(executor));
         assertEq(onboardProposal.executor() == address(executor), true);
     }
@@ -113,63 +134,19 @@ contract setAddressesTest is Test {
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
     }
 
-    function testSetDEGNotOwner() public {
-        // use a non owner address to make sure it's not allowed to set address
-        vm.prank(address(0x0000abcdef));
-        vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setDeg(address(deg));
-    }
-
-     function testSetVeDEGNotOwner() public {
-        // use a non owner address to make sure it's not allowed to set address
-        vm.prank(address(0x0000abcdef));
-        vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setVeDeg(address(vedeg));
-    }
-     function testSetSHIELDNotOwner() public {
-        // use a non owner address to make sure it's not allowed to set address
-        vm.prank(address(0x0000abcdef));
-        vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setShield(address(shield));
-    }
-     function testSetReinsurancePoolNotOwner() public {
-        // use a non owner address to make sure it's not allowed to set address
-        vm.prank(address(0x0000abcdef));
-        vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
-    }
-
+    
     function testSetInsurancePoolFactoryNotOwner() public {
         // use a non owner address to make sure it's not allowed to set address
         vm.prank(address(0x0000abcdef));
         vm.expectRevert("Ownable: caller is not the owner");
-         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
     }
-    
 
     function testSetExecutorNotOwner() public {
         // use a random address to make sure it doesn't work
         vm.prank(address(0x0000abcdef));
         vm.expectRevert("Ownable: caller is not the owner");
         onboardProposal.setExecutor(address(executor));
-    }
-
-    // since insurance pools are deployed from the insurance pool factory,
-    // it has a administrator role initially set during deployment.
-    function testSetInsurancePoolAdministrator() public {
-        InsurancePool(pool1).setAdministrator(alice);
-        assertEq(InsurancePool(pool1).administrator() == alice, true);
-        vm.prank(alice);
-        InsurancePool(pool1).setAdministrator(bob);
-        assertEq(InsurancePool(pool1).administrator() == address(bob), true);
-    }
-
-    function testSetPoolFactoryAdministratorNotOwner() public {
-        insurancePoolFactory.setAdministrator(alice);
-        assertEq(insurancePoolFactory.administrator() == alice, true);
-        vm.prank(alice);
-        vm.expectRevert("Ownable: caller is not the owner");
-        insurancePoolFactory.setAdministrator(bob);
     }
 
     // test setting pool max capacity
@@ -182,36 +159,17 @@ contract setAddressesTest is Test {
         assertEq(InsurancePool(pool1).maxCapacity() == 1000 ether, true);
     }
 
-    function testSetDEGInsurancePool() public {
-        InsurancePool(pool1).setDeg(address(deg));
-        assertEq(InsurancePool(pool1).deg() == address(deg), true);
-    }
 
-     function testSetVeDEGInsurancePool() public {
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        assertEq(InsurancePool(pool1).veDeg() == address(vedeg), true);
-    }
-     function testSetSHIELDInsurancePool() public {
-        InsurancePool(pool1).setShield(address(shield));
-        assertEq(InsurancePool(pool1).shield() == address(shield), true);
-    }
-     function testSetReinsurancePoolInsurancePool() public {
-        InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
-        assertEq(InsurancePool(pool1).reinsurancePool() == address(reinsurancePool), true);
-    }
-
-    function testSetInsurancePoolFactoryInsurancePool() public {
-          InsurancePool(pool1).setInsurancePoolFactory(address(insurancePoolFactory));
-         assertEq(InsurancePool(pool1).insurancePoolFactory() == address(insurancePoolFactory), true);
-    }
-    
-     function testSetExecutorInsurancePool() public {
-         InsurancePool(pool1).setExecutor(address(executor));
+    function testSetExecutorInsurancePool() public {
+        InsurancePool(pool1).setExecutor(address(executor));
         assertEq(InsurancePool(pool1).executor() == address(executor), true);
     }
 
     function testSetIncidentReport() public {
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
-        assertEq(InsurancePool(pool1).incidentReport() == address(incidentReport), true);
+        assertEq(
+            InsurancePool(pool1).incidentReport() == address(incidentReport),
+            true
+        );
     }
 }

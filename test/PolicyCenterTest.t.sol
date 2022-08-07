@@ -75,15 +75,34 @@ contract PostInsurancePoolDeploymentTest is Test {
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         vedeg.transfer(address(this), 100 ether);
-        reinsurancePool = new ReinsurancePool();
-        insurancePoolFactory = new InsurancePoolFactory(
-            address(reinsurancePool),
-            address(deg)
+        reinsurancePool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
         );
-        policyCenter = new PolicyCenter(address(reinsurancePool), address(deg));
+        insurancePoolFactory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(reinsurancePool)
+        );
         executor = new Executor();
-        onboardProposal = new OnboardProposal();
-        incidentReport = new IncidentReport();
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
 
         shield.approve(address(policyCenter), 20000);
 
@@ -104,46 +123,29 @@ contract PostInsurancePoolDeploymentTest is Test {
         shield.transfer(address(this), 1000 ether);
 
         // sets addresses needed to execute functions
-        insurancePoolFactory.setDeg(address(deg));
-        insurancePoolFactory.setVeDeg(address(vedeg));
-        insurancePoolFactory.setShield(address(shield));
+
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setOnboardProposal(address(onboardProposal));
+
         insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        policyCenter.setDeg(address(deg));
-        policyCenter.setVeDeg(address(vedeg));
-        policyCenter.setShield(address(shield));
+
         policyCenter.setExecutor(address(executor));
-        policyCenter.setIncidentReport(address(incidentReport));
-        policyCenter.setOnboardProposal(address(onboardProposal));
+
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-        reinsurancePool.setDeg(address(deg));
-        reinsurancePool.setVeDeg(address(vedeg));
-        reinsurancePool.setShield(address(shield));
+
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setOnboardProposal(address(onboardProposal));
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-        onboardProposal.setDeg(address(deg));
-        onboardProposal.setVeDeg(address(vedeg));
-        onboardProposal.setShield(address(shield));
         onboardProposal.setExecutor(address(executor));
-        onboardProposal.setPolicyCenter(address(policyCenter));
-        onboardProposal.setReinsurancePool(address(reinsurancePool));
+
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-        incidentReport.setDeg(address(deg));
-        incidentReport.setVeDeg(address(vedeg));
-        incidentReport.setShield(address(shield));
-        incidentReport.setExecutor(address(executor));
+
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
-        executor.setDeg(address(deg));
-        executor.setVeDeg(address(vedeg));
-        executor.setShield(address(shield));
+
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
@@ -156,16 +158,10 @@ contract PostInsurancePoolDeploymentTest is Test {
             POOL_PRICE_RATIO
         );
         // set addreses for ptp pool
-        InsurancePool(pool1).setDeg(address(deg));
-        InsurancePool(pool1).setVeDeg(address(vedeg));
-        InsurancePool(pool1).setShield(address(shield));
+
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        InsurancePool(pool1).setOnboardProposal(address(onboardProposal));
+
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
-        InsurancePool(pool1).setReinsurancePool(address(reinsurancePool));
-        InsurancePool(pool1).setInsurancePoolFactory(
-            address(insurancePoolFactory)
-        );
     }
 
     function testGetPoolAddressList() public {
@@ -248,11 +244,13 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testExceedMaxCapacity() public {
         shield.approve(address(policyCenter), 10000 ether);
-        InsurancePool(pool1).setMaxCapacity(1);
-        uint256 price = InsurancePool(pool1).coveragePrice(1000 ether, 90);
+        ptp.approve(address(policyCenter), 10000 ether);
+
+        uint256 price = InsurancePool(pool1).coveragePrice(10000 ether, 90);
+
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
-        policyCenter.buyCoverage(POOL_ID, price, 1000 ether, 90);
+        policyCenter.buyCover(POOL_ID, 10000 ether, 90);
     }
 
     function testProvideLiqudityDirectlyToInsurancePool() public {
@@ -277,7 +275,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         policyCenter.removeLiquidity(POOL_ID, 1);
     }
 
-    function testGetCoveragePrice() public {
+    function testGetCoverPrice() public {
         uint256 amount = 100 ether;
         uint256 length = 90;
         // get coverage price and returns it
@@ -287,7 +285,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         assertEq(price == expectedPrice, true);
     }
 
-    function testBuyCoverageWithoutSuppliedLiquidity() public {
+    function testBuyCoverWithoutSuppliedLiquidity() public {
         // expected behavior when coverage is bough with
         // liquidity provided by other users
 
@@ -305,23 +303,24 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // get price
-        uint256 price = InsurancePool(pool1).coveragePrice(10000 ether, 90);
+        uint256 price = InsurancePool(pool1).coveragePrice(1000 ether, 90);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 10000 ether, 90);
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .getCoverage(POOL_ID, alice);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 90);
 
-        assertEq(amount == 10000 ether, true);
+        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
+            .covers(POOL_ID, alice);
+
+        assertEq(amount,1000 ether);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
     }
 
-    function testBuyCoverageWithSuppliedLiquidity() public {
+    function testBuyCoverWithSuppliedLiquidity() public {
         // expected behavior when coverage is bough with
         // liquidity provided by other users
 
@@ -349,21 +348,12 @@ contract PostInsurancePoolDeploymentTest is Test {
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 100 ether, 90);
+        policyCenter.buyCover(POOL_ID, 100 ether, 90);
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .getCoverage(POOL_ID, alice);
+            .covers(POOL_ID, alice);
         assertEq(amount == 100 ether, true);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
-    }
-
-    function testBuyWrongPaymentCoverage() public {
-        shield.approve(address(policyCenter), 10000 ether);
-        uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
-        price--;
-        // user should no be able to buy a coverage with wrong payment amount
-        vm.expectRevert("pay does not correspond to price");
-        policyCenter.buyCoverage(POOL_ID, price, 100 ether, 90);
     }
 
     function testProvideLiquidityReinsurancePool() public {
@@ -427,10 +417,10 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
 
-        uint256 price = InsurancePool(pool1).coveragePrice(10000 ether, 90);
+        uint256 price = InsurancePool(pool1).coveragePrice(1000 ether, 90);
 
         vm.prank(alice);
-        policyCenter.buyCoverage(POOL_ID, price, 10000 ether, 90);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 90);
 
         console.log(ptp.balanceOf(address(policyCenter)));
 
