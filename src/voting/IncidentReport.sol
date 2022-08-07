@@ -154,6 +154,43 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
+     * @notice Start a new incident report from proposal center
+     *
+     *         1000 DEG tokens are staked to start a report
+     *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
+     *         If the report is wrong, reporter loses 1000DEG to those who vote against
+     *
+     * @param _poolId Pool id to report incident
+     */
+    function report(uint256 _poolId, address _msgsender) external {
+        require(msg.sender == proposalCenter, "not sent from proposal center");
+        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
+            _poolId
+        );
+        require(pool != address(0), "Pool doesn't exist");
+        require(!poolReported[pool], "Pool already reported");
+
+        uint256 currentReportId = ++reportCounter;
+
+        poolReported[pool] = true;
+
+        // Record the new report
+        Report storage newReport = reports[currentReportId];
+        newReport.poolId = _poolId;
+        newReport.reportTimestamp = block.timestamp;
+        newReport.reporter = msg.sender;
+        newReport.status = PENDING_STATUS;
+
+        // burn degis tokens to start a report
+        IDegisToken(deg).burnDegis(_msgsender, REPORT_THRESHOLD);
+
+        // Pause insurance pool and reinsurance pool
+        _pausePools(pool);
+
+        emit ReportCreated(reportCounter, _poolId, block.timestamp, _msgsender);
+    }
+
+    /**
      * @notice Start the voting process
      *
      * @param _reportId Report id
@@ -268,6 +305,82 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
     }
 
     /**
+     * @notice Vote on currently pending reports from proposal center
+     *
+     *         Voting power is decided by the (unlocked) balance of veDEG
+     *         Rewarded if votes with majority
+     *         Punished if votes against majority
+     *
+     * @param _reportId Id of the report to be voted on
+     * @param _isFor    The user's choice (1: vote for, 2: vote against)
+     * @param _amount   Amount of veDEG used for this vote
+     * @param _msgsender The sender of the vote
+     */
+    function vote(
+        uint256 _reportId,
+        uint256 _isFor,
+        uint256 _amount,
+        address _msgsender
+    ) external {
+        require(msg.sender == proposalCenter, "not sent from proposal center");
+        // Should be manually switched on the voting process
+        require(
+            reports[_reportId].status == VOTING_STATUS,
+            "Not voting status"
+        );
+
+        require(_isFor == 1 || _isFor == 2, "Wrong choice");
+
+        _enoughVeDEG(_msgsender, _amount);
+
+        // Lock vedeg until this report is settled
+        IVeDEG(veDeg).lockVeDEG(_msgsender, _amount);
+
+        // Record the user's choice
+        UserVote storage userReportVote = userReportVotes[_msgsender][
+            _reportId
+        ];
+        if (userReportVote.amount > 0) {
+            require(
+                userReportVote.choice == _isFor,
+                "Can not choose both sides"
+            );
+        } else {
+            userReportVote.choice = _isFor;
+        }
+
+        userReportVote.amount += _amount;
+
+        Report storage currentReport = reports[_reportId];
+        // Record the vote for this report
+        if (_isFor == 1) {
+            currentReport.numFor += _amount;
+        } else {
+            currentReport.numAgainst += _amount;
+        }
+
+        // Record a temporary result
+        // If the hasChanged already been true, no need for further update
+        // If the voting period has passed, no need for update
+        if (
+            !reportTempResults[_reportId].hasChanged &&
+            !_passedVotingPeriod(
+                currentReport.round,
+                currentReport.reportTimestamp
+            )
+        ) {
+            _recordTempResult(
+                _reportId,
+                currentReport.round,
+                currentReport.numFor,
+                currentReport.numAgainst
+            );
+        }
+
+        emit ReportVoted(_reportId, _msgsender, _isFor, _amount);
+    }
+
+    /**
      * @notice Settle the final result for a report
      *
      * @param _reportId Report id
@@ -305,6 +418,8 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         }
     }
 
+    
+
     /**
      * @notice Claim the voting reward
      *
@@ -330,6 +445,34 @@ contract IncidentReport is ProtocolProtection, IncidentReportParameters {
         } else revert("No reward to claim");
 
         userReportVotes[msg.sender][_reportId].claimed = true;
+    }
+
+    /**
+     * @notice Claim voting reward from Proposal Center
+     *
+     * @param _reportId Report id
+     */
+    function claimReward(uint256 _reportId, address _msgsender) external {
+        require(msg.sender == proposalCenter, "not sent from proposal center");
+        UserVote memory userVote = userReportVotes[_msgsender][_reportId];
+        uint256 finalResult = reports[_reportId].result;
+
+        require(finalResult > 0, "Not settled");
+        require(!userVote.claimed, "Already claimed");
+
+        // Correct choice
+        if (userVote.choice == finalResult) {
+            IDegisToken(deg).mintDegis(
+                _msgsender,
+                (reports[_reportId].votingReward * userVote.amount) / SCALE
+            );
+            IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
+        } else if (finalResult == TIED_RESULT) {
+            // Tied result, give back user's veDEG
+            IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
+        } else revert("No reward to claim");
+
+        userReportVotes[_msgsender][_reportId].claimed = true;
     }
 
     /**

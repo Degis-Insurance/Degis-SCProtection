@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 interface IPolicyCenter {
+    event CoverageBought(uint256 paid, address buyer, uint256 poolId, uint256 length, uint256 amount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event Payout(uint256 _amount, address _address);
     event Reward(uint256 _amount, address _address);
@@ -20,7 +21,7 @@ interface IPolicyCenter {
     function fundsByPoolId(uint256) view external returns (uint256);
     function getCoverage(uint256 _poolId, address _covered) view external returns (uint256, uint256, uint256);
     function getInsurancePoolById(uint256 _poolId) view external returns (address);
-    function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);
+    function getPoolInfo(uint256 _poolId) view external returns (bool paused, uint256 accumulatedRewardPerShare, uint256 lastRewardTimestamp, uint256 emissionEndTime, uint256 emissionRate, uint256 maxCapacity);
     function getPremiumSplits() view external returns (uint256, uint256);
     function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);

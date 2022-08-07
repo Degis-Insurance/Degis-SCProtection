@@ -168,7 +168,7 @@ contract PolicyCenter is ProtocolProtection {
         uint256 length = IInsurancePoolFactory(insurancePoolFactory)
             .getPoolCounter();
         // iterates through all pools. If not found, returns false
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i <= length; i++) {
             if (insurancePools[i] == _poolAddress) {
                 return true;
             }

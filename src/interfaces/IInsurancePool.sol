@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 interface IInsurancePool {
-    event AccRewardsPerShareUpdated(uint256 amount);
+     event AccRewardsPerShareUpdated(uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event EmissionRateUpdated(uint256 newEmissionRate, uint256 newEmissionEndTime);
     event Liquidation(uint256 amount, uint256 endDate);
@@ -15,8 +15,9 @@ interface IInsurancePool {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Unpaused(address account);
 
+    function CLAIM_PERIOD() view external returns (uint256);
     function DISTRIBUTION_PERIOD() view external returns (uint256);
-    function PAY_COVER_PERIOD() view external returns (uint256);
+    function MIN_COVER_AMOUNT() view external returns (uint256);
     function accumulatedRewardPerShare() view external returns (uint256);
     function administrator() view external returns (address);
     function allowance(address owner, address spender) view external returns (uint256);
@@ -40,13 +41,15 @@ interface IInsurancePool {
     function liquidated() view external returns (bool);
     function maxCapacity() view external returns (uint256);
     function maxLength() view external returns (uint256);
+    function minLength() view external returns (uint256);
     function name() view external returns (string memory);
     function onboardProposal() view external returns (address);
     function owner() view external returns (address);
+    function pauseInsurancePool(bool _paused) external;
     function paused() view external returns (bool);
     function policyCenter() view external returns (address);
     function poolInfo() view external returns (bool, uint256, uint256, uint256, uint256, uint256);
-    function priceRatio() view external returns (uint256);
+    function premiumRatio() view external returns (uint256);
     function provideLiquidity(uint256 _amount, address _provider) external;
     function reinsurancePool() view external returns (address);
     function removeLiquidity(uint256 _amount, address _provider) external;
@@ -57,9 +60,7 @@ interface IInsurancePool {
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setMaxCapacity(uint256 _maxCapacity) external;
-    function setMaxLength(uint256 _maxLength) external;
     function setOnboardProposal(address _onboardProposal) external;
-    function pauseInsurancePool(bool _paused) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
     function setShield(address _shield) external;

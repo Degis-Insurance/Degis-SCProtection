@@ -46,6 +46,7 @@ contract ProtocolProtection is Ownable {
     address public policyCenter;
     address public incidentReport;
     address public onboardProposal;
+    address public proposalCenter;
     address public reinsurancePool;
     address public insurancePoolFactory;
 
@@ -67,6 +68,10 @@ contract ProtocolProtection is Ownable {
 
     function setPolicyCenter(address _policyCenter) external virtual onlyOwner {
         policyCenter = _policyCenter;
+    }
+
+    function setProposalCenter(address _proposalCenter) external virtual onlyOwner {
+        proposalCenter = _proposalCenter;
     }
 
     function setIncidentReport(address _incidentReport) external virtual onlyOwner {
