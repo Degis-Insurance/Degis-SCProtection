@@ -55,7 +55,7 @@ contract Executor is
 
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
 
-    event NewPoolEecuted(
+    event NewPoolExecuted(
         address poolAddress,
         uint256 proposalId,
         address protocol
@@ -175,7 +175,7 @@ contract Executor is
             );
 
         // emit the event
-        emit NewPoolEecuted(newPool, _proposalId, proposal.protocolAddress);
+        emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
     }

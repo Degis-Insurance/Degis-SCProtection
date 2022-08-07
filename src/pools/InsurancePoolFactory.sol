@@ -124,7 +124,6 @@ contract InsurancePoolFactory is
         for (uint256 i; i < poolAmount; ) {
             list[i] = poolInfoById[i].poolAddress;
 
-
             unchecked {
                 ++i;
             }

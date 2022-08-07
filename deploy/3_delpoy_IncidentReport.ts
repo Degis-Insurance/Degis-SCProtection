@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  getExternalTokenAddress,
+  readAddressList,
+  storeAddressList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -19,11 +23,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
+  let degAddress: string, veDegAddress: string, shieldAddress: string;
+
+  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
+    network.name
+  );
+
   // Proxy Admin contract artifact
   const incidentReport = await deploy("IncidentReport", {
     contract: "IncidentReport",
     from: deployer,
-    args: [],
+    args: [degAddress, veDegAddress, shieldAddress],
     log: true,
   });
   addressList[network.name].IncidentReport = incidentReport.address;
