@@ -8,6 +8,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockExchange.sol";
+import "src/mock/MockSHIELD.sol";
+import "src/mock/MockVeDEG.sol";
 
 import "src/pools/InsurancePool.sol";
 import "src/pools/ReinsurancePool.sol";
@@ -26,6 +28,8 @@ contract InsurancePoolTest is BaseTest {
     PolicyCenter public policyCenter;
 
     MockDEG deg;
+    MockVeDEG vedeg;
+    MockSHIELD shield;
 
     Exchange exchange;
 
@@ -35,12 +39,31 @@ contract InsurancePoolTest is BaseTest {
     function setUp() public {
         deg = new MockDEG(0, "DegisToken", 18, "DEG");
         gmx = new ERC20Mock("GMX", "GMX", address(this), 0);
+
+        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
+
         exchange = new Exchange();
 
-        repool = new ReinsurancePool();
-        factory = new InsurancePoolFactory(address(repool), address(deg));
+        repool = new ReinsurancePool(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
 
-        policyCenter = new PolicyCenter(address(repool), address(deg));
+        factory = new InsurancePoolFactory(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(repool)
+        );
+
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(repool)
+        );
 
         factory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(factory));
@@ -51,9 +74,9 @@ contract InsurancePoolTest is BaseTest {
         InsurancePoolFactory.PoolInfo memory firstPool = factory.getPoolInfo(0);
 
         assertEq(firstPool.protocolName, "ReinsurancePool");
-        assertEq(firstPool.protocolToken, address(deg));
+        assertEq(firstPool.protocolToken, address(shield));
 
-        assertTrue(factory.tokenRegistered(address(deg)));
+        assertTrue(factory.tokenRegistered(address(shield)));
         assertTrue(factory.poolRegistered(address(repool)));
     }
 

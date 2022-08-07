@@ -48,14 +48,20 @@ interface IInsurancePool {
     function pauseInsurancePool(bool _paused) external;
     function paused() view external returns (bool);
     function policyCenter() view external returns (address);
+
     function poolInfo() view external returns (bool, uint256, uint256, uint256, uint256, uint256);
+<<<<<<< HEAD
     function premiumRatio() view external returns (uint256);
+=======
+
+    function priceRatio() view external returns (uint256);
+>>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function provideLiquidity(uint256 _amount, address _provider) external;
     function reinsurancePool() view external returns (address);
     function removeLiquidity(uint256 _amount, address _provider) external;
     function renounceOwnership() external;
-    function setAdministrator(address _administrator) external;
-    function setDeg(address _deg) external;
+   
+    
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
@@ -63,8 +69,7 @@ interface IInsurancePool {
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+    
     function shield() view external returns (address);
     function startTime() view external returns (uint256);
     function symbol() view external returns (string memory);

@@ -22,7 +22,12 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "../util/ProtocolProtection.sol";
+import "./interfaces/ReinsurancePoolDependencies.sol";
+
+import "../util/OwnableWithoutContext.sol";
+
+import "../interfaces/ExternalTokenDependencies.sol";
+
 import "forge-std/console.sol";
 
 /**
@@ -35,7 +40,12 @@ import "forge-std/console.sol";
  *         If the insurance pool is unable to fulfil the insurance, the reinsurance pool
  *         will be able to provide the insurance to the user.
  */
-contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
+contract ReinsurancePool is
+    ERC20,
+    ReinsurancePoolDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -49,12 +59,22 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     bool public insurancePoolLiquidated;
     bool public paused;
 
-    uint256 public accumulatedRewardPerShare;
-    uint256 public lastRewardTimestamp;
-    uint256 public emissionEndTime;
-    uint256 public emissionRate;
     uint256 public maxCapacity;
+
     uint256 public startTime;
+
+    // Variables about distributing reward
+    // Accumulated reward per share (lp token)
+    uint256 public accumulatedRewardPerShare;
+
+    // Last reward update timestamp
+    uint256 public lastRewardTimestamp;
+
+    // Emission end tiemstamp
+    uint256 public emissionEndTime;
+
+    // Current emission rate
+    uint256 public emissionRate;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -75,7 +95,15 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() {
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield
+    )
+        ERC20("ReinsurancePool", "RP")
+        ExternalTokenDependencies(_deg, _veDeg, _shield)
+        OwnableWithoutContext(msg.sender)
+    {
         // Register time that pool was deployed
         startTime = block.timestamp;
     }
@@ -84,10 +112,12 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // only allows to be calle from a pool
+    // Only allowed to be called from a pool
     modifier poolOnly() {
         require(
-            IPolicyCenter(policyCenter).isPoolAddress(msg.sender),
+            IInsurancePoolFactory(insurancePoolFactory).poolRegistered(
+                msg.sender
+            ),
             "Pool not found"
         );
         _;
@@ -100,9 +130,10 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     /**
      * @notice Returns the to be rewarded by reinsurance pool
      *
-     * @param _amount   amount of liquidity provided by the user
-     * @param _userDebt amount of debt the user has to the pool
-     * @return reward   amount to receive considering amount and userDebt
+     * @param _amount   Amount of liquidity provided by the user
+     * @param _userDebt Amount of debt the user has to the pool
+     *
+     * @return reward Reward amount
      */
     function calculateReward(uint256 _amount, uint256 _userDebt)
         public
@@ -112,16 +143,16 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         if (totalSupply() == 0) {
             return 0;
         }
-        uint256 time = block.timestamp - lastRewardTimestamp;
 
-        uint256 rewards = time * emissionRate;
+        uint256 rewards = (block.timestamp - lastRewardTimestamp) *
+            emissionRate;
 
         uint256 acc = accumulatedRewardPerShare +
             ((rewards * SCALE) / totalSupply());
-        uint256 reward = (_amount * acc) / SCALE - _userDebt;
 
+        uint256 pending = (_amount * acc) / SCALE - _userDebt;
 
-        return reward;
+        return pending;
     }
 
     /**
@@ -158,6 +189,21 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
     */
     function endLiquidationPeriod() external onlyOwner {
         insurancePoolLiquidated = false;
+    }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -209,7 +255,7 @@ contract ReinsurancePool is ERC20("ReinsurancePool", "RP"), ProtocolProtection {
         onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        address poolAddress = IPolicyCenter(policyCenter).getInsurancePoolById(
+        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
             _poolId
         );
         require(poolAddress != address(0), "Pool not found");

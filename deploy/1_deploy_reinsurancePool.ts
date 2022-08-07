@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  getExternalTokenAddress,
+  readAddressList,
+  storeAddressList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -19,16 +23,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // Proxy Admin contract artifact
+  let degAddress: string, veDegAddress: string, shieldAddress: string;
+
+  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
+    network.name
+  );
+
+  // Deploy contract
   const reinsurancePool = await deploy("ReinsurancePool", {
     contract: "ReinsurancePool",
     from: deployer,
-    args: [],
+    args: [degAddress, veDegAddress, shieldAddress],
     log: true,
   });
   addressList[network.name].ReinsurancePool = reinsurancePool.address;
 
-  console.log("\ndeployed to address: ", reinsurancePool.address);
+  console.log("deployed to address: ", reinsurancePool.address, "\n");
 
   //   await hre.run("verify:verify", {
   //     address: insurancePoolFactory.address,
@@ -39,5 +49,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["reinsurancePool"];
+func.tags = ["ReinsurancePool"];
 export default func;

@@ -33,17 +33,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].MockDEG = mockDEG.address;
 
-  console.log("\nmock degis token deployed to address: ", mockDEG.address);
+  console.log("mock degis token deployed to address: ", mockDEG.address, "\n");
 
   const mockShield = await deploy("MockSHIELD", {
     contract: "MockSHIELD",
     from: deployer,
-    args: [0, "Shield", 18, "SHD"],
+    args: [0, "Shield", 6, "SHD"],
     log: true,
   });
   addressList[network.name].MockShield = mockShield.address;
 
-  console.log("\nmock shield token deployed to address: ", mockShield.address);
+  console.log(
+    "mock shield token deployed to address: ",
+    mockShield.address,
+    "\n"
+  );
 
   // Proxy Admin contract artifact
   const mockVeDEG = await deploy("MockVeDEG", {
@@ -55,8 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   addressList[network.name].MockVeDEG = mockVeDEG.address;
 
   console.log(
-    "\nmock vote escrowed degis token deployed to address: ",
-    mockVeDEG.address
+    "mock vote escrowed degis token deployed to address: ",
+    mockVeDEG.address,
+    "\n"
   );
 
   //   await hre.run("verify:verify", {

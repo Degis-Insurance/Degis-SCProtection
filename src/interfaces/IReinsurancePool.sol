@@ -45,15 +45,19 @@ interface IReinsurancePool {
     function reinsurancePool() view external returns (address);
     function removeLiquidity(uint256 _amount, address _provider) external;
     function renounceOwnership() external;
-    function setDeg(address _deg) external;
+    
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
+<<<<<<< HEAD
     function setOnboardProposal(address _onboardProposal) external;
+=======
+    function pauseReinsurancePool(bool _paused) external;
+
+>>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
+    
     function shield() view external returns (address);
     function startTime() view external returns (uint256);
     function symbol() view external returns (string memory);

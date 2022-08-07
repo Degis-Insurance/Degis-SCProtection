@@ -20,8 +20,13 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/ProtocolProtection.sol";
+import "../util/OwnableWithoutContext.sol";
+
 import "../mock/MockExchange.sol";
+
+import "./interfaces/PolicyCenterDependencies.sol";
+
+import "../interfaces/ExternalTokenDependencies.sol";
 
 import "forge-std/console.sol";
 
@@ -35,7 +40,11 @@ import "forge-std/console.sol";
  *         Sellers can provide liquidity and choose the pools to cover
  *
  */
-contract PolicyCenter is ProtocolProtection {
+contract PolicyCenter is
+    PolicyCenterDependencies,
+    ExternalTokenDependencies,
+    OwnableWithoutContext
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -45,16 +54,17 @@ contract PolicyCenter is ProtocolProtection {
     mapping(uint256 => address) public insurancePools;
     mapping(uint256 => address) public tokenByPoolId;
 
-    // poolId => user => Coverage info
-    struct Coverage {
+    // poolId => user => Cover info
+    struct Cover {
         uint256 amount;
         uint256 buyDate;
         uint256 length;
     }
-    mapping(uint256 => mapping(address => Coverage)) public coverages;
+    mapping(uint256 => mapping(address => Cover)) public covers;
 
     mapping(uint256 => uint256) public fundsByPoolId;
-    // amount of rewards by pool Id paid by coverage buyers
+
+    // amount of rewards by pool Id paid by cover buyers
     mapping(uint256 => uint256) public totalRewardsByPoolId;
 
     // poolId => user => Liquidity info
@@ -69,10 +79,9 @@ contract PolicyCenter is ProtocolProtection {
 
     // bps distribution of premiums 0: insurance pool, 1: reinsurance pool
     uint256[2] public premiumSplits;
+
     // amount of degis in treasury
     uint256 public treasury;
-    // exchange used to trade native tokens for degis
-    address public exchange;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -80,24 +89,33 @@ contract PolicyCenter is ProtocolProtection {
 
     event Reward(uint256 _amount, address _address);
     event Payout(uint256 _amount, address _address);
-    event CoverageBought(
-        uint256 paid,
+    event CoverBought(
         address buyer,
         uint256 poolId,
         uint256 length,
-        uint256 amount
+        uint256 coverAmount,
+        uint256 premium
     );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _reinsurancePool, address _degis) {
+    constructor(
+        address _deg,
+        address _veDeg,
+        address _shield,
+        address _reinsurancePool
+    )
+        ExternalTokenDependencies(_deg, _veDeg, _shield)
+        OwnableWithoutContext(msg.sender)
+    {
         // initializes required reinsurance address and degis token as reinsurance token
         insurancePools[0] = _reinsurancePool;
-        tokenByPoolId[0] = _degis;
-        reinsurancePool = _reinsurancePool;
-        deg = _degis;
+        tokenByPoolId[0] = _shield;
+
+        _setReinsurancePool(_reinsurancePool);
+
         // initializes premium split standard in bps
         premiumSplits = [4500, 5000];
     }
@@ -131,8 +149,8 @@ contract PolicyCenter is ProtocolProtection {
      * @return paused                   true if pool is paused, false otherwise
      * @return accumulatedRewardPerShare  accumulated reward per each share of the pool
      * @return lastRewardTimestamp      last time reward has been  updated
-     * @return emissionEndTime          time emission ends if no new coverage is bought
-     * @return emissionRate             rate of emission if no new coverage is bought
+     * @return emissionEndTime          time emission ends if no new cover is bought
+     * @return emissionRate             rate of emission if no new cover is bought
      * @return maxCapacity              max capacity of the pool in shield
      */
     function getPoolInfo(uint256 _poolId)
@@ -159,6 +177,7 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
+<<<<<<< HEAD
      * @notice returns true if given pool address is a valid pool
      * @param _poolAddress pool address
      * @return bool true if pool address is valid
@@ -195,25 +214,30 @@ contract PolicyCenter is ProtocolProtection {
     @return _covered    address of covered wallet
     @return buyDate     date bought
     @return length      length of coverage
+=======
+     * @notice returns information about the cover of a given user
+     *
+     * @param _poolId Pool id
+     * @param _user   User address
+     *
+     * @return cover Cover info
+>>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
      */
-    function getCoverage(uint256 _poolId, address _covered)
+    function getCover(uint256 _poolId, address _user)
         public
         view
         poolExists(_poolId)
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (Cover memory)
     {
-        Coverage memory coverage = coverages[_poolId][_covered];
-        return (coverage.amount, coverage.buyDate, coverage.length);
+        return covers[_poolId][_user];
     }
 
     /**
-     * @notice returns reward to liquidity providers
-     * @param _poolId pool id to claim from. 0 if reinsurance pool
-     * @return uint256 amount of reward
+     * @notice Reward for liquidity providers
+     *
+     * @param _poolId Pool id (0 for reinsurance pool)
+     *
+     * @return uint256 Reward
      */
     function calculateReward(uint256 _poolId, address _provider)
         public
@@ -240,7 +264,7 @@ contract PolicyCenter is ProtocolProtection {
     }
 
     /**
-     * @notice returns payout given to coverage buyers when report passes
+     * @notice returns payout given to cover buyers when report passes
      * @param _poolId pool id to claim from. 0 if reinsurance pool
      * @return uint256 amount of payout
      */
@@ -250,8 +274,8 @@ contract PolicyCenter is ProtocolProtection {
         returns (uint256)
     {
         require(_poolId > 0, "Reinsurance pool grants no direct payout");
-        // returns amount user has paid for coverage
-        uint256 amount = coverages[_poolId][_insured].amount;
+        // returns amount user has paid for cover
+        uint256 amount = covers[_poolId][_insured].amount;
         return amount;
     }
 
@@ -284,6 +308,21 @@ contract PolicyCenter is ProtocolProtection {
         exchange = _exchange;
     }
 
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
+    }
+
+    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
+        _setReinsurancePool(_reinsurancePool);
+    }
+
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
+        _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
     /**
      * @notice sets the insurance pool factory address
      * @param _pool  address of the insurance pool
@@ -303,7 +342,7 @@ contract PolicyCenter is ProtocolProtection {
         tokenByPoolId[_poolId] = _token;
         // maps pool address to pool id
         insurancePools[_poolId] = _pool;
-        // approve token swapping for internal fudns management
+        // approve token swapping for internal funds management
         _approvePoolToken(_token);
     }
 
@@ -324,58 +363,46 @@ contract PolicyCenter is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Buy new coverage for a given pool
+     * @notice Buy new cover for a given pool
      * @param _poolId       pool id generated on Policy Center
-     * @param _pay          amount paid to cover amount of tokens
      * @param _coverAmount  amount of tokens to cover
-     * @param _length       lenght of coverage in days
+     * @param _length       lenght of cover in days
      */
-    function buyCoverage(
+    function buyCover(
         uint256 _poolId,
-        uint256 _pay,
         uint256 _coverAmount,
         uint256 _length
     ) external poolExists(_poolId) {
         require(_coverAmount > 0, "Amount must be greater than 0");
         require(_length > 0, "Length must be greater than 0");
         require(_poolId > 0, "PoolId must be greater than 0");
-        require(_pay > 0, "Pay must be greater than 0");
+
         require(
             IInsurancePool(insurancePools[_poolId]).maxCapacity() >=
-                _pay + fundsByPoolId[_poolId],
+                _coverAmount + fundsByPoolId[_poolId],
             "exceeds max capacity"
         );
-        uint256 price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
-            _coverAmount,
-            _length
-        );
-        // checks if user is paying just enough to cover the amount of tokens
-        require(price == _pay, "pay does not correspond to price");
-        //register coverage
 
-        totalRewardsByPoolId[_poolId] += _pay;
-        Coverage storage coverage = coverages[_poolId][msg.sender];
-        coverage.amount += _coverAmount;
+        uint256 premium = _getCoverPrice(_poolId, _coverAmount, _length);
+
+        totalRewardsByPoolId[_poolId] += premium;
+
+        Cover storage cover = covers[_poolId][msg.sender];
+
+        cover.amount += _coverAmount;
         // initial 7 days buffer so pool cannot be exploited
-        coverage.buyDate = block.timestamp + 7 days;
-        coverage.length = _length;
-
-        uint256 toTransfer = _pay;
+        cover.buyDate = block.timestamp + 7 days;
+        cover.length = _length;
 
         // updates pool distribution based on paid amount
         IERC20(tokenByPoolId[_poolId]).transferFrom(
             msg.sender,
             address(this),
-            toTransfer
+            premium
         );
-        emit CoverageBought(
-            toTransfer,
-            msg.sender,
-            _pay,
-            _length,
-            _coverAmount
-        );
-        _splitPremium(_poolId, toTransfer);
+        emit CoverBought(msg.sender, _poolId, _length, _coverAmount, premium);
+
+        _splitPremium(_poolId, premium);
     }
 
     /**
@@ -449,11 +476,10 @@ contract PolicyCenter is ProtocolProtection {
         );
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
-        console.log("Start");
+      
         // claim rewards for caller by pool id. user debt is updated in claim reward
         _claimReward(_poolId, msg.sender);
-        console.log("End");
-        console.log("liquidity by pool id", liquidityByPoolId[_poolId]);
+        
         // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= _amount;
 
@@ -488,12 +514,12 @@ contract PolicyCenter is ProtocolProtection {
 
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
 
-        Coverage storage coverage = coverages[_poolId][msg.sender];
-        //the user can only claim a payout 7 days after the coverage was bought
+        Cover storage cover = covers[_poolId][msg.sender];
+        //the user can only claim a payout 7 days after the cover was bought
 
         // exploit protection
         require(
-            coverage.buyDate < block.timestamp,
+            cover.buyDate < block.timestamp,
             "coverage is not yet active"
         );
         require(pool.liquidated(), "pool is not claimable");
@@ -505,22 +531,22 @@ contract PolicyCenter is ProtocolProtection {
         // buy date + length + liquidation date - 5 days buffer
         // intended to fullfil valid coverages accounting for voting period
         require(
-            coverage.buyDate + (coverage.length * 1 days) >=
+            cover.buyDate + (cover.length * 1 days) >=
                 pool.endLiquidationDate() - 20 days,
             "coverage has expired"
         );
 
-        require(coverage.amount > 0, "no coverage to claim");
+        require(cover.amount > 0, "no coverage to claim");
         // gets amount to give as payout
         uint256 amount = calculatePayout(_poolId, msg.sender);
 
         // coverage by user is removed
-        coverage.amount = 0;
+        cover.amount = 0;
         if (liquidityByPoolId[_poolId] >= amount) {
             // Insurance doesn't need reinsurance
             // Registers removal of funds from insurance pool
             // if its enough to cover all funds
-            fundsByPoolId[_poolId] -= coverage.amount;
+            fundsByPoolId[_poolId] -= cover.amount;
         } else {
             // Insurance pool needs reinsurance
             // registers removel of funds from insurance and reinsurance pools
@@ -542,6 +568,7 @@ contract PolicyCenter is ProtocolProtection {
      */
     function rewardTreasuryToReporter(address _reporter) external {
         require(msg.sender == executor, "not requested by Executor");
+
         // 10% of treasury + 2000 DEG
         uint256 reward = (treasury * 1000) / 10000;
         treasury -= reward;
@@ -607,15 +634,17 @@ contract PolicyCenter is ProtocolProtection {
         address _fromToken,
         address _toToken
     ) internal returns (uint256 receives) {
-        address[] memory array = new address[](1);
-        array[0] = _fromToken;
+        address[] memory path = new address[](2);
+        path[0] = _fromToken;
+        path[1] = _toToken;
+
         // exchange tokens for deg and return amount of deg received
         receives = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * 99) / 100),
-            array,
-            _toToken,
-            0
+            path,
+            address(this),
+            block.timestamp + 1
         );
     }
 
@@ -669,12 +698,13 @@ contract PolicyCenter is ProtocolProtection {
             fromToken,
             deg
         );
+
         treasury += treasuryReceives;
+
         fundsByPoolId[_poolId] += toInsurancePool;
+
         // reinsurance pool is pool 0
         fundsByPoolId[0] += reinsuranceReceives;
-
-        console.log("to insurancepool", toInsurancePool);
 
         IInsurancePool(insurancePools[_poolId]).updateEmissionRate(
             toInsurancePool
@@ -688,5 +718,19 @@ contract PolicyCenter is ProtocolProtection {
         require(exchange != address(0), "Exchange address not set");
         // approve exchange to swap policy center tokens for deg
         IERC20(_token).approve(exchange, type(uint256).max);
+    }
+
+    /**
+     * @notice Get cover price from insurance pool
+     */
+    function _getCoverPrice(
+        uint256 _poolId,
+        uint256 _coverAmount,
+        uint256 _length
+    ) internal view returns (uint256 price) {
+        price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
+            _coverAmount,
+            _length
+        );
     }
 }
