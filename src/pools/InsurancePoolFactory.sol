@@ -167,7 +167,7 @@ contract InsurancePoolFactory is
      * @param _name                 Name of the protocol
      * @param _protocolToken        Address of the token used for the protocol
      * @param _maxCapacity          Maximum capacity of the pool
-     * @param _priceRatio  Initial policy price per shield
+     * @param _priceRatio    Initial policy price per shield
      *
      * @return address Address of the new insurance pool
      */

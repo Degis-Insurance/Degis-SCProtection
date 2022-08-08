@@ -242,7 +242,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     function testProvideLiqudityDirectlyToInsurancePool() public {
         shield.approve(address(policyCenter), 10000 ether);
         // user should not be able to provide liquidity directly to insurance pool
-        vm.expectRevert("cannot provide liquidity directly to insurance pool");
+        vm.expectRevert("Only policy center can call this function");
         InsurancePool(pool1).provideLiquidity(10000, address(this));
     }
 
@@ -251,7 +251,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         policyCenter.provideLiquidity(POOL_ID, 10000);
         vm.warp(604801);
         // user should not be able to provide liquidity directly to insurance pool
-        vm.expectRevert("cannot remove liquidity directly from insurance pool");
+        vm.expectRevert("Only policy center can call this function");
         InsurancePool(pool1).removeLiquidity(10000, address(this));
     }
 
@@ -298,10 +298,12 @@ contract PostInsurancePoolDeploymentTest is Test {
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 1000 ether, 90);
 
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .covers(POOL_ID, alice);
+        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
+            POOL_ID,
+            alice
+        );
 
-        assertEq(amount,1000 ether);
+        assertEq(amount, 1000 ether);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
     }
@@ -324,7 +326,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // Owner address provides liquidity to ptp pool
-        console.log(shield.balanceOf(address(this)));
+       
         vm.prank(alice);
         policyCenter.provideLiquidity(POOL_ID, 1000);
         uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
@@ -335,8 +337,10 @@ contract PostInsurancePoolDeploymentTest is Test {
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 100 ether, 90);
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter
-            .covers(POOL_ID, alice);
+        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
+            POOL_ID,
+            alice
+        );
         assertEq(amount == 100 ether, true);
         assertEq(buyDate - block.timestamp < 604810, true);
         assertEq(length == 90, true);
