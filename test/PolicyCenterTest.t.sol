@@ -326,7 +326,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // Owner address provides liquidity to ptp pool
-        console.log(shield.balanceOf(address(this)));
+       
         vm.prank(alice);
         policyCenter.provideLiquidity(POOL_ID, 1000);
         uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
