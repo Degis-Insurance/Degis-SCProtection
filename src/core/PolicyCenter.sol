@@ -737,18 +737,19 @@ contract PolicyCenter is
     /**
      * @notice Get cover price from insurance pool
      *
-     * @param _poolId      Pool id
-     * @param _coverAmount Cover amount
-     * @param _length      Cover length
+     * @param _poolId        Pool id
+     * @param _coverAmount   Cover amount
+     * @param _coverDuration Cover length in months (1,2,3)
      */
     function _getCoverPrice(
         uint256 _poolId,
         uint256 _coverAmount,
-        uint256 _length
+        uint256 _coverDuration
     ) internal view returns (uint256 price) {
+        uint256 length = getExpiryDateInternal(block.timestamp, _coverDuration);
         price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
             _coverAmount,
-            _length
+            length
         );
     }
 
