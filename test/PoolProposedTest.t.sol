@@ -184,7 +184,7 @@ contract ClaimPayoutTest is Test {
         // check if pool is created
         string memory name = InsurancePool(pool2).name();
         uint256 maxCapacity = InsurancePool(pool2).maxCapacity();
-        console.log(name);
+     
         assertEq(maxCapacity == 10000 ether, true);
     }
 
@@ -202,7 +202,6 @@ contract ClaimPayoutTest is Test {
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
 
-        uint256 price = InsurancePool(pool2).coveragePrice(100 ether, 90);
 
         policyCenter.buyCover(2, 100 ether, 90);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));

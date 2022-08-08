@@ -17,6 +17,8 @@ import {
   ReinsurancePool__factory,
 } from "../typechain-types";
 
+task("setAllAddress", "Set all addresses");
+
 task("setReinsurancePool", "Set contract address in reinsurancePool").setAction(
   async (_, hre) => {
     console.log("\nSetting contract addresses in reinsurance pool\n");

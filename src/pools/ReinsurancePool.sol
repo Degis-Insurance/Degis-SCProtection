@@ -123,6 +123,14 @@ contract ReinsurancePool is
         _;
     }
 
+    modifier onlyPolicyCenter() {
+        require(
+            msg.sender == policyCenter,
+            "Only policy center can call this function"
+        );
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -215,12 +223,12 @@ contract ReinsurancePool is
      *
      * @param _amount Liquidity amount (shield)
      */
-    function provideLiquidity(uint256 _amount, address _provider) external {
+    function provideLiquidity(uint256 _amount, address _provider)
+        external
+        onlyPolicyCenter
+    {
         require(_amount > 0, "amount should be greater than 0");
-        require(
-            msg.sender == policyCenter,
-            "cannot provide liquidity directly to insurance pool"
-        );
+
         _mint(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
@@ -231,13 +239,13 @@ contract ReinsurancePool is
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
-    function removeLiquidity(uint256 _amount, address _provider) external {
+    function removeLiquidity(uint256 _amount, address _provider)
+        external
+        onlyPolicyCenter
+    {
         require(_amount <= totalSupply(), "amount exceeds totalSupply");
         require(_amount > 0, "amount should be greater than 0");
-        require(
-            msg.sender == policyCenter,
-            "liquidity can only be provide through policy center"
-        );
+
         require(!paused, "cannot remove liquidity while paused");
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
@@ -281,11 +289,7 @@ contract ReinsurancePool is
     @notice Called when liqudity is provided, removed or coverage is bought.
     updates all state variables to reflect current reward emission.
     */
-    function updateRewards() public {
-        require(
-            msg.sender == policyCenter,
-            "Only pollicyCenter can update rewards"
-        );
+    function updateRewards() public onlyPolicyCenter {
         _updateRewards();
     }
 
@@ -294,11 +298,7 @@ contract ReinsurancePool is
      *
      * @param _premium premium given to liquidity providers
      */
-    function updateEmissionRate(uint256 _premium) public {
-        require(
-            msg.sender == policyCenter,
-            "Only pollicyCenter can update emission rate"
-        );
+    function updateEmissionRate(uint256 _premium) public onlyPolicyCenter {
         _updateEmissionRate(_premium);
     }
 
