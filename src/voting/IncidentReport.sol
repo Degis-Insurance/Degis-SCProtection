@@ -21,6 +21,7 @@ contract IncidentReport is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    address public proposalCenter;
     // Total number of reports
     uint256 public reportCounter;
 
@@ -148,6 +149,10 @@ contract IncidentReport is
         _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
+    function setProposalCenter(address _proposalCenter) external onlyOwner {
+        proposalCenter = _proposalCenter;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -197,9 +202,7 @@ contract IncidentReport is
      */
     function report(uint256 _poolId, address _msgsender) external {
         require(msg.sender == proposalCenter, "not sent from proposal center");
-        address pool = IPolicyCenter(policyCenter).getInsurancePoolById(
-            _poolId
-        );
+        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
         require(pool != address(0), "Pool doesn't exist");
         require(!poolReported[pool], "Pool already reported");
 

@@ -19,15 +19,9 @@ interface IPolicyCenter {
     function exchange() view external returns (address);
     function executor() view external returns (address);
     function fundsByPoolId(uint256) view external returns (uint256);
-<<<<<<< HEAD
-    function getCoverage(uint256 _poolId, address _covered) view external returns (uint256, uint256, uint256);
-    function getInsurancePoolById(uint256 _poolId) view external returns (address);
-    function getPoolInfo(uint256 _poolId) view external returns (bool paused, uint256 accumulatedRewardPerShare, uint256 lastRewardTimestamp, uint256 emissionEndTime, uint256 emissionRate, uint256 maxCapacity);
-=======
 
  
     function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function getPremiumSplits() view external returns (uint256, uint256);
     function incidentReport() view external returns (address);
     function insurancePoolFactory() view external returns (address);

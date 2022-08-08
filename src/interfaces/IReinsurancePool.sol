@@ -49,12 +49,8 @@ interface IReinsurancePool {
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
-<<<<<<< HEAD
     function setOnboardProposal(address _onboardProposal) external;
-=======
-    function pauseReinsurancePool(bool _paused) external;
 
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
     

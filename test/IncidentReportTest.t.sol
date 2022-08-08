@@ -166,6 +166,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+        executor.setIncidentReport(address(incidentReport));
         //deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",

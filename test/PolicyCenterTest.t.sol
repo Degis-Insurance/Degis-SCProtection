@@ -186,20 +186,6 @@ contract PostInsurancePoolDeploymentTest is Test {
         );
     }
 
-    function testIsPoolAddress() public {
-        assertEq(policyCenter.isPoolAddress(pool1), true);
-        assertEq(policyCenter.isPoolAddress(address(reinsurancePool)), true);
-        assertEq(policyCenter.isPoolAddress(address(this)), false);
-    }
-
-    function testGetInsurancePoolById() public {
-        // get pool by id
-        address pool = policyCenter.getInsurancePoolById(1);
-        assertEq(pool == pool1, true);
-        // get pool by id that does not exist
-        pool = policyCenter.getInsurancePoolById(2);
-        assertEq(pool == address(0), true);
-    }
 
     function testApprovePTPPolicyCenter() public {
         // approve ptp pool to policy center
