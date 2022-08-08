@@ -139,15 +139,15 @@ contract Executor is
         // reward 10% of treasury to reporter
         IPolicyCenter(policyCenter).rewardTreasuryToReporter(reporter);
 
-        // liquidate the pool
+        // Mark the pool as liquidated
         IInsurancePool(poolAddress).liquidatePool();
 
         // remove pool from protocol registry in insurance pool factory
-        // that allows the creation of newe pools for that protocol
+        // that allows the creation of new pools for that protocol
         IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(
             tokenAddress
         );
-        // IInsurancePoolFactory(poolAddress).deregisterToken()
+
         // emit the event
         emit ReportExecuted(poolAddress, poolId, _reportId);
     }

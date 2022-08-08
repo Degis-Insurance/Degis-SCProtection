@@ -382,8 +382,6 @@ contract IncidentReport is
 
         uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
 
-        console.log("debt", debt);
-
         // Pay the debt in DEG
         IDegisToken(deg).burnDegis(msg.sender, debt);
 
@@ -420,8 +418,6 @@ contract IncidentReport is
                 REPORTER_REWARD + REPORT_THRESHOLD
             );
 
-            _distributeIncomeForWinner(currentReport.reporter);
-
             // Total deg reward
             uint256 totalRewardToVoters = currentReport.numAgainst / 100;
 
@@ -440,15 +436,6 @@ contract IncidentReport is
                 (totalRewardToVoters * SCALE) /
                 currentReport.numAgainst;
         }
-    }
-
-    /**
-     * @notice Distribute part of shield income to correct reporter
-     *
-     * @param _winner Winner address
-     */
-    function _distributeIncomeForWinner(address _winner) internal {
-        // IDegisToken(deg).mintDegis(_winner, REPORT_THRESHOLD);
     }
 
     /**

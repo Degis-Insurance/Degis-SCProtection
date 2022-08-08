@@ -80,6 +80,8 @@ contract InsurancePool is
     // Max amount of bought protection in shield
     uint256 public maxCapacity;
 
+    uint256 public lockedAmount;
+
     // Timestamp of pool creation
     uint256 public startTime;
 
@@ -127,8 +129,9 @@ contract InsurancePool is
 
         premiumRatio = _premiumRatio;
 
+        // TODO: change length
         maxLength = 90;
-        minLength = 7;
+        minLength = 0;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -262,7 +265,9 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Provide liquidity from liquidity pool. Only callable through policyCenter
+     * @notice Provide liquidity to liquidity pool
+     *         Only callable through policyCenter
+     *         Can not provide new liquidity when liquidated
      *
      * @param _amount   Amount of liquidity to provide
      * @param _provider Liquidity provider adress
@@ -272,15 +277,18 @@ contract InsurancePool is
         whenNotPaused
         onlyPolicyCenter
     {
-        require(!liquidated, "cannot provide new liquidity");
-        require(_amount > 0, "amount should be greater than 0");
+        require(!liquidated, "Liquidated");
+        require(_amount > 0, "Amount should be greater than 0");
+        require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
+        // Mint lp tokens to the provider
         _mint(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
 
     /**
-     * @notice Remove liquidity from insurance pool. Only callable through policyCenter
+     * @notice Remove liquidity from insurance pool
+     *         Only callable through policyCenter
      *
      * @param _amount   Amount of liquidity to remove
      * @param _provider Provider address
@@ -290,6 +298,9 @@ contract InsurancePool is
         whenNotPaused
         onlyPolicyCenter
     {
+        uint256 avaLiquidity = totalSupply() - lockedAmount;
+        require(_amount <= avaLiquidity, "No available liquidity");
+
         require(
             !liquidated,
             "Pool has been liquidated, cannot remove liquidity"
@@ -299,6 +310,7 @@ contract InsurancePool is
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
+
 
     /**
     @notice Called when liqudity is provided, removed or coverage is bought.
@@ -340,6 +352,7 @@ contract InsurancePool is
 
     /**
      * @notice End the liquidation period
+     *         Users can redeem remaining capacity when ending liquidation
      */
     function endLiquidation() external {
         require(liquidated, "Pool has not been liquidated");
@@ -367,27 +380,29 @@ contract InsurancePool is
         // Update current reward taking into account new emission rate
         _updateRewards();
 
-        // Get time to complete current pool of tokens emission to liquidity providers
-        uint256 timeToFinishEmission = emissionEndTime > block.timestamp
-            ? emissionEndTime - block.timestamp
-            : 0;
+        if (_premium > 0) {
+            // Get time to complete current pool of tokens emission to liquidity providers
+            uint256 timeToFinishEmission = emissionEndTime > block.timestamp
+                ? emissionEndTime - block.timestamp
+                : 0;
 
-        // Calculate new emission rate by adding new premium and redistributing previous emission
-        // Throughout the time it takes to complete emission.
-        if (timeToFinishEmission > 0) {
-            emissionRate =
-                ((emissionRate * timeToFinishEmission) + _premium) /
-                DISTRIBUTION_PERIOD;
-            // Update emission rate
-        } else {
-            // Update emission rate
-            emissionRate = _premium / DISTRIBUTION_PERIOD;
+            // Calculate new emission rate by adding new premium and redistributing previous emission
+            // Throughout the time it takes to complete emission.
+            if (timeToFinishEmission > 0) {
+                emissionRate =
+                    ((emissionRate * timeToFinishEmission) + _premium) /
+                    DISTRIBUTION_PERIOD;
+                // Update emission rate
+            } else {
+                // Update emission rate
+                emissionRate = _premium / DISTRIBUTION_PERIOD;
+            }
+
+            // update emission rate and emission ends
+            emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
+
+            emit EmissionRateUpdated(emissionRate, emissionEndTime);
         }
-
-        // update emission rate and emission ends
-        emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
-
-        emit EmissionRateUpdated(emissionRate, emissionEndTime);
     }
 
     /**
