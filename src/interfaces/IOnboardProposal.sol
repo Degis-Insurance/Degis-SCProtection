@@ -39,25 +39,15 @@ interface IOnboardProposal {
     function propose(string memory _name, address _token, uint256 _maxCapacity, uint256 _priceRatio, address _msgsender) external;
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;
-<<<<<<< HEAD
-    function setDeg(address _deg) external;
-=======
-
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
     function setReinsurancePool(address _reinsurancePool) external;
-<<<<<<< HEAD
-    function setShield(address _shield) external;
-    function setVeDeg(address _veDeg) external;
-=======
 
 
 
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function settle(uint256 _proposalId) external;
     function shield() view external returns (address);
     function startVoting(uint256 _proposalId) external;

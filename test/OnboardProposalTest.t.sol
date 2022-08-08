@@ -291,7 +291,7 @@ contract OnboardProposalVotingTest is Test {
 
     function testCloseProposal() public {
         // close proposal
-        onboardProposal.closeProposal(PROPOSAL_ID);
+        executor.closeProposal(PROPOSAL_ID);
         assert(onboardProposal.getProposal(PROPOSAL_ID).status == CLOSE_STATUS);
     }
 

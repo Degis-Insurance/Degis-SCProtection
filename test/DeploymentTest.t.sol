@@ -89,7 +89,7 @@ contract InitialContractDeploymentTest is Test {
 
     function testDeployExecutor() public {
         executor = new Executor();
-        assertEq(executor.poolBuffer() == 0 days, true);
+        assertEq(executor.proposalBuffer() == 0 days, true);
     }
 
     function testDeployOnboardProposal() public {

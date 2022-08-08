@@ -177,51 +177,12 @@ contract PolicyCenter is
     }
 
     /**
-<<<<<<< HEAD
-     * @notice returns true if given pool address is a valid pool
-     * @param _poolAddress pool address
-     * @return bool true if pool address is valid
-     */
-    function isPoolAddress(address _poolAddress) public view returns (bool) {
-        // gets the amount of deployed pools by Insurance Pool Factory
-        uint256 length = IInsurancePoolFactory(insurancePoolFactory)
-            .getPoolCounter();
-        // iterates through all pools. If not found, returns false
-        for (uint256 i = 0; i <= length; i++) {
-            if (insurancePools[i] == _poolAddress) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @notice returns insurance pool address given a pool id
-     * @param _poolId pool id generated on Policy Center
-     * @return address of insurance pool
-     */
-    function getInsurancePoolById(uint256 _poolId)
-        public
-        view
-        returns (address)
-    {
-        return insurancePools[_poolId];
-    }
-
-    /**
-    @notice returns information about the coverage of a given user
-    @param _poolId      address of the covered wallet
-    @return _covered    address of covered wallet
-    @return buyDate     date bought
-    @return length      length of coverage
-=======
      * @notice returns information about the cover of a given user
      *
      * @param _poolId Pool id
      * @param _user   User address
      *
      * @return cover Cover info
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
      */
     function getCover(uint256 _poolId, address _user)
         public

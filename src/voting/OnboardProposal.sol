@@ -19,6 +19,7 @@ contract OnboardProposal is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    address public proposalCenter;
     // Total number of reports
     uint256 public proposalCounter;
 
@@ -102,6 +103,13 @@ contract OnboardProposal is
         onlyOwner
     {
         _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
+    function setProposalCenter(address _proposalCenter)
+        external
+        onlyOwner
+    {
+        proposalCenter = _proposalCenter;
     }
 
     // ---------------------------------------------------------------------------------------- //

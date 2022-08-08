@@ -68,14 +68,8 @@ contract Executor is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-<<<<<<< HEAD
      * @notice              sets pool and report time buffers
      * @param _proposalBuffer   time in unix
-=======
-     * @notice              Set pool and report time buffers
-     *
-     * @param _poolBuffer   time in unix
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
      * @param _reportBuffer time in unix
      */
     function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) public {
@@ -184,5 +178,9 @@ contract Executor is
         emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
+    }
+
+    function closeProposal(uint256 _proposalId) external onlyOwner {
+        IOnboardProposal(onboardProposal).closeProposal(_proposalId);
     }
 }

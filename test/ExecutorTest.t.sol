@@ -229,6 +229,5 @@ contract ExecutorTest is Test, IncidentReportParameters {
         // expect that pool1 is now in the liquidation state
         assertEq(InsurancePool(pool1).liquidated() == true, true);
     }
-
     
 }

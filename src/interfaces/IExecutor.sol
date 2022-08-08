@@ -34,17 +34,13 @@ interface IExecutor {
     function onboardProposal() view external returns (address);
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
+    function poolBuffer() view external returns (uint256);
     function proposalBuffer() view external returns (uint256);
     function reinsurancePool() view external returns (address);
     function renounceOwnership() external;
     function reportBuffer() view external returns (uint256);
-<<<<<<< HEAD
     function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) external;
     function setDeg(address _deg) external;
-=======
-    function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) external;
-   
->>>>>>> 05456c0a196e8fab9f0b49751142cf12c977c2eb
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
