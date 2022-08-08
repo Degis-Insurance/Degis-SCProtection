@@ -138,7 +138,6 @@ contract PostInsurancePoolDeploymentTest is Test {
         reinsurancePool.setPolicyCenter(address(policyCenter));
         reinsurancePool.setIncidentReport(address(incidentReport));
         reinsurancePool.setPolicyCenter(address(policyCenter));
-
         onboardProposal.setExecutor(address(executor));
 
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
@@ -186,6 +185,7 @@ contract PostInsurancePoolDeploymentTest is Test {
             true
         );
     }
+
 
     function testApprovePTPPolicyCenter() public {
         // approve ptp pool to policy center

@@ -200,6 +200,26 @@ contract ExecutorTest is Test, IncidentReportParameters {
 
         onboardProposal.settle(PROPOSAL_ID);
     }
+    
+    function testChangeBuffer() public {
+            
+            vm.warp(8 days);
+            // change buffer to time
+            executor.setBuffers(1 days, 1 days);
+            // expect that pool1 is now in the liquidation state
+            assertEq(executor.reportBuffer(), 1 days);
+            assertEq(executor.proposalBuffer(), 1 days);
+    }
+
+    function testExecuteProposal() public {
+
+        vm.warp(8 days);
+        // execute proposal
+        pool2 = executor.executeProposal(PROPOSAL_ID);
+        // expect that pool2 is deployed
+        address insuredToken = IInsurancePool(pool2).insuredToken();
+        assertEq(insuredToken, address(yeti));
+    }
 
     function testExecuteReport() public {
         vm.warp(8 days);
@@ -209,4 +229,5 @@ contract ExecutorTest is Test, IncidentReportParameters {
         // expect that pool1 is now in the liquidation state
         assertEq(InsurancePool(pool1).liquidated() == true, true);
     }
+    
 }

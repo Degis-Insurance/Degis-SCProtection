@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 interface IPolicyCenter {
+    event CoverageBought(uint256 paid, address buyer, uint256 poolId, uint256 length, uint256 amount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event Payout(uint256 _amount, address _address);
     event Reward(uint256 _amount, address _address);

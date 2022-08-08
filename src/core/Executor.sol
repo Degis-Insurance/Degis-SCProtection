@@ -47,7 +47,7 @@ contract Executor is
     // if chosen to, executor report could have a buffer timer to prevent abuse of the system
     // from team or organization members
     uint256 public reportBuffer;
-    uint256 public poolBuffer;
+    uint256 public proposalBuffer;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -68,13 +68,12 @@ contract Executor is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice              Set pool and report time buffers
-     *
-     * @param _poolBuffer   time in unix
+     * @notice              sets pool and report time buffers
+     * @param _proposalBuffer   time in unix
      * @param _reportBuffer time in unix
      */
-    function setBuffers(uint256 _poolBuffer, uint256 _reportBuffer) public {
-        poolBuffer = _poolBuffer;
+    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) public {
+        proposalBuffer = _proposalBuffer;
         reportBuffer = _reportBuffer;
     }
 
@@ -179,5 +178,9 @@ contract Executor is
         emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
+    }
+
+    function closeProposal(uint256 _proposalId) external onlyOwner {
+        IOnboardProposal(onboardProposal).closeProposal(_proposalId);
     }
 }

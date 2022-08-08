@@ -166,6 +166,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setReinsurancePool(address(reinsurancePool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+        executor.setIncidentReport(address(incidentReport));
         //deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
@@ -184,6 +185,12 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
     function _report(uint256 _id) public {
         incidentReport.report(_id);
+    }
+
+    function testExecuteReportBeforeBeingQueued() public {
+        // a report should only be executable once its queued in the executor
+        vm.expectRevert("Report is not ready to be executed");
+        executor.executeReport(1);
     }
 
     function testStartReport() public {
