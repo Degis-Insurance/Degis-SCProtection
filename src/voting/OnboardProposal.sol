@@ -334,9 +334,7 @@ contract OnboardProposal is
         emit ProposalSettled(_proposalId, res);
     }
 
-    function closeProposal(uint256 _proposalId) external {
-        require(msg.sender == executor, "Only executor can close proposal");
-
+    function closeProposal(uint256 _proposalId) external onlyOwner {
         Proposal storage currentProposal = proposals[_proposalId];
 
         // require current proposal to be settled
