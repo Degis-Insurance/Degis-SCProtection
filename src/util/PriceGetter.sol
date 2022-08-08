@@ -35,10 +35,10 @@ contract PriceGetter is OwnableWithoutContext {
         address priceFeedAddress;
         uint256 decimals;
     }
-    // Use token name (string) as the mapping key
-    // Should set the correct orginal token name
+    // Use token address as the mapping key
     mapping(address => PriceFeedInfo) public priceFeedInfo;
 
+    // Find address according to name
     mapping(string => address) public nameToAddress;
 
     // ---------------------------------------------------------------------------------------- //
@@ -116,7 +116,8 @@ contract PriceGetter is OwnableWithoutContext {
     /**
      * @notice Get latest price of a token
      *
-     * @param _tokenName Address of the token
+     * @param _tokenName Name of the token
+     *
      * @return price The latest price
      */
     function getLatestPrice(string memory _tokenName) public returns (uint256) {

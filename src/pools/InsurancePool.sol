@@ -53,7 +53,7 @@ contract InsurancePool is
     // Time users have to claim payout when pool is liquidated
     uint256 public constant CLAIM_PERIOD = 90;
 
-    uint256 public constant MIN_COVER_AMOUNT = 1e18;
+    uint256 public constant MIN_COVER_AMOUNT = 1 ether;
 
     // Max time length in days of granted protection
     uint256 public immutable maxLength;
@@ -61,6 +61,7 @@ contract InsurancePool is
     // Min time length in days
     uint256 public immutable minLength;
 
+    // Premium ratio (max 10000) (260 means 2.6% annually)
     uint256 public immutable premiumRatio;
 
     // ---------------------------------------------------------------------------------------- //
@@ -123,6 +124,7 @@ contract InsurancePool is
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
+
         premiumRatio = _premiumRatio;
 
         maxLength = 90;
@@ -133,9 +135,18 @@ contract InsurancePool is
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // allows executor contract
+    // Only executor contract
     modifier onlyExecutor() {
         require(msg.sender == executor, "Only executor can call this function");
+        _;
+    }
+
+    // Only policy center contract
+    modifier onlyPolicyCenter() {
+        require(
+            msg.sender == policyCenter,
+            "Only policy center can call this function"
+        );
         _;
     }
 
@@ -158,12 +169,8 @@ contract InsurancePool is
         require(_withinLength(_length), "Wrong cover length");
 
         // price in bps per year * amount of tokens to receive when pool is liquidated
-        // * lenght of coverage in days / year and 100 to get bps to percentage
+        // * lenght of coverage in days / year and 10000 to get bps to percentage
         return (premiumRatio * _amount * _length) / 3650000;
-    }
-
-    function _withinLength(uint256 _length) internal view returns (bool) {
-        return _length >= minLength && _length <= maxLength;
     }
 
     /**
@@ -263,13 +270,11 @@ contract InsurancePool is
     function provideLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
+        onlyPolicyCenter
     {
         require(!liquidated, "cannot provide new liquidity");
         require(_amount > 0, "amount should be greater than 0");
-        require(
-            msg.sender == policyCenter,
-            "cannot provide liquidity directly to insurance pool"
-        );
+
         _mint(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
@@ -283,14 +288,11 @@ contract InsurancePool is
     function removeLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
+        onlyPolicyCenter
     {
         require(
             !liquidated,
             "Pool has been liquidated, cannot remove liquidity"
-        );
-        require(
-            msg.sender == policyCenter,
-            "cannot remove liquidity directly from insurance pool"
         );
 
         require(_amount > 0, "amount should be greater than 0");
@@ -302,11 +304,7 @@ contract InsurancePool is
     @notice Called when liqudity is provided, removed or coverage is bought.
     updates all state variables to reflect current reward emission.
     */
-    function updateRewards() public {
-        require(
-            msg.sender == policyCenter,
-            "Only pollicyCenter can update rewards"
-        );
+    function updateRewards() public onlyPolicyCenter {
         _updateRewards();
     }
 
@@ -315,11 +313,7 @@ contract InsurancePool is
      *
      * @param _premium premium given to liquidity providers
      */
-    function updateEmissionRate(uint256 _premium) public {
-        require(
-            msg.sender == policyCenter,
-            "Only pollicyCenter can update emission rate"
-        );
+    function updateEmissionRate(uint256 _premium) public onlyPolicyCenter {
         _updateEmissionRate(_premium);
     }
 
@@ -347,7 +341,7 @@ contract InsurancePool is
     /**
      * @notice End the liquidation period
      */
-    function verifyLiquidationEnded() external {
+    function endLiquidation() external {
         require(liquidated, "Pool has not been liquidated");
         require(
             block.timestamp > endLiquidationDate,
@@ -367,18 +361,16 @@ contract InsurancePool is
     /**
      * @notice Updates emission rate based on new incoming premium
      *
-     * @param _premium incoming new premium
+     * @param _premium Incoming new premium
      */
     function _updateEmissionRate(uint256 _premium) internal {
         // Update current reward taking into account new emission rate
         _updateRewards();
+
         // Get time to complete current pool of tokens emission to liquidity providers
         uint256 timeToFinishEmission = emissionEndTime > block.timestamp
             ? emissionEndTime - block.timestamp
             : 0;
-
-        console.log("Timetofinish emission", timeToFinishEmission);
-        console.log("premium comes in", _premium);
 
         // Calculate new emission rate by adding new premium and redistributing previous emission
         // Throughout the time it takes to complete emission.
@@ -409,22 +401,15 @@ contract InsurancePool is
         } else {
             // if no coverages have been bought in over 30 days,
             // discount time passed since the time that emission ends.
-            console.log("emmission end", emissionEndTime);
             uint256 claimTimestamp = emissionEndTime < block.timestamp
                 ? emissionEndTime
                 : block.timestamp;
+
             // Calculate difference between claim time and last time rewards were claimed
             uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
 
-            console.log("time passed", timeSinceLastReward);
-            console.log("claimTime", claimTimestamp);
-            console.log("lastRewardTimestamp", lastRewardTimestamp);
-
             // Calculate new reward
             uint256 rewards = (timeSinceLastReward * emissionRate) / 1 days;
-
-            console.log("emission rate:", emissionRate);
-            console.log("new rewards", rewards);
 
             // Update accumulated rewards given to each pool share
             // accumulated
@@ -436,7 +421,17 @@ contract InsurancePool is
         }
     }
 
+    /**
+     * @notice Set liquidation status
+     */
     function _setLiquidationStatus(bool _liquidated) internal {
         liquidated = _liquidated;
+    }
+
+    /**
+     * @notice Check the cover length is ok
+     */
+    function _withinLength(uint256 _length) internal view returns (bool) {
+        return _length >= minLength && _length <= maxLength;
     }
 }

@@ -49,7 +49,7 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // poolIds => address, updated once pools are deployed
+    // poolId => address, updated once pools are deployed
     // ReinsurancePool is pool 0
     mapping(uint256 => address) public insurancePools;
     mapping(uint256 => address) public tokenByPoolId;
@@ -367,6 +367,12 @@ contract PolicyCenter is
     }
 
     /**
+     * @notice Distribute those pending premiums
+     *         To save gas, we do not transfer premiums for every purchase
+     */
+    function distributePremium() external {}
+
+    /**
      * @notice claim rewards from a given pool id
      * @param _poolId pool id to claim rewards from
      */
@@ -375,17 +381,20 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice provide liquidity to a give pool id
-     * @param _poolId pool id generated on Policy Center
-     * @param _amount amount of liquidity to provide
+     * @notice Provide liquidity to a give pool id
+     *
+     * @param _poolId Pool id
+     * @param _amount Amount of liquidity to provide
      */
     function provideLiquidity(uint256 _poolId, uint256 _amount)
         external
         poolExists(_poolId)
     {
         require(_amount > 0, "Amount must be greater than 0");
+
         // claim rewards. user debt is updated in _claimReward
         _claimReward(_poolId, msg.sender);
+
         // adds liquidity to insurance or reinsurance pool
         liquidityByPoolId[_poolId] += _amount;
 
@@ -412,9 +421,10 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice remove liquidity to a give pool id
-     * @param _poolId pool id generated on Policy Center
-     * @param _amount amount of liquidity to provide
+     * @notice Remove liquidity to a give pool id
+     *
+     * @param _poolId Pool id
+     * @param _amount Amount of liquidity to provide
      */
     function removeLiquidity(uint256 _poolId, uint256 _amount)
         external
@@ -437,10 +447,10 @@ contract PolicyCenter is
         );
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
-      
+
         // claim rewards for caller by pool id. user debt is updated in claim reward
         _claimReward(_poolId, msg.sender);
-        
+
         // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= _amount;
 
@@ -479,10 +489,7 @@ contract PolicyCenter is
         //the user can only claim a payout 7 days after the cover was bought
 
         // exploit protection
-        require(
-            cover.buyDate < block.timestamp,
-            "coverage is not yet active"
-        );
+        require(cover.buyDate < block.timestamp, "coverage is not yet active");
         require(pool.liquidated(), "pool is not claimable");
         require(
             pool.endLiquidationDate() >= block.timestamp,

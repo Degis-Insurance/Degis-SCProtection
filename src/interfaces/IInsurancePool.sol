@@ -75,5 +75,5 @@ interface IInsurancePool {
     function updateEmissionRate(uint256 _premium) external;
     function updateRewards() external;
     function veDeg() view external returns (address);
-    function verifyLiquidationEnded() external;
+    function endLiquidation() external;
 }
