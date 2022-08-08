@@ -91,9 +91,11 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             address(reinsurancePool)
         );
         executor = new Executor();
-        onboardProposal = new OnboardProposal(address(deg),
+        onboardProposal = new OnboardProposal(
+            address(deg),
             address(vedeg),
-            address(shield));
+            address(shield)
+        );
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
@@ -111,7 +113,6 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         reinsurancePool.setPolicyCenter(address(policyCenter));
 
         policyCenter.setExecutor(address(executor));
-        
 
         policyCenter.setReinsurancePool(address(reinsurancePool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
@@ -121,7 +122,6 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
 
-  
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setReinsurancePool(address(reinsurancePool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
@@ -142,7 +142,6 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-        
 
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(onboardProposal), 1000 ether);
@@ -223,7 +222,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.warp(
             REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
         );
-        IInsurancePool(pool1).verifyLiquidationEnded();
+        IInsurancePool(pool1).endLiquidation();
 
         assertEq(IInsurancePool(pool1).liquidated() == false, true);
     }
@@ -244,7 +243,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
         incidentReport.unpausePools(address(pool1));
 
-        IInsurancePool(pool1).verifyLiquidationEnded();
+        IInsurancePool(pool1).endLiquidation();
         policyCenter.removeLiquidity(1, lpBalance);
 
         assertEq(InsurancePool(pool1).liquidated() == false, true);
