@@ -80,8 +80,6 @@ contract InsurancePool is
     // Max amount of bought protection in shield
     uint256 public maxCapacity;
 
-    uint256 public lockedAmount;
-
     // Timestamp of pool creation
     uint256 public startTime;
 
@@ -260,6 +258,10 @@ contract InsurancePool is
         _setPolicyCenter(_policyCenter);
     }
 
+    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+        _setInsurancePoolFactory(_insurancePoolFactory);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -279,7 +281,7 @@ contract InsurancePool is
     {
         require(!liquidated, "Liquidated");
         require(_amount > 0, "Amount should be greater than 0");
-        require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
+        // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
         // Mint lp tokens to the provider
         _mint(_provider, _amount);
@@ -298,8 +300,8 @@ contract InsurancePool is
         whenNotPaused
         onlyPolicyCenter
     {
-        uint256 avaLiquidity = totalSupply() - lockedAmount;
-        require(_amount <= avaLiquidity, "No available liquidity");
+        // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
+
 
         require(
             !liquidated,
@@ -365,6 +367,11 @@ contract InsurancePool is
         _setLiquidationStatus(false);
 
         emit LiquidationEnded(block.timestamp);
+    }
+
+    function increaseMaxCapacity(uint256 _maxCapacity) external onlyOwner {
+        maxCapacity = _maxCapacity;
+        IInsurancePoolFactory(insurancePoolFactory).updateMaxCapacity(maxCapacity);
     }
 
     // ---------------------------------------------------------------------------------------- //

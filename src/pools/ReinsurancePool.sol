@@ -106,6 +106,7 @@ contract ReinsurancePool is
     {
         // Register time that pool was deployed
         startTime = block.timestamp;
+        maxCapacity = type(uint256).max;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -247,29 +248,13 @@ contract ReinsurancePool is
         require(_amount > 0, "amount should be greater than 0");
 
         require(!paused, "cannot remove liquidity while paused");
+
+        require(totalSupply() - _amount >= IInsurancePoolFactory(
+                insurancePoolFactory
+            ).totalMaxCapacity(),
+            "undermines reinsurance capability");
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
-    }
-
-    /**
-     * @notice  Move liquidity to another pool to be used for reinsurance,
-                reducing gas costs during liquidation period.
-     *
-     * @param _amount Amount of liquidity to transfer to insurance pool
-     * @param _poolId Id of the pool to move the liquidity to.
-     */
-    function moveLiquidity(uint256 _poolId, uint256 _amount)
-        external
-        onlyOwner
-    {
-        require(_amount > 0, "Amount must be greater than 0");
-        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
-            _poolId
-        );
-        require(poolAddress != address(0), "Pool not found");
-
-        IERC20(shield).transferFrom(address(this), poolAddress, _amount);
-        emit MoveLiquidity(_poolId, _amount);
     }
 
     /**

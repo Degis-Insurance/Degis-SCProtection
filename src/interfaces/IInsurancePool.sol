@@ -74,6 +74,9 @@ interface IInsurancePool {
         external
         returns (bool);
 
+    function increaseMaxCapacity(uint256 _maxCapacity) external;
+
+
     function insurancePoolFactory() external view returns (address);
 
     function insuredToken() external view returns (address);
