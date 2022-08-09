@@ -58,7 +58,7 @@ contract InsurancePoolFactory is
     mapping(uint256 => PoolInfo) public pools;
 
     uint256 public poolCounter;
-    uint256 public maxCapacity;
+    uint256 public sumOfMaxCapacities;
 
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
@@ -181,7 +181,16 @@ contract InsurancePoolFactory is
             msg.sender == owner() || msg.sender == executor,
             "Only owner or executor contract can create a new insurance pool"
         );
-        require(!tokenRegistered[_protocolToken], "Already registered");
+        require(!tokenRegistered[_protocolToken], "Already registered");        
+
+        // retrieve reinsurance pool liquidity
+        uint256 reinsurancePoolLiquidity = IPolicyCenter(policyCenter).liquidityByPoolId(0);
+
+        // check if reinsurance pool can cover all max capacities
+        require(reinsurancePoolLiquidity >= _maxCapacity + sumOfMaxCapacities, "Insufficient liquidity");
+
+        // add new pool max capacity to sum of max capacities
+        sumOfMaxCapacities += _maxCapacity;
 
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
@@ -225,6 +234,21 @@ contract InsurancePoolFactory is
         );
 
         return newPoolAddress;
+    }
+
+    function updateMaxCapacity(uint256 _maxCapacity) external {
+        uint256 difference;
+        for (uint256 i = 0; i <= poolCounter; i++) {
+            if (pools[i].poolAddress == msg.sender) {
+                if (pools[i].maxCapacity > _maxCapacity) {
+                    difference = pools[i].maxCapacity - _maxCapacity;
+                    sumOfMaxCapacities -= difference;
+                } else {
+                    difference = _maxCapacity - pools[i].maxCapacity;
+                    sumOfMaxCapacities += difference;
+                }
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //

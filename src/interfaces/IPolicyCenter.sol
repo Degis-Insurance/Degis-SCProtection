@@ -18,7 +18,7 @@ interface IPolicyCenter {
     function deg() view external returns (address);
     function exchange() view external returns (address);
     function executor() view external returns (address);
-    function fundsByPoolId(uint256) view external returns (uint256);
+    function rewardsByPoolId(uint256) view external returns (uint256);
 
  
     function getPoolInfo(uint256 _poolId) external view returns (bool, uint256, uint256, uint256 ,uint256, uint256, uint256);

@@ -87,10 +87,14 @@ interface IInsurancePoolFactory {
 
     function setReinsurancePool(address _reinsurancePool) external;
 
+    function updateMaxCapacity(uint256 _maxCapacity) external;
+
     function shield() external view returns (address);
 
     function tokenRegistered(address) external view returns (bool);
 
+    function totalMaxCapacity() external view returns (uint256);
+    
     function transferOwnership(address newOwner) external;
 
     function veDeg() external view returns (address);
