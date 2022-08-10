@@ -27,15 +27,28 @@ import "./interfaces/InsurancePoolDependencies.sol";
 
 import "../util/OwnableWithoutContext.sol";
 
+import "../libraries/DateTime.sol";
+
 import "forge-std/console.sol";
 
 /**
- * @title Insurance Pool Factory
+ * @title Insurance Pool (for single project)
  *
  * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
  *
- * @notice This is the factory contract for deploying new insurance pools
- *         Each pool represents a project that has joined Degis Smart Contract Protection
+ * @notice Priority pool is used for protecting a specific project
+ *         Each priority pool has a maxCapacity (0 ~ 100%) that it can cover
+ *
+ *         When liquidity providers join a priority pool,
+ *         they need to transfer their RP_LP token to this insurance pool.
+ *
+ *         After that, they can share the 45% percent native token reward of this pool.
+ *         At the same time, that also means these liquidity will be first liquidated,
+ *         when there is an incident happened for this project.
+ *
+ *         For liquidation process, the pool will first redeem Shield from protectionPool with the staked RP_LP tokens.
+ *         If that is enough, no more redeeming.
+ *         If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
  */
 contract InsurancePool is
     ERC20,
@@ -61,8 +74,8 @@ contract InsurancePool is
     // Min time length in days
     uint256 public immutable minLength;
 
-    // Premium ratio (max 10000) (260 means 2.6% annually)
-    uint256 public immutable premiumRatio;
+    // Base premium ratio (max 10000) (260 means 2.6% annually)
+    uint256 public immutable basePremiumRatio;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -94,6 +107,14 @@ contract InsurancePool is
 
     uint256 public endLiquidationDate;
 
+    // Reward speed for the next 3 months
+    uint256[] public rewardSpeed;
+
+    // Total active covered amount
+    uint256 public totalCovered;
+
+    //
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -117,7 +138,7 @@ contract InsurancePool is
         uint256 _maxCapacity,
         string memory _name,
         string memory _symbol,
-        uint256 _premiumRatio,
+        uint256 _baseRatio,
         address _admin
     ) ERC20(_name, _symbol) OwnableWithoutContext(_admin) {
         // token address insured by pool
@@ -125,11 +146,11 @@ contract InsurancePool is
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
 
-        premiumRatio = _premiumRatio;
+        basePremiumRatio = _baseRatio;
 
         // TODO: change length
-        maxLength = 90;
-        minLength = 0;
+        maxLength = 3;
+        minLength = 1;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -156,12 +177,12 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice returns cost to buy coverage for a given period of time and amount of tokens
+     * @notice Cost to buy a cover for a given period of time and amount of tokens
      *
      * @param _amount Amount being covered
-     * @param _length Coverage length in days
+     * @param _length Cover length in month
      */
-    function coveragePrice(uint256 _amount, uint256 _length)
+    function coverPrice(uint256 _amount, uint256 _length)
         external
         view
         returns (uint256)
@@ -169,57 +190,33 @@ contract InsurancePool is
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_length), "Wrong cover length");
 
-        // price in bps per year * amount of tokens to receive when pool is liquidated
-        // * lenght of coverage in days / year and 10000 to get bps to percentage
-        return (premiumRatio * _amount * _length) / 3650000;
+        uint256 dynamicRatio = dynamicPremiumRatio();
+
+        uint256 endTimestamp = getExpiryDateInternal(block.timestamp, _length);
+        uint256 length = endTimestamp - block.timestamp;
+
+        return (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
+
+    function activeCovered() public view returns (uint256 covered) {}
 
     /**
-     * @notice Calculate your reward
-     *
-     * @param _amount   Amount in provided liquidity
-     * @param _userDebt Amount of debt the user
+     * @notice Get the dynamic premium ratio (annually)
+     *         Depends on the covers sold and liquidity amount
      */
-    function calculateReward(uint256 _amount, uint256 _userDebt)
-        external
-        view
-        returns (uint256)
-    {
-        if (totalSupply() == 0) {
-            return 0;
-        }
-        uint256 timePassed = block.timestamp - lastRewardTimestamp;
-        uint256 rewards = timePassed * emissionRate;
+    function dynamicPremiumRatio() public view returns (uint256 ratio) {
+        // Covered ratio = Covered amount of this pool / Total covered amount
+        uint256 coveredRatio = (totalCovered * SCALE) /
+            IProtectionPool(protectionPool).totalCovered();
 
-        uint256 acc = accumulatedRewardPerShare + rewards / totalSupply();
-        uint256 reward = (_amount * acc) - _userDebt;
-        return reward;
+        // LP Token ratio = LP token in this pool / Total lp token
+        uint256 tokenRatio = (totalSupply() * SCALE) /
+            IProtectionPool(protectionPool).totalSupply();
+
+        // Dynamic premium ratio
+        ratio = (basePremiumRatio * coveredRatio) / tokenRatio;
     }
 
-    /**
-     * @notice returns pool information
-     */
-    function poolInfo()
-        external
-        view
-        returns (
-            bool,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            paused(),
-            accumulatedRewardPerShare,
-            lastRewardTimestamp,
-            emissionEndTime,
-            emissionRate,
-            maxCapacity
-        );
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -258,7 +255,10 @@ contract InsurancePool is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory) external onlyOwner {
+    function setInsurancePoolFactory(address _insurancePoolFactory)
+        external
+        onlyOwner
+    {
         _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
@@ -302,7 +302,6 @@ contract InsurancePool is
     {
         // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
-
         require(
             !liquidated,
             "Pool has been liquidated, cannot remove liquidity"
@@ -313,11 +312,10 @@ contract InsurancePool is
         emit LiquidityRemoved(_amount, _provider);
     }
 
-
     /**
-    @notice Called when liqudity is provided, removed or coverage is bought.
-    updates all state variables to reflect current reward emission.
-    */
+     * @notice Called when liqudity is provided, removed or coverage is bought.
+     *         updates all state variables to reflect current reward emission.
+     */
     function updateRewards() public onlyPolicyCenter {
         _updateRewards();
     }
@@ -371,7 +369,9 @@ contract InsurancePool is
 
     function increaseMaxCapacity(uint256 _maxCapacity) external onlyOwner {
         maxCapacity = _maxCapacity;
-        IInsurancePoolFactory(insurancePoolFactory).updateMaxCapacity(maxCapacity);
+        IInsurancePoolFactory(insurancePoolFactory).updateMaxCapacity(
+            maxCapacity
+        );
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -455,5 +455,65 @@ contract InsurancePool is
      */
     function _withinLength(uint256 _length) internal view returns (bool) {
         return _length >= minLength && _length <= maxLength;
+    }
+
+    /**
+     * @notice Get the expiry date based on cover duration
+     *
+     * @param _now           Current timestamp
+     * @param _coverDuration Months to cover: 1-3
+     */
+    function getExpiryDateInternal(uint256 _now, uint256 _coverDuration)
+        public
+        pure
+        returns (uint256)
+    {
+        // Get the day of the month
+        (, , uint256 day) = DateTimeLibrary.timestampToDate(_now);
+
+        // Cover duration of 1 month means current month
+        // unless today is the 25th calendar day or later
+        uint256 monthToAdd = _coverDuration - 1;
+
+        if (day >= 25) {
+            // Add one month
+            monthToAdd += 1;
+        }
+
+        return _getNextMonthEndDate(_now, monthToAdd);
+    }
+
+    function _getNextMonthEndDate(uint256 date, uint256 monthsToAdd)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 futureDate = DateTimeLibrary.addMonths(date, monthsToAdd);
+        return _getMonthEndTimestamp(futureDate);
+    }
+
+    function _getMonthEndTimestamp(uint256 _date)
+        private
+        pure
+        returns (uint256)
+    {
+        // Get the year and month from the date
+        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
+            _date
+        );
+
+        // Count the total number of days of that month and year
+        uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(year, month);
+
+        // Get the month end timestamp
+        return
+            DateTimeLibrary.timestampFromDateTime(
+                year,
+                month,
+                daysInMonth,
+                23,
+                59,
+                59
+            );
     }
 }

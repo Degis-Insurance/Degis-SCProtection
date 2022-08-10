@@ -70,7 +70,7 @@ interface IInsurancePoolFactory {
 
     function proposalCenter() external view returns (address);
 
-    function reinsurancePool() external view returns (address);
+    function protectionPool() external view returns (address);
 
     function renounceOwnership() external;
 
@@ -85,7 +85,7 @@ interface IInsurancePoolFactory {
 
     function setProposalCenter(address _proposalCenter) external;
 
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
 
     function updateMaxCapacity(uint256 _maxCapacity) external;
 

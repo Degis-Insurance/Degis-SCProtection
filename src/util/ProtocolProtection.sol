@@ -23,7 +23,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IDegisToken.sol";
 import "../interfaces/IVeDEG.sol";
 import "../interfaces/IExchange.sol";
-import "../interfaces/IReinsurancePool.sol";
+import "../interfaces/IProtectionPool.sol";
 import "../interfaces/IInsurancePool.sol";
 import "../interfaces/IInsurancePoolFactory.sol";
 import "../interfaces/IOnboardProposal.sol";
@@ -49,7 +49,7 @@ contract ProtocolProtection is Ownable {
     address public incidentReport;
     address public onboardProposal;
     address public proposalCenter;
-    address public reinsurancePool;
+    address public protectionPool;
     address public insurancePoolFactory;
 
     constructor() {}
@@ -90,12 +90,12 @@ contract ProtocolProtection is Ownable {
         onboardProposal = _onboardProposal;
     }
 
-    function setReinsurancePool(address _reinsurancePool)
+    function setProtectionPool(address _protectionPool)
         external
         virtual
         onlyOwner
     {
-        reinsurancePool = _reinsurancePool;
+        protectionPool = _protectionPool;
     }
 
     function setInsurancePoolFactory(address _insurancePoolFactory)

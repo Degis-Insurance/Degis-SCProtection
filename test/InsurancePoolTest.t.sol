@@ -12,7 +12,7 @@ import "src/mock/MockSHIELD.sol";
 import "src/mock/MockVeDEG.sol";
 
 import "src/pools/InsurancePool.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/pools/InsurancePoolFactory.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -21,7 +21,7 @@ contract InsurancePoolTest is BaseTest {
     address alice = mkaddr("alice");
     address bob = mkaddr("bob");
 
-    ReinsurancePool repool;
+    ProtectionPool repool;
     InsurancePoolFactory factory;
     InsurancePool pool;
 
@@ -45,7 +45,7 @@ contract InsurancePoolTest is BaseTest {
 
         exchange = new Exchange();
 
-        repool = new ReinsurancePool(
+        repool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -73,7 +73,7 @@ contract InsurancePoolTest is BaseTest {
     function testFactorySetUp() public {
         InsurancePoolFactory.PoolInfo memory firstPool = factory.getPoolInfo(0);
 
-        assertEq(firstPool.protocolName, "ReinsurancePool");
+        assertEq(firstPool.protocolName, "ProtectionPool");
         assertEq(firstPool.protocolToken, address(shield));
 
         assertTrue(factory.tokenRegistered(address(shield)));

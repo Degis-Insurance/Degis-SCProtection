@@ -23,7 +23,7 @@ interface IProposalCenter {
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
     function proposePool(string memory _name, address _protocolToken, uint256 _maxCapacity, uint256 _priceRatio) external;
-    function reinsurancePool() view external returns (address);
+    function protectionPool() view external returns (address);
     function renounceOwnership() external;
     function reportPool(uint256 _poolId) external;
     function setBuffers(uint256 _reportBuffer, uint256 _proposalBuffer) external;
@@ -33,7 +33,7 @@ interface IProposalCenter {
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
    
     function shield() view external returns (address);
     function transferOwnership(address newOwner) external;

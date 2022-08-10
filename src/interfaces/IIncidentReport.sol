@@ -43,7 +43,7 @@ interface IIncidentReport {
     function payDebt(uint256 _reportId, address _user) external;
     function policyCenter() view external returns (address);
     function poolReported(address) view external returns (bool);
-    function reinsurancePool() view external returns (address);
+    function protectionPool() view external returns (address);
     function renounceOwnership() external;
     function report(uint256 _poolId) external;
     function report(uint256 _poolId, address _msgsender) external;
@@ -56,7 +56,7 @@ interface IIncidentReport {
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
  
     function settle(uint256 _reportId) external;
     function shield() view external returns (address);

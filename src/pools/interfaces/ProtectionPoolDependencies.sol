@@ -5,7 +5,9 @@ pragma solidity ^0.8.13;
 import "../../interfaces/IInsurancePoolFactory.sol";
 import "../../interfaces/IPolicyCenter.sol";
 
-abstract contract ReinsurancePoolDependencies {
+abstract contract ProtectionPoolDependencies {
+    uint256 constant UINT256_MAX = type(uint256).max;
+
     address public insurancePoolFactory;
     address public policyCenter;
     address public incidentReport;

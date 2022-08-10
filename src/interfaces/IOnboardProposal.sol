@@ -37,14 +37,14 @@ interface IOnboardProposal {
     function proposals(uint256) view external returns (string memory name, address protocolToken, address proposer, uint256 proposeTimestamp, uint256 numFor, uint256 numAgainst, uint256 maxCapacity, uint256 priceRatio, uint256 poolId, uint256 status, uint256 result);
     function propose(string memory _name, address _token, uint256 _maxCapacity, uint256 _priceRatio) external;
     function propose(string memory _name, address _token, uint256 _maxCapacity, uint256 _priceRatio, address _msgsender) external;
-    function reinsurancePool() view external returns (address);
+    function protectionPool() view external returns (address);
     function renounceOwnership() external;
     function setExecutor(address _executor) external;
     function setIncidentReport(address _incidentReport) external;
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
 
 
 

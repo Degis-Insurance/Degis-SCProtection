@@ -13,6 +13,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import "./tasks/setAddress";
+import "./tasks/voting/onboard";
 
 function getRemappings() {
   return fs

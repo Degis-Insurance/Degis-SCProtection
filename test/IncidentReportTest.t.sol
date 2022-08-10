@@ -7,7 +7,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -18,9 +18,9 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
@@ -60,7 +60,7 @@ abstract contract Events {
 
 contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
@@ -103,7 +103,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         vedeg.mint(bob, 100000 ether);
         vedeg.mint(carol, 10000 ether);
 
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -112,13 +112,13 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         executor = new Executor();
         onboardProposal = new OnboardProposal(
@@ -139,7 +139,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         // Set incident report
 
         incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setProtectionPool(address(protectionPool));
 
         // approve incident report interaction
         deg.approve(address(incidentReport), 10000 ether);
@@ -150,21 +150,21 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
         policyCenter.setExecutor(address(executor));
 
-        policyCenter.setReinsurancePool(address(reinsurancePool));
+        policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
+        insurancePoolFactory.setProtectionPool(address(protectionPool));
 
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
+        protectionPool.setPolicyCenter(address(policyCenter));
+        protectionPool.setIncidentReport(address(incidentReport));
+        protectionPool.setPolicyCenter(address(policyCenter));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setReinsurancePool(address(reinsurancePool));
+        executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         executor.setIncidentReport(address(incidentReport));
         //deploy ptp pool
@@ -178,7 +178,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-       
+
         vm.warp(REPORT_START_TIME);
         incidentReport.report(POOL_ID);
     }

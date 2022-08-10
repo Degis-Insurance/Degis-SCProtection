@@ -13,7 +13,7 @@ interface ISetAddress {
 
     function setOnboardProposal(address _onboardProposal) external;
 
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
 
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
 }

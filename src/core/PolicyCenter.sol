@@ -29,8 +29,6 @@ import "./interfaces/PolicyCenterDependencies.sol";
 import "../interfaces/ExternalTokenDependencies.sol";
 import "../interfaces/IPriceGetter.sol";
 
-import "../libraries/DateTime.sol";
-
 import "forge-std/console.sol";
 
 /**
@@ -53,7 +51,7 @@ contract PolicyCenter is
     // ---------------------------------------------------------------------------------------- //
 
     // poolId => address, updated once pools are deployed
-    // ReinsurancePool is pool 0
+    // Protection Pool is pool 0
     mapping(uint256 => address) public insurancePools;
     mapping(uint256 => address) public tokenByPoolId;
 
@@ -65,7 +63,7 @@ contract PolicyCenter is
     }
     mapping(uint256 => mapping(address => Cover)) public covers;
 
-    // 
+    //
     mapping(uint256 => uint256) public rewardsByPoolId;
 
     // poolId => user => Liquidity info
@@ -82,7 +80,7 @@ contract PolicyCenter is
     uint256[2] public premiumSplits;
 
     // uint256 public pendingPremiumToTreasury;
-    // uint256 public pendingPremiumToReinsurancePool;
+    // uint256 public pendingPremiumToProtectionPool;
 
     // amount of degis in treasury
     uint256 public treasury;
@@ -112,19 +110,19 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _reinsurancePool
+        address _protectionPool
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
         // initializes required reinsurance address and degis token as reinsurance token
-        insurancePools[0] = _reinsurancePool;
+        insurancePools[0] = _protectionPool;
         tokenByPoolId[0] = _shield;
 
-        _setReinsurancePool(_reinsurancePool);
+        _setProtectionPool(_protectionPool);
 
         // Initialize premium split standard in bps
-        // 45% to reinsurancePool, 50% to insurancePool, 5% to treasury
+        // 45% to protectionPool, 50% to insurancePool, 5% to treasury
         premiumSplits = [4500, 5000];
     }
 
@@ -144,8 +142,8 @@ contract PolicyCenter is
 
     /**
      * @notice returns premium split used by Policy Center
-     * @return insurancePool premium split in bps
-     * @return reinsurancePool premium split in bps
+     * @return toPriorityPool   premium split in bps
+     * @return toProtectionPool premium split in bps
      */
     function getPremiumSplits() public view returns (uint256, uint256) {
         return (premiumSplits[0], premiumSplits[1]);
@@ -201,36 +199,7 @@ contract PolicyCenter is
         return covers[_poolId][_user];
     }
 
-    /**
-     * @notice Reward for liquidity providers
-     *
-     * @param _poolId Pool id (0 for reinsurance pool)
-     *
-     * @return uint256 Reward
-     */
-    function calculateReward(uint256 _poolId, address _provider)
-        public
-        view
-        poolExists(_poolId)
-        returns (uint256)
-    {
-        Liquidity memory liquidity = liquidities[_poolId][_provider];
-        if (_poolId > 0) {
-            // gets reward from insurance pool
-            return
-                IInsurancePool(insurancePools[_poolId]).calculateReward(
-                    liquidity.amount,
-                    liquidity.userDebt
-                );
-        } else {
-            return
-                // gets reward from reinsurance pool
-                IReinsurancePool(reinsurancePool).calculateReward(
-                    liquidity.amount,
-                    liquidity.userDebt
-                );
-        }
-    }
+  
 
     /**
      * @notice returns payout given to cover buyers when report passes
@@ -281,8 +250,8 @@ contract PolicyCenter is
         _setExecutor(_executor);
     }
 
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        _setReinsurancePool(_reinsurancePool);
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        _setProtectionPool(_protectionPool);
     }
 
     function setInsurancePoolFactory(address _insurancePoolFactory)
@@ -334,23 +303,25 @@ contract PolicyCenter is
     /**
      * @notice Buy new cover for a given pool
      *
-     * @param _poolId               Pool id
-     * @param _coverAmount          Amount of tokens to cover
-     * @param _coverDuration        1, 2 or 3 months
+     * @param _poolId        Pool id
+     * @param _coverAmount   Amount to cover
+     * @param _coverDuration Cover duration in month (1 ~ 3)
      */
     function buyCover(
         uint256 _poolId,
         uint256 _coverAmount,
         uint256 _coverDuration
     ) external poolExists(_poolId) {
-        require(_coverAmount > 0, "Amount must be greater than 0");
-        require(_coverDuration > 0, "Length must be greater than 0");
-        require(_poolId > 0, "PoolId must be greater than 0");
+        require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
+        require(_withinLength(_coverDuration), "Wrong cover length");
+        require(_poolId > 0, "Wrong pool id");
 
         _checkCapacity(_poolId, _coverAmount);
 
-        // Premium in USD(shield)
+        // Premium in USD (shield)
         uint256 premium = _getCoverPrice(_poolId, _coverAmount, _coverDuration);
+
+        // Premium in project native token
         uint256 premiumInNativeToken = _getNativeTokenAmount(
             premium,
             tokenByPoolId[_poolId]
@@ -368,9 +339,22 @@ contract PolicyCenter is
             address(this),
             premiumInNativeToken
         );
-        emit CoverBought(msg.sender, _poolId, _coverDuration, _coverAmount, premium);
+        emit CoverBought(
+            msg.sender,
+            _poolId,
+            _coverDuration,
+            _coverAmount,
+            premium
+        );
 
         _splitPremium(_poolId, premium);
+    }
+
+    /**
+     * @notice Check the cover length
+     */
+    function _withinLength(uint256 _length) internal pure returns (bool) {
+        return _length > 0 && _length <= MAX_COVER_LENGTH;
     }
 
     /**
@@ -389,29 +373,22 @@ contract PolicyCenter is
         return (_premium * 1e12) / price;
     }
 
-    // 1000 ReinsurancePool
-    // A + B + C <= 1000
-    // 200 200 600
-    // 100 0   600
-    // LP in reinsurancepool
-    // remaining liquidity > 700
-
+    /**
+     * @notice Check insurance pool capacity
+     *
+     * @param _poolId      Pool id
+     * @param _coverAmount Amount to cover
+     */
     function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
         internal
         view
     {
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
         require(
-            pool.maxCapacity() >= _coverAmount + liquidityByPoolId[_poolId],
-            "Exceed max capacity"
+            pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
+            "Insufficient capacity"
         );
     }
-
-    // /**
-    //  * @notice Distribute those pending premiums
-    //  *         To save gas, we do not transfer premiums for every purchase
-    //  */
-    // function distributePremium(address _token) external {}
 
     /**
      * @notice claim rewards from a given pool id
@@ -449,7 +426,7 @@ contract PolicyCenter is
             );
         } else {
             // emits tokens to user from reinsurnace pool
-            IReinsurancePool(reinsurancePool).provideLiquidity(
+            IProtectionPool(protectionPool).provideLiquidity(
                 _amount,
                 msg.sender
             );
@@ -503,10 +480,10 @@ contract PolicyCenter is
                 msg.sender
             );
         } else {
-            totalSupply = IReinsurancePool(reinsurancePool).totalSupply();
+            totalSupply = IProtectionPool(protectionPool).totalSupply();
 
             // burns the full amount of liquidity tokens in users account from reinsurance pool
-            IReinsurancePool(reinsurancePool).removeLiquidity(
+            IProtectionPool(protectionPool).removeLiquidity(
                 _amount,
                 msg.sender
             );
@@ -515,8 +492,8 @@ contract PolicyCenter is
         // actual amount is liquidity by LP tokens times amount.
         // If no liquidation and payout, liquidity / totalSupply = 1
         // therefore actual amount = _amount
-        uint256 actualAmount = liquidityByPoolId[_poolId] / totalSupply * _amount;
-
+        uint256 actualAmount = (liquidityByPoolId[_poolId] / totalSupply) *
+            _amount;
 
         // removes liquidity from insurance or reinsurance pool
         liquidityByPoolId[_poolId] -= actualAmount;
@@ -540,8 +517,10 @@ contract PolicyCenter is
         onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        require(IInsurancePool(insurancePools[_poolId]).liquidated(),
-         "Insurance pool must have been liquidated");
+        require(
+            IInsurancePool(insurancePools[_poolId]).liquidated(),
+            "Insurance pool must have been liquidated"
+        );
         liquidityByPoolId[_poolId] -= _amount;
         liquidityByPoolId[0] += _amount;
 
@@ -643,10 +622,10 @@ contract PolicyCenter is
             IInsurancePool(insurancePools[_poolId]).updateRewards();
         } else {
             require(
-                !IReinsurancePool(reinsurancePool).paused(),
+                !IProtectionPool(protectionPool).paused(),
                 "Reinsurance pool paused"
             );
-            IReinsurancePool(reinsurancePool).updateRewards();
+            IProtectionPool(protectionPool).updateRewards();
         }
 
         // User's liquidity
@@ -695,31 +674,6 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Swap tokens
-     *
-     * @param _amount    Amount of liquidity to request
-     * @param _fromToken Token address to exchange from
-     * @param _toToken   Token address to exchange to
-     */
-    function _swapForExactTokens(
-        uint256 _amount,
-        address _fromToken,
-        address _toToken
-    ) internal returns (uint256 receives) {
-        address[] memory array = new address[](1);
-        array[0] = _fromToken;
-
-        // exchange tokens for deg and return amount of deg received
-        receives = IExchange(exchange).swapTokensForExactTokens(
-            _amount,
-            ((_amount * 99) / 100),
-            array,
-            _toToken,
-            0
-        );
-    }
-
-    /**
      * @notice Split premium for a pool
      *
      * @param _poolId     Pool id
@@ -738,23 +692,22 @@ contract PolicyCenter is
         // swap native for degis
         uint256 swapped = _swapTokens(toSwap, fromToken, shield);
 
-        uint256 toReinsurancePool = (swapped * premiumSplits[1]) / (10000 - premiumSplits[0]);
-        uint256 toTreasury = (swapped * (10000 - premiumSplits[0] - premiumSplits[1]));
-
+        uint256 toProtectionPool = (swapped * premiumSplits[1]) /
+            (10000 - premiumSplits[0]);
+        uint256 toTreasury = (swapped *
+            (10000 - premiumSplits[0] - premiumSplits[1]));
 
         // pendingPremiumToTreasury += toTreasury;
-        // pendingPremiumToReinsurancePool += toReinsurancePool;
+        // pendingPremiumToProtectionPool += toProtectionPool;
 
         // reinsurance pool is pool 0
-        rewardsByPoolId[0] += toReinsurancePool;
+        rewardsByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 
         IInsurancePool(insurancePools[_poolId]).updateEmissionRate(
             toInsurancePool
         );
-        IReinsurancePool(reinsurancePool).updateEmissionRate(
-            toReinsurancePool
-        );
+        IProtectionPool(protectionPool).updateEmissionRate(toProtectionPool);
     }
 
     /**
@@ -780,64 +733,9 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration
     ) internal view returns (uint256 price) {
-        uint256 endDate = getExpiryDateInternal(block.timestamp, _coverDuration);
-        uint256 length = endDate - block.timestamp;
-        price = IInsurancePool(insurancePools[_poolId]).coveragePrice(
+        price = IInsurancePool(insurancePools[_poolId]).coverPrice(
             _coverAmount,
-            length
+            _coverDuration
         );
-    }
-
-    /**
-     * @dev Gets the expiry date based on cover duration
-     * @param today Enter the current timestamp
-     * @param coverDuration Enter the number of months to cover. Accepted values: 1-3.
-     */
-    function getExpiryDateInternal(uint256 today, uint256 coverDuration)
-        public
-        pure
-        returns (uint256)
-    {
-        // Get the day of the month
-        (, , uint256 day) = DateTimeLibrary.timestampToDate(today);
-
-        // Cover duration of 1 month means current month
-        // unless today is the 25th calendar day or later
-        uint256 monthToAdd = coverDuration - 1;
-
-        if (day >= 25) {
-            // Add one month
-            monthToAdd += 1;
-        }
-
-        return _getNextMonthEndDate(today, monthToAdd);
-    }
-
-    function _getNextMonthEndDate(uint256 date, uint256 monthsToAdd)
-        private
-        pure
-        returns (uint256)
-    {
-        uint256 futureDate = DateTimeLibrary.addMonths(date, monthsToAdd);
-        return _getMonthEndDate(futureDate);
-    }
-
-    function _getMonthEndDate(uint256 date) private pure returns (uint256) {
-        // Get the year and month from the date
-        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(date);
-
-        // Count the total number of days of that month and year
-        uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(year, month);
-
-        // Get the month end date
-        return
-            DateTimeLibrary.timestampFromDateTime(
-                year,
-                month,
-                daysInMonth,
-                23,
-                59,
-                59
-            );
     }
 }

@@ -24,13 +24,15 @@ task("proposeNewPool", "Proposa a new pool in onboard proposal")
 
     const onboardProposal: OnboardProposal = new OnboardProposal__factory(
       dev_account
-    ).attach(addressList[network.name].OnbardProposal);
+    ).attach(addressList[network.name].OnboardProposal);
+
+    console.log("hello");
 
     const tx = await onboardProposal.propose(
       taskArgs.name,
       taskArgs.token,
-      parseUnits(taskArgs.maxCapacity, 6),
-      taskArgs.premiumRatio
+      parseUnits(taskArgs.capacity, 6),
+      taskArgs.premium
     );
 
     console.log("tx details", await tx.wait());

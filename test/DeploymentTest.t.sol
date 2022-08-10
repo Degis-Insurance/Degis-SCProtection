@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -16,9 +16,9 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
@@ -28,7 +28,7 @@ import "src/interfaces/IExecutor.sol";
  */
 contract InitialContractDeploymentTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
@@ -74,15 +74,15 @@ contract InitialContractDeploymentTest is Test {
         );
     }
 
-    function testDeployReinsurancePool() public {
-        reinsurancePool = new ReinsurancePool(
+    function testDeployProtectionPool() public {
+        protectionPool = new ProtectionPool(
             address(0),
             address(0),
             address(0)
         );
         assertEq(
-            keccak256(bytes(reinsurancePool.name())) ==
-                keccak256(bytes("ReinsurancePool")),
+            keccak256(bytes(protectionPool.name())) ==
+                keccak256(bytes("ProtectionPool")),
             true
         );
     }
@@ -113,7 +113,7 @@ contract InitialContractDeploymentTest is Test {
 contract SecondaryContractDeploymentTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
     OnboardProposal public onboardProposal;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     Executor public executor;
     Exchange public exchange;
@@ -127,10 +127,10 @@ contract SecondaryContractDeploymentTest is Test {
 
     function setUp() public {
         // Policy Center, Factory and Insurrance Pool require deg, a third party token
-        // and the reinsurancePool already deployed.
+        // and the protectionPool already deployed.
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(0),
             address(0)
@@ -139,47 +139,47 @@ contract SecondaryContractDeploymentTest is Test {
 
     function testDeployPolicyCenter() public {
         // Policy center manages user interactions with insurance pools.
-        // It is dependent on deg and reinsurancePool being deployed.
+        // It is dependent on deg and protectionPool being deployed.
         policyCenter = new PolicyCenter(
             address(deg),
             address(0),
             address(0),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         assertEq(
-            policyCenter.reinsurancePool() == address(reinsurancePool),
+            policyCenter.protectionPool() == address(protectionPool),
             true
         );
     }
 
     function testDeployFactory() public {
         // Factory creates insurance pools.
-        // It is dependent on deg and reinsurancePool being deployed.
+        // It is dependent on deg and protectionPool being deployed.
         insurancePoolFactory = new InsurancePoolFactory(
             address(0),
             address(0),
             address(deg),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         assertEq(insurancePoolFactory.poolCounter() == 0, true);
     }
 
     function testDeployInsurancePool() public {
         // Insurance pools are created by the insurance pool factory.
-        // it is dependent on deg, reinsurancePool,
+        // it is dependent on deg, protectionPool,
         // policyCenter and insurancePoolFactory being deployed.
         insurancePoolFactory = new InsurancePoolFactory(
             address(0),
             address(0),
             address(deg),
-            address(reinsurancePool)
+            address(protectionPool)
         );
 
         policyCenter = new PolicyCenter(
             address(0),
             address(0),
             address(deg),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         exchange = new Exchange();
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));

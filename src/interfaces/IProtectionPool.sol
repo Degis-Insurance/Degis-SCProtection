@@ -2,36 +2,31 @@
 
 pragma solidity ^0.8.13;
 
-interface IInsurancePool {
+interface IProtectionPool {
     event AccRewardsPerShareUpdated(uint256 amount);
     event Approval(
         address indexed owner,
         address indexed spender,
         uint256 value
     );
+    event Deposit(address indexed user, uint256 amount);
     event EmissionRateUpdated(
         uint256 newEmissionRate,
         uint256 newEmissionEndTime
     );
-    event Liquidation(uint256 amount, uint256 endDate);
-    event LiquidationEnded(uint256 timestamp);
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
+    event MoveLiquidity(uint256 poolId, uint256 amount);
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
     );
-    event Paused(address account);
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Unpaused(address account);
+    event Withdraw(address indexed user, uint256 amount);
 
     function DISTRIBUTION_PERIOD() external view returns (uint256);
 
-    function PAY_COVER_PERIOD() external view returns (uint256);
-
     function accumulatedRewardPerShare() external view returns (uint256);
-
-    function administrator() external view returns (address);
 
     function allowance(address owner, address spender)
         external
@@ -42,12 +37,7 @@ interface IInsurancePool {
 
     function balanceOf(address account) external view returns (uint256);
 
- 
-
-    function coverPrice(uint256 _amount, uint256 _length)
-        external
-        view
-        returns (uint256);
+  
 
     function decimals() external view returns (uint8);
 
@@ -61,7 +51,7 @@ interface IInsurancePool {
 
     function emissionRate() external view returns (uint256);
 
-    function endLiquidationDate() external view returns (uint256);
+    function endLiquidationPeriod() external;
 
     function executor() external view returns (address);
 
@@ -71,27 +61,23 @@ interface IInsurancePool {
         external
         returns (bool);
 
-    function increaseMaxCapacity(uint256 _maxCapacity) external;
-
     function insurancePoolFactory() external view returns (address);
 
-    function insuredToken() external view returns (address);
+    function insurancePoolLiquidated() external view returns (bool);
 
     function lastRewardTimestamp() external view returns (uint256);
 
-    function liquidatePool() external;
-
-    function liquidated() external view returns (bool);
-
     function maxCapacity() external view returns (uint256);
 
-    function maxLength() external view returns (uint256);
+    function moveLiquidity(uint256 _poolId, uint256 _amount) external;
 
     function name() external view returns (string memory);
 
     function onboardProposal() external view returns (address);
 
     function owner() external view returns (address);
+
+    function pauseProtectionPool(bool _paused) external;
 
     function paused() external view returns (bool);
 
@@ -109,8 +95,6 @@ interface IInsurancePool {
             uint256
         );
 
-    function priceRatio() external view returns (uint256);
-
     function provideLiquidity(uint256 _amount, address _provider) external;
 
     function protectionPool() external view returns (address);
@@ -125,13 +109,7 @@ interface IInsurancePool {
 
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
 
-    function setMaxCapacity(uint256 _maxCapacity) external;
-
-    function setMaxLength(uint256 _maxLength) external;
-
     function setOnboardProposal(address _onboardProposal) external;
-
-    function pauseInsurancePool(bool _paused) external;
 
     function setPolicyCenter(address _policyCenter) external;
 
@@ -161,9 +139,5 @@ interface IInsurancePool {
 
     function veDeg() external view returns (address);
 
-    function endLiquidation() external;
-
-    function lockedAmount() external view returns (uint256);
-
-    function activeCovered() external view returns (uint256);
+    function totalCovered() external view returns (uint256);
 }
