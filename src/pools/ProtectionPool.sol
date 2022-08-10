@@ -240,7 +240,9 @@ contract ProtectionPool is
                     totalReward +=
                         (block.timestamp - startTimestamp) *
                         rewardSpeed[tempYear][tempMonth];
-                } else {
+                }
+                // Middle month reward
+                else {
                     uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
                         tempYear,
                         tempMonth
@@ -252,7 +254,10 @@ contract ProtectionPool is
                 }
 
                 unchecked {
-                    if (++tempMonth == 12) ++tempYear;
+                    if (++tempMonth == 12) {
+                        ++tempYear;
+                        tempMonth = 1;
+                    }
                 }
             }
         }
@@ -260,8 +265,6 @@ contract ProtectionPool is
         // Distribute reward to Protection Pool
         IShieldRewardPool(shieldRewardPool).distributeShield(totalReward);
     }
-
-    function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {}
 
     /**
      * @notice Update the price of PRO_LP token
@@ -322,6 +325,40 @@ contract ProtectionPool is
      */
     function updateEmissionRate(uint256 _premium) public onlyPolicyCenter {
         _updateEmissionRate(_premium);
+    }
+
+    /**
+     * @notice Update reward speed
+     *
+     * @param _length Cover length in months
+     */
+    function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {
+        // uint256 daysPassed = _length % DateTimeLibrary.SECONDS_PER_DAY;
+
+        uint256 newSpeed = _premium / _length;
+
+        (
+            uint256 currentYear,
+            uint256 currentMonth,
+            uint256 currentDay
+        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+
+        // If later than day 25, one more month
+        if (currentDay >= 25) ++_length;
+
+        uint256 tempYear = currentYear;
+        uint256 tempMonth = currentMonth;
+
+        for (uint256 i; i < _length; ) {
+            rewardSpeed[tempYear][tempMonth] += newSpeed;
+
+            unchecked {
+                if (++tempMonth == 12) {
+                    ++tempYear;
+                    tempMonth = 1;
+                }
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //
