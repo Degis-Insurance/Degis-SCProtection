@@ -3,13 +3,17 @@
 pragma solidity ^0.8.13;
 
 import "../../interfaces/IInsurancePool.sol";
-import "../../interfaces/IReinsurancePool.sol";
+import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IInsurancePoolFactory.sol";
 import "../../interfaces/IExchange.sol";
 
 abstract contract PolicyCenterDependencies {
+    uint256 constant MAX_COVER_LENGTH = 3;
+    uint256 constant MIN_COVER_AMOUNT = 100e6;
+
+
     address public executor;
-    address public reinsurancePool;
+    address public protectionPool;
     address public insurancePoolFactory;
     address public exchange;
 
@@ -21,8 +25,8 @@ abstract contract PolicyCenterDependencies {
         executor = _executor;
     }
 
-    function _setReinsurancePool(address _reinsurancePool) internal virtual {
-        reinsurancePool = _reinsurancePool;
+    function _setProtectionPool(address _protectionPool) internal virtual {
+        protectionPool = _protectionPool;
     }
 
     function _setInsurancePoolFactory(address _insurancePoolFactory)

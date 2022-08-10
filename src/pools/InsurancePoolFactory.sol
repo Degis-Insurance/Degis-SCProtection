@@ -36,7 +36,7 @@ import "./InsurancePool.sol";
  * @author Eric Lee (ylikp.ust@gmail.com)
  *
  * @notice This is the factory contract for deploying new insurance pools
- *         Each pool represents a project that has joined Degis Smart Contract Protection
+ *         Each pool represents a project that has joined Degis Protocol Protection
  */
 contract InsurancePoolFactory is
     InsurancePoolFactoryDependencies,
@@ -85,25 +85,25 @@ contract InsurancePoolFactory is
         address _deg,
         address _veDeg,
         address _shield,
-        address _reinsurancePool
+        address _protectionPool
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
         // stores addresses of the reinsurance pool and degis token
-        reinsurancePool = _reinsurancePool;
+        protectionPool = _protectionPool;
 
         // stores information about reinsurance pool, first pool recorded
         pools[poolCounter] = PoolInfo(
-            "ReinsurancePool",
-            _reinsurancePool,
+            "ProtectionPool",
+            _protectionPool,
             _shield,
             100000e18,
             1
         );
 
         // Register reinsurance pool and degis token
-        poolRegistered[_reinsurancePool] = true;
+        poolRegistered[_protectionPool] = true;
         tokenRegistered[_shield] = true;
     }
 
@@ -149,8 +149,8 @@ contract InsurancePoolFactory is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        _setReinsurancePool(_reinsurancePool);
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        _setProtectionPool(_protectionPool);
     }
 
     function setExecutor(address _executor) external onlyOwner {
@@ -164,9 +164,9 @@ contract InsurancePoolFactory is
     /**
      * @notice Creates a new insurance pool
      *
-     * @param _name                 Name of the protocol
-     * @param _protocolToken        Address of the token used for the protocol
-     * @param _maxCapacity          Maximum capacity of the pool
+     * @param _name          Name of the protocol
+     * @param _protocolToken Address of the token used for the protocol
+     * @param _maxCapacity   Maximum capacity of the pool
      * @param _priceRatio    Initial policy price per shield
      *
      * @return address Address of the new insurance pool
@@ -184,10 +184,10 @@ contract InsurancePoolFactory is
         require(!tokenRegistered[_protocolToken], "Already registered");        
 
         // retrieve reinsurance pool liquidity
-        uint256 reinsurancePoolLiquidity = IPolicyCenter(policyCenter).liquidityByPoolId(0);
+        uint256 protectionPoolLiquidity = IPolicyCenter(policyCenter).liquidityByPoolId(0);
 
         // check if reinsurance pool can cover all max capacities
-        require(reinsurancePoolLiquidity >= _maxCapacity + sumOfMaxCapacities, "Insufficient liquidity");
+        require(protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities, "Insufficient liquidity");
 
         // add new pool max capacity to sum of max capacities
         sumOfMaxCapacities += _maxCapacity;
@@ -216,6 +216,7 @@ contract InsurancePoolFactory is
             _protocolToken,
             currentPoolId
         );
+
         pools[currentPoolId] = PoolInfo(
             _name,
             newPoolAddress,

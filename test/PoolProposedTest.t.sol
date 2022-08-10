@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -17,16 +17,16 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
@@ -66,7 +66,7 @@ contract ClaimPayoutTest is Test {
         console.log(yeti.balanceOf(address(this)));
 
         // deploy contracts
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -75,13 +75,13 @@ contract ClaimPayoutTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         executor = new Executor();
         incidentReport = new IncidentReport(
@@ -103,16 +103,16 @@ contract ClaimPayoutTest is Test {
 
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
 
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
+        insurancePoolFactory.setProtectionPool(address(protectionPool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         insurancePoolFactory.setExecutor(address(executor));
 
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
+        protectionPool.setPolicyCenter(address(policyCenter));
+        protectionPool.setIncidentReport(address(incidentReport));
+        protectionPool.setPolicyCenter(address(policyCenter));
 
         policyCenter.setExecutor(address(executor));
-        policyCenter.setReinsurancePool(address(reinsurancePool));
+        policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
@@ -120,12 +120,12 @@ contract ClaimPayoutTest is Test {
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
 
         incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setReinsurancePool(address(reinsurancePool));
+        executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
@@ -184,7 +184,7 @@ contract ClaimPayoutTest is Test {
         // check if pool is created
         string memory name = InsurancePool(pool2).name();
         uint256 maxCapacity = InsurancePool(pool2).maxCapacity();
-     
+
         assertEq(maxCapacity == 10000 ether, true);
     }
 
@@ -201,7 +201,6 @@ contract ClaimPayoutTest is Test {
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-
 
         policyCenter.buyCover(2, 100 ether, 90);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));

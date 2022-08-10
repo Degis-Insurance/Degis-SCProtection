@@ -11,6 +11,40 @@ import "../interfaces/ExternalTokenDependencies.sol";
 
 import "forge-std/console.sol";
 
+/**
+ * @notice Incident Report Contract
+ *
+ *         New reports for project hacks are handled inside this contract
+ *
+ *         Timeline for a report is:
+ *
+ *         |-----------------------|----------------------|-------|-------|
+ *               Pending Period         Voting Period       Extend Period
+ *
+ *         When a new report is proposed, it start with PENDING_STATUS.
+ *         The person who start the report need to deposit REPORT_THRESHOLD DEG tokens.
+ *         During PENDING_STATUS, users & security companies can look at the report event.
+ *
+ *         After PENDING_PERIOD, the voting can be started and status transfer to VOTING_STATUS.
+ *         Users can vote for or against the report with veDeg tokens.
+ *         VeDeg tokens used for voting will be tentatively locked until the voting is settled.
+ *
+ *         After VOTING_PERIOD, the voting can be settled and status transfer to SETTLED_STATUS.
+ *         Depending on the votes of each side, the result can be PASSED, REJECTED or TIED.
+ *         Different results for their veDeg tokens will be set depending on the result.
+ *
+ *         If the result has changes during the last 24 hours of voting, the voting will be extended.
+ *         The time can only be extended twice.
+ *
+ *         For voters:
+ *              PASSED: Who vote for will get all veDeg tokens from the opposite side
+ *              REJECTED: Who vote against will get all veDeg tokens from the opposite side
+ *              TIED: Users can unlock their veDeg tokens
+ *         For reporter:
+ *              PASSED: Get back REPORT_THRESHOLD and get extra REPORT_REWARD & 10% of total treasury income
+ *              REJECTED: Lose REPORT_THRESHOLD to whom vote against
+ *              TIED: Lose REPORT_THRESHOLD
+ */
 contract IncidentReport is
     IncidentReportParameters,
     IncidentReportDependencies,
@@ -35,7 +69,7 @@ contract IncidentReport is
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
         uint256 status;
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
-        uint256 votingReward; // Voting reward per veDEG if the report passed
+        uint256 votingReward; // Voting reward per veDEG
     }
     // Report id => Report
     mapping(uint256 => Report) public reports;
@@ -45,7 +79,7 @@ contract IncidentReport is
         uint256 sampleTimestamp;
         bool hasChanged;
     }
-    mapping(uint256 => TempResult) public reportTempResults;
+    mapping(uint256 => TempResult) public tempResults;
 
     struct UserVote {
         uint256 choice; // 1: vote for, 2: vote against
@@ -59,7 +93,7 @@ contract IncidentReport is
     mapping(address => uint256) public userCoolDownUntil;
 
     // Pool address => whether the pool is being reported
-    mapping(address => bool) public poolReported;
+    mapping(address => bool) public reported;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -123,7 +157,7 @@ contract IncidentReport is
         view
         returns (TempResult memory)
     {
-        return reportTempResults[_poolId];
+        return tempResults[_poolId];
     }
 
     function getReport(uint256 _id) public view returns (Report memory) {
@@ -138,8 +172,8 @@ contract IncidentReport is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        _setReinsurancePool(_reinsurancePool);
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        _setProtectionPool(_protectionPool);
     }
 
     function setInsurancePoolFactory(address _insurancePoolFactory)
@@ -166,15 +200,15 @@ contract IncidentReport is
      *
      * @param _poolId Pool id to report incident
      */
+
     function report(uint256 _poolId) external {
-        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
-        require(pool != address(0), "Pool doesn't exist");
-        require(!poolReported[pool], "Pool already reported");
+        // Check pool can be reported
+        address pool = _checkPoolStatus(_poolId);
+
+        // Mark as already reported
+        reported[pool] = true;
 
         uint256 currentReportId = ++reportCounter;
-
-        poolReported[pool] = true;
-
         // Record the new report
         Report storage newReport = reports[currentReportId];
         newReport.poolId = _poolId;
@@ -182,7 +216,7 @@ contract IncidentReport is
         newReport.reporter = msg.sender;
         newReport.status = PENDING_STATUS;
 
-        // burn degis tokens to start a report
+        // Burn degis tokens to start a report
         IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
 
         // Pause insurance pool and reinsurance pool
@@ -204,11 +238,11 @@ contract IncidentReport is
         require(msg.sender == proposalCenter, "not sent from proposal center");
         address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
         require(pool != address(0), "Pool doesn't exist");
-        require(!poolReported[pool], "Pool already reported");
+        require(!reported[pool], "Pool already reported");
 
         uint256 currentReportId = ++reportCounter;
 
-        poolReported[pool] = true;
+        reported[pool] = true;
 
         // Record the new report
         Report storage newReport = reports[currentReportId];
@@ -323,7 +357,7 @@ contract IncidentReport is
         // If the hasChanged already been true, no need for further update
         // If the voting period has passed, no need for update
         if (
-            !reportTempResults[_reportId].hasChanged &&
+            !tempResults[_reportId].hasChanged &&
             !_passedVotingPeriod(
                 currentReport.round,
                 currentReport.reportTimestamp
@@ -399,7 +433,7 @@ contract IncidentReport is
         // If the hasChanged already been true, no need for further update
         // If the voting period has passed, no need for update
         if (
-            !reportTempResults[_reportId].hasChanged &&
+            !tempResults[_reportId].hasChanged &&
             !_passedVotingPeriod(
                 currentReport.round,
                 currentReport.reportTimestamp
@@ -453,8 +487,6 @@ contract IncidentReport is
             emit ReportExtended(_reportId, currentReport.round);
         }
     }
-
-    
 
     /**
      * @notice Claim the voting reward
@@ -572,7 +604,7 @@ contract IncidentReport is
                 (totalRewardToVoters * SCALE) /
                 currentReport.numFor;
         } else if (currentReport.result == 2) {
-            // Total deg reward
+            // Total deg reward = reporter's DEG + those who vote for
             uint256 totalRewardToVoters = REPORT_THRESHOLD +
                 currentReport.numFor /
                 100;
@@ -657,15 +689,15 @@ contract IncidentReport is
         internal
         returns (uint256 result)
     {
-        console.log("has changed", reportTempResults[_reportId].hasChanged);
+        console.log("has changed", tempResults[_reportId].hasChanged);
 
-        if (!reportTempResults[_reportId].hasChanged) {
+        if (!tempResults[_reportId].hasChanged) {
             result = _settleResult(
                 _reportId,
                 reports[_reportId].numFor,
                 reports[_reportId].numAgainst
             );
-        } else if (reportTempResults[_reportId].hasChanged && _round < 2) {
+        } else if (tempResults[_reportId].hasChanged && _round < 2) {
             _extendRound(_reportId);
         }
     }
@@ -713,7 +745,7 @@ contract IncidentReport is
         uint256 _numFor,
         uint256 _numAgainst
     ) internal {
-        TempResult storage temp = reportTempResults[_reportId];
+        TempResult storage temp = tempResults[_reportId];
 
         // Only record when it has reached the last day (time uint)
         if (
@@ -755,6 +787,16 @@ contract IncidentReport is
         else result = TIED_RESULT;
     }
 
+    function _checkPoolStatus(uint256 _poolId)
+        internal
+        view
+        returns (address pool)
+    {
+        pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
+        require(pool != address(0), "Pool doesn't exist");
+        require(!reported[pool], "Pool already reported");
+    }
+
     /**
      * @notice Pause the related project pool and the re-insurance pool
      *         Once there is an incident reported
@@ -763,7 +805,7 @@ contract IncidentReport is
      */
     function _pausePools(address _pool) internal {
         IInsurancePool(_pool).pauseInsurancePool(true);
-        IReinsurancePool(reinsurancePool).pauseReinsurancePool(true);
+        IProtectionPool(protectionPool).pauseProtectionPool(true);
     }
 
     /**
@@ -774,6 +816,6 @@ contract IncidentReport is
      */
     function _unpausePools(address _pool) internal {
         IInsurancePool(_pool).pauseInsurancePool(false);
-        IReinsurancePool(reinsurancePool).pauseReinsurancePool(false);
+        IProtectionPool(protectionPool).pauseProtectionPool(false);
     }
 }

@@ -88,8 +88,8 @@ contract Executor is
         _setInsurancePoolFactory(_insurancePoolFactory);
     }
 
-    function setReinsurancePool(address _reinsurancePool) external onlyOwner {
-        _setReinsurancePool(_reinsurancePool);
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        _setProtectionPool(_protectionPool);
     }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {

@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -17,16 +17,16 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract NoLiquidationTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
@@ -55,7 +55,7 @@ contract NoLiquidationTest is Test {
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
 
         // deploy contracts
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -64,21 +64,25 @@ contract NoLiquidationTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         executor = new Executor();
-        onboardProposal = new OnboardProposal(address(deg),
+        onboardProposal = new OnboardProposal(
+            address(deg),
             address(vedeg),
-            address(shield));
-        incidentReport = new IncidentReport(address(deg),
+            address(shield)
+        );
+        incidentReport = new IncidentReport(
+            address(deg),
             address(vedeg),
-            address(shield));
+            address(shield)
+        );
 
         // deploy exchange and supply tokens can be swapped during buy coverage split
         exchange = new Exchange();
@@ -87,33 +91,32 @@ contract NoLiquidationTest is Test {
         ptp.transfer(address(exchange), 1000 ether);
 
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-     
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
+
+        insurancePoolFactory.setProtectionPool(address(protectionPool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         insurancePoolFactory.setExecutor(address(executor));
 
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        
-        reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
+        protectionPool.setPolicyCenter(address(policyCenter));
+
+        protectionPool.setIncidentReport(address(incidentReport));
+        protectionPool.setPolicyCenter(address(policyCenter));
 
         policyCenter.setExecutor(address(executor));
-       
-        policyCenter.setReinsurancePool(address(reinsurancePool));
+
+        policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
         onboardProposal.setExecutor(address(executor));
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
 
-
         incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setReinsurancePool(address(reinsurancePool));
+        executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
@@ -124,7 +127,7 @@ contract NoLiquidationTest is Test {
 
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-       
+
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(policyCenter), 100);
         vedeg.transfer(alice, 3000 ether);
@@ -175,26 +178,5 @@ contract NoLiquidationTest is Test {
         vm.warp(30 days);
     }
 
-    function testClaimRewardsFromReinsurancePool() public {
-        // bob should receive rewards from reinsurance pool
-        vm.prank(bob);
-        uint256 reward = policyCenter.calculateReward(0, bob);
-        console.log("reward", reward);
-
-        vm.prank(bob);
-        policyCenter.claimReward(0);
-        assertEq(reward > 0, true);
-    }
-
-    function testClaimRewardsFromInsurancePool() public {
-        // alice should receive rewards from pool 1
-        vm.prank(alice);
-        (bool paused, , , , , ) = policyCenter.getPoolInfo(1);
-        assertEq(paused, false);
-        uint256 reward = policyCenter.calculateReward(1, alice);
-        console.log("reward", reward);
-        vm.prank(alice);
-        policyCenter.claimReward(1);
-        assertEq(reward > 0, true);
-    }
+  
 }

@@ -22,27 +22,31 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/ReinsurancePoolDependencies.sol";
+import "./interfaces/ProtectionPoolDependencies.sol";
+import "./interfaces/IShieldRewardPool.sol";
 
 import "../util/OwnableWithoutContext.sol";
 
 import "../interfaces/ExternalTokenDependencies.sol";
 
+import "../libraries/DateTime.sol";
+
 import "forge-std/console.sol";
 
 /**
- * @title Reinsurance Pool
+ * @title Protection Pool
  *
  * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
  *
- * @notice This is the reinsurance pool contract for degis Protocol Protection
- *         Users can provide liquidity to it through the Policy Center.
+ * @notice This is the protection pool contract for Degis Protocol Protection
+ *
+ *         Users can provide liquidity to protection pool and get PRO_LP token.
  *         If the insurance pool is unable to fulfil the insurance, the reinsurance pool
  *         will be able to provide the insurance to the user.
  */
-contract ReinsurancePool is
+contract ProtectionPool is
     ERC20,
-    ReinsurancePoolDependencies,
+    ProtectionPoolDependencies,
     ExternalTokenDependencies,
     OwnableWithoutContext
 {
@@ -56,10 +60,7 @@ contract ReinsurancePool is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    bool public insurancePoolLiquidated;
     bool public paused;
-
-    uint256 public maxCapacity;
 
     uint256 public startTime;
 
@@ -76,6 +77,17 @@ contract ReinsurancePool is
     // Current emission rate
     uint256 public emissionRate;
 
+    // Total covered amount of all insurance pools
+    uint256 public totalCovered;
+
+    // PRO_LP token price
+    uint256 public price;
+
+    // Year => Month => Speed
+    mapping(uint256 => mapping(uint256 => uint256)) rewardSpeed;
+
+    address public shieldRewardPool;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -83,7 +95,7 @@ contract ReinsurancePool is
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event MoveLiquidity(uint256 poolId, uint256 amount);
-    event LiquidityProvision(uint256 amount, address sender);
+    event LiquidityProvision(uint256 amount, uint256 lpAmount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
     event EmissionRateUpdated(
         uint256 newEmissionRate,
@@ -100,13 +112,12 @@ contract ReinsurancePool is
         address _veDeg,
         address _shield
     )
-        ERC20("ReinsurancePool", "RP")
+        ERC20("ProtectionPool", "PRO_LP")
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
         // Register time that pool was deployed
         startTime = block.timestamp;
-        maxCapacity = type(uint256).max;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -136,69 +147,9 @@ contract ReinsurancePool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @notice Returns the to be rewarded by reinsurance pool
-     *
-     * @param _amount   Amount of liquidity provided by the user
-     * @param _userDebt Amount of debt the user has to the pool
-     *
-     * @return reward Reward amount
-     */
-    function calculateReward(uint256 _amount, uint256 _userDebt)
-        public
-        view
-        returns (uint256)
-    {
-        if (totalSupply() == 0) {
-            return 0;
-        }
-
-        uint256 rewards = (block.timestamp - lastRewardTimestamp) *
-            emissionRate;
-
-        uint256 acc = accumulatedRewardPerShare +
-            ((rewards * SCALE) / totalSupply());
-
-        uint256 pending = (_amount * acc) / SCALE - _userDebt;
-
-        return pending;
-    }
-
-    /**
-     * @notice returns pool information
-     */
-    function poolInfo()
-        external
-        view
-        returns (
-            bool,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            paused,
-            accumulatedRewardPerShare,
-            lastRewardTimestamp,
-            emissionEndTime,
-            emissionRate,
-            maxCapacity
-        );
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-    @notice terminate liquidation period on reinsurance pool only
-    */
-    function endLiquidationPeriod() external onlyOwner {
-        insurancePoolLiquidated = false;
-    }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
@@ -228,10 +179,95 @@ contract ReinsurancePool is
         external
         onlyPolicyCenter
     {
-        require(_amount > 0, "amount should be greater than 0");
+        require(_amount > 0, "Zero amount");
 
-        _mint(_provider, _amount);
-        emit LiquidityProvision(_amount, _provider);
+        _updateReward();
+        _updatePrice();
+
+        // Mint PRO_LP tokens to the user
+        uint256 amountToMint = _amount / price;
+        _mint(_provider, amountToMint);
+
+        emit LiquidityProvision(_amount, amountToMint, _provider);
+    }
+
+    function _updateReward() internal {
+        (
+            uint256 lastRewardYear,
+            uint256 lastRewardMonth,
+            uint256 lastRewardDay
+        ) = DateTimeLibrary.timestampToDate(lastRewardTimestamp);
+
+        (
+            uint256 currentYear,
+            uint256 currentMonth,
+            uint256 currentDay
+        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+
+        uint256 monthPassed = currentMonth - lastRewardMonth;
+
+        uint256 totalReward;
+        uint256 tempYear = lastRewardYear;
+        uint256 tempMonth = lastRewardMonth;
+
+        if (monthPassed == 0) {
+            totalReward +=
+                (block.timestamp - lastRewardTimestamp) *
+                rewardSpeed[currentYear][currentMonth];
+        } else {
+            for (uint256 i; i < monthPassed + 1; ) {
+                // First month reward
+                if (i == 0) {
+                    // End timestamp of the first month
+                    uint256 endTimestamp = DateTimeLibrary
+                        .timestampFromDateTime(
+                            lastRewardYear,
+                            lastRewardMonth,
+                            lastRewardDay,
+                            23,
+                            59,
+                            59
+                        );
+                    totalReward +=
+                        (endTimestamp - lastRewardTimestamp) *
+                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                }
+                // Last month reward
+                if (i == monthPassed) {
+                    uint256 startTimestamp = DateTimeLibrary
+                        .timestampFromDateTime(tempYear, tempMonth, 1, 0, 0, 0);
+
+                    totalReward +=
+                        (block.timestamp - startTimestamp) *
+                        rewardSpeed[tempYear][tempMonth];
+                } else {
+                    uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
+                        tempYear,
+                        tempMonth
+                    );
+
+                    totalReward +=
+                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
+                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                }
+
+                unchecked {
+                    if (++tempMonth == 12) ++tempYear;
+                }
+            }
+        }
+
+        // Distribute reward to Protection Pool
+        IShieldRewardPool(shieldRewardPool).distributeShield(totalReward);
+    }
+
+    function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {}
+
+    /**
+     * @notice Update the price of PRO_LP token
+     */
+    function _updatePrice() internal {
+        price = IERC20(shield).balanceOf(address(this)) / totalSupply();
     }
 
     /**
@@ -249,10 +285,11 @@ contract ReinsurancePool is
 
         require(!paused, "cannot remove liquidity while paused");
 
-        require(totalSupply() - _amount >= IInsurancePoolFactory(
-                insurancePoolFactory
-            ).totalMaxCapacity(),
-            "undermines reinsurance capability");
+        require(
+            totalSupply() - _amount >=
+                IInsurancePoolFactory(insurancePoolFactory).totalMaxCapacity(),
+            "undermines reinsurance capability"
+        );
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
@@ -262,7 +299,7 @@ contract ReinsurancePool is
      *
      * @param _paused true if paused, false if not.
      */
-    function pauseReinsurancePool(bool _paused) external {
+    function pauseProtectionPool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"

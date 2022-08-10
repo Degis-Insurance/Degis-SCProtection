@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/ProposalCenter.sol";
@@ -18,18 +18,17 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 
 import "src/interfaces/IExecutor.sol";
 
-
 contract ProposalCenterTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     ProposalCenter public proposalCenter;
@@ -102,47 +101,66 @@ contract ProposalCenterTest is Test {
         vm.label(address(yeti), "yeti");
 
         //
-        reinsurancePool = new ReinsurancePool(address(deg), address(vedeg), address(shield));
+        protectionPool = new ProtectionPool(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
         insurancePoolFactory = new InsurancePoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
-        policyCenter = new PolicyCenter(address(deg), address(vedeg), address(shield), address(reinsurancePool));
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(vedeg),
+            address(shield),
+            address(protectionPool)
+        );
         executor = new Executor();
-        onboardProposal = new OnboardProposal(address(deg), address(vedeg), address(shield));
-        incidentReport = new IncidentReport(address(deg), address(vedeg), address(shield));
+        onboardProposal = new OnboardProposal(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
+        incidentReport = new IncidentReport(
+            address(deg),
+            address(vedeg),
+            address(shield)
+        );
 
         // deploy proposal center
-        proposalCenter = new ProposalCenter(address(onboardProposal), address(incidentReport));
+        proposalCenter = new ProposalCenter(
+            address(onboardProposal),
+            address(incidentReport)
+        );
 
         exchange = new Exchange();
-
 
         shield.approve(address(policyCenter), 20000 ether);
         deg.approve(address(policyCenter), 10000 ether);
 
         insurancePoolFactory.setExecutor(address(executor));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setInsurancePoolFactory(address(insurancePoolFactory));
+        insurancePoolFactory.setProtectionPool(address(protectionPool));
+        protectionPool.setPolicyCenter(address(policyCenter));
+        protectionPool.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExecutor(address(executor));
         policyCenter.setExchange(address(exchange));
-        policyCenter.setReinsurancePool(address(reinsurancePool));
+        policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         onboardProposal.setExecutor(address(executor));
         onboardProposal.setProposalCenter(address(proposalCenter));
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
         incidentReport.setProposalCenter(address(proposalCenter));
         incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
-        executor.setReinsurancePool(address(reinsurancePool));
+        executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         // create insurance pool
         pool1 = insurancePoolFactory.deployPool(
@@ -151,7 +169,7 @@ contract ProposalCenterTest is Test {
             10000 ether,
             100
         );
-  
+
         // set insurance pool addresses
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
 
@@ -169,33 +187,20 @@ contract ProposalCenterTest is Test {
     }
 
     function testPoolProposalCenter() public {
-        proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
         );
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
         assertEq(proposal.protocolToken, address(yeti));
     }
 
     function testExistingPoolProposalCenter() public {
         vm.expectRevert("Protocol already protected");
-        proposalCenter.proposePool(
-            "Platypus",
-            address(ptp),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Platypus", address(ptp), 10000 ether, 100);
     }
 
     function testVoteProposalCenter() public {
-        proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(PROPOSAL_ID);
         // vote with 3 participants
@@ -227,12 +232,7 @@ contract ProposalCenterTest is Test {
     }
 
     function testVoteMoreThanOnceOnPoolProposal() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         // user should not be able to vote with morethan
         // how much they have committed to the proposal
         vm.warp(3 days + 1);
@@ -247,12 +247,7 @@ contract ProposalCenterTest is Test {
     }
 
     function testEvaluatePoolProposalTrue() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         // pool proposal should be truthy if majority of votes are true
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(PROPOSAL_ID);
@@ -274,12 +269,7 @@ contract ProposalCenterTest is Test {
     }
 
     function testEvaluatePoolProposalFalse() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         // pool proposal should be false if majority of votes are false
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(1);
@@ -302,21 +292,16 @@ contract ProposalCenterTest is Test {
     }
 
     function testVoteProposalNotEnoughQuorum() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(1);
         // vote with 3 participants
         vm.prank(alice);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
         vm.prank(bob);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
         vm.prank(carol);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 500 ether);
 
         vm.warp(6 days + 2);
         vm.expectRevert("Not reached quorum");
@@ -328,12 +313,7 @@ contract ProposalCenterTest is Test {
     }
 
     function testProposePoolAlreadyDeployed() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         vm.warp(3 days + 1);
         // pool proposal should not be proposed twice
         vm.prank(alice);
@@ -342,12 +322,7 @@ contract ProposalCenterTest is Test {
     }
 
     function testProposePoolAlreadyProposed() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         // pool proposal should not be proposed twice
         deg.transfer(alice, 1000 ether);
         vm.prank(alice);
@@ -360,21 +335,16 @@ contract ProposalCenterTest is Test {
     }
 
     function testProposePoolAfterFailedProposal() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(1);
         // after a failed proposal, a new proposal should be possible
         vm.prank(alice);
-       proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
         vm.prank(bob);
-       proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
         vm.prank(carol);
-       proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_AGAINST, 3000 ether);
 
         vm.warp(6 days + 2);
         // settle proposal after voting period
@@ -394,21 +364,16 @@ contract ProposalCenterTest is Test {
     }
 
     function testProposePoolAfterSuccessfulProposal() public {
-         proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
         vm.warp(3 days + 1);
         proposalCenter.startProposalVoting(1);
 
         vm.prank(alice);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
         vm.prank(bob);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
         vm.prank(carol);
-       proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
+        proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
 
         vm.warp(6 days + 2);
         // settle proposal after voting period
@@ -421,11 +386,6 @@ contract ProposalCenterTest is Test {
         executor.executeProposal(1);
 
         vm.expectRevert("Protocol already protected");
-        proposalCenter.proposePool(
-            "Yeti",
-            address(yeti),
-            10000 ether,
-            100
-        );
+        proposalCenter.proposePool("Yeti", address(yeti), 10000 ether, 100);
     }
 }

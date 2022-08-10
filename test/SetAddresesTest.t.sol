@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -17,16 +17,16 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract setAddressesTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
@@ -52,7 +52,7 @@ contract setAddressesTest is Test {
 
         // deploy contracts
         exchange = new Exchange();
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -61,13 +61,13 @@ contract setAddressesTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         executor = new Executor();
         incidentReport = new IncidentReport(
@@ -111,8 +111,6 @@ contract setAddressesTest is Test {
         );
     }
 
-   
-
     function testSetInsurancePoolFactory() public {
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
         assertEq(
@@ -134,7 +132,6 @@ contract setAddressesTest is Test {
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
     }
 
-    
     function testSetInsurancePoolFactoryNotOwner() public {
         // use a non owner address to make sure it's not allowed to set address
         vm.prank(address(0x0000abcdef));
@@ -158,7 +155,6 @@ contract setAddressesTest is Test {
     function testGetMaxCapacity() public {
         assertEq(InsurancePool(pool1).maxCapacity() == 1000 ether, true);
     }
-
 
     function testSetExecutorInsurancePool() public {
         InsurancePool(pool1).setExecutor(address(executor));

@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/InsurancePoolFactory.sol";
-import "src/pools/ReinsurancePool.sol";
+import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
 import "src/voting/IncidentReport.sol";
@@ -17,9 +17,9 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ReinsurancePoolErrors.sol";
+import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IReinsurancePool.sol";
+import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
@@ -32,7 +32,7 @@ import "forge-std/console.sol";
 */
 contract PostInsurancePoolDeploymentTest is Test {
     InsurancePoolFactory public insurancePoolFactory;
-    ReinsurancePool public reinsurancePool;
+    ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
@@ -75,7 +75,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         vedeg.transfer(address(this), 100 ether);
-        reinsurancePool = new ReinsurancePool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -84,13 +84,13 @@ contract PostInsurancePoolDeploymentTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(reinsurancePool)
+            address(protectionPool)
         );
         executor = new Executor();
         onboardProposal = new OnboardProposal(
@@ -126,29 +126,29 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
 
-        insurancePoolFactory.setReinsurancePool(address(reinsurancePool));
+        insurancePoolFactory.setProtectionPool(address(protectionPool));
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
 
         policyCenter.setExecutor(address(executor));
 
-        policyCenter.setReinsurancePool(address(reinsurancePool));
+        policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        reinsurancePool.setPolicyCenter(address(policyCenter));
-        reinsurancePool.setIncidentReport(address(incidentReport));
-        reinsurancePool.setPolicyCenter(address(policyCenter));
+        protectionPool.setPolicyCenter(address(policyCenter));
+        protectionPool.setIncidentReport(address(incidentReport));
+        protectionPool.setPolicyCenter(address(policyCenter));
         onboardProposal.setExecutor(address(executor));
 
         onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
 
         incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setReinsurancePool(address(reinsurancePool));
+        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setReinsurancePool(address(reinsurancePool));
+        executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         // deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
@@ -172,7 +172,7 @@ contract PostInsurancePoolDeploymentTest is Test {
             console.log(list[i]);
         }
         // asserts that the list is not empty
-        assertEq(list[0] == address(reinsurancePool), true);
+        assertEq(list[0] == address(protectionPool), true);
         assertEq(list[1] == pool1, true);
     }
 
@@ -185,7 +185,6 @@ contract PostInsurancePoolDeploymentTest is Test {
             true
         );
     }
-
 
     function testApprovePTPPolicyCenter() public {
         // approve ptp pool to policy center
@@ -326,7 +325,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // Owner address provides liquidity to ptp pool
-       
+
         vm.prank(alice);
         policyCenter.provideLiquidity(POOL_ID, 1000);
         uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
@@ -346,39 +345,39 @@ contract PostInsurancePoolDeploymentTest is Test {
         assertEq(length == 90, true);
     }
 
-    function testProvideLiquidityReinsurancePool() public {
+    function testProvideLiquidityProtectionPool() public {
         // user should be able to provide liquidity to reinsurance pool
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         assertEq(
-            ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000,
+            ProtectionPool(protectionPool).balanceOf(address(this)) == 10000,
             true
         );
     }
 
-    function testRemoveLiquidityBeforeBufferTimeReinsurancePool() public {
+    function testRemoveLiquidityBeforeBufferTimeProtectionPool() public {
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         // user should not be able to remove liquidity from reinsurance pool prior to buffer time
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         policyCenter.removeLiquidity(REINSURANCE_POOL_ID, 10000);
         assertEq(
-            ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000,
+            ProtectionPool(protectionPool).balanceOf(address(this)) == 10000,
             true
         );
         assertEq(
-            ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000,
+            ProtectionPool(protectionPool).balanceOf(address(this)) == 10000,
             true
         );
     }
 
-    function testRemoveLiquidityAfterBufferTimeReinsurancePool() public {
+    function testRemoveLiquidityAfterBufferTimeProtectionPool() public {
         // user should be able to remove liquidity from reinsurance pool after buffer time
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.provideLiquidity(REINSURANCE_POOL_ID, 10000);
         uint256 initialBalance = ptp.balanceOf(address(this));
         assertEq(
-            ReinsurancePool(reinsurancePool).balanceOf(address(this)) == 10000,
+            ProtectionPool(protectionPool).balanceOf(address(this)) == 10000,
             true
         );
         vm.warp(604801);

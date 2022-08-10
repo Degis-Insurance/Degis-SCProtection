@@ -36,7 +36,7 @@ interface IExecutor {
     function policyCenter() view external returns (address);
     function poolBuffer() view external returns (uint256);
     function proposalBuffer() view external returns (uint256);
-    function reinsurancePool() view external returns (address);
+    function protectionPool() view external returns (address);
     function renounceOwnership() external;
     function reportBuffer() view external returns (uint256);
     function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) external;
@@ -46,7 +46,7 @@ interface IExecutor {
     function setInsurancePoolFactory(address _insurancePoolFactory) external;
     function setOnboardProposal(address _onboardProposal) external;
     function setPolicyCenter(address _policyCenter) external;
-    function setReinsurancePool(address _reinsurancePool) external;
+    function setProtectionPool(address _protectionPool) external;
     
     function shield() view external returns (address);
     function transferOwnership(address newOwner) external;

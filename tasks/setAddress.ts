@@ -9,6 +9,8 @@ import {
   IncidentReport__factory,
   InsurancePoolFactory,
   InsurancePoolFactory__factory,
+  MockDEG,
+  MockDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
   PolicyCenter,
@@ -16,6 +18,7 @@ import {
   ReinsurancePool,
   ReinsurancePool__factory,
 } from "../typechain-types";
+import { parseUnits } from "ethers/lib/utils";
 
 task("setAllAddress", "Set all addresses");
 
@@ -308,3 +311,20 @@ task("setExecutor", "Set contract address in executor").setAction(
     console.log("\nFinish setting contract addresses in executor\n");
   }
 );
+
+task("mintToken").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const deg: MockDEG = new MockDEG__factory(dev_account).attach(
+    addressList[network.name].MockDEG
+  );
+
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("1000"));
+  console.log("tx details", await tx.wait());
+});
