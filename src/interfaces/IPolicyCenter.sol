@@ -9,7 +9,7 @@ interface IPolicyCenter {
     event Reward(uint256 _amount, address _address);
 
     function approvePoolToken(address _token) external;
-    function buyCover(uint256 _poolId, uint256 _pay, uint256 _coverAmount, uint256 _length) external;
+    function buyCover(uint256 _poolId,uint256 _coverAmount, uint256 _length,  uint256 _maxPayment) external;
     function calculatePayout(uint256 _poolId, address _insured) view external returns (uint256);
   
     function claimPayout(uint256 _poolId) external;
@@ -33,9 +33,9 @@ interface IPolicyCenter {
     function owner() view external returns (address);
     function policyCenter() view external returns (address);
     function premiumSplits(uint256) view external returns (uint256);
-    function provideLiquidity(uint256 _poolId, uint256 _amount) external;
+    function provideLiquidity(uint256 _amount) external;
     function protectionPool() view external returns (address);
-    function removeLiquidity(uint256 _poolId, uint256 _amount) external;
+    function removeLiquidity(uint256 _amount) external;
     function renounceOwnership() external;
     function rewardTreasuryToReporter(address _reporter) external;
     

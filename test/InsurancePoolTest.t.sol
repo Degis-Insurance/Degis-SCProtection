@@ -96,7 +96,7 @@ contract InsurancePoolTest is BaseTest {
 
         pool = InsurancePool(newPoolAddress);
 
-        uint256 price = pool.coveragePrice(10 ether, 90);
+        uint256 price = pool.coverPrice(10 ether, 90);
         console.log("price", price);
     }
 }

@@ -17,7 +17,6 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -175,7 +174,7 @@ contract OnboardProposalVotingTest is Test {
 
     function testCloseProposal() public {
         // close proposal
-        executor.closeProposal(PROPOSAL_ID);
+        onboardProposal.closeProposal(PROPOSAL_ID);
         assert(onboardProposal.getProposal(PROPOSAL_ID).status == CLOSE_STATUS);
     }
 
@@ -190,15 +189,15 @@ contract OnboardProposalVotingTest is Test {
         vm.prank(carol);
         onboardProposal.vote(1, VOTE_FOR, 3000 ether);
 
-        (uint256 aliceChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 aliceChoice = onboardProposal.getUserProposalVote(
             alice,
             PROPOSAL_ID
         );
-        (uint256 bobChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 bobChoice = onboardProposal.getUserProposalVote(
             bob,
             PROPOSAL_ID
         );
-        (uint256 carolChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 carolChoice = onboardProposal.getUserProposalVote(
             carol,
             PROPOSAL_ID
         );
