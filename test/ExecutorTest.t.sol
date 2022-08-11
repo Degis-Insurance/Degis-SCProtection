@@ -127,6 +127,9 @@ contract ExecutorTest is Test, IncidentReportParameters {
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
 
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),

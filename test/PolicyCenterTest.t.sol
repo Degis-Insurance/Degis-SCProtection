@@ -149,6 +149,10 @@ contract PostInsurancePoolDeploymentTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         // deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",

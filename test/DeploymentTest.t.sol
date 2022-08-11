@@ -164,6 +164,8 @@ contract SecondaryContractDeploymentTest is Test {
     }
 
     function testDeployInsurancePool() public {
+        // To deploy an insurance pool, a minnimum liquidity must be provided to protection pool
+        policyCenter.provideLiquidity(10000 ether);
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, protectionPool,
         // policyCenter and insurancePoolFactory being deployed.

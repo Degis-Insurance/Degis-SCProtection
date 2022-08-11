@@ -83,6 +83,9 @@ contract setAddressesTest is Test {
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
 
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),
