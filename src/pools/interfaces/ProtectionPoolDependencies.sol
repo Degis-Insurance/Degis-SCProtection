@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 
 import "../../interfaces/IInsurancePoolFactory.sol";
 import "../../interfaces/IPolicyCenter.sol";
+import "../../interfaces/IInsurancePool.sol";
 
 abstract contract ProtectionPoolDependencies {
     uint256 constant UINT256_MAX = type(uint256).max;

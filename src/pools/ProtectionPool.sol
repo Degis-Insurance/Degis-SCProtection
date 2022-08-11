@@ -23,7 +23,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/ProtectionPoolDependencies.sol";
-import "./interfaces/IShieldRewardPool.sol";
+import "./interfaces/IPremiumRewardPool.sol";
 
 import "../util/OwnableWithoutContext.sol";
 
@@ -86,7 +86,7 @@ contract ProtectionPool is
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) rewardSpeed;
 
-    address public shieldRewardPool;
+    address public premiumRewardPool;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -147,6 +147,25 @@ contract ProtectionPool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    function getTotalCovered() external view returns (uint256 covered) {
+        uint256 poolAmount = IInsurancePoolFactory(insurancePoolFactory)
+            .poolCounter();
+
+        for (uint256 i; i < poolAmount; ) {
+            (, address poolAddress, , , ) = IInsurancePoolFactory(
+                insurancePoolFactory
+            ).pools(i);
+
+            if (
+                IInsurancePoolFactory(insurancePoolFactory).alreadyDynamic(
+                    poolAddress
+                )
+            ) {
+                covered += IInsurancePool(poolAddress).totalCovered();
+            } else continue;
+        }
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -197,7 +216,10 @@ contract ProtectionPool is
      * @param _premium Premium of the cover to be distributed to Protection Pool
      * @param _length  Length in month
      */
-    function updateWhenBuy(uint256 _premium, uint256 _length) external onlyPolicyCenter {
+    function updateWhenBuy(uint256 _premium, uint256 _length)
+        external
+        onlyPolicyCenter
+    {
         _updateReward();
         _updatePrice();
 
@@ -276,7 +298,7 @@ contract ProtectionPool is
         }
 
         // Distribute reward to Protection Pool
-        IShieldRewardPool(shieldRewardPool).distributeShield(totalReward);
+        IPremiumRewardPool(premiumRewardPool).distributeShield(totalReward);
     }
 
     /**
@@ -324,23 +346,6 @@ contract ProtectionPool is
     }
 
     /**
-    @notice Called when liqudity is provided, removed or coverage is bought.
-    updates all state variables to reflect current reward emission.
-    */
-    function updateRewards() public onlyPolicyCenter {
-        _updateRewards();
-    }
-
-    /**
-     * @notice Update emission rate based on new premium comission to liquidity providers
-     *
-     * @param _premium premium given to liquidity providers
-     */
-    function updateEmissionRate(uint256 _premium) public onlyPolicyCenter {
-        _updateEmissionRate(_premium);
-    }
-
-    /**
      * @notice Update reward speed
      *
      * @param _premium New premium received
@@ -376,69 +381,4 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Updates emission rate based on new incoming premium
-     *
-     * @param _premium incoming new premium
-     */
-    function _updateEmissionRate(uint256 _premium) internal {
-        // Update current reward taking into account new emission rate
-        _updateRewards();
-        // Get time to complete current pool of tokens emission to liquidity providers
-        uint256 timeToFinishEmission = emissionEndTime > block.timestamp
-            ? emissionEndTime - block.timestamp
-            : 0;
-
-        // Calculate new emission rate by adding new premium and redistributing previous emission
-        // Throughout the time it takes to complete emission.
-        if (timeToFinishEmission > 0) {
-            emissionRate =
-                ((emissionRate * timeToFinishEmission) + _premium) /
-                DISTRIBUTION_PERIOD;
-            // Update emission rate
-        } else {
-            // Update emission rate
-            emissionRate = _premium / DISTRIBUTION_PERIOD;
-        }
-
-        // update emission rate and emission ends
-        emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
-
-        emit EmissionRateUpdated(emissionRate, emissionEndTime);
-    }
-
-    /**
-     * @notice Update rewards
-     */
-    function _updateRewards() internal {
-        if (totalSupply() == 0 || emissionEndTime == 0) {
-            // if totalSupply is 0, no rewards can be paid
-            // update last time rewards were claimed
-            lastRewardTimestamp = block.timestamp;
-        } else {
-            // if no coverages have been bought in over 30 days,
-            // discount time passed since the time that emission ends.
-
-            uint256 claimTimestamp = emissionEndTime < block.timestamp
-                ? emissionEndTime
-                : block.timestamp;
-            // Calculate difference between claim time and last time rewards were claimed
-            uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
-
-            // Calculate new reward
-            uint256 rewards = (timeSinceLastReward * emissionRate) / 1 days;
-
-            // Update accumulated rewards given to each pool share
-            // accumulated
-            accumulatedRewardPerShare =
-                accumulatedRewardPerShare +
-                rewards /
-                totalSupply();
-            lastRewardTimestamp = block.timestamp;
-
-            // emit event to notify users that rewards have been updated
-            emit AccRewardsPerShareUpdated(accumulatedRewardPerShare);
-        }
-    }
 }
