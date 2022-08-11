@@ -191,6 +191,19 @@ contract ProtectionPool is
         emit LiquidityProvision(_amount, amountToMint, _provider);
     }
 
+    /**
+     * @notice Update when new cover is bought
+     *
+     * @param _premium Premium of the cover to be distributed to Protection Pool
+     * @param _length  Length in month
+     */
+    function updateWhenBuy(uint256 _premium, uint256 _length) external onlyPolicyCenter {
+        _updateReward();
+        _updatePrice();
+
+        _updateRewardSpeed(_premium, _length);
+    }
+
     function _updateReward() internal {
         (
             uint256 lastRewardYear,
@@ -330,11 +343,10 @@ contract ProtectionPool is
     /**
      * @notice Update reward speed
      *
-     * @param _length Cover length in months
+     * @param _premium New premium received
+     * @param _length  Cover length in months
      */
     function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {
-        // uint256 daysPassed = _length % DateTimeLibrary.SECONDS_PER_DAY;
-
         uint256 newSpeed = _premium / _length;
 
         (

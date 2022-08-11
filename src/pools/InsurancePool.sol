@@ -203,20 +203,42 @@ contract InsurancePool is
     /**
      * @notice Get the dynamic premium ratio (annually)
      *         Depends on the covers sold and liquidity amount
+     *         For the first 48 hours, use the base premium ratio
+     *         
+     * @return ratio The dynamic ratio
      */
     function dynamicPremiumRatio() public view returns (uint256 ratio) {
-        // Covered ratio = Covered amount of this pool / Total covered amount
-        uint256 coveredRatio = (totalCovered * SCALE) /
-            IProtectionPool(protectionPool).totalCovered();
+        uint256 fromStart = block.timestamp - startTime;
 
-        // LP Token ratio = LP token in this pool / Total lp token
-        uint256 tokenRatio = (totalSupply() * SCALE) /
-            IProtectionPool(protectionPool).totalSupply();
+        // First 48 hours use base ratio
+        // Then use dynamic ratio
+        if (fromStart > 2 days) {
+            // Covered ratio = Covered amount of this pool / Total covered amount
+            uint256 coveredRatio = (totalCovered * SCALE) /
+                IProtectionPool(protectionPool).totalCovered();
 
-        // Dynamic premium ratio
-        ratio = (basePremiumRatio * coveredRatio) / tokenRatio;
+            // LP Token ratio = LP token in this pool / Total lp token
+            uint256 tokenRatio = (totalSupply() * SCALE) /
+                IProtectionPool(protectionPool).totalSupply();
+
+            uint256 numofPools = IInsurancePoolFactory(insurancePoolFactory)
+                .poolCounter();
+
+            // Dynamic premium ratio
+            //                     Covered          1
+            //                  --------------- + -----
+            //                   TotalCovered       N
+            // dynamic ratio =  -------------------------- * base ratio
+            //                      LP Amount         1
+            //                  ----------------- + -----
+            //                   Total LP Amount      N
+            ratio =
+                (basePremiumRatio * coveredRatio * numofPools + 1) /
+                ((tokenRatio * numofPools) + 1);
+        } else {
+            ratio = basePremiumRatio;
+        }
     }
-
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
