@@ -175,7 +175,7 @@ contract ProtectionPool is
      *
      * @param _amount Liquidity amount (shield)
      */
-    function provideLiquidity(uint256 _amount, address _provider)
+    function providedLiquidity(uint256 _amount, address _provider)
         external
         onlyPolicyCenter
     {
@@ -279,7 +279,7 @@ contract ProtectionPool is
     @param _amount      token being insured
     @param _provider    liquidity provider adress
     */
-    function removeLiquidity(uint256 _amount, address _provider)
+    function removedLiquidity(uint256 _amount, address _provider)
         external
         onlyPolicyCenter
     {

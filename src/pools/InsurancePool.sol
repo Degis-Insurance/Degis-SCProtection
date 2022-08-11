@@ -274,7 +274,7 @@ contract InsurancePool is
      * @param _amount   Amount of liquidity to provide
      * @param _provider Liquidity provider adress
      */
-    function provideLiquidity(uint256 _amount, address _provider)
+    function stakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
         onlyPolicyCenter
@@ -295,7 +295,7 @@ contract InsurancePool is
      * @param _amount   Amount of liquidity to remove
      * @param _provider Provider address
      */
-    function removeLiquidity(uint256 _amount, address _provider)
+    function unstakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
         onlyPolicyCenter

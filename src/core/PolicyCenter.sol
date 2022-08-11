@@ -73,10 +73,12 @@ contract PolicyCenter is
         uint256 lastClaim;
     }
     mapping(uint256 => mapping(address => Liquidity)) public liquidities;
+
     // amount of liquidity by pool id given by liquidity providers
+    // pool 0 represents the total liquidity of the system
     mapping(uint256 => uint256) public liquidityByPoolId;
 
-    // bps distribution of premiums 0: insurance pool, 1: reinsurance pool
+    // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
     // uint256 public pendingPremiumToTreasury;
@@ -115,7 +117,7 @@ contract PolicyCenter is
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
-        // initializes required reinsurance address and degis token as reinsurance token
+        // initializes required protection address and degis token as protection token
         insurancePools[0] = _protectionPool;
         tokenByPoolId[0] = _shield;
 
@@ -203,7 +205,7 @@ contract PolicyCenter is
 
     /**
      * @notice returns payout given to cover buyers when report passes
-     * @param _poolId pool id to claim from. 0 if reinsurance pool
+     * @param _poolId pool id to claim from. 0 if protection pool
      * @return uint256 amount of payout
      */
     function calculatePayout(uint256 _poolId, address _insured)
@@ -214,6 +216,8 @@ contract PolicyCenter is
         require(_poolId > 0, "Reinsurance pool grants no direct payout");
         // returns amount user has paid for cover
         uint256 amount = covers[_poolId][_insured].amount;
+
+        // TODO: calculate payout according to Cover Index
         return amount;
     }
 
@@ -223,19 +227,19 @@ contract PolicyCenter is
 
     /**
      * @notice sets the premium splits used by Policy Center
-     * @param _insurance    split for insurance
-     * @param _reinsurance  split for reinsurance
+     * @param _priority    split for priority pool in bps
+     * @param _protection  split for protection pool in bps
      */
-    function setPremiumSplit(uint256 _insurance, uint256 _reinsurance)
+    function setPremiumSplit(uint256 _priority, uint256 _protection)
         external
         onlyOwner
     {
         // up to 1000bps, left over goes to treasury
-        require(_insurance + _reinsurance <= 10000, "Invalid split");
-        require(_insurance > 0, "has not given an insurance split");
-        require(_reinsurance > 0, "has not given a reinsurance split");
-        //sets insurance and reinsurance splits
-        premiumSplits = [_insurance, _reinsurance];
+        require(_priority + _protection <= 10000, "Invalid split");
+        require(_priority > 0, "has not given an insurance split");
+        require(_protection > 0, "has not given a protection split");
+        //sets insurance and protection splits
+        premiumSplits = [_priority, _protection];
     }
 
     /**
@@ -254,6 +258,7 @@ contract PolicyCenter is
         _setProtectionPool(_protectionPool);
     }
 
+    //TODO: rename insurance pool factory to priority pool factory?
     function setInsurancePoolFactory(address _insurancePoolFactory)
         external
         onlyOwner
@@ -351,29 +356,6 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Check the cover length
-     */
-    function _withinLength(uint256 _length) internal pure returns (bool) {
-        return _length > 0 && _length <= MAX_COVER_LENGTH;
-    }
-
-    /**
-     * @notice Get native token amount to pay
-     *
-     * @param _premium Premium in USD
-     * @param _token   Native token address
-     */
-    function _getNativeTokenAmount(uint256 _premium, address _token)
-        internal
-        returns (uint256)
-    {
-        // Price in 18 decimals
-        uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
-
-        return (_premium * 1e12) / price;
-    }
-
-    /**
      * @notice Check insurance pool capacity
      *
      * @param _poolId      Pool id
@@ -399,43 +381,68 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Provide liquidity to a give pool id
+     * @notice Stake Protection Pool Tokens for increased rewards
      *
      * @param _poolId Pool id
-     * @param _amount Amount of liquidity to provide
+     * @param _amount Amount of LP tokens to stake
      */
-    function provideLiquidity(uint256 _poolId, uint256 _amount)
-        external
-        poolExists(_poolId)
-    {
+    function stakeLiquidityPoolToken(uint256 _poolId, uint256 _amount) public poolExists(_poolId) {
         require(_amount > 0, "Amount must be greater than 0");
 
         // claim rewards. user debt is updated in _claimReward
         _claimReward(_poolId, msg.sender);
 
-        // adds liquidity to insurance or reinsurance pool
+        // adds liquidity to insurance or protection pool
         liquidityByPoolId[_poolId] += _amount;
 
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
 
-        if (_poolId > 0) {
-            // emits tokens to user from insurnace pool
-            IInsurancePool(insurancePools[_poolId]).provideLiquidity(
-                _amount,
-                msg.sender
-            );
-        } else {
-            // emits tokens to user from reinsurnace pool
-            IProtectionPool(protectionPool).provideLiquidity(
-                _amount,
-                msg.sender
-            );
-        }
+        // emits tokens to user from insurnace pool
+        IInsurancePool(insurancePools[_poolId]).stakedLiquidity(
+            _amount,
+            msg.sender
+        );
+        
+        // transfer protection pool tokens from user to contract
+        IProtectionPool(protectionPool).transferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
         // upsates user provided amount and last claim
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
+    }
 
+    /**
+     * @notice Provide liquidity to a give protection pool
+     *
+     * @param _amount Amount of liquidity to provide
+     */
+    function provideLiquidity(uint256 _amount)
+        external
+    {
+        require(_amount > 0, "Amount must be greater than 0");
+
+        // claim rewards. user debt is updated in _claimReward
+        _claimReward(0, msg.sender);
+
+        // adds liquidity to insurance or protection pool
+        liquidityByPoolId[0] += _amount;
+
+        Liquidity storage liquidity = liquidities[0][msg.sender];
+
+        // mints tokens to user from protection pool
+        IProtectionPool(protectionPool).providedLiquidity(
+            _amount,
+            msg.sender
+        );
+
+        // transfers shield from user to contract
         IERC20(shield).transferFrom(msg.sender, address(this), _amount);
+        // upsates user provided amount and last claim
+        liquidity.amount += _amount;
+        liquidity.lastClaim = block.timestamp;
     }
 
     /**
@@ -444,7 +451,7 @@ contract PolicyCenter is
      * @param _poolId Pool id
      * @param _amount Amount of liquidity to provide
      */
-    function removeLiquidity(uint256 _poolId, uint256 _amount)
+    function unstakeLiquidityPoolToken(uint256 _poolId, uint256 _amount)
         external
         poolExists(_poolId)
     {
@@ -470,32 +477,21 @@ contract PolicyCenter is
         _claimReward(_poolId, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply;
+        uint256 totalSupply = IInsurancePool(insurancePools[_poolId]).totalSupply();
 
-        if (_poolId > 0) {
-            totalSupply = IInsurancePool(insurancePools[_poolId]).totalSupply();
-            // burns the full amount of liquidity tokens in users account from insurance pool
-            IInsurancePool(insurancePools[_poolId]).removeLiquidity(
-                _amount,
-                msg.sender
-            );
-        } else {
-            totalSupply = IProtectionPool(protectionPool).totalSupply();
-
-            // burns the full amount of liquidity tokens in users account from reinsurance pool
-            IProtectionPool(protectionPool).removeLiquidity(
-                _amount,
-                msg.sender
-            );
-        }
-
+        // burns the full amount of liquidity tokens in users account from insurance pool
+        IInsurancePool(insurancePools[_poolId]).unstakedLiquidity(
+            _amount,
+            msg.sender
+        );
+        
         // actual amount is liquidity by LP tokens times amount.
         // If no liquidation and payout, liquidity / totalSupply = 1
         // therefore actual amount = _amount
         uint256 actualAmount = (liquidityByPoolId[_poolId] / totalSupply) *
             _amount;
 
-        // removes liquidity from insurance or reinsurance pool
+        // removes liquidity from insurance or protection pool
         liquidityByPoolId[_poolId] -= actualAmount;
 
         // new amount owned by caller
@@ -505,26 +501,59 @@ contract PolicyCenter is
         IERC20(shield).transfer(msg.sender, actualAmount);
     }
 
+
     /**
-     * @notice  Move liquidity to another pool to be used for reinsurance,
-                reducing gas costs during liquidation period.
+     * @notice Remove liquidity from protection pool
      *
-     * @param _amount Amount of liquidity to transfer to insurance pool
-     * @param _poolId Id of the pool to move the liquidity to.
+     * @param _amount Amount of liquidity to provide
      */
-    function moveLiquidity(uint256 _poolId, uint256 _amount)
+    function removeLiquidity(uint256 _amount)
         external
-        onlyOwner
     {
         require(_amount > 0, "Amount must be greater than 0");
-        require(
-            IInsurancePool(insurancePools[_poolId]).liquidated(),
-            "Insurance pool must have been liquidated"
-        );
-        liquidityByPoolId[_poolId] -= _amount;
-        liquidityByPoolId[0] += _amount;
 
-        emit MoveLiquidity(_poolId, _amount);
+        require(
+            _amount <= liquidities[0][msg.sender].amount,
+            "Amount must be less than provided liquidity"
+        );
+        require(
+            _amount <= liquidityByPoolId[0],
+            "Amount must be less than liquidity"
+        );
+        require(
+            block.timestamp >=
+                liquidities[0][msg.sender].lastClaim + 604800,
+            "cannot remove liquidity within 7 days of last claim"
+        );
+
+        Liquidity storage liquidity = liquidities[0][msg.sender];
+
+        // claim rewards for caller by pool id. user debt is updated in claim reward
+        _claimReward(0, msg.sender);
+
+        // totalSupply that wil be used to calculate the amount of shield to be removed
+        uint256 totalSupply = IProtectionPool(protectionPool).totalSupply();
+
+        // burns the full amount of liquidity tokens in users account from protection pool
+        IProtectionPool(protectionPool).removedLiquidity(
+            _amount,
+            msg.sender
+        );
+
+        // actual amount is liquidity by LP tokens times amount.
+        // If no liquidation and payout, liquidity / totalSupply = 1
+        // therefore actual amount = _amount
+        uint256 actualAmount = (liquidityByPoolId[0] / totalSupply) *
+            _amount;
+
+        // removes liquidity from insurance or protection pool
+        liquidityByPoolId[0] -= actualAmount;
+
+        // new amount owned by caller
+        liquidity.amount -= _amount;
+        liquidity.lastClaim = block.timestamp;
+
+        IERC20(shield).transfer(msg.sender, actualAmount);
     }
 
     /**
@@ -563,17 +592,17 @@ contract PolicyCenter is
         // coverage by user is removed
         cover.amount = 0;
         if (liquidityByPoolId[_poolId] >= amount) {
-            // Insurance doesn't need reinsurance
+            // Insurance doesn't need protection
             // Registers removal of funds from insurance pool
             // if its enough to cover all funds
             liquidityByPoolId[_poolId] -= cover.amount;
         } else {
-            // Insurance pool needs reinsurance
-            // registers removel of funds from insurance and reinsurance pools
+            // Insurance pool needs protection
+            // registers removel of funds from insurance and protection pools
             // effectively reinsuring insurance pools
             liquidityByPoolId[_poolId] -= amount;
 
-            // remove from reinsurance pool
+            // remove from protection pool
             liquidityByPoolId[0] -= (amount - liquidityByPoolId[_poolId]);
         }
         // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
@@ -582,20 +611,10 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice rewards reporter when a reported insurance pool is liquidated with treasury
-     * callable by contract only
-     * @param _reporter address of the reporter
+     * @notice method to remove treasury funds by contract owner
+     * 
+     * @param _amount       amount to be removed
      */
-    function rewardTreasuryToReporter(address _reporter) external {
-        require(msg.sender == executor, "not requested by Executor");
-
-        // 10% of treasury + 2000 DEG
-        uint256 reward = (treasury * 1000) / 10000;
-        treasury -= reward;
-
-        IDegisToken(deg).transfer(_reporter, reward);
-    }
-
     function claimTreasury(uint256 _amount) external onlyOwner {
         require(treasury > 0, "No funds to claim");
         require(_amount <= treasury, "Amount exceeds treasury balance");
@@ -673,6 +692,29 @@ contract PolicyCenter is
         );
     }
 
+     /**
+     * @notice Check the cover length
+     */
+    function _withinLength(uint256 _length) internal pure returns (bool) {
+        return _length > 0 && _length <= MAX_COVER_LENGTH;
+    }
+
+    /**
+     * @notice Get native token amount to pay
+     *
+     * @param _premium Premium in USD
+     * @param _token   Native token address
+     */
+    function _getNativeTokenAmount(uint256 _premium, address _token)
+        internal
+        returns (uint256)
+    {
+        // Price in 18 decimals
+        uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
+
+        return (_premium * 1e12) / price;
+    }
+
     /**
      * @notice Split premium for a pool
      *
@@ -686,7 +728,7 @@ contract PolicyCenter is
 
         uint256 toInsurancePool = (_totalSplit * premiumSplits[0]) / 10000;
 
-        // amount to swap for shield and store as reward to reinsurance pool and treasury
+        // amount to swap for shield and store as reward to protection pool and treasury
         uint256 toSwap = _totalSplit - toInsurancePool;
 
         // swap native for degis
@@ -700,7 +742,7 @@ contract PolicyCenter is
         // pendingPremiumToTreasury += toTreasury;
         // pendingPremiumToProtectionPool += toProtectionPool;
 
-        // reinsurance pool is pool 0
+        // protection pool is pool 0
         rewardsByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 

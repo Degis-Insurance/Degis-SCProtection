@@ -135,8 +135,6 @@ contract Executor is
             poolId
         );
 
-        // reward 10% of treasury to reporter
-        IPolicyCenter(policyCenter).rewardTreasuryToReporter(reporter);
 
         // Mark the pool as liquidated
         IInsurancePool(poolAddress).liquidatePool();
@@ -178,9 +176,5 @@ contract Executor is
         emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
 
         return newPool;
-    }
-
-    function closeProposal(uint256 _proposalId) external onlyOwner {
-        IOnboardProposal(onboardProposal).closeProposal(_proposalId);
     }
 }
