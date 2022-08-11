@@ -166,6 +166,10 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
         executor.setIncidentReport(address(incidentReport));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         //deploy ptp pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",

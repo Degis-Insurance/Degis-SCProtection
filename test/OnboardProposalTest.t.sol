@@ -144,6 +144,10 @@ contract OnboardProposalVotingTest is Test {
         executor.setIncidentReport(address(incidentReport));
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         // create insurance pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",

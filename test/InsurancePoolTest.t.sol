@@ -21,7 +21,7 @@ contract InsurancePoolTest is BaseTest {
     address alice = mkaddr("alice");
     address bob = mkaddr("bob");
 
-    ProtectionPool repool;
+    ProtectionPool protectionPool;
     InsurancePoolFactory factory;
     InsurancePool pool;
 
@@ -45,7 +45,7 @@ contract InsurancePoolTest is BaseTest {
 
         exchange = new Exchange();
 
-        repool = new ProtectionPool(
+        protectionPool = new ProtectionPool(
             address(deg),
             address(vedeg),
             address(shield)
@@ -55,19 +55,22 @@ contract InsurancePoolTest is BaseTest {
             address(deg),
             address(vedeg),
             address(shield),
-            address(repool)
+            address(protectionPool)
         );
 
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
             address(shield),
-            address(repool)
+            address(protectionPool)
         );
 
         factory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(factory));
         policyCenter.setExchange(address(exchange));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
     }
 
     function testFactorySetUp() public {
@@ -77,7 +80,7 @@ contract InsurancePoolTest is BaseTest {
         assertEq(firstPool.protocolToken, address(shield));
 
         assertTrue(factory.tokenRegistered(address(shield)));
-        assertTrue(factory.poolRegistered(address(repool)));
+        assertTrue(factory.poolRegistered(address(protectionPool)));
     }
 
     function testDeployPool() public {
