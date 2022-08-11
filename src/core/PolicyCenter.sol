@@ -89,6 +89,9 @@ contract PolicyCenter is
 
     address public priceGetter;
 
+    // Year => Month => Total Cover Amount
+    mapping(uint256 => mapping(uint256 => uint256)) coverInMonth;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -200,8 +203,6 @@ contract PolicyCenter is
     {
         return covers[_poolId][_user];
     }
-
-  
 
     /**
      * @notice returns payout given to cover buyers when report passes
@@ -344,6 +345,7 @@ contract PolicyCenter is
             address(this),
             premiumInNativeToken
         );
+
         emit CoverBought(
             msg.sender,
             _poolId,
@@ -352,7 +354,16 @@ contract PolicyCenter is
             premium
         );
 
-        _splitPremium(_poolId, premium);
+        // Split the premium income and update the pool status
+        (
+            uint256 premiumToProtectionPool,
+            uint256 premiumToPriorityPool
+        ) = _splitPremium(_poolId, _amount);
+
+        IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool);
+        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
+            premiumToInsurancePool
+        );
     }
 
     /**
@@ -386,7 +397,10 @@ contract PolicyCenter is
      * @param _poolId Pool id
      * @param _amount Amount of LP tokens to stake
      */
-    function stakeLiquidityPoolToken(uint256 _poolId, uint256 _amount) public poolExists(_poolId) {
+    function stakeLiquidityPoolToken(uint256 _poolId, uint256 _amount)
+        public
+        poolExists(_poolId)
+    {
         require(_amount > 0, "Amount must be greater than 0");
 
         // claim rewards. user debt is updated in _claimReward
@@ -402,7 +416,7 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
-        
+
         // transfer protection pool tokens from user to contract
         IProtectionPool(protectionPool).transferFrom(
             msg.sender,
@@ -419,9 +433,7 @@ contract PolicyCenter is
      *
      * @param _amount Amount of liquidity to provide
      */
-    function provideLiquidity(uint256 _amount)
-        external
-    {
+    function provideLiquidity(uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
 
         // claim rewards. user debt is updated in _claimReward
@@ -433,10 +445,7 @@ contract PolicyCenter is
         Liquidity storage liquidity = liquidities[0][msg.sender];
 
         // mints tokens to user from protection pool
-        IProtectionPool(protectionPool).providedLiquidity(
-            _amount,
-            msg.sender
-        );
+        IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
 
         // transfers shield from user to contract
         IERC20(shield).transferFrom(msg.sender, address(this), _amount);
@@ -477,14 +486,15 @@ contract PolicyCenter is
         _claimReward(_poolId, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply = IInsurancePool(insurancePools[_poolId]).totalSupply();
+        uint256 totalSupply = IInsurancePool(insurancePools[_poolId])
+            .totalSupply();
 
         // burns the full amount of liquidity tokens in users account from insurance pool
         IInsurancePool(insurancePools[_poolId]).unstakedLiquidity(
             _amount,
             msg.sender
         );
-        
+
         // actual amount is liquidity by LP tokens times amount.
         // If no liquidation and payout, liquidity / totalSupply = 1
         // therefore actual amount = _amount
@@ -501,15 +511,12 @@ contract PolicyCenter is
         IERC20(shield).transfer(msg.sender, actualAmount);
     }
 
-
     /**
      * @notice Remove liquidity from protection pool
      *
      * @param _amount Amount of liquidity to provide
      */
-    function removeLiquidity(uint256 _amount)
-        external
-    {
+    function removeLiquidity(uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
 
         require(
@@ -521,8 +528,7 @@ contract PolicyCenter is
             "Amount must be less than liquidity"
         );
         require(
-            block.timestamp >=
-                liquidities[0][msg.sender].lastClaim + 604800,
+            block.timestamp >= liquidities[0][msg.sender].lastClaim + 604800,
             "cannot remove liquidity within 7 days of last claim"
         );
 
@@ -535,16 +541,12 @@ contract PolicyCenter is
         uint256 totalSupply = IProtectionPool(protectionPool).totalSupply();
 
         // burns the full amount of liquidity tokens in users account from protection pool
-        IProtectionPool(protectionPool).removedLiquidity(
-            _amount,
-            msg.sender
-        );
+        IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
 
         // actual amount is liquidity by LP tokens times amount.
         // If no liquidation and payout, liquidity / totalSupply = 1
         // therefore actual amount = _amount
-        uint256 actualAmount = (liquidityByPoolId[0] / totalSupply) *
-            _amount;
+        uint256 actualAmount = (liquidityByPoolId[0] / totalSupply) * _amount;
 
         // removes liquidity from insurance or protection pool
         liquidityByPoolId[0] -= actualAmount;
@@ -612,7 +614,7 @@ contract PolicyCenter is
 
     /**
      * @notice method to remove treasury funds by contract owner
-     * 
+     *
      * @param _amount       amount to be removed
      */
     function claimTreasury(uint256 _amount) external onlyOwner {
@@ -692,7 +694,7 @@ contract PolicyCenter is
         );
     }
 
-     /**
+    /**
      * @notice Check the cover length
      */
     function _withinLength(uint256 _length) internal pure returns (bool) {
