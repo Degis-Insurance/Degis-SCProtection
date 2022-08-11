@@ -111,11 +111,11 @@ interface IInsurancePool {
 
     function priceRatio() external view returns (uint256);
 
-    function provideLiquidity(uint256 _amount, address _provider) external;
+    function stakedLiquidity(uint256 _amount, address _provider) external;
 
     function protectionPool() external view returns (address);
 
-    function removeLiquidity(uint256 _amount, address _provider) external;
+    function unstakedLiquidity(uint256 _amount, address _provider) external;
 
     function renounceOwnership() external;
 

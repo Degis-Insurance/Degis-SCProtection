@@ -95,11 +95,11 @@ interface IProtectionPool {
             uint256
         );
 
-    function provideLiquidity(uint256 _amount, address _provider) external;
+    function providedLiquidity(uint256 _amount, address _provider) external;
 
     function protectionPool() external view returns (address);
 
-    function removeLiquidity(uint256 _amount, address _provider) external;
+    function removedLiquidity(uint256 _amount, address _provider) external;
 
     function renounceOwnership() external;
 
