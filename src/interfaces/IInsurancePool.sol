@@ -163,4 +163,6 @@ interface IInsurancePool {
     function activeCovered() external view returns (uint256);
 
     function totalCovered() external view returns (uint256);
+
+    function updateWhenBuy(uint256 _amount) external;
 }

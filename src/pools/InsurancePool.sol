@@ -108,9 +108,6 @@ contract InsurancePool is
 
     uint256 public endLiquidationDate;
 
-    // Total active covered amount
-    uint256 public totalCovered;
-
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
 
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
@@ -200,7 +197,7 @@ contract InsurancePool is
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_length), "Wrong cover length");
 
-        uint256 dynamicRatio = dynamicPremiumRatio();
+        uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
         uint256 endTimestamp = getExpiryDateInternal(block.timestamp, _length);
         uint256 length = endTimestamp - block.timestamp;
@@ -234,14 +231,18 @@ contract InsurancePool is
      *
      * @return ratio The dynamic ratio
      */
-    function dynamicPremiumRatio() public view returns (uint256 ratio) {
+    function dynamicPremiumRatio(uint256 _newAmount)
+        public
+        view
+        returns (uint256 ratio)
+    {
         uint256 fromStart = block.timestamp - startTime;
 
         // First 7 days use base ratio
         // Then use dynamic ratio
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
-            uint256 coveredRatio = (totalCovered * SCALE) /
+            uint256 coveredRatio = ((activeCovered() + _newAmount) * SCALE) /
                 IProtectionPool(protectionPool).totalCovered();
 
             // LP Token ratio = LP token in this pool / Total lp token
@@ -262,8 +263,8 @@ contract InsurancePool is
             //                   Total LP Amount      N
             //
             ratio =
-                (basePremiumRatio * coveredRatio * numofPools + 1) /
-                ((tokenRatio * numofPools) + 1);
+                (basePremiumRatio * (coveredRatio * numofPools + SCALE)) /
+                ((tokenRatio * numofPools) + SCALE);
         } else {
             ratio = basePremiumRatio;
         }
@@ -360,13 +361,29 @@ contract InsurancePool is
         emit LiquidityRemoved(_amount, _provider);
     }
 
-    function updateWhenBuy()
+    function updateWhenBuy(uint256 _amount, uint256 _length)
         external
         whenNotPaused
         whenNotLiquidated
         onlyPolicyCenter
     {
+        _updateCoverInfo(_amount, _length);
+        // coverInMonth[]
         _updateDynamic();
+    }
+
+    function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
+        (
+            uint256 currentYear,
+            uint256 currentMonth,
+            uint256 currentDay
+        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+
+        if (currentDay >= 25) ++_length;
+
+        for (uint256 i; i < _length; ) {
+            coverInMonth[currentYear][currentMonth + i] += _amount;
+        }
     }
 
     /**

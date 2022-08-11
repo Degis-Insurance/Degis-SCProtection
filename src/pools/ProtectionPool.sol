@@ -147,6 +147,11 @@ contract ProtectionPool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Get total active cover amount of all pools
+     *
+     * @return covered Covered amount
+     */
     function getTotalCovered() external view returns (uint256 covered) {
         uint256 poolAmount = IInsurancePoolFactory(insurancePoolFactory)
             .poolCounter();
@@ -161,7 +166,7 @@ contract ProtectionPool is
                     poolAddress
                 )
             ) {
-                covered += IInsurancePool(poolAddress).totalCovered();
+                covered += IInsurancePool(poolAddress).activeCovered();
             } else continue;
         }
     }

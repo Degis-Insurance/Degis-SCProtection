@@ -364,6 +364,7 @@ contract PolicyCenter is
 
         IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool);
         IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
+            _coverAmount, _coverDuration,
             premiumToPriorityPool
         );
     }
