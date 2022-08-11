@@ -17,7 +17,6 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -155,7 +154,7 @@ contract ClaimPayoutTest is Test {
         // owner provides liquidity
         shield.transfer(address(this), 10000);
         shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.provideLiquidity(1, 10000);
+        policyCenter.stakeLiquidityPoolToken(1, 10000);
 
         vm.warp(0);
         onboardProposal.propose("Yeti", address(yeti), 10000 ether, 1);
@@ -191,7 +190,7 @@ contract ClaimPayoutTest is Test {
     function testProvideLiquidityNewPool() public {
         // approve shield usage for new pool
         shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.provideLiquidity(2, 10000);
+        policyCenter.stakeLiquidityPoolToken(2, 10000);
 
         // check if pool has received tokens
         assertEq(InsurancePool(pool2).totalSupply() == 10000, true);
@@ -201,8 +200,8 @@ contract ClaimPayoutTest is Test {
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-
-        policyCenter.buyCover(2, 100 ether, 90);
+        uint price = InsurancePool(pool2).coverPrice(10000 ether, 90);
+        policyCenter.buyCover(2, 100 ether, 90, price);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);
     }

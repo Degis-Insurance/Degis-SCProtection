@@ -210,15 +210,15 @@ contract ProposalCenterTest is Test {
         vm.prank(carol);
         proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
 
-        (uint256 aliceChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 aliceChoice = onboardProposal.getUserProposalVote(
             alice,
             PROPOSAL_ID
         );
-        (uint256 bobChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 bobChoice = onboardProposal.getUserProposalVote(
             bob,
             PROPOSAL_ID
         );
-        (uint256 carolChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 carolChoice = onboardProposal.getUserProposalVote(
             carol,
             PROPOSAL_ID
         );
