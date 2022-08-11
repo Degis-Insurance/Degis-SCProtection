@@ -37,8 +37,6 @@ interface IProtectionPool {
 
     function balanceOf(address account) external view returns (uint256);
 
-  
-
     function decimals() external view returns (uint8);
 
     function decreaseAllowance(address spender, uint256 subtractedValue)
@@ -140,4 +138,6 @@ interface IProtectionPool {
     function veDeg() external view returns (address);
 
     function totalCovered() external view returns (uint256);
+
+    function updateWhenBuy(uint256 _amount) external;
 }

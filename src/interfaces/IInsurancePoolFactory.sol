@@ -74,7 +74,6 @@ interface IInsurancePoolFactory {
 
     function renounceOwnership() external;
 
-
     function setExecutor(address _executor) external;
 
     function setIncidentReport(address _incidentReport) external;
@@ -94,8 +93,25 @@ interface IInsurancePoolFactory {
     function tokenRegistered(address) external view returns (bool);
 
     function totalMaxCapacity() external view returns (uint256);
-    
+
     function transferOwnership(address newOwner) external;
 
     function veDeg() external view returns (address);
+
+    function addDynamicCounter() external;
+
+    function dynamicPoolCounter() external view returns (uint256);
+
+    function alreadyDynamic(address _pool) external view returns (bool);
+
+    function pools(uint256 _poolId)
+        external
+        view
+        returns (
+            string memory name,
+            address poolAddress,
+            address protocolToken,
+            uint256 maxCapacity,
+            uint256 basePremiumRatio
+        );
 }

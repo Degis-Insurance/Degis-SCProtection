@@ -24,6 +24,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/InsurancePoolDependencies.sol";
+import "./interfaces/IPremiumRewardPool.sol";
 
 import "../util/OwnableWithoutContext.sol";
 
@@ -107,13 +108,17 @@ contract InsurancePool is
 
     uint256 public endLiquidationDate;
 
-    // Reward speed for the next 3 months
-    uint256[] public rewardSpeed;
-
     // Total active covered amount
     uint256 public totalCovered;
 
-    //
+    mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
+
+    mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
+
+    address public premiumRewardPool;
+
+    // Has already passed the base premium ratio period
+    bool public passedBasePeriod;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -172,6 +177,11 @@ contract InsurancePool is
         _;
     }
 
+    modifier whenNotLiquidated() {
+        require(!liquidated, "Liquidated");
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -198,21 +208,38 @@ contract InsurancePool is
         return (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
 
-    function activeCovered() public view returns (uint256 covered) {}
+    /**
+     * @notice Get current active cover amount
+     */
+    function activeCovered() public view returns (uint256 covered) {
+        (uint256 currentYear, uint256 currentMonth, ) = DateTimeLibrary
+            .timestampToDate(block.timestamp);
+
+        for (uint256 i; i < 3; ) {
+            covered += coverInMonth[currentYear][currentMonth];
+
+            unchecked {
+                if (++currentMonth == 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
+            }
+        }
+    }
 
     /**
      * @notice Get the dynamic premium ratio (annually)
      *         Depends on the covers sold and liquidity amount
      *         For the first 48 hours, use the base premium ratio
-     *         
+     *
      * @return ratio The dynamic ratio
      */
     function dynamicPremiumRatio() public view returns (uint256 ratio) {
         uint256 fromStart = block.timestamp - startTime;
 
-        // First 48 hours use base ratio
+        // First 7 days use base ratio
         // Then use dynamic ratio
-        if (fromStart > 2 days) {
+        if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = (totalCovered * SCALE) /
                 IProtectionPool(protectionPool).totalCovered();
@@ -222,16 +249,18 @@ contract InsurancePool is
                 IProtectionPool(protectionPool).totalSupply();
 
             uint256 numofPools = IInsurancePoolFactory(insurancePoolFactory)
-                .poolCounter();
+                .dynamicPoolCounter();
 
             // Dynamic premium ratio
-            //                     Covered          1
-            //                  --------------- + -----
-            //                   TotalCovered       N
+            //
+            //                      Covered          1
+            //                   --------------- + -----
+            //                    TotalCovered       N
             // dynamic ratio =  -------------------------- * base ratio
             //                      LP Amount         1
             //                  ----------------- + -----
             //                   Total LP Amount      N
+            //
             ratio =
                 (basePremiumRatio * coveredRatio * numofPools + 1) /
                 ((tokenRatio * numofPools) + 1);
@@ -289,9 +318,9 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Provide liquidity to liquidity pool
+     * @notice Provide liquidity to priority pool
      *         Only callable through policyCenter
-     *         Can not provide new liquidity when liquidated
+     *         Can not provide new liquidity when liquidated / paused
      *
      * @param _amount   Amount of liquidity to provide
      * @param _provider Liquidity provider adress
@@ -299,10 +328,10 @@ contract InsurancePool is
     function stakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
+        whenNotLiquidated
         onlyPolicyCenter
     {
-        require(!liquidated, "Liquidated");
-        require(_amount > 0, "Amount should be greater than 0");
+        _updateDynamic();
         // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
         // Mint lp tokens to the provider
@@ -320,18 +349,24 @@ contract InsurancePool is
     function unstakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
+        whenNotLiquidated
         onlyPolicyCenter
     {
+        _updateDynamic();
         // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
-
-        require(
-            !liquidated,
-            "Pool has been liquidated, cannot remove liquidity"
-        );
 
         require(_amount > 0, "amount should be greater than 0");
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
+    }
+
+    function updateWhenBuy()
+        external
+        whenNotPaused
+        whenNotLiquidated
+        onlyPolicyCenter
+    {
+        _updateDynamic();
     }
 
     /**
@@ -340,15 +375,6 @@ contract InsurancePool is
      */
     function updateRewards() public onlyPolicyCenter {
         _updateRewards();
-    }
-
-    /**
-     * @notice Update emission rate based on new premium comission to liquidity providers
-     *
-     * @param _premium premium given to liquidity providers
-     */
-    function updateEmissionRate(uint256 _premium) public onlyPolicyCenter {
-        _updateEmissionRate(_premium);
     }
 
     /**
@@ -370,6 +396,15 @@ contract InsurancePool is
 
         // emit event to notify users that pool has been liquidated.
         emit Liquidation(amount, endLiquidationDate);
+    }
+
+    function _updateDynamic() internal {
+        uint256 fromStart = block.timestamp - startTime;
+
+        if (fromStart > 7 days && !passedBasePeriod) {
+            IInsurancePoolFactory(insurancePoolFactory).addDynamicCounter();
+            passedBasePeriod = true;
+        }
     }
 
     /**
@@ -401,68 +436,85 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Updates emission rate based on new incoming premium
-     *
-     * @param _premium Incoming new premium
-     */
-    function _updateEmissionRate(uint256 _premium) internal {
-        // Update current reward taking into account new emission rate
-        _updateRewards();
-
-        if (_premium > 0) {
-            // Get time to complete current pool of tokens emission to liquidity providers
-            uint256 timeToFinishEmission = emissionEndTime > block.timestamp
-                ? emissionEndTime - block.timestamp
-                : 0;
-
-            // Calculate new emission rate by adding new premium and redistributing previous emission
-            // Throughout the time it takes to complete emission.
-            if (timeToFinishEmission > 0) {
-                emissionRate =
-                    ((emissionRate * timeToFinishEmission) + _premium) /
-                    DISTRIBUTION_PERIOD;
-                // Update emission rate
-            } else {
-                // Update emission rate
-                emissionRate = _premium / DISTRIBUTION_PERIOD;
-            }
-
-            // update emission rate and emission ends
-            emissionEndTime = block.timestamp + (DISTRIBUTION_PERIOD * 1 days);
-
-            emit EmissionRateUpdated(emissionRate, emissionEndTime);
-        }
-    }
-
-    /**
      * @notice Update rewards
      */
+
     function _updateRewards() internal {
-        if (totalSupply() == 0 || emissionEndTime == 0) {
-            // if totalSupply is 0, no rewards can be paid
-            // update last time rewards were claimed
-            lastRewardTimestamp = block.timestamp;
+        (
+            uint256 lastRewardYear,
+            uint256 lastRewardMonth,
+            uint256 lastRewardDay
+        ) = DateTimeLibrary.timestampToDate(lastRewardTimestamp);
+
+        (
+            uint256 currentYear,
+            uint256 currentMonth,
+            uint256 currentDay
+        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+
+        uint256 monthPassed = currentMonth - lastRewardMonth;
+
+        uint256 totalReward;
+        uint256 tempYear = lastRewardYear;
+        uint256 tempMonth = lastRewardMonth;
+
+        if (monthPassed == 0) {
+            totalReward +=
+                (block.timestamp - lastRewardTimestamp) *
+                rewardSpeed[currentYear][currentMonth];
         } else {
-            // if no coverages have been bought in over 30 days,
-            // discount time passed since the time that emission ends.
-            uint256 claimTimestamp = emissionEndTime < block.timestamp
-                ? emissionEndTime
-                : block.timestamp;
+            for (uint256 i; i < monthPassed + 1; ) {
+                // First month reward
+                if (i == 0) {
+                    // End timestamp of the first month
+                    uint256 endTimestamp = DateTimeLibrary
+                        .timestampFromDateTime(
+                            lastRewardYear,
+                            lastRewardMonth,
+                            lastRewardDay,
+                            23,
+                            59,
+                            59
+                        );
+                    totalReward +=
+                        (endTimestamp - lastRewardTimestamp) *
+                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                }
+                // Last month reward
+                else if (i == monthPassed) {
+                    uint256 startTimestamp = DateTimeLibrary
+                        .timestampFromDateTime(tempYear, tempMonth, 1, 0, 0, 0);
 
-            // Calculate difference between claim time and last time rewards were claimed
-            uint256 timeSinceLastReward = claimTimestamp - lastRewardTimestamp;
+                    totalReward +=
+                        (block.timestamp - startTimestamp) *
+                        rewardSpeed[tempYear][tempMonth];
+                }
+                // Middle month reward
+                else {
+                    uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
+                        tempYear,
+                        tempMonth
+                    );
 
-            // Calculate new reward
-            uint256 rewards = (timeSinceLastReward * emissionRate) / 1 days;
+                    totalReward +=
+                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
+                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                }
 
-            // Update accumulated rewards given to each pool share
-            // accumulated
-            accumulatedRewardPerShare += rewards / totalSupply();
-            lastRewardTimestamp = block.timestamp;
-
-            // emit event to notify users that rewards have been updated
-            emit AccRewardsPerShareUpdated(accumulatedRewardPerShare);
+                unchecked {
+                    if (++tempMonth == 12) {
+                        ++tempYear;
+                        tempMonth = 1;
+                    }
+                }
+            }
         }
+
+        // Distribute reward to Protection Pool
+        IPremiumRewardPool(premiumRewardPool).distributeToken(
+            insuredToken,
+            totalReward
+        );
     }
 
     /**

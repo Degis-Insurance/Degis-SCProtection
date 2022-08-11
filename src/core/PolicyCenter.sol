@@ -312,11 +312,13 @@ contract PolicyCenter is
      * @param _poolId        Pool id
      * @param _coverAmount   Amount to cover
      * @param _coverDuration Cover duration in month (1 ~ 3)
+     * @param _maxPayment    Maximum payment user can accept
      */
     function buyCover(
         uint256 _poolId,
         uint256 _coverAmount,
-        uint256 _coverDuration
+        uint256 _coverDuration,
+        uint256 _maxPayment
     ) external poolExists(_poolId) {
         require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_coverDuration), "Wrong cover length");
@@ -358,11 +360,11 @@ contract PolicyCenter is
         (
             uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool
-        ) = _splitPremium(_poolId, _amount);
+        ) = _splitPremium(_poolId, _coverAmount);
 
         IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool);
         IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
-            premiumToInsurancePool
+            premiumToPriorityPool
         );
     }
 

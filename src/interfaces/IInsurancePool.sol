@@ -42,8 +42,6 @@ interface IInsurancePool {
 
     function balanceOf(address account) external view returns (uint256);
 
- 
-
     function coverPrice(uint256 _amount, uint256 _length)
         external
         view
@@ -153,9 +151,6 @@ interface IInsurancePool {
         uint256 amount
     ) external returns (bool);
 
-    function transferOwnership(address newOwner) external;
-
-    function updateEmissionRate(uint256 _premium) external;
 
     function updateRewards() external;
 
@@ -166,4 +161,6 @@ interface IInsurancePool {
     function lockedAmount() external view returns (uint256);
 
     function activeCovered() external view returns (uint256);
+
+    function totalCovered() external view returns (uint256);
 }

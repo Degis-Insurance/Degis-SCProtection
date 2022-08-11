@@ -51,8 +51,8 @@ contract InsurancePoolFactory is
         string protocolName;
         address poolAddress;
         address protocolToken;
-        uint256 maxCapacity;
-        uint256 policyPricePerShield;
+        uint256 maxCapacity; // max capacity ratio
+        uint256 basePremiumRatio;
     }
     // poolId => Pool Information
     mapping(uint256 => PoolInfo) public pools;
@@ -60,9 +60,14 @@ contract InsurancePoolFactory is
     uint256 public poolCounter;
     uint256 public sumOfMaxCapacities;
 
+    mapping(address => bool) public alreadyDynamic;
+    uint256 public dynamicPoolCounter;
+
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
     mapping(address => bool) public tokenRegistered;
+
+    address public premiumRewardPool;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -77,6 +82,8 @@ contract InsurancePoolFactory is
         uint256 policyPricePerShield
     );
 
+    event DynamicPoolCounterUpdate(address pool, uint256 dynamicPoolCounter);
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -90,21 +97,10 @@ contract InsurancePoolFactory is
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
-        // stores addresses of the reinsurance pool and degis token
         protectionPool = _protectionPool;
 
-        // stores information about reinsurance pool, first pool recorded
-        pools[poolCounter] = PoolInfo(
-            "ProtectionPool",
-            _protectionPool,
-            _shield,
-            100000e18,
-            1
-        );
-
-        // Register reinsurance pool and degis token
-        poolRegistered[_protectionPool] = true;
-        tokenRegistered[_shield] = true;
+        // Protection pool as pool 0
+        pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -161,13 +157,25 @@ contract InsurancePoolFactory is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    function addDynamicCounter() external {
+        require(poolRegistered[msg.sender], "Only priority pool");
+
+        unchecked {
+            ++dynamicPoolCounter;
+        }
+
+        alreadyDynamic[msg.sender] = true;
+
+        emit DynamicPoolCounterUpdate(msg.sender, dynamicPoolCounter);
+    }
+
     /**
      * @notice Creates a new insurance pool
      *
      * @param _name          Name of the protocol
      * @param _protocolToken Address of the token used for the protocol
      * @param _maxCapacity   Maximum capacity of the pool
-     * @param _priceRatio    Initial policy price per shield
+     * @param _basePremiumRatio    Initial policy price per shield
      *
      * @return address Address of the new insurance pool
      */
@@ -175,19 +183,23 @@ contract InsurancePoolFactory is
         string calldata _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _priceRatio
+        uint256 _basePremiumRatio
     ) public returns (address) {
         require(
             msg.sender == owner() || msg.sender == executor,
             "Only owner or executor contract can create a new insurance pool"
         );
-        require(!tokenRegistered[_protocolToken], "Already registered");        
+        require(!tokenRegistered[_protocolToken], "Already registered");
 
         // retrieve reinsurance pool liquidity
-        uint256 protectionPoolLiquidity = IPolicyCenter(policyCenter).liquidityByPoolId(0);
+        uint256 protectionPoolLiquidity = IPolicyCenter(policyCenter)
+            .liquidityByPoolId(0);
 
         // check if reinsurance pool can cover all max capacities
-        require(protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities, "Insufficient liquidity");
+        require(
+            protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities,
+            "Insufficient liquidity"
+        );
 
         // add new pool max capacity to sum of max capacities
         sumOfMaxCapacities += _maxCapacity;
@@ -197,7 +209,7 @@ contract InsurancePoolFactory is
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
             _maxCapacity,
-            _priceRatio,
+            _basePremiumRatio,
             _name,
             _name
         );
@@ -217,12 +229,17 @@ contract InsurancePoolFactory is
             currentPoolId
         );
 
+        IPremiumRewardPool(premiumRewardPool).register(
+            newPoolAddress,
+            _protocolToken
+        );
+
         pools[currentPoolId] = PoolInfo(
             _name,
             newPoolAddress,
             _protocolToken,
             _maxCapacity,
-            _priceRatio
+            _basePremiumRatio
         );
 
         emit PoolCreated(
@@ -231,7 +248,7 @@ contract InsurancePoolFactory is
             _name,
             _protocolToken,
             _maxCapacity,
-            _priceRatio
+            _basePremiumRatio
         );
 
         return newPoolAddress;
