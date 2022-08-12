@@ -62,6 +62,8 @@ contract PolicyCenter is
         uint256 length;
     }
     mapping(uint256 => mapping(address => Cover)) public covers;
+    // poolId => Cover Address
+    mapping(uint256 => address) public coverTokenByPoolId;
 
     //
     mapping(uint256 => uint256) public rewardsByPoolId;
@@ -304,6 +306,22 @@ contract PolicyCenter is
     }
 
     /**
+     * @notice Store new pool information
+     *
+     * @param _coverToken   Address of the insurance pool
+     * @param _poolId Pool id
+     */
+    function storeCoverTokenInformation(
+        address _coverToken,
+        uint256 _poolId
+    ) external {
+        require(msg.sender == coverRightTokenFactory, "Only factory can store");
+
+        // maps token address to pool id
+        coverTokenByPoolId[_poolId] = _coverToken;
+    }
+
+    /**
      * @notice Approve the exchange to swap tokens
      *
      * @param _token Address of the approved token
@@ -373,6 +391,12 @@ contract PolicyCenter is
             premium
         );
 
+        ICoverRightToken(coverTokenByPoolId[_poolId]).mint(
+            _poolId,
+            msg.sender,
+            _coverAmount
+        );
+
         // Split the premium income and update the pool status
         (
             uint256 premiumToProtectionPool,
@@ -381,31 +405,6 @@ contract PolicyCenter is
 
         IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool, _coverDuration);
         IInsurancePool(insurancePools[_poolId]).updateWhenBuy(premiumToPriorityPool, _coverDuration);
-    }
-
-    /**
-     * @notice Check insurance pool capacity
-     *
-     * @param _poolId      Pool id
-     * @param _coverAmount Amount to cover
-     */
-    function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
-        internal
-        view
-    {
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
-        require(
-            pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
-            "Insufficient capacity"
-        );
-    }
-
-    /**
-     * @notice claim rewards from a given pool id
-     * @param _poolId pool id to claim rewards from
-     */
-    function claimReward(uint256 _poolId) public poolExists(_poolId) {
-        _claimReward(_poolId, msg.sender);
     }
 
     /**
@@ -795,5 +794,30 @@ contract PolicyCenter is
             _coverAmount,
             _coverDuration
         );
+    }
+
+    /**
+     * @notice Check insurance pool capacity
+     *
+     * @param _poolId      Pool id
+     * @param _coverAmount Amount to cover
+     */
+    function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
+        internal
+        view
+    {
+        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        require(
+            pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
+            "Insufficient capacity"
+        );
+    }
+
+    /**
+     * @notice claim rewards from a given pool id
+     * @param _poolId pool id to claim rewards from
+     */
+    function claimReward(uint256 _poolId) public poolExists(_poolId) {
+        _claimReward(_poolId, msg.sender);
     }
 }
