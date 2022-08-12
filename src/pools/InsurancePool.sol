@@ -527,7 +527,7 @@ contract InsurancePool is
             }
         }
 
-        // Distribute reward to Protection Pool
+        // Distribute reward to Priority Pool
         IPremiumRewardPool(premiumRewardPool).distributeToken(
             insuredToken,
             totalReward
