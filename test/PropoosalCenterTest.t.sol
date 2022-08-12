@@ -161,6 +161,10 @@ contract ProposalCenterTest is Test {
         executor.setIncidentReport(address(incidentReport));
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         // create insurance pool
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
@@ -210,15 +214,15 @@ contract ProposalCenterTest is Test {
         vm.prank(carol);
         proposalCenter.votePoolProposal(1, VOTE_FOR, 3000 ether);
 
-        (uint256 aliceChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 aliceChoice = onboardProposal.getUserProposalVote(
             alice,
             PROPOSAL_ID
         );
-        (uint256 bobChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 bobChoice = onboardProposal.getUserProposalVote(
             bob,
             PROPOSAL_ID
         );
-        (uint256 carolChoice, , ) = onboardProposal.userProposalVotes(
+        uint256 carolChoice = onboardProposal.getUserProposalVote(
             carol,
             PROPOSAL_ID
         );

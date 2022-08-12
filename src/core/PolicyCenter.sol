@@ -222,6 +222,20 @@ contract PolicyCenter is
         return amount;
     }
 
+
+    function calculateReward(uint256 _poolId, uint256 _amount, uint256 _debt)
+        public
+        view
+        returns (uint256)
+    {   
+        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        // Calculate reward amount based on user's liquidity and acc reward per share.
+        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) -
+            _debt;
+
+        return reward;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -329,6 +343,9 @@ contract PolicyCenter is
         // Premium in USD (shield)
         uint256 premium = _getCoverPrice(_poolId, _coverAmount, _coverDuration);
 
+        // Check if premium cost is within limits given by user
+        require(premium <= _maxPayment, "Premium too high");
+
         // Premium in project native token
         uint256 premiumInNativeToken = _getNativeTokenAmount(
             premium,
@@ -362,11 +379,8 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool
         ) = _splitPremium(_poolId, _coverAmount);
 
-        IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool);
-        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
-            _coverAmount, _coverDuration,
-            premiumToPriorityPool
-        );
+        IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool, _coverDuration);
+        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(premiumToPriorityPool, _coverDuration);
     }
 
     /**
@@ -440,7 +454,8 @@ contract PolicyCenter is
         require(_amount > 0, "Amount must be greater than 0");
 
         // claim rewards. user debt is updated in _claimReward
-        _claimReward(0, msg.sender);
+        // reward is not claimable on protection pool
+        // _claimReward(0, msg.sender);
 
         // adds liquidity to insurance or protection pool
         liquidityByPoolId[0] += _amount;
@@ -538,7 +553,8 @@ contract PolicyCenter is
         Liquidity storage liquidity = liquidities[0][msg.sender];
 
         // claim rewards for caller by pool id. user debt is updated in claim reward
-        _claimReward(0, msg.sender);
+        // reward is not claimable on protection pool
+        // _claimReward(0, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
         uint256 totalSupply = IProtectionPool(protectionPool).totalSupply();
@@ -726,7 +742,7 @@ contract PolicyCenter is
      * @param _poolId     Pool id
      * @param _totalSplit Amount of premium to split
      */
-    function _splitPremium(uint256 _poolId, uint256 _totalSplit) internal {
+    function _splitPremium(uint256 _poolId, uint256 _totalSplit) internal returns (uint256, uint256) {
         require(_totalSplit > 0, "No funds to split");
 
         address fromToken = tokenByPoolId[_poolId];
@@ -739,10 +755,8 @@ contract PolicyCenter is
         // swap native for degis
         uint256 swapped = _swapTokens(toSwap, fromToken, shield);
 
-        uint256 toProtectionPool = (swapped * premiumSplits[1]) /
-            (10000 - premiumSplits[0]);
-        uint256 toTreasury = (swapped *
-            (10000 - premiumSplits[0] - premiumSplits[1]));
+        uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) * premiumSplits[1];
+        uint256 toTreasury = swapped - toProtectionPool;
 
         // pendingPremiumToTreasury += toTreasury;
         // pendingPremiumToProtectionPool += toProtectionPool;
@@ -751,10 +765,7 @@ contract PolicyCenter is
         rewardsByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 
-        IInsurancePool(insurancePools[_poolId]).updateEmissionRate(
-            toInsurancePool
-        );
-        IProtectionPool(protectionPool).updateEmissionRate(toProtectionPool);
+        return (toInsurancePool, toProtectionPool);
     }
 
     /**

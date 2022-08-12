@@ -333,6 +333,10 @@ contract ProtectionPool is
                 IInsurancePoolFactory(insurancePoolFactory).totalMaxCapacity(),
             "undermines reinsurance capability"
         );
+
+        _updateReward();
+        _updatePrice();
+        
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }

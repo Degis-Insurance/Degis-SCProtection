@@ -99,6 +99,14 @@ contract OnboardProposal is
         return proposals[_proposalId];
     }
 
+    function getUserProposalVote(address _user, uint256 _proposalId)
+        public
+        view
+        returns (uint256)
+    {
+        return votes[_user][_proposalId].choice;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //

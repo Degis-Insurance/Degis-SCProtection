@@ -18,7 +18,6 @@ import "src/mock/MockExchange.sol";
 import "src/voting/interfaces/IncidentReportParameters.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -132,6 +131,9 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
 
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),
@@ -158,9 +160,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         shield.transfer(address(this), 1000);
         shield.approve(address(policyCenter), 10000 ether);
 
-        policyCenter.provideLiquidity(1, 10000 ether);
+        policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
+        
 
-        uint256 price = InsurancePool(pool1).coveragePrice(100 ether, 90);
+        uint256 price = InsurancePool(pool1).coverPrice(100 ether, 90);
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);
@@ -170,8 +173,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 100000 ether);
 
         // Alice buys coverage for 100 ether
-        vm.prank(alice);
-        policyCenter.buyCover(1, 100 ether, 90);
+        policyCenter.buyCover(1, 100 ether, 90, price);
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);
@@ -244,7 +246,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         incidentReport.unpausePools(address(pool1));
 
         IInsurancePool(pool1).endLiquidation();
-        policyCenter.removeLiquidity(1, lpBalance);
+        policyCenter.unstakeLiquidityPoolToken(1, lpBalance);
 
         assertEq(InsurancePool(pool1).liquidated() == false, true);
 
