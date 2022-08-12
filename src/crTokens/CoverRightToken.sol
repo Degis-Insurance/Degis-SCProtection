@@ -20,15 +20,15 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
 
     uint256 public constant EXCLUDE_DAYS = 2;
 
+    // User address => start timestamp => cover amount
     mapping(address => mapping(uint256 => uint256)) public coverStartFrom;
 
     constructor(
         string memory _name,
-        string memory _symbol,
         string memory _poolName,
         uint256 _poolId,
         uint256 _expiry
-    ) ERC20(_name, _symbol) {
+    ) ERC20(_name, "crToken") {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
@@ -39,7 +39,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         uint256 _poolId,
         address _user,
         uint256 _amount
-    ) external override nonReentrant {
+    ) external nonReentrant {
         require(_amount > 0, "Zero Amount");
         require(_poolId == POOL_ID, "Wrong pool id");
         require(msg.sender == policyCenter, "Only policy center");
@@ -48,9 +48,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
             block.timestamp + EXCLUDE_DAYS * 1 days
         );
 
-        coverStartFrom[_user][effectiveFrom] += amount;
+        coverStartFrom[_user][effectiveFrom] += _amount;
 
-        super._mint(_user, _amount);
+        _mint(_user, _amount);
     }
 
     function getClaimableOf(address _user) external view returns (uint256) {
@@ -94,7 +94,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         uint256
     ) internal view override {
         if (block.timestamp > expiry) {
-            require(to == address(0), "Expired cxToken");
+            require(to == address(0), "Expired crToken");
         }
 
         // crTokens can only be used for claim
