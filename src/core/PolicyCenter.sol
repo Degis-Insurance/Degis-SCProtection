@@ -306,7 +306,7 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Store new pool information
+     * @notice Store new cover token address for a given pool id
      *
      * @param _coverToken   Address of the insurance pool
      * @param _poolId Pool id
@@ -405,6 +405,14 @@ contract PolicyCenter is
 
         IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool, _coverDuration);
         IInsurancePool(insurancePools[_poolId]).updateWhenBuy(premiumToPriorityPool, _coverDuration);
+    }
+
+    /**
+     * @notice claim rewards from a given pool id
+     * @param _poolId pool id to claim rewards from
+     */
+    function claimReward(uint256 _poolId) public poolExists(_poolId) {
+        _claimReward(_poolId, msg.sender);
     }
 
     /**
@@ -647,25 +655,17 @@ contract PolicyCenter is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Claim reward for a pool
+     * @notice Claim reward for an insurance pool
      *
      * @param _poolId   Pool id to claim rewards from
      * @param _provider Address of the claimer
      */
     function _claimReward(uint256 _poolId, address _provider) internal {
-        if (_poolId > 0) {
-            require(
-                !IInsurancePool(insurancePools[_poolId]).liquidated(),
-                "Pool liquidated"
-            );
-            IInsurancePool(insurancePools[_poolId]).updateRewards();
-        } else {
-            require(
-                !IProtectionPool(protectionPool).paused(),
-                "Reinsurance pool paused"
-            );
-            IProtectionPool(protectionPool).updateRewards();
-        }
+        require(
+            !IInsurancePool(insurancePools[_poolId]).liquidated(),
+            "Pool liquidated"
+        );
+        IInsurancePool(insurancePools[_poolId]).updateRewards();
 
         // User's liquidity
         Liquidity storage liquidity = liquidities[_poolId][_provider];
@@ -757,11 +757,12 @@ contract PolicyCenter is
         uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) * premiumSplits[1];
         uint256 toTreasury = swapped - toProtectionPool;
 
-        // pendingPremiumToTreasury += toTreasury;
-        // pendingPremiumToProtectionPool += toProtectionPool;
-
         // protection pool is pool 0
+        rewardsByPoolId[_poolId] += toInsurancePool;
         rewardsByPoolId[0] += toProtectionPool;
+
+        // 
+        liquidityByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 
         return (toInsurancePool, toProtectionPool);
@@ -811,13 +812,5 @@ contract PolicyCenter is
             pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
             "Insufficient capacity"
         );
-    }
-
-    /**
-     * @notice claim rewards from a given pool id
-     * @param _poolId pool id to claim rewards from
-     */
-    function claimReward(uint256 _poolId) public poolExists(_poolId) {
-        _claimReward(_poolId, msg.sender);
     }
 }

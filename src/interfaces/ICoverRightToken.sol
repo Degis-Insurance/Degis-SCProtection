@@ -20,6 +20,7 @@ interface ICoverRightToken {
     function incidentReport() view external returns (address);
     function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
     function mint(uint256 _poolId, address _user, uint256 _amount) external;
+    function burn(uint256 _poolId, address _user, uint256 _amount) external;
     function name() view external returns (string memory);
     function policyCenter() view external returns (address);
     function symbol() view external returns (string memory);

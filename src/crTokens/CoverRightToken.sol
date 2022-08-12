@@ -62,6 +62,23 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         _mint(_user, _amount);
     }
 
+    function burn(
+        uint256 _poolId,
+        address _user,
+        uint256 _amount
+    ) external onlyPolicyCenter nonReentrant {
+        require(_amount > 0, "Zero Amount");
+        require(_poolId == POOL_ID, "Wrong pool id");
+
+        uint256 effectiveFrom = _getEOD(
+            block.timestamp + EXCLUDE_DAYS * 1 days
+        );
+
+        coverStartFrom[_user][effectiveFrom] -= _amount;
+
+        _mint(_user, _amount);
+    }
+
     function getClaimableOf(address _user) external view returns (uint256) {
         uint256 exclusion = getExcludedCoverageOf(_user);
         uint256 balance = balanceOf(_user);
