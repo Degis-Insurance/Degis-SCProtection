@@ -17,7 +17,6 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -118,6 +117,10 @@ contract NoLiquidationTest is Test {
         executor.setOnboardProposal(address(onboardProposal));
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
+
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),
@@ -159,22 +162,22 @@ contract NoLiquidationTest is Test {
         vm.prank(alice);
         shield.approve(address(policyCenter), 10000 ether);
         vm.prank(alice);
-        policyCenter.provideLiquidity(1, 1 ether);
+        policyCenter.stakeLiquidityPoolToken(1, 1 ether);
 
         // bob provides liqudity to reinsurance pool
         vm.prank(bob);
         shield.approve(address(policyCenter), 10000 ether);
         vm.prank(bob);
-        policyCenter.provideLiquidity(0, 1 ether);
+        policyCenter.provideLiquidity(1 ether);
         vm.prank(carol);
         shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
-        uint256 price = InsurancePool(pool1).coveragePrice(10 ether, 90);
+        uint256 price = InsurancePool(pool1).coverPrice(10 ether, 90);
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);
-        policyCenter.buyCover(1, 10 ether, 90);
+        policyCenter.buyCover(1, 10 ether, 90, price);
         vm.warp(30 days);
     }
 

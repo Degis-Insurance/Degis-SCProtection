@@ -52,7 +52,7 @@ interface IOnboardProposal {
     function shield() view external returns (address);
     function startVoting(uint256 _proposalId) external;
     function transferOwnership(address newOwner) external;
-    function userProposalVotes(address, uint256) view external returns (uint256 choice, uint256 amount, bool claimed);
+    function getUserProposalVote(address user, uint256 proposalId) view external returns (uint256 choice);
     function veDeg() view external returns (address);
     function vote(uint256 _proposalId, uint256 _isFor, uint256 _amount) external;
     function vote(uint256 _reportId, uint256 _isFor, uint256 _amount, address _msgsender) external;

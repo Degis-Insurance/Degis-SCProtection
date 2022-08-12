@@ -16,7 +16,6 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -135,6 +134,8 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0)
         );
+
+        protectionPool.setPolicyCenter(address(policyCenter));
     }
 
     function testDeployPolicyCenter() public {
@@ -153,6 +154,7 @@ contract SecondaryContractDeploymentTest is Test {
     }
 
     function testDeployFactory() public {
+        
         // Factory creates insurance pools.
         // It is dependent on deg and protectionPool being deployed.
         insurancePoolFactory = new InsurancePoolFactory(
@@ -165,6 +167,16 @@ contract SecondaryContractDeploymentTest is Test {
     }
 
     function testDeployInsurancePool() public {
+        policyCenter = new PolicyCenter(
+            address(deg),
+            address(0),
+            address(0),
+            address(protectionPool)
+        );
+        policyCenter.setProtectionPool(address(protectionPool));
+        protectionPool.setPolicyCenter(address(policyCenter));
+        // To deploy an insurance pool, a minnimum liquidity must be provided to protection pool
+        policyCenter.provideLiquidity(10000 ether);
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, protectionPool,
         // policyCenter and insurancePoolFactory being deployed.

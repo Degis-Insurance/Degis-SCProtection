@@ -18,7 +18,6 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -128,6 +127,9 @@ contract ExecutorTest is Test, IncidentReportParameters {
         executor.setProtectionPool(address(protectionPool));
         executor.setInsurancePoolFactory(address(insurancePoolFactory));
 
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
+
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
             address(ptp),
@@ -160,7 +162,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 10000 ether);
         yeti.approve(address(policyCenter), 10000 ether);
 
-        policyCenter.provideLiquidity(POOL_ID, 10000);
+        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
         // approve deg usage to report and propose pools
         deg.approve(address(incidentReport), 100000 ether);

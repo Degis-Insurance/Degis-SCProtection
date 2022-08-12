@@ -17,7 +17,6 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
 import "src/interfaces/IInsurancePool.sol";
-import "src/interfaces/ProtectionPoolErrors.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
@@ -83,6 +82,10 @@ contract setAddressesTest is Test {
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
+        // required to provide liquidity
+        protectionPool.setPolicyCenter(address(policyCenter));
+        // pools require initial liquidity input to Protection pool
+        policyCenter.provideLiquidity(10000 ether);
 
         pool1 = insurancePoolFactory.deployPool(
             "Platypus",
