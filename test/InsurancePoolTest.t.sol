@@ -68,6 +68,7 @@ contract InsurancePoolTest is BaseTest {
         factory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(factory));
         policyCenter.setExchange(address(exchange));
+        protectionPool.setPolicyCenter(address(policyCenter));
 
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);

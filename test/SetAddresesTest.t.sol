@@ -82,7 +82,8 @@ contract setAddressesTest is Test {
         insurancePoolFactory.setPolicyCenter(address(policyCenter));
         policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
         policyCenter.setExchange(address(exchange));
-
+        // required to provide liquidity
+        protectionPool.setPolicyCenter(address(policyCenter));
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);
 
