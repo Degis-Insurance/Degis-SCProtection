@@ -4,12 +4,13 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../util/OwnableWithoutContext.sol";
 
 import "../interfaces/IIncidentReport.sol";
 
 import "../libraries/DateTime.sol";
 
-contract CoverRightToken is ERC20, ReentrancyGuard {
+contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     address public incidentReport;
     address public policyCenter;
 
@@ -28,21 +29,29 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         string memory _poolName,
         uint256 _poolId,
         uint256 _expiry
-    ) ERC20(_name, "crToken") {
+    ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
         POOL_ID = _poolId;
     }
 
+    modifier onlyPolicyCenter() {
+        require(msg.sender == policyCenter, "Only policy center");
+        _;
+    }
+
+    function setPolicyCenter(address _policyCenter) public onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
     function mint(
         uint256 _poolId,
         address _user,
         uint256 _amount
-    ) external nonReentrant {
+    ) external onlyPolicyCenter nonReentrant {
         require(_amount > 0, "Zero Amount");
         require(_poolId == POOL_ID, "Wrong pool id");
-        require(msg.sender == policyCenter, "Only policy center");
 
         uint256 effectiveFrom = _getEOD(
             block.timestamp + EXCLUDE_DAYS * 1 days

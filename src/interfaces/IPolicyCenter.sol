@@ -47,6 +47,7 @@ interface IPolicyCenter {
     function setPolicyCenter(address _policyCenter) external;
     function setPremiumSplit(uint256 _insurance, uint256 _reinsurance) external;
     function setProtectionPool(address _protectionPool) external;
+    function storeCoverTokenInformation(address _coverToken, uint256 _poolId) external;
     
     function shield() view external returns (address);
     function storePoolInformation(address _pool, address _token, uint256 _poolId) external;
