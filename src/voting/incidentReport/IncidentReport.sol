@@ -1,13 +1,32 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/*
+ //======================================================================\\
+ //======================================================================\\
+  *******         **********     ***********     *****     ***********
+  *      *        *              *                 *       *
+  *        *      *              *                 *       *
+  *         *     *              *                 *       *
+  *         *     *              *                 *       *
+  *         *     **********     *       *****     *       ***********
+  *         *     *              *         *       *                 *
+  *         *     *              *         *       *                 *
+  *        *      *              *         *       *                 *
+  *      *        *              *         *       *                 *
+  *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.13;
 
-import "../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContext.sol";
 
-import "./interfaces/IncidentReportParameters.sol";
-import "./interfaces/IncidentReportDependencies.sol";
+import "./IncidentReportParameters.sol";
+import "./IncidentReportDependencies.sol";
+import "./IncidentReportErrorEvent.sol";
 
-import "../interfaces/ExternalTokenDependencies.sol";
+import "../../interfaces/ExternalTokenDependencies.sol";
 
 import "forge-std/console.sol";
 
@@ -47,9 +66,10 @@ import "forge-std/console.sol";
  */
 contract IncidentReport is
     IncidentReportParameters,
-    IncidentReportDependencies,
+    IncidentReportEventError,
     ExternalTokenDependencies,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    IncidentReportDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -67,7 +87,7 @@ contract IncidentReport is
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
-        uint256 status;
+        uint256 status; // PENDING, VOTING, SETTLED, CLOSED
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
         uint256 votingReward; // Voting reward per veDEG
     }
@@ -83,50 +103,17 @@ contract IncidentReport is
 
     struct UserVote {
         uint256 choice; // 1: vote for, 2: vote against
-        uint256 amount;
-        bool claimed;
+        uint256 amount; // total veDEG amount for voting
+        bool claimed; // whether has claimed the reward
     }
     // User address => report id => user's voting info
-    mapping(address => mapping(uint256 => UserVote)) public userReportVotes;
+    mapping(address => mapping(uint256 => UserVote)) public votes;
 
     // User address => cool down for report until
     mapping(address => uint256) public userCoolDownUntil;
 
     // Pool address => whether the pool is being reported
     mapping(address => bool) public reported;
-
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    event ReportCreated(
-        uint256 reportId,
-        uint256 indexed poolId,
-        uint256 reportTimestamp,
-        address indexed reporter
-    );
-
-    event VotingStart(uint256 reportId, uint256 startTimestamp);
-
-    event ReportClosed(uint256 reportId, uint256 closeTimestamp);
-
-    event ReportVoted(
-        uint256 reportId,
-        address indexed user,
-        uint256 voteFor,
-        uint256 amount
-    );
-
-    event ReportSettled(uint256 reportId, uint256 result);
-
-    event ReportExtended(uint256 reportId, uint256 round);
-
-    event DebtPaid(
-        address payer,
-        address user,
-        uint256 debt,
-        uint256 unlockAmount
-    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -149,7 +136,7 @@ contract IncidentReport is
         view
         returns (UserVote memory)
     {
-        return userReportVotes[_user][_poolId];
+        return votes[_user][_poolId];
     }
 
     function getTempResult(uint256 _poolId)
@@ -217,10 +204,8 @@ contract IncidentReport is
         newReport.status = PENDING_STATUS;
 
         // Burn degis tokens to start a report
+        // Need to add this smart contract to burner list
         IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
-
-        // Pause insurance pool and reinsurance pool
-        _pausePools(pool);
 
         emit ReportCreated(reportCounter, _poolId, block.timestamp, msg.sender);
     }
@@ -278,6 +263,9 @@ contract IncidentReport is
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
 
+        // Pause insurance pool and reinsurance pool
+        _pausePools(pool);
+
         emit VotingStart(_reportId, block.timestamp);
     }
 
@@ -331,9 +319,7 @@ contract IncidentReport is
         IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
 
         // Record the user's choice
-        UserVote storage userReportVote = userReportVotes[msg.sender][
-            _reportId
-        ];
+        UserVote storage userReportVote = votes[msg.sender][_reportId];
         if (userReportVote.amount > 0) {
             require(
                 userReportVote.choice == _isFor,
@@ -407,9 +393,7 @@ contract IncidentReport is
         IVeDEG(veDeg).lockVeDEG(_msgsender, _amount);
 
         // Record the user's choice
-        UserVote storage userReportVote = userReportVotes[_msgsender][
-            _reportId
-        ];
+        UserVote storage userReportVote = votes[_msgsender][_reportId];
         if (userReportVote.amount > 0) {
             require(
                 userReportVote.choice == _isFor,
@@ -494,7 +478,7 @@ contract IncidentReport is
      * @param _reportId Report id
      */
     function claimReward(uint256 _reportId) external {
-        UserVote memory userVote = userReportVotes[msg.sender][_reportId];
+        UserVote memory userVote = votes[msg.sender][_reportId];
         uint256 finalResult = reports[_reportId].result;
 
         require(finalResult > 0, "Not settled");
@@ -512,7 +496,7 @@ contract IncidentReport is
             IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
         } else revert("No reward to claim");
 
-        userReportVotes[msg.sender][_reportId].claimed = true;
+        votes[msg.sender][_reportId].claimed = true;
     }
 
     /**
@@ -522,7 +506,7 @@ contract IncidentReport is
      */
     function claimReward(uint256 _reportId, address _msgsender) external {
         require(msg.sender == proposalCenter, "not sent from proposal center");
-        UserVote memory userVote = userReportVotes[_msgsender][_reportId];
+        UserVote memory userVote = votes[_msgsender][_reportId];
         uint256 finalResult = reports[_reportId].result;
 
         require(finalResult > 0, "Not settled");
@@ -540,7 +524,7 @@ contract IncidentReport is
             IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
         } else revert("No reward to claim");
 
-        userReportVotes[_msgsender][_reportId].claimed = true;
+        votes[_msgsender][_reportId].claimed = true;
     }
 
     /**
@@ -552,7 +536,7 @@ contract IncidentReport is
      * @param _user     User address (can pay debt for another user)
      */
     function payDebt(uint256 _reportId, address _user) external {
-        UserVote memory userVote = userReportVotes[_user][_reportId];
+        UserVote memory userVote = votes[_user][_reportId];
         uint256 finalResult = reports[_reportId].result;
 
         require(finalResult > 0, "Not settled");
@@ -805,7 +789,6 @@ contract IncidentReport is
      */
     function _pausePools(address _pool) internal {
         IInsurancePool(_pool).pauseInsurancePool(true);
-        IProtectionPool(protectionPool).pauseProtectionPool(true);
     }
 
     /**

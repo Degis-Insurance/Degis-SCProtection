@@ -64,7 +64,7 @@ interface IIncidentReport {
     function transferOwnership(address newOwner) external;
     function unpausePools(address _pool) external;
     function userCoolDownUntil(address) view external returns (uint256);
-    function userReportVotes(address, uint256) view external returns (uint256 choice, uint256 amount, bool claimed);
+    function votes(address, uint256) view external returns (uint256 choice, uint256 amount, bool claimed);
     function veDeg() view external returns (address);
     function vote(uint256 _reportId, uint256 _isFor, uint256 _amount) external;
     function vote(uint256 _reportId, uint256 _isFor, uint256 _amount, address _msgsender) external;
