@@ -211,42 +211,10 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Start a new incident report from proposal center
-     *
-     *         1000 DEG tokens are staked to start a report
-     *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
-     *         If the report is wrong, reporter loses 1000DEG to those who vote against
-     *
-     * @param _poolId Pool id to report incident
-     */
-    function report(uint256 _poolId, address _msgsender) external {
-        require(msg.sender == proposalCenter, "not sent from proposal center");
-        address pool = IPolicyCenter(policyCenter).insurancePools(_poolId);
-        require(pool != address(0), "Pool doesn't exist");
-        require(!reported[pool], "Pool already reported");
-
-        uint256 currentReportId = ++reportCounter;
-
-        reported[pool] = true;
-
-        // Record the new report
-        Report storage newReport = reports[currentReportId];
-        newReport.poolId = _poolId;
-        newReport.reportTimestamp = block.timestamp;
-        newReport.reporter = msg.sender;
-        newReport.status = PENDING_STATUS;
-
-        // burn degis tokens to start a report
-        IDegisToken(deg).burnDegis(_msgsender, REPORT_THRESHOLD);
-
-        // Pause insurance pool and reinsurance pool
-        _pausePools(pool);
-
-        emit ReportCreated(reportCounter, _poolId, block.timestamp, _msgsender);
-    }
-
-    /**
      * @notice Start the voting process
+     *
+     *         Can only be started after the pending period
+     *         Will change the status from PENDING to VOTING
      *
      * @param _reportId Report id
      */
@@ -271,6 +239,9 @@ contract IncidentReport is
 
     /**
      * @notice Close a pending report
+     *
+     *         Can only be started after the pending period
+     *         Will change the status from PENDING to CLOSED
      *
      * @param _reportId Report id
      */
@@ -341,13 +312,10 @@ contract IncidentReport is
 
         // Record a temporary result
         // If the hasChanged already been true, no need for further update
-        // If the voting period has passed, no need for update
+        // If not reached the last day, no need for update
         if (
             !tempResults[_reportId].hasChanged &&
-            !_passedVotingPeriod(
-                currentReport.round,
-                currentReport.reportTimestamp
-            )
+            _withinLastDay(currentReport.voteTimestamp, currentReport.round)
         ) {
             _recordTempResult(
                 _reportId,
@@ -358,80 +326,6 @@ contract IncidentReport is
         }
 
         emit ReportVoted(_reportId, msg.sender, _isFor, _amount);
-    }
-
-    /**
-     * @notice Vote on currently pending reports from proposal center
-     *
-     *         Voting power is decided by the (unlocked) balance of veDEG
-     *         Rewarded if votes with majority
-     *         Punished if votes against majority
-     *
-     * @param _reportId Id of the report to be voted on
-     * @param _isFor    The user's choice (1: vote for, 2: vote against)
-     * @param _amount   Amount of veDEG used for this vote
-     * @param _msgsender The sender of the vote
-     */
-    function vote(
-        uint256 _reportId,
-        uint256 _isFor,
-        uint256 _amount,
-        address _msgsender
-    ) external {
-        require(msg.sender == proposalCenter, "not sent from proposal center");
-        // Should be manually switched on the voting process
-        require(
-            reports[_reportId].status == VOTING_STATUS,
-            "Not voting status"
-        );
-
-        require(_isFor == 1 || _isFor == 2, "Wrong choice");
-
-        _enoughVeDEG(_msgsender, _amount);
-
-        // Lock vedeg until this report is settled
-        IVeDEG(veDeg).lockVeDEG(_msgsender, _amount);
-
-        // Record the user's choice
-        UserVote storage userReportVote = votes[_msgsender][_reportId];
-        if (userReportVote.amount > 0) {
-            require(
-                userReportVote.choice == _isFor,
-                "Can not choose both sides"
-            );
-        } else {
-            userReportVote.choice = _isFor;
-        }
-
-        userReportVote.amount += _amount;
-
-        Report storage currentReport = reports[_reportId];
-        // Record the vote for this report
-        if (_isFor == 1) {
-            currentReport.numFor += _amount;
-        } else {
-            currentReport.numAgainst += _amount;
-        }
-
-        // Record a temporary result
-        // If the hasChanged already been true, no need for further update
-        // If the voting period has passed, no need for update
-        if (
-            !tempResults[_reportId].hasChanged &&
-            !_passedVotingPeriod(
-                currentReport.round,
-                currentReport.reportTimestamp
-            )
-        ) {
-            _recordTempResult(
-                _reportId,
-                currentReport.round,
-                currentReport.numFor,
-                currentReport.numAgainst
-            );
-        }
-
-        emit ReportVoted(_reportId, _msgsender, _isFor, _amount);
     }
 
     /**
@@ -448,7 +342,7 @@ contract IncidentReport is
         require(
             _passedVotingPeriod(
                 currentReport.round,
-                currentReport.reportTimestamp
+                currentReport.voteTimestamp
             ),
             "Not reached settlement"
         );
@@ -458,8 +352,6 @@ contract IncidentReport is
         _checkQuorum(currentReport.numFor + currentReport.numAgainst);
 
         uint256 res = _checkRoundExtended(_reportId, currentReport.round);
-
-        console.log("Res", res);
 
         if (res > 0) {
             _settleVotingReward(_reportId);
@@ -500,37 +392,10 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Claim voting reward from Proposal Center
-     *
-     * @param _reportId Report id
-     */
-    function claimReward(uint256 _reportId, address _msgsender) external {
-        require(msg.sender == proposalCenter, "not sent from proposal center");
-        UserVote memory userVote = votes[_msgsender][_reportId];
-        uint256 finalResult = reports[_reportId].result;
-
-        require(finalResult > 0, "Not settled");
-        require(!userVote.claimed, "Already claimed");
-
-        // Correct choice
-        if (userVote.choice == finalResult) {
-            IDegisToken(deg).mintDegis(
-                _msgsender,
-                (reports[_reportId].votingReward * userVote.amount) / SCALE
-            );
-            IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
-        } else if (finalResult == TIED_RESULT) {
-            // Tied result, give back user's veDEG
-            IVeDEG(veDeg).unlockVeDEG(_msgsender, userVote.amount);
-        } else revert("No reward to claim");
-
-        votes[_msgsender][_reportId].claimed = true;
-    }
-
-    /**
      * @notice Pay debt to get back veDEG
      *
      *         For those who made a wrong voting choice
+     *         The paid DEG will be burned and the veDEG will be unlocked
      *
      * @param _reportId Report id
      * @param _user     User address (can pay debt for another user)
@@ -648,13 +513,12 @@ contract IncidentReport is
      *
      * @return hasPassed True for passing
      */
-    function _passedVotingPeriod(uint256 _round, uint256 _reportTime)
+    function _passedVotingPeriod(uint256 _round, uint256 _voteTimestamp)
         internal
         view
         returns (bool)
     {
-        uint256 endTime = _reportTime +
-            PENDING_PERIOD +
+        uint256 endTime = _voteTimestamp +
             VOTING_PERIOD +
             _round *
             EXTEND_PERIOD;
@@ -673,8 +537,6 @@ contract IncidentReport is
         internal
         returns (uint256 result)
     {
-        console.log("has changed", tempResults[_reportId].hasChanged);
-
         if (!tempResults[_reportId].hasChanged) {
             result = _settleResult(
                 _reportId,
@@ -720,6 +582,7 @@ contract IncidentReport is
      *         Temporary result use 1 for "pass" and 2 for "reject"
      *
      * @param _reportId   Report id
+     * @param _round      Current voting round
      * @param _numFor     Vote numbers for
      * @param _numAgainst Vote numbers against
      */
@@ -732,25 +595,38 @@ contract IncidentReport is
         TempResult storage temp = tempResults[_reportId];
 
         // Only record when it has reached the last day (time uint)
-        if (
-            block.timestamp >
-            reports[_reportId].voteTimestamp +
-                VOTING_PERIOD +
-                _round *
-                EXTEND_PERIOD -
-                SAMPLE_PERIOD
-        ) {
-            uint256 currentResult = _getVotingResult(_numFor, _numAgainst);
 
-            // If this is the first time for sampling, not record hasChange state
-            if (temp.result > 0) {
-                temp.hasChanged = currentResult != temp.result;
-            }
+        uint256 currentResult = _getVotingResult(_numFor, _numAgainst);
 
-            // Store the current result and sample time
-            temp.result = currentResult;
-            temp.sampleTimestamp = block.timestamp;
+        // If this is the first time for sampling, not record hasChange state
+        if (temp.result > 0) {
+            temp.hasChanged = currentResult != temp.result;
         }
+
+        // Store the current result and sample time
+        temp.result = currentResult;
+        temp.sampleTimestamp = block.timestamp;
+    }
+
+    /**
+     * @notice Check time is within the last day
+     *
+     * @param _voteTimestamp Vote start timestamp
+     * @param _round         Current round
+     */
+    function _withinLastDay(uint256 _voteTimestamp, uint256 _round) internal {
+        uint256 endTime = _voteTimestamp +
+            VOTING_PERIOD +
+            _round *
+            EXTEND_PERIOD;
+
+        uint256 lastDayStart = _voteTimestamp +
+            VOTING_PERIOD +
+            _round *
+            EXTEND_PERIOD -
+            SAMPLE_PERIOD;
+
+        return block.timstamp > lastDayStart && block.timestamp < endTime;
     }
 
     /**
@@ -771,6 +647,14 @@ contract IncidentReport is
         else result = TIED_RESULT;
     }
 
+    /**
+     * @notice Check pool status and return address
+     *         Ensure the pool exists and has not been reported
+     *
+     * @param _poolId Pool id
+     *
+     * @return poolAddress Pool address
+     */
     function _checkPoolStatus(uint256 _poolId)
         internal
         view
@@ -782,8 +666,9 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Pause the related project pool and the re-insurance pool
-     *         Once there is an incident reported
+     * @notice Pause the related project pool
+     *         Once there is an incident reported and voting start
+     *         If the vote is closed or
      *
      * @param _pool Project pool address
      */
@@ -799,6 +684,5 @@ contract IncidentReport is
      */
     function _unpausePools(address _pool) internal {
         IInsurancePool(_pool).pauseInsurancePool(false);
-        IProtectionPool(protectionPool).pauseProtectionPool(false);
     }
 }

@@ -39,4 +39,10 @@ interface IncidentReportEventError {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    error IncidentReport__WrongStatus();
+    error IncidentReport__WrongPeriod();
+    error IncidentReport__ChooseBothSides();
+    error IncidentReport__NotReachedQuorum();
+    error IncidentReport__NotEnoughVeDEG();
 }
