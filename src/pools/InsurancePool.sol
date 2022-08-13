@@ -192,7 +192,7 @@ contract InsurancePool is
     function coverPrice(uint256 _amount, uint256 _length)
         external
         view
-        returns (uint256)
+        returns (uint256 price, uint256 length)
     {
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_length), "Wrong cover length");
@@ -200,9 +200,9 @@ contract InsurancePool is
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
         uint256 endTimestamp = getExpiryDateInternal(block.timestamp, _length);
-        uint256 length = endTimestamp - block.timestamp;
+        length = endTimestamp - block.timestamp;
 
-        return (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
+        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
 
     /**

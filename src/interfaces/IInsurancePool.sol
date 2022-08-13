@@ -45,7 +45,7 @@ interface IInsurancePool {
     function coverPrice(uint256 _amount, uint256 _length)
         external
         view
-        returns (uint256);
+        returns (uint256, uint256);
 
     function decimals() external view returns (uint8);
 

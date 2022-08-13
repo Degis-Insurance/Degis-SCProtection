@@ -336,7 +336,7 @@ contract ProtectionPool is
 
         _updateReward();
         _updatePrice();
-        
+
         _burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
@@ -361,6 +361,7 @@ contract ProtectionPool is
      * @param _length  Cover length in months
      */
     function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {
+        // How many premium need to be distributed in each month
         uint256 newSpeed = _premium / _length;
 
         (
@@ -383,6 +384,8 @@ contract ProtectionPool is
                     ++tempYear;
                     tempMonth = 1;
                 }
+
+                ++i;
             }
         }
     }

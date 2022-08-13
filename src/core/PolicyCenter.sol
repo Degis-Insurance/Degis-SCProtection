@@ -224,16 +224,14 @@ contract PolicyCenter is
         return amount;
     }
 
-
-    function calculateReward(uint256 _poolId, uint256 _amount, uint256 _debt)
-        public
-        view
-        returns (uint256)
-    {   
+    function calculateReward(
+        uint256 _poolId,
+        uint256 _amount,
+        uint256 _debt
+    ) public view returns (uint256) {
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
         // Calculate reward amount based on user's liquidity and acc reward per share.
-        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) -
-            _debt;
+        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) - _debt;
 
         return reward;
     }
@@ -311,10 +309,9 @@ contract PolicyCenter is
      * @param _coverToken   Address of the insurance pool
      * @param _poolId Pool id
      */
-    function storeCoverTokenInformation(
-        address _coverToken,
-        uint256 _poolId
-    ) external {
+    function storeCoverTokenInformation(address _coverToken, uint256 _poolId)
+        external
+    {
         require(msg.sender == coverRightTokenFactory, "Only factory can store");
 
         // maps token address to pool id
@@ -359,7 +356,11 @@ contract PolicyCenter is
         _checkCapacity(_poolId, _coverAmount);
 
         // Premium in USD (shield)
-        uint256 premium = _getCoverPrice(_poolId, _coverAmount, _coverDuration);
+        (uint256 premium, uint256 timestampDuration) = _getCoverPrice(
+            _poolId,
+            _coverAmount,
+            _coverDuration
+        );
 
         // Check if premium cost is within limits given by user
         require(premium <= _maxPayment, "Premium too high");
@@ -403,8 +404,16 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool
         ) = _splitPremium(_poolId, _coverAmount);
 
-        IProtectionPool(protectionPool).updateWhenBuy(premiumToProtectionPool, _coverDuration);
-        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(premiumToPriorityPool, _coverDuration);
+        IProtectionPool(protectionPool).updateWhenBuy(
+            premiumToProtectionPool,
+            _coverDuration,
+            timestampDuration
+        );
+        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
+            premiumToPriorityPool,
+            _coverDuration,
+            timestampDuration
+        );
     }
 
     /**
@@ -741,7 +750,10 @@ contract PolicyCenter is
      * @param _poolId     Pool id
      * @param _totalSplit Amount of premium to split
      */
-    function _splitPremium(uint256 _poolId, uint256 _totalSplit) internal returns (uint256, uint256) {
+    function _splitPremium(uint256 _poolId, uint256 _totalSplit)
+        internal
+        returns (uint256, uint256)
+    {
         require(_totalSplit > 0, "No funds to split");
 
         address fromToken = tokenByPoolId[_poolId];
@@ -754,14 +766,15 @@ contract PolicyCenter is
         // swap native for degis
         uint256 swapped = _swapTokens(toSwap, fromToken, shield);
 
-        uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) * premiumSplits[1];
+        uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) *
+            premiumSplits[1];
         uint256 toTreasury = swapped - toProtectionPool;
 
         // protection pool is pool 0
         rewardsByPoolId[_poolId] += toInsurancePool;
         rewardsByPoolId[0] += toProtectionPool;
 
-        // 
+        //
         liquidityByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 
@@ -790,8 +803,8 @@ contract PolicyCenter is
         uint256 _poolId,
         uint256 _coverAmount,
         uint256 _coverDuration
-    ) internal view returns (uint256 price) {
-        price = IInsurancePool(insurancePools[_poolId]).coverPrice(
+    ) internal view returns (uint256 price, uint256 timestampDuration) {
+        (price, timestampDuration) = IInsurancePool(insurancePools[_poolId]).coverPrice(
             _coverAmount,
             _coverDuration
         );
