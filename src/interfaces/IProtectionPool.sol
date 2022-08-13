@@ -139,5 +139,9 @@ interface IProtectionPool {
 
     function totalCovered() external view returns (uint256);
 
-    function updateWhenBuy(uint256 _amount, uint _length) external;
+    function updateWhenBuy(
+        uint256 _amount,
+        uint256 _length,
+        uint256 _timestampLength
+    ) external;
 }
