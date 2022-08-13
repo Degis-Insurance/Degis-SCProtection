@@ -218,17 +218,18 @@ contract ProtectionPool is
     /**
      * @notice Update when new cover is bought
      *
-     * @param _premium Premium of the cover to be distributed to Protection Pool
-     * @param _length  Length in month
+     * @param _premium         Premium of the cover to be distributed to Protection Pool
+     * @param _length          Length in month
+     * @param _timestampLength Length in seconds
      */
-    function updateWhenBuy(uint256 _premium, uint256 _length)
+    function updateWhenBuy(uint256 _premium, uint256 _length, uint256 _timestampLength)
         external
         onlyPolicyCenter
     {
         _updateReward();
         _updatePrice();
 
-        _updateRewardSpeed(_premium, _length);
+        _updateRewardSpeed(_premium, _length, _timestampLength);
     }
 
     function _updateReward() internal {
@@ -298,6 +299,8 @@ contract ProtectionPool is
                         ++tempYear;
                         tempMonth = 1;
                     }
+
+                    ++i;
                 }
             }
         }
@@ -357,12 +360,13 @@ contract ProtectionPool is
     /**
      * @notice Update reward speed
      *
-     * @param _premium New premium received
-     * @param _length  Cover length in months
+     * @param _premium          New premium received
+     * @param _length           Cover length in months
+     * @param _timestampLength Cover length in seconds
      */
-    function _updateRewardSpeed(uint256 _premium, uint256 _length) internal {
-        // How many premium need to be distributed in each month
-        uint256 newSpeed = _premium / _length;
+    function _updateRewardSpeed(uint256 _premium, uint256 _length, uint256 _timestampLength) internal {
+        // How many premiums need to be distributed in each second
+        uint256 newSpeed = _premium / _timestampLength;
 
         (
             uint256 currentYear,

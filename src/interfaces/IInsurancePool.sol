@@ -151,7 +151,6 @@ interface IInsurancePool {
         uint256 amount
     ) external returns (bool);
 
-
     function updateRewards() external;
 
     function veDeg() external view returns (address);
@@ -164,5 +163,9 @@ interface IInsurancePool {
 
     function totalCovered() external view returns (uint256);
 
-    function updateWhenBuy(uint256 _amount, uint _length) external;
+    function updateWhenBuy(
+        uint256 _amount,
+        uint256 _length,
+        uint256 _timestampLength
+    ) external;
 }
