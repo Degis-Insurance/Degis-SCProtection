@@ -774,8 +774,6 @@ contract PolicyCenter is
         rewardsByPoolId[_poolId] += toInsurancePool;
         rewardsByPoolId[0] += toProtectionPool;
 
-        //
-        liquidityByPoolId[0] += toProtectionPool;
         treasury += toTreasury;
 
         return (toInsurancePool, toProtectionPool);
