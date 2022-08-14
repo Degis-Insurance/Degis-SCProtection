@@ -25,7 +25,6 @@ abstract contract FlashLoanPool is IERC3156FlashLender {
         bytes calldata _data
     ) external override returns (bool) {
         require(_amount > 0, "Zero amount");
-        require(_token == SHIELD, "Only SHIELD");
 
         uint256 fee = flashFee(_token, _amount);
 
@@ -46,16 +45,29 @@ abstract contract FlashLoanPool is IERC3156FlashLender {
         uint256 finalBalance = IERC20(_token).balanceOf(address(this));
         require(finalBalance >= previousBalance + fee, "Not enough pay back");
 
-        emit FlashLoanBorrowed(address(this), _receiver, _token, _amount, fee);
+        emit FlashLoanBorrowed(
+            address(this),
+            address(_receiver),
+            _token,
+            _amount,
+            fee
+        );
+
         return true;
     }
 
     function flashFee(address _token, uint256 _amount)
         public
-        view
+        pure
         override
         returns (uint256)
     {
+        require(_token == SHIELD, "only shield");
         return (_amount * FEE) / 10000;
+    }
+
+    function maxFlashLoan(address _token) external view returns (uint256) {
+        require(_token == SHIELD, "only shield");
+        return IERC20(SHIELD).balanceOf(address(this));
     }
 }
