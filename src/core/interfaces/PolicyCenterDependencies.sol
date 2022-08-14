@@ -7,6 +7,7 @@ import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/ICoverRightToken.sol";
 import "../../interfaces/ICoverRightTokenFactory.sol";
+import "../../interfaces/IPayoutPool.sol";
 
 import "../../interfaces/IExchange.sol";
 
@@ -19,6 +20,7 @@ abstract contract PolicyCenterDependencies {
     address public priorityPoolFactory;
     address public coverRightTokenFactory;
     address public exchange;
+    address public payoutPool;
 
     function _setExchange(address _exchange) internal virtual {
         exchange = _exchange;
@@ -44,5 +46,9 @@ abstract contract PolicyCenterDependencies {
         virtual
     {
         coverRightTokenFactory = _coverRightTokenFactory;
+    }
+
+    function _setPayoutPool(address _payoutPool) internal virtual {
+        payoutPool = _payoutPool;
     }
 }

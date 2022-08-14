@@ -226,18 +226,6 @@ contract PolicyCenter is
         return amount;
     }
 
-    function calculateReward(
-        uint256 _poolId,
-        uint256 _amount,
-        uint256 _debt
-    ) public view returns (uint256) {
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
-        // Calculate reward amount based on user's liquidity and acc reward per share.
-        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) - _debt;
-
-        return reward;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -275,7 +263,6 @@ contract PolicyCenter is
         _setProtectionPool(_protectionPool);
     }
 
-    //TODO: rename insurance pool factory to priority pool factory?
     function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
@@ -489,11 +476,7 @@ contract PolicyCenter is
         );
 
         // transfer protection pool tokens from user to contract
-        IProtectionPool(protectionPool).transferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20(protectionPool).transferFrom(msg.sender, address(this), _amount);
         // upsates user provided amount and last claim
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
@@ -611,7 +594,7 @@ contract PolicyCenter is
         // _claimReward(0, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply = IProtectionPool(protectionPool).totalSupply();
+        uint256 totalSupply = IERC20(protectionPool).totalSupply();
 
         // burns the full amount of liquidity tokens in users account from protection pool
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
@@ -632,56 +615,25 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice claims liquidation payout given a pool id
+     * @notice Claim payout
      *
      * @param _poolId Pool id
      */
-    function claimPayout(uint256 _poolId) public poolExists(_poolId) {
+    function claimPayout(uint256 _poolId, address _crToken)
+        public
+        poolExists(_poolId)
+    {
         require(_poolId > 0, "PoolId must be greater than 0");
 
         IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
 
-        Cover storage cover = covers[_poolId][msg.sender];
-        //the user can only claim a payout 7 days after the cover was bought
-
-        // exploit protection
-        require(cover.buyDate < block.timestamp, "coverage is not yet active");
-        require(pool.liquidated(), "pool is not claimable");
-        require(
-            pool.endLiquidationDate() >= block.timestamp,
-            "claim period is over"
+        // Claim payout from payout pool
+        uint256 amount = IPayoutPool(payoutPool).claim(
+            msg.sender,
+            _crToken,
+            _poolId
         );
 
-        // buy date + length + liquidation date - 5 days buffer
-        // intended to fullfil valid coverages accounting for voting period
-        require(
-            cover.buyDate + (cover.length * 1 days) >=
-                pool.endLiquidationDate() - 20 days,
-            "coverage has expired"
-        );
-
-        require(cover.amount > 0, "no coverage to claim");
-        // gets amount to give as payout
-        uint256 amount = calculatePayout(_poolId, msg.sender);
-
-        // coverage by user is removed
-        cover.amount = 0;
-        if (liquidityByPoolId[_poolId] >= amount) {
-            // Insurance doesn't need protection
-            // Registers removal of funds from insurance pool
-            // if its enough to cover all funds
-            liquidityByPoolId[_poolId] -= cover.amount;
-        } else {
-            // Insurance pool needs protection
-            // registers removel of funds from insurance and protection pools
-            // effectively reinsuring insurance pools
-            liquidityByPoolId[_poolId] -= amount;
-
-            // remove from protection pool
-            liquidityByPoolId[0] -= (amount - liquidityByPoolId[_poolId]);
-        }
-        // transfer the totalSupply to user and then ask Reinsurance pool for the remainder
-        IERC20(tokenByPoolId[_poolId]).transfer(msg.sender, amount);
         emit Payout(amount, msg.sender);
     }
 
