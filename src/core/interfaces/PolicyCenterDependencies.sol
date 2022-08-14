@@ -6,13 +6,13 @@ import "../../interfaces/IInsurancePool.sol";
 import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IInsurancePoolFactory.sol";
 import "../../interfaces/ICoverRightToken.sol";
+import "../../interfaces/ICoverRightTokenFactory.sol";
 
 import "../../interfaces/IExchange.sol";
 
 abstract contract PolicyCenterDependencies {
     uint256 constant MAX_COVER_LENGTH = 3;
     uint256 constant MIN_COVER_AMOUNT = 100e6;
-
 
     address public executor;
     address public protectionPool;

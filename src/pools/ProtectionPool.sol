@@ -64,12 +64,11 @@ contract ProtectionPool is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Pool start time
     uint256 public startTime;
 
+    // Last pool reward distribution
     uint256 public lastRewardTimestamp;
-
-    // Total covered amount of all insurance pools
-    uint256 public totalCovered;
 
     // PRO_LP token price
     uint256 public price;
@@ -83,16 +82,16 @@ contract ProtectionPool is
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event Deposit(address indexed user, uint256 amount);
-    event Withdraw(address indexed user, uint256 amount);
-    event MoveLiquidity(uint256 poolId, uint256 amount);
-    event LiquidityProvision(uint256 amount, uint256 lpAmount, address sender);
-    event LiquidityRemoved(uint256 amount, address sender);
-    event EmissionRateUpdated(
-        uint256 newEmissionRate,
-        uint256 newEmissionEndTime
+    event LiquidityProvision(
+        uint256 shieldAmount,
+        uint256 lpAmount,
+        address sender
     );
-    event AccRewardsPerShareUpdated(uint256 amount);
+    event LiquidityRemoved(
+        uint256 lpAmount,
+        uint256 shieldAmount,
+        address sender
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -133,7 +132,7 @@ contract ProtectionPool is
      *
      * @return covered Covered amount
      */
-    function getTotalCovered() external view returns (uint256 covered) {
+    function getTotalCovered() public view returns (uint256 covered) {
         IInsurancePoolFactory factory = IInsurancePoolFactory(
             insurancePoolFactory
         );
@@ -209,19 +208,23 @@ contract ProtectionPool is
         whenNotPaused
         onlyPolicyCenter
     {
-        require(_amount <= totalSupply(), "amount exceeds totalSupply");
-
-        require(
-            totalSupply() - _amount >=
-                IInsurancePoolFactory(insurancePoolFactory).totalMaxCapacity(),
-            "undermines reinsurance capability"
-        );
+        require(_amount <= totalSupply(), "Exceed totalSupply");
 
         _updateReward();
         _updatePrice();
 
+        // Burn PRO_LP tokens to the user
+        uint256 shieldToTransfer = _amount / price;
+        require(
+            IERC20(shield).balanceOf(address(this)) >=
+                getTotalCovered() + shieldToTransfer,
+            "Not enough liquidity"
+        );
+
         _burn(_provider, _amount);
-        emit LiquidityRemoved(_amount, _provider);
+        IERC20(shield).transfer(_provider, shieldToTransfer);
+
+        emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
     }
 
     /**
