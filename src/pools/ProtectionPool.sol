@@ -26,6 +26,8 @@ import "./interfaces/ProtectionPoolDependencies.sol";
 import "./interfaces/IPremiumRewardPool.sol";
 
 import "../util/OwnableWithoutContext.sol";
+import "../util/PausableWithoutContext.sol";
+import "../util/FlashLoanPool.sol";
 
 import "../interfaces/ExternalTokenDependencies.sol";
 
@@ -46,9 +48,11 @@ import "forge-std/console.sol";
  */
 contract ProtectionPool is
     ERC20,
-    ProtectionPoolDependencies,
+    FlashLoanPool,
+    OwnableWithoutContext,
+    PausableWithoutContext,
     ExternalTokenDependencies,
-    OwnableWithoutContext
+    ProtectionPoolDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
@@ -60,22 +64,9 @@ contract ProtectionPool is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    bool public paused;
-
     uint256 public startTime;
 
-    // Variables about distributing reward
-    // Accumulated reward per share (lp token)
-    uint256 public accumulatedRewardPerShare;
-
-    // Last reward update timestamp
     uint256 public lastRewardTimestamp;
-
-    // Emission end tiemstamp
-    uint256 public emissionEndTime;
-
-    // Current emission rate
-    uint256 public emissionRate;
 
     // Total covered amount of all insurance pools
     uint256 public totalCovered;
@@ -124,17 +115,6 @@ contract ProtectionPool is
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Only allowed to be called from a pool
-    modifier poolOnly() {
-        require(
-            IInsurancePoolFactory(insurancePoolFactory).poolRegistered(
-                msg.sender
-            ),
-            "Pool not found"
-        );
-        _;
-    }
-
     modifier onlyPolicyCenter() {
         require(
             msg.sender == policyCenter,
@@ -149,25 +129,27 @@ contract ProtectionPool is
 
     /**
      * @notice Get total active cover amount of all pools
+     *         Only calculate those "already dynamic" pools
      *
      * @return covered Covered amount
      */
     function getTotalCovered() external view returns (uint256 covered) {
-        uint256 poolAmount = IInsurancePoolFactory(insurancePoolFactory)
-            .poolCounter();
+        IInsurancePoolFactory factory = IInsurancePoolFactory(
+            insurancePoolFactory
+        );
+
+        uint256 poolAmount = factory.poolCounter();
 
         for (uint256 i; i < poolAmount; ) {
-            (, address poolAddress, , , ) = IInsurancePoolFactory(
-                insurancePoolFactory
-            ).pools(i);
+            (, address poolAddress, , , ) = factory.pools(i);
 
-            if (
-                IInsurancePoolFactory(insurancePoolFactory).alreadyDynamic(
-                    poolAddress
-                )
-            ) {
+            if (factory.alreadyDynamic(poolAddress)) {
                 covered += IInsurancePool(poolAddress).activeCovered();
-            } else continue;
+            }
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -195,16 +177,16 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice mints liquidity tokens. Only callable through policyCenter
+     * @notice Finish providing liquidity
+     *         Only callable through policyCenter
      *
-     * @param _amount Liquidity amount (shield)
+     * @param _amount   Liquidity amount (shield)
+     * @param _provider Provider address
      */
     function providedLiquidity(uint256 _amount, address _provider)
         external
         onlyPolicyCenter
     {
-        require(_amount > 0, "Zero amount");
-
         _updateReward();
         _updatePrice();
 
@@ -216,20 +198,72 @@ contract ProtectionPool is
     }
 
     /**
+     * @notice Finish removing liquidity
+     *         Only callable through policyCenter
+     *
+     * @param _amount   Liquidity to remove (LP token amount)
+     * @param _provider Provider address
+     */
+    function removedLiquidity(uint256 _amount, address _provider)
+        external
+        whenNotPaused
+        onlyPolicyCenter
+    {
+        require(_amount <= totalSupply(), "amount exceeds totalSupply");
+
+        require(
+            totalSupply() - _amount >=
+                IInsurancePoolFactory(insurancePoolFactory).totalMaxCapacity(),
+            "undermines reinsurance capability"
+        );
+
+        _updateReward();
+        _updatePrice();
+
+        _burn(_provider, _amount);
+        emit LiquidityRemoved(_amount, _provider);
+    }
+
+    /**
      * @notice Update when new cover is bought
      *
      * @param _premium         Premium of the cover to be distributed to Protection Pool
      * @param _length          Length in month
      * @param _timestampLength Length in seconds
      */
-    function updateWhenBuy(uint256 _premium, uint256 _length, uint256 _timestampLength)
-        external
-        onlyPolicyCenter
-    {
+    function updateWhenBuy(
+        uint256 _premium,
+        uint256 _length,
+        uint256 _timestampLength
+    ) external onlyPolicyCenter {
         _updateReward();
         _updatePrice();
 
         _updateRewardSpeed(_premium, _length, _timestampLength);
+    }
+
+    /**
+     * @notice Set paused state of the protection pool
+     *
+     * @param _paused True for pause, false for unpause
+     */
+    function pauseProtectionPool(bool _paused) external {
+        require(
+            (msg.sender == owner()) || (msg.sender == incidentReport),
+            "Only owner or Incident Report can call this function"
+        );
+        _pause(_paused);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Update the price of PRO_LP token
+     */
+    function _updatePrice() internal {
+        price = IERC20(shield).balanceOf(address(this)) / totalSupply();
     }
 
     function _updateReward() internal {
@@ -310,61 +344,17 @@ contract ProtectionPool is
     }
 
     /**
-     * @notice Update the price of PRO_LP token
-     */
-    function _updatePrice() internal {
-        price = IERC20(shield).balanceOf(address(this)) / totalSupply();
-    }
-
-    /**
-    @notice burns liquidity tokens. Only callable through policyCenter
-     *
-    @param _amount      token being insured
-    @param _provider    liquidity provider adress
-    */
-    function removedLiquidity(uint256 _amount, address _provider)
-        external
-        onlyPolicyCenter
-    {
-        require(_amount <= totalSupply(), "amount exceeds totalSupply");
-        require(_amount > 0, "amount should be greater than 0");
-
-        require(!paused, "cannot remove liquidity while paused");
-
-        require(
-            totalSupply() - _amount >=
-                IInsurancePoolFactory(insurancePoolFactory).totalMaxCapacity(),
-            "undermines reinsurance capability"
-        );
-
-        _updateReward();
-        _updatePrice();
-
-        _burn(_provider, _amount);
-        emit LiquidityRemoved(_amount, _provider);
-    }
-
-    /**
-     * @notice Sets paused state of the reinsurance pool
-     *
-     * @param _paused true if paused, false if not.
-     */
-    function pauseProtectionPool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or Incident Report can call this function"
-        );
-        paused = _paused;
-    }
-
-    /**
      * @notice Update reward speed
      *
      * @param _premium          New premium received
      * @param _length           Cover length in months
      * @param _timestampLength Cover length in seconds
      */
-    function _updateRewardSpeed(uint256 _premium, uint256 _length, uint256 _timestampLength) internal {
+    function _updateRewardSpeed(
+        uint256 _premium,
+        uint256 _length,
+        uint256 _timestampLength
+    ) internal {
         // How many premiums need to be distributed in each second
         uint256 newSpeed = _premium / _timestampLength;
 
@@ -393,8 +383,4 @@ contract ProtectionPool is
             }
         }
     }
-
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
 }
