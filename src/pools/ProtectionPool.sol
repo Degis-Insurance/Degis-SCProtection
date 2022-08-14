@@ -58,8 +58,6 @@ contract ProtectionPool is
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    uint256 public constant DISTRIBUTION_PERIOD = 30 days;
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -92,6 +90,8 @@ contract ProtectionPool is
         uint256 shieldAmount,
         address sender
     );
+
+    event LiquidityRemovedWhenClaimed(address pool, uint256 amount);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -133,8 +133,8 @@ contract ProtectionPool is
      * @return covered Covered amount
      */
     function getTotalCovered() public view returns (uint256 covered) {
-        IInsurancePoolFactory factory = IInsurancePoolFactory(
-            insurancePoolFactory
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
         );
 
         uint256 poolAmount = factory.poolCounter();
@@ -164,11 +164,11 @@ contract ProtectionPool is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -207,6 +207,7 @@ contract ProtectionPool is
         external
         whenNotPaused
         onlyPolicyCenter
+        returns (uint256 shieldToTransfer)
     {
         require(_amount <= totalSupply(), "Exceed totalSupply");
 
@@ -214,7 +215,7 @@ contract ProtectionPool is
         _updatePrice();
 
         // Burn PRO_LP tokens to the user
-        uint256 shieldToTransfer = _amount / price;
+        shieldToTransfer = _amount / price;
         require(
             IERC20(shield).balanceOf(address(this)) >=
                 getTotalCovered() + shieldToTransfer,
@@ -225,6 +226,28 @@ contract ProtectionPool is
         IERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
+    }
+
+    function removedLiquidityWhenClaimed(uint256 _amount, address _to)
+        external
+    {
+        require(
+            IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+                msg.sender
+            ),
+            "Only from priority pool"
+        );
+
+        require(
+            _amount <= IERC20(shield).balanceOf(address(this)),
+            "Not enough balance"
+        );
+
+        IERC20(shield).transfer(_to, _amount);
+
+        _updatePrice();
+
+        emit LiquidityRemovedWhenClaimed(msg.sender, _amount);
     }
 
     /**
@@ -266,7 +289,9 @@ contract ProtectionPool is
      * @notice Update the price of PRO_LP token
      */
     function _updatePrice() internal {
-        price = IERC20(shield).balanceOf(address(this)) / totalSupply();
+        price =
+            (IERC20(shield).balanceOf(address(this)) * SCALE) /
+            totalSupply();
     }
 
     function _updateReward() internal {

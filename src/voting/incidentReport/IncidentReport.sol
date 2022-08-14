@@ -90,9 +90,13 @@ contract IncidentReport is
         uint256 status; // PENDING, VOTING, SETTLED, CLOSED
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
         uint256 votingReward; // Voting reward per veDEG
+        uint256 payout; // Payout amount of this report (partial payout)
     }
     // Report id => Report
     mapping(uint256 => Report) public reports;
+
+    // Pool id => All related reports
+    mapping(uint256 => uint256[]) public poolReports;
 
     struct TempResult {
         uint256 result;
@@ -151,6 +155,22 @@ contract IncidentReport is
         return reports[_id];
     }
 
+    function getPoolReports(uint256 _poolId)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return poolReports[_poolId];
+    }
+
+    function getPoolReportsAmount(uint256 _poolId)
+        external
+        view
+        returns (uint256)
+    {
+        return poolReports[_poolId].length;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -163,11 +183,11 @@ contract IncidentReport is
         _setProtectionPool(_protectionPool);
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setProposalCenter(address _proposalCenter) external onlyOwner {
@@ -207,6 +227,8 @@ contract IncidentReport is
         // Need to add this smart contract to burner list
         IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
 
+        poolReports[_poolId].push(currentReportId);
+
         emit ReportCreated(reportCounter, _poolId, block.timestamp, msg.sender);
     }
 
@@ -230,6 +252,9 @@ contract IncidentReport is
 
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
+
+        (, address pool, , , ) = IPriorityPoolFactory(priorityPoolFactory)
+            .pools(currentReport.poolId);
 
         // Pause insurance pool and reinsurance pool
         _pausePools(pool);
@@ -319,7 +344,6 @@ contract IncidentReport is
         ) {
             _recordTempResult(
                 _reportId,
-                currentReport.round,
                 currentReport.numFor,
                 currentReport.numAgainst
             );
@@ -421,7 +445,7 @@ contract IncidentReport is
     function unpausePools(address _pool) external {
         require(
             IInsurancePool(_pool).endLiquidationDate() < block.timestamp,
-            "pool is still in payout period"
+            "Pool is still in payout period"
         );
         _unpausePools(_pool);
     }
@@ -508,8 +532,8 @@ contract IncidentReport is
     /**
      * @notice Check whether has passed the voting time period
      *
-     * @param _round      Current round
-     * @param _reportTime Start timestamp of the report
+     * @param _round         Current round
+     * @param _voteTimestamp Start timestamp of the report voting
      *
      * @return hasPassed True for passing
      */
@@ -582,13 +606,11 @@ contract IncidentReport is
      *         Temporary result use 1 for "pass" and 2 for "reject"
      *
      * @param _reportId   Report id
-     * @param _round      Current voting round
      * @param _numFor     Vote numbers for
      * @param _numAgainst Vote numbers against
      */
     function _recordTempResult(
         uint256 _reportId,
-        uint256 _round,
         uint256 _numFor,
         uint256 _numAgainst
     ) internal {
@@ -614,7 +636,10 @@ contract IncidentReport is
      * @param _voteTimestamp Vote start timestamp
      * @param _round         Current round
      */
-    function _withinLastDay(uint256 _voteTimestamp, uint256 _round) internal {
+    function _withinLastDay(uint256 _voteTimestamp, uint256 _round)
+        internal
+        returns (bool)
+    {
         uint256 endTime = _voteTimestamp +
             VOTING_PERIOD +
             _round *
@@ -626,7 +651,7 @@ contract IncidentReport is
             EXTEND_PERIOD -
             SAMPLE_PERIOD;
 
-        return block.timstamp > lastDayStart && block.timestamp < endTime;
+        return block.timestamp > lastDayStart && block.timestamp < endTime;
     }
 
     /**
@@ -653,7 +678,7 @@ contract IncidentReport is
      *
      * @param _poolId Pool id
      *
-     * @return poolAddress Pool address
+     * @return pool Pool address
      */
     function _checkPoolStatus(uint256 _poolId)
         internal

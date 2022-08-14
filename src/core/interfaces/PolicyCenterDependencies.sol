@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import "../../interfaces/IInsurancePool.sol";
 import "../../interfaces/IProtectionPool.sol";
-import "../../interfaces/IInsurancePoolFactory.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/ICoverRightToken.sol";
 import "../../interfaces/ICoverRightTokenFactory.sol";
 
@@ -16,7 +16,7 @@ abstract contract PolicyCenterDependencies {
 
     address public executor;
     address public protectionPool;
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
     address public coverRightTokenFactory;
     address public exchange;
 
@@ -32,11 +32,11 @@ abstract contract PolicyCenterDependencies {
         protectionPool = _protectionPool;
     }
 
-    function _setInsurancePoolFactory(address _insurancePoolFactory)
+    function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     function _setCoverRightTokenFactory(address _coverRightTokenFactory)

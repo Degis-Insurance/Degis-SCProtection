@@ -13,7 +13,7 @@ import "src/mock/MockVeDEG.sol";
 
 import "src/pools/InsurancePool.sol";
 import "src/pools/ProtectionPool.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 
 import "src/core/PolicyCenter.sol";
 
@@ -22,7 +22,7 @@ contract InsurancePoolTest is BaseTest {
     address bob = mkaddr("bob");
 
     ProtectionPool protectionPool;
-    InsurancePoolFactory factory;
+    PriorityPoolFactory factory;
     InsurancePool pool;
 
     PolicyCenter public policyCenter;
@@ -51,7 +51,7 @@ contract InsurancePoolTest is BaseTest {
             address(shield)
         );
 
-        factory = new InsurancePoolFactory(
+        factory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
@@ -66,7 +66,7 @@ contract InsurancePoolTest is BaseTest {
         );
 
         factory.setPolicyCenter(address(policyCenter));
-        policyCenter.setInsurancePoolFactory(address(factory));
+        policyCenter.setPriorityPoolFactory(address(factory));
         policyCenter.setExchange(address(exchange));
         protectionPool.setPolicyCenter(address(policyCenter));
 
@@ -75,7 +75,7 @@ contract InsurancePoolTest is BaseTest {
     }
 
     function testFactorySetUp() public {
-        InsurancePoolFactory.PoolInfo memory firstPool = factory.getPoolInfo(0);
+        PriorityPoolFactory.PoolInfo memory firstPool = factory.getPoolInfo(0);
 
         assertEq(firstPool.protocolName, "ProtectionPool");
         assertEq(firstPool.protocolToken, address(shield));

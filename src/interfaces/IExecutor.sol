@@ -21,34 +21,65 @@
 pragma solidity ^0.8.13;
 
 interface IExecutor {
-    event NewPoolEecuted(address poolAddress, uint256 proposalId, address protocol);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event NewPoolEecuted(
+        address poolAddress,
+        uint256 proposalId,
+        address protocol
+    );
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
 
-    function deg() view external returns (address);
+    function deg() external view returns (address);
+
     function executeProposal(uint256 _proposalId) external returns (address);
+
     function executeReport(uint256 _reportId) external;
-    function executor() view external returns (address);
-    function incidentReport() view external returns (address);
-    function insurancePoolFactory() view external returns (address);
-    function onboardProposal() view external returns (address);
-    function owner() view external returns (address);
-    function policyCenter() view external returns (address);
-    function poolBuffer() view external returns (uint256);
-    function proposalBuffer() view external returns (uint256);
-    function protectionPool() view external returns (address);
+
+    function executor() external view returns (address);
+
+    function incidentReport() external view returns (address);
+
+    function priorityPoolFactory() external view returns (address);
+
+    function onboardProposal() external view returns (address);
+
+    function owner() external view returns (address);
+
+    function policyCenter() external view returns (address);
+
+    function poolBuffer() external view returns (uint256);
+
+    function proposalBuffer() external view returns (uint256);
+
+    function protectionPool() external view returns (address);
+
     function renounceOwnership() external;
-    function reportBuffer() view external returns (uint256);
-    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) external;
+
+    function reportBuffer() external view returns (uint256);
+
+    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer)
+        external;
+
     function setDeg(address _deg) external;
+
     function setExecutor(address _executor) external;
+
     function setIncidentReport(address _incidentReport) external;
-    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+
+    function setPriorityPoolFactory(address _priorityPoolFactory) external;
+
     function setOnboardProposal(address _onboardProposal) external;
+
     function setPolicyCenter(address _policyCenter) external;
+
     function setProtectionPool(address _protectionPool) external;
-    
-    function shield() view external returns (address);
+
+    function shield() external view returns (address);
+
     function transferOwnership(address newOwner) external;
-    function veDeg() view external returns (address);
+
+    function veDeg() external view returns (address);
 }

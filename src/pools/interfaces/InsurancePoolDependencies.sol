@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IInsurancePoolFactory.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IProtectionPool.sol";
+import "../../interfaces/IPayoutPool.sol";
 
 abstract contract InsurancePoolDependencies {
     uint256 constant SCALE = 1e12;
@@ -14,7 +15,7 @@ abstract contract InsurancePoolDependencies {
     address public executor;
     address public incidentReport;
     address public policyCenter;
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
 
     address public protectionPool;
 
@@ -30,10 +31,10 @@ abstract contract InsurancePoolDependencies {
         policyCenter = _policyCenter;
     }
 
-    function _setInsurancePoolFactory(address _insurancePoolFactory)
+    function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 }

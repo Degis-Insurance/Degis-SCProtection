@@ -3,36 +3,6 @@
 pragma solidity ^0.8.13;
 
 interface IInsurancePool {
-    event AccRewardsPerShareUpdated(uint256 amount);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-    event EmissionRateUpdated(
-        uint256 newEmissionRate,
-        uint256 newEmissionEndTime
-    );
-    event Liquidation(uint256 amount, uint256 endDate);
-    event LiquidationEnded(uint256 timestamp);
-    event LiquidityProvision(uint256 amount, address sender);
-    event LiquidityRemoved(uint256 amount, address sender);
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event Paused(address account);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Unpaused(address account);
-
-    function DISTRIBUTION_PERIOD() external view returns (uint256);
-
-    function PAY_COVER_PERIOD() external view returns (uint256);
-
-    function accumulatedRewardPerShare() external view returns (uint256);
-
-    function administrator() external view returns (address);
-
     function allowance(address owner, address spender)
         external
         view
@@ -65,19 +35,13 @@ interface IInsurancePool {
 
     function incidentReport() external view returns (address);
 
-    function increaseAllowance(address spender, uint256 addedValue)
-        external
-        returns (bool);
-
-    function increaseMaxCapacity(uint256 _maxCapacity) external;
-
-    function insurancePoolFactory() external view returns (address);
+    function priorityPoolFactory() external view returns (address);
 
     function insuredToken() external view returns (address);
 
     function lastRewardTimestamp() external view returns (uint256);
 
-    function liquidatePool() external;
+    function liquidatePool(uint256 amount) external;
 
     function liquidated() external view returns (bool);
 
@@ -121,7 +85,7 @@ interface IInsurancePool {
 
     function setIncidentReport(address _incidentReport) external;
 
-    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setPriorityPoolFactory(address _priorityPoolFactory) external;
 
     function setMaxCapacity(uint256 _maxCapacity) external;
 
@@ -160,8 +124,6 @@ interface IInsurancePool {
     function lockedAmount() external view returns (uint256);
 
     function activeCovered() external view returns (uint256);
-
-    function totalCovered() external view returns (uint256);
 
     function updateWhenBuy(
         uint256 _amount,

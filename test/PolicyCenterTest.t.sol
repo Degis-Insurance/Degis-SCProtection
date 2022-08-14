@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
@@ -30,7 +30,7 @@ import "forge-std/console.sol";
         Initial
 */
 contract PostInsurancePoolDeploymentTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
@@ -79,7 +79,7 @@ contract PostInsurancePoolDeploymentTest is Test {
             address(vedeg),
             address(shield)
         );
-        insurancePoolFactory = new InsurancePoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
@@ -123,15 +123,15 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         // sets addresses needed to execute functions
 
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
 
-        insurancePoolFactory.setProtectionPool(address(protectionPool));
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setProtectionPool(address(protectionPool));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
 
         policyCenter.setExecutor(address(executor));
 
         policyCenter.setProtectionPool(address(protectionPool));
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
 
         protectionPool.setPolicyCenter(address(policyCenter));
@@ -139,22 +139,22 @@ contract PostInsurancePoolDeploymentTest is Test {
         protectionPool.setPolicyCenter(address(policyCenter));
         onboardProposal.setExecutor(address(executor));
 
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setProtectionPool(address(protectionPool));
-        incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
+        incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setProtectionPool(address(protectionPool));
-        executor.setInsurancePoolFactory(address(insurancePoolFactory));
+        executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);
 
         // deploy ptp pool
-        pool1 = insurancePoolFactory.deployPool(
+        pool1 = priorityPoolFactory.deployPool(
             "Platypus",
             address(ptp),
             1000 ether,
@@ -169,7 +169,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
     function testGetPoolAddressList() public {
         // reads list of pools in the protocol
-        address[] memory list = insurancePoolFactory.getPoolAddressList();
+        address[] memory list = priorityPoolFactory.getPoolAddressList();
         uint256 length = list.length;
         for (uint256 i = 0; length > i; i++) {
             console.log(list[i]);
@@ -452,10 +452,14 @@ contract PostInsurancePoolDeploymentTest is Test {
         vm.warp(30 days);
         vm.prank(alice);
 
-        (uint256 amount, uint256 userDebt, uint256 lastClaim)
-        = policyCenter.liquidities(POOL_ID, alice);
+        (uint256 amount, uint256 userDebt, uint256 lastClaim) = policyCenter
+            .liquidities(POOL_ID, alice);
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = policyCenter.calculateReward(POOL_ID, amount, userDebt);
+        uint256 reward = policyCenter.calculateReward(
+            POOL_ID,
+            amount,
+            userDebt
+        );
 
         assertEq(reward == 0, true);
         // no user should be able to claim rewards
@@ -478,10 +482,14 @@ contract PostInsurancePoolDeploymentTest is Test {
         vm.prank(alice);
 
         vm.warp(31 days);
-        (uint256 amount, uint256 userDebt, uint256 lastClaim)
-        = policyCenter.liquidities(POOL_ID, alice);
+        (uint256 amount, uint256 userDebt, uint256 lastClaim) = policyCenter
+            .liquidities(POOL_ID, alice);
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = policyCenter.calculateReward(POOL_ID, amount, userDebt);
+        uint256 reward = policyCenter.calculateReward(
+            POOL_ID,
+            amount,
+            userDebt
+        );
 
         console.log("reward", reward);
         // no user should be able to claim rewards

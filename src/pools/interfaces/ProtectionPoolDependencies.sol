@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IInsurancePoolFactory.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IInsurancePool.sol";
 
 abstract contract ProtectionPoolDependencies {
     uint256 constant UINT256_MAX = type(uint256).max;
 
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
     address public policyCenter;
     address public incidentReport;
 
@@ -17,11 +17,11 @@ abstract contract ProtectionPoolDependencies {
         policyCenter = _policyCenter;
     }
 
-    function _setInsurancePoolFactory(address _insurancePoolFactory)
+    function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     function _setIncidentReport(address _incidentReport) internal virtual {

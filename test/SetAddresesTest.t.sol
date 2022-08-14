@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
@@ -24,7 +24,7 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract setAddressesTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
@@ -56,7 +56,7 @@ contract setAddressesTest is Test {
             address(vedeg),
             address(shield)
         );
-        insurancePoolFactory = new InsurancePoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
@@ -79,15 +79,15 @@ contract setAddressesTest is Test {
             address(vedeg),
             address(shield)
         );
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
         // required to provide liquidity
         protectionPool.setPolicyCenter(address(policyCenter));
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);
 
-        pool1 = insurancePoolFactory.deployPool(
+        pool1 = priorityPoolFactory.deployPool(
             "Platypus",
             address(ptp),
             1000 ether,
@@ -96,29 +96,28 @@ contract setAddressesTest is Test {
     }
 
     function testSetPolicyCenterAddress() public {
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        console.log(insurancePoolFactory.policyCenter());
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
+        console.log(priorityPoolFactory.policyCenter());
         assertEq(
-            insurancePoolFactory.policyCenter() == address(policyCenter),
+            priorityPoolFactory.policyCenter() == address(policyCenter),
             true
         );
     }
 
-    function testSetInsurancePoolFactoryAddress() public {
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
-        console.log(policyCenter.insurancePoolFactory());
+    function testSetPriorityPoolFactoryAddress() public {
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
+        console.log(policyCenter.priorityPoolFactory());
         assertEq(
-            policyCenter.insurancePoolFactory() ==
-                address(insurancePoolFactory),
+            policyCenter.priorityPoolFactory() == address(priorityPoolFactory),
             true
         );
     }
 
-    function testSetInsurancePoolFactory() public {
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+    function testSetPriorityPoolFactory() public {
+        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
         assertEq(
-            onboardProposal.insurancePoolFactory() ==
-                address(insurancePoolFactory),
+            onboardProposal.priorityPoolFactory() ==
+                address(priorityPoolFactory),
             true
         );
     }
@@ -132,14 +131,14 @@ contract setAddressesTest is Test {
         // use a non owner address to make sure it's not allowed to set address
         vm.prank(address(0x0000abcdef));
         vm.expectRevert("Ownable: caller is not the owner");
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
     }
 
-    function testSetInsurancePoolFactoryNotOwner() public {
+    function testSetPriorityPoolFactoryNotOwner() public {
         // use a non owner address to make sure it's not allowed to set address
         vm.prank(address(0x0000abcdef));
         vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
     }
 
     function testSetExecutorNotOwner() public {

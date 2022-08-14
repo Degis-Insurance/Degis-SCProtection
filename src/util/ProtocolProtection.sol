@@ -25,7 +25,7 @@ import "../interfaces/IVeDEG.sol";
 import "../interfaces/IExchange.sol";
 import "../interfaces/IProtectionPool.sol";
 import "../interfaces/IInsurancePool.sol";
-import "../interfaces/IInsurancePoolFactory.sol";
+import "../interfaces/IPriorityPoolFactory.sol";
 import "../interfaces/IOnboardProposal.sol";
 import "../interfaces/IIncidentReport.sol";
 import "../interfaces/IPolicyCenter.sol";
@@ -50,7 +50,7 @@ contract ProtocolProtection is Ownable {
     address public onboardProposal;
     address public proposalCenter;
     address public protectionPool;
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
 
     constructor() {}
 
@@ -74,11 +74,19 @@ contract ProtocolProtection is Ownable {
         policyCenter = _policyCenter;
     }
 
-    function setProposalCenter(address _proposalCenter) external virtual onlyOwner {
+    function setProposalCenter(address _proposalCenter)
+        external
+        virtual
+        onlyOwner
+    {
         proposalCenter = _proposalCenter;
     }
 
-    function setIncidentReport(address _incidentReport) external virtual onlyOwner {
+    function setIncidentReport(address _incidentReport)
+        external
+        virtual
+        onlyOwner
+    {
         incidentReport = _incidentReport;
     }
 
@@ -98,11 +106,11 @@ contract ProtocolProtection is Ownable {
         protectionPool = _protectionPool;
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         virtual
         onlyOwner
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 }

@@ -11,4 +11,6 @@ interface ICoverRightTokenFactory {
     ) external returns (address newCRTokenAddress);
 
     function deployed(bytes32 _salt) external view returns (bool);
+
+    function saltToAddress(bytes32 _salt) external view returns (address);
 }

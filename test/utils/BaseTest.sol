@@ -15,7 +15,7 @@ interface ISetAddress {
 
     function setProtectionPool(address _protectionPool) external;
 
-    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setPriorityPoolFactory(address _priorityPoolFactory) external;
 }
 
 /**

@@ -4,10 +4,12 @@ pragma solidity ^0.8.13;
 
 import "../../interfaces/IPolicyCenter.sol";
 
-abstract contract InsurancePoolFactoryDependencies {
+abstract contract PriorityPoolFactoryDependencies {
     address public protectionPool;
     address public policyCenter;
     address public executor;
+
+    address public payoutPool;
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
@@ -19,5 +21,9 @@ abstract contract InsurancePoolFactoryDependencies {
 
     function _setPolicyCenter(address _policyCenter) internal virtual {
         policyCenter = _policyCenter;
+    }
+
+    function _setPayoutPool(address _payoutPool) internal virtual {
+        payoutPool = _payoutPool;
     }
 }
