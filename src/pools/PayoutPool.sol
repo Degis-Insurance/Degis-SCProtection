@@ -49,22 +49,26 @@ contract PayoutPool {
     // Claim the payout with crTokens
     function claim(
         address _user,
-        uint256 _poolId,
-        uint256 _expiry
-    ) external {
+        address _crToken,
+        uint256 _poolId
+    ) external returns (uint256 claimed) {
         require(msg.sender == policyCenter, "Only policy center");
 
-        bytes32 salt = keccak256(abi.encodePacked(_poolId, _expiry));
+        uint256 expiry = ICoverRightToken(_crToken).expiry();
 
-        address crToken = ICoverRightTokenFactory(crFactory).saltToAddress(
-            salt
+        bytes32 salt = keccak256(abi.encodePacked(_poolId, expiry));
+        require(
+            ICoverRightTokenFactory(crFactory).deployed(salt),
+            "Wrong cr token"
         );
 
-        uint256 ava = ICoverRightToken(crToken).getClaimableOf(msg.sender);
+        uint256 ava = ICoverRightToken(_crToken).getClaimableOf(msg.sender);
 
         // TODO: add remaining payout check
         // TODO: how to store the payout id
         uint256 id;
-        IERC20(shield).transfer(_user, (ava * payouts[id].ratio) / SCALE);
+        claimed = (ava * payouts[id].ratio) / SCALE;
+        
+        IERC20(shield).transfer(_user, claimed);
     }
 }
