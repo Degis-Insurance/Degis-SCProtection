@@ -8,17 +8,16 @@ import "../../interfaces/IInsurancePoolFactory.sol";
 import "../../interfaces/IOnboardProposal.sol";
 import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IIncidentReport.sol";
+import "../../interfaces/ITreasury.sol";
 
 abstract contract ExecutorDependencies {
-    address public policyCenter;
     address public protectionPool;
     address public insurancePoolFactory;
     address public incidentReport;
     address public onboardProposal;
 
-    function _setPolicyCenter(address _policyCenter) internal virtual {
-        policyCenter = _policyCenter;
-    }
+    address public treasury;
+
 
     function _setProtectionPool(address _protectionPool) internal virtual {
         protectionPool = _protectionPool;
@@ -37,5 +36,9 @@ abstract contract ExecutorDependencies {
 
     function _setOnboardProposal(address _onboardProposal) internal virtual {
         onboardProposal = _onboardProposal;
+    }
+
+    function _setTreasury(address _treasury) internal virtual {
+        treasury = _treasury;
     }
 }

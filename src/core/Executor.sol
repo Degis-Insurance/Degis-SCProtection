@@ -77,10 +77,6 @@ contract Executor is
         reportBuffer = _reportBuffer;
     }
 
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
-    }
-
     function setInsurancePoolFactory(address _insurancePoolFactory)
         external
         onlyOwner
@@ -105,12 +101,18 @@ contract Executor is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Execute a report already settled
+     * @notice Execute a report
+     *         The report must already been settled and the result is PASSED
+     *         Execution means:
+     *             1) Give 10% of protocol income to reporter (SHIELD)
+     *             2) Mark the priority pool as "liquidated"
+     *
+     *
      *
      * @param _reportId Id of the report to be executed
      */
     function executeReport(uint256 _reportId) public {
-        // get the report
+        // Get the report
         (
             uint256 poolId,
             ,
@@ -127,14 +129,17 @@ contract Executor is
         require(status == SETTLED_STATUS, "Report is not ready to be executed");
         require(result == 1, "Report is not passed");
 
-        // execute the pool
-        address poolAddress = IPolicyCenter(policyCenter).insurancePools(
-            poolId
-        );
-        address tokenAddress = IPolicyCenter(policyCenter).tokenByPoolId(
-            poolId
+        // Give 10% of treasury to the reporter
+        ITreasury(treasury).rewardReporter(reporter);
+
+        IInsurancePoolFactory factory = IInsurancePoolFactory(
+            insurancePoolFactory
         );
 
+        // execute the pool
+        (, address poolAddress, address tokenAddress, , ) = factory.pools(
+            poolId
+        );
 
         // Mark the pool as liquidated
         IInsurancePool(poolAddress).liquidatePool();
@@ -174,8 +179,6 @@ contract Executor is
 
         // emit the event
         emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
-
-
 
         return newPool;
     }
