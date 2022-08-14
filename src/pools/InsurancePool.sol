@@ -65,7 +65,7 @@ contract InsurancePool is
     uint256 public constant DISTRIBUTION_PERIOD = 30;
 
     // Time users have to claim payout when pool is liquidated
-    uint256 public constant CLAIM_PERIOD = 90;
+    uint256 public constant CLAIM_PERIOD = 30;
 
     uint256 public constant MIN_COVER_AMOUNT = 1 ether;
 
@@ -77,6 +77,9 @@ contract InsurancePool is
 
     // Base premium ratio (max 10000) (260 means 2.6% annually)
     uint256 public immutable basePremiumRatio;
+
+    // Pool id set when deployed
+    uint256 public immutable poolId;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -141,7 +144,8 @@ contract InsurancePool is
         string memory _name,
         string memory _symbol,
         uint256 _baseRatio,
-        address _admin
+        address _admin,
+        uint256 _poolId
     ) ERC20(_name, _symbol) OwnableWithoutContext(_admin) {
         // token address insured by pool
         insuredToken = _protocolToken;
@@ -149,6 +153,8 @@ contract InsurancePool is
         startTime = block.timestamp;
 
         basePremiumRatio = _baseRatio;
+
+        poolId = _poolId;
 
         // TODO: change length
         maxLength = 3;
@@ -159,13 +165,11 @@ contract InsurancePool is
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Only executor contract
     modifier onlyExecutor() {
         require(msg.sender == executor, "Only executor can call this function");
         _;
     }
 
-    // Only policy center contract
     modifier onlyPolicyCenter() {
         require(
             msg.sender == policyCenter,
@@ -207,6 +211,8 @@ contract InsurancePool is
 
     /**
      * @notice Get current active cover amount
+     *
+     * @return covered Total active cover
      */
     function activeCovered() public view returns (uint256 covered) {
         (uint256 currentYear, uint256 currentMonth, ) = DateTimeLibrary
@@ -220,6 +226,8 @@ contract InsurancePool is
                     ++currentYear;
                     currentMonth = 1;
                 }
+
+                ++i;
             }
         }
     }
@@ -228,6 +236,8 @@ contract InsurancePool is
      * @notice Get the dynamic premium ratio (annually)
      *         Depends on the covers sold and liquidity amount
      *         For the first 48 hours, use the base premium ratio
+     *
+     * @param _newAmount New cover amount being bought
      *
      * @return ratio The dynamic ratio
      */
@@ -273,23 +283,6 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Pause this pool
-     *
-     * @param _paused True to pause, false to unpause
-     */
-    function pauseInsurancePool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or Incident Report can call this function"
-        );
-        if (_paused) {
-            _pause();
-        } else {
-            _unpause();
-        }
-    }
 
     function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {
         maxCapacity = _maxCapacity;
@@ -372,17 +365,20 @@ contract InsurancePool is
         _updateDynamic();
     }
 
-    function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (
-            uint256 currentYear,
-            uint256 currentMonth,
-            uint256 currentDay
-        ) = DateTimeLibrary.timestampToDate(block.timestamp);
-
-        if (currentDay >= 25) ++_length;
-
-        for (uint256 i; i < _length; ) {
-            coverInMonth[currentYear][currentMonth + i] += _amount;
+    /**
+     * @notice Pause this pool
+     *
+     * @param _paused True to pause, false to unpause
+     */
+    function pauseInsurancePool(bool _paused) external {
+        require(
+            (msg.sender == owner()) || (msg.sender == incidentReport),
+            "Only owner or Incident Report can call this function"
+        );
+        if (_paused) {
+            _pause();
+        } else {
+            _unpause();
         }
     }
 
@@ -411,17 +407,7 @@ contract InsurancePool is
         // Users will have CLAIM_PERIOD days to claim payout.
         endLiquidationDate = block.timestamp + CLAIM_PERIOD * 1 days;
 
-        // emit event to notify users that pool has been liquidated.
         emit Liquidation(amount, endLiquidationDate);
-    }
-
-    function _updateDynamic() internal {
-        uint256 fromStart = block.timestamp - startTime;
-
-        if (fromStart > 7 days && !passedBasePeriod) {
-            IInsurancePoolFactory(insurancePoolFactory).addDynamicCounter();
-            passedBasePeriod = true;
-        }
     }
 
     /**
@@ -441,16 +427,42 @@ contract InsurancePool is
         emit LiquidationEnded(block.timestamp);
     }
 
-    function increaseMaxCapacity(uint256 _maxCapacity) external onlyOwner {
-        maxCapacity = _maxCapacity;
-        IInsurancePoolFactory(insurancePoolFactory).updateMaxCapacity(
-            maxCapacity
-        );
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Update cover record info when new covers come in
+     *
+     * @param _amount Cover amount
+     * @param _length Cover length
+     */
+    function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
+        (
+            uint256 currentYear,
+            uint256 currentMonth,
+            uint256 currentDay
+        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+
+        if (currentDay >= 25) ++_length;
+
+        for (uint256 i; i < _length; ) {
+            coverInMonth[currentYear][currentMonth + i] += _amount;
+        }
+    }
+
+    /**
+     * @notice Update dynamic status of this pool
+     *         Record this pool as "already dynamic" in factory
+     */
+    function _updateDynamic() internal {
+        uint256 fromStart = block.timestamp - startTime;
+
+        if (fromStart > 7 days && !passedBasePeriod) {
+            IInsurancePoolFactory(insurancePoolFactory).addDynamicCounter();
+            passedBasePeriod = true;
+        }
+    }
 
     /**
      * @notice Update rewards

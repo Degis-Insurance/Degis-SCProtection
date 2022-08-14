@@ -129,6 +129,24 @@ contract InsurancePoolFactory is
     }
 
     /**
+     * @notice Get total max capacity
+     *
+     * @return capacity Total capacity
+     */
+    function totalMaxCapacity() external view returns (uint256 capacity) {
+        uint256 poolAmount = poolCounter + 1;
+
+        // Not count the Protection Pool
+        for (uint256 i = 1; i < poolAmount; ) {
+            capacity += pools[i].maxCapacity;
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
      * @notice Get the pool information by pool id
      *
      * @param _poolId Pool id
@@ -140,6 +158,10 @@ contract InsurancePoolFactory is
     {
         return pools[_poolId];
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
         _setPolicyCenter(_policyCenter);
@@ -206,12 +228,15 @@ contract InsurancePoolFactory is
 
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
+        uint256 currentPoolId = ++poolCounter;
+
         bytes memory bytecode = _getInsurancePoolBytecode(
             _protocolToken,
             _maxCapacity,
             _basePremiumRatio,
             _name,
-            _name
+            _name,
+            currentPoolId
         );
 
         // Finish deployment and get the address
@@ -220,7 +245,7 @@ contract InsurancePoolFactory is
         tokenRegistered[_protocolToken] = true;
         poolRegistered[newPoolAddress] = true;
 
-        uint256 currentPoolId = ++poolCounter;
+        
 
         // Store pool information in Policy Center
         IPolicyCenter(policyCenter).storePoolInformation(
@@ -254,20 +279,6 @@ contract InsurancePoolFactory is
         return newPoolAddress;
     }
 
-    function updateMaxCapacity(uint256 _maxCapacity) external {
-        uint256 difference;
-        for (uint256 i = 0; i <= poolCounter; i++) {
-            if (pools[i].poolAddress == msg.sender) {
-                if (pools[i].maxCapacity > _maxCapacity) {
-                    difference = pools[i].maxCapacity - _maxCapacity;
-                    sumOfMaxCapacities -= difference;
-                } else {
-                    difference = _maxCapacity - pools[i].maxCapacity;
-                    sumOfMaxCapacities += difference;
-                }
-            }
-        }
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
@@ -281,6 +292,7 @@ contract InsurancePoolFactory is
      * @param _policyPrice   Policy price
      * @param _tokenName     Name for the new pool
      * @param _symbol        Symbol for new pool
+     * @param _poolId        Current pool id
      *
      * @return bytecode Creation bytecode
      */
@@ -289,7 +301,8 @@ contract InsurancePoolFactory is
         uint256 _maxCapacity,
         uint256 _policyPrice,
         string memory _tokenName,
-        string memory _symbol
+        string memory _symbol,
+        uint256 _poolId
     ) internal view virtual returns (bytes memory) {
         bytes memory bytecode = type(InsurancePool).creationCode;
 
@@ -304,7 +317,8 @@ contract InsurancePoolFactory is
                     _tokenName,
                     _symbol,
                     _policyPrice,
-                    owner()
+                    owner(),
+                    _poolId
                 )
             );
     }

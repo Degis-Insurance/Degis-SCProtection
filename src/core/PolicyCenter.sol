@@ -29,6 +29,8 @@ import "./interfaces/PolicyCenterDependencies.sol";
 import "../interfaces/ExternalTokenDependencies.sol";
 import "../interfaces/IPriceGetter.sol";
 
+import "../libraries/DateTime.sol";
+
 import "forge-std/console.sol";
 
 /**
@@ -306,8 +308,8 @@ contract PolicyCenter is
     /**
      * @notice Store new cover token address for a given pool id
      *
-     * @param _coverToken   Address of the insurance pool
-     * @param _poolId Pool id
+     * @param _coverToken Cover token address
+     * @param _poolId     Pool id
      */
     function storeCoverTokenInformation(address _coverToken, uint256 _poolId)
         external
@@ -362,6 +364,8 @@ contract PolicyCenter is
             _coverDuration
         );
 
+        address crToken = _checkCRToken(_poolId, timestampDuration);
+
         // Check if premium cost is within limits given by user
         require(premium <= _maxPayment, "Premium too high");
 
@@ -414,6 +418,40 @@ contract PolicyCenter is
             _coverDuration,
             timestampDuration
         );
+    }
+
+    function _checkCRToken(uint256 _poolId, uint256 _length)
+        internal
+        returns (address crToken)
+    {
+        crToken = coverTokenByPoolId[_poolId];
+        if (crToken == address(0)) {
+            (string memory poolName, , , , ) = IInsurancePoolFactory(
+                insurancePoolFactory
+            ).pools(_poolId);
+
+            uint256 expiry = block.timestamp + _length;
+
+            (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
+                expiry
+            );
+
+            string memory tokenName = string.concat(
+                "CR-",
+                poolName,
+                "-",
+                _toString(year),
+                "-",
+                _toString(month)
+            );
+
+            ICoverRightTokenFactory(coverRightTokenFactory).deployCRToken(
+                poolName,
+                _poolId,
+                tokenName,
+                expiry
+            );
+        }
     }
 
     /**
@@ -802,10 +840,8 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration
     ) internal view returns (uint256 price, uint256 timestampDuration) {
-        (price, timestampDuration) = IInsurancePool(insurancePools[_poolId]).coverPrice(
-            _coverAmount,
-            _coverDuration
-        );
+        (price, timestampDuration) = IInsurancePool(insurancePools[_poolId])
+            .coverPrice(_coverAmount, _coverDuration);
     }
 
     /**
@@ -823,5 +859,27 @@ contract PolicyCenter is
             pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
             "Insufficient capacity"
         );
+    }
+
+    function _toString(uint256 value) internal pure returns (string memory) {
+        // Inspired by OraclizeAPI's implementation - MIT licence
+        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
+
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }

@@ -40,6 +40,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         bytes32 salt = keccak256(abi.encodePacked(_poolId, _expiry));
 
         require(!deployed[salt], "already deployed");
+        deployed[salt] = true;
 
         bytes memory bytecode = _getCRTokenBytecode(
             _poolName,
