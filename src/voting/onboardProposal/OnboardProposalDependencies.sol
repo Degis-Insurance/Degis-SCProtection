@@ -3,20 +3,20 @@
 pragma solidity ^0.8.13;
 
 import "../../interfaces/IExecutor.sol";
-import "../../interfaces/IInsurancePoolFactory.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 
 abstract contract OnboardProposalDependencies {
     address public executor;
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
     }
 
-    function _setInsurancePoolFactory(address _insurancePoolFactory)
+    function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 }

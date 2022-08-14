@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
@@ -26,7 +26,7 @@ import "src/interfaces/IExecutor.sol";
 @notice Tests initial deployment for most contracts.
  */
 contract InitialContractDeploymentTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
@@ -74,11 +74,7 @@ contract InitialContractDeploymentTest is Test {
     }
 
     function testDeployProtectionPool() public {
-        protectionPool = new ProtectionPool(
-            address(0),
-            address(0),
-            address(0)
-        );
+        protectionPool = new ProtectionPool(address(0), address(0), address(0));
         assertEq(
             keccak256(bytes(protectionPool.name())) ==
                 keccak256(bytes("ProtectionPool")),
@@ -110,7 +106,7 @@ contract InitialContractDeploymentTest is Test {
 @notice Tests secondary deployment for most contracts since they are dependent on other contracts.
  */
 contract SecondaryContractDeploymentTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     OnboardProposal public onboardProposal;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
@@ -154,16 +150,15 @@ contract SecondaryContractDeploymentTest is Test {
     }
 
     function testDeployFactory() public {
-        
         // Factory creates insurance pools.
         // It is dependent on deg and protectionPool being deployed.
-        insurancePoolFactory = new InsurancePoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(0),
             address(0),
             address(deg),
             address(protectionPool)
         );
-        assertEq(insurancePoolFactory.poolCounter() == 0, true);
+        assertEq(priorityPoolFactory.poolCounter() == 0, true);
     }
 
     function testDeployInsurancePool() public {
@@ -179,8 +174,8 @@ contract SecondaryContractDeploymentTest is Test {
         policyCenter.provideLiquidity(10000 ether);
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, protectionPool,
-        // policyCenter and insurancePoolFactory being deployed.
-        insurancePoolFactory = new InsurancePoolFactory(
+        // policyCenter and priorityPoolFactory being deployed.
+        priorityPoolFactory = new PriorityPoolFactory(
             address(0),
             address(0),
             address(deg),
@@ -194,10 +189,10 @@ contract SecondaryContractDeploymentTest is Test {
             address(protectionPool)
         );
         exchange = new Exchange();
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        address pool1 = insurancePoolFactory.deployPool(
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
+        address pool1 = priorityPoolFactory.deployPool(
             "Platypus",
             address(ptp),
             10000,

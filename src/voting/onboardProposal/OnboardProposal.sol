@@ -20,18 +20,21 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContext.sol";
 
-import "./interfaces/OnboardProposalParameters.sol";
-import "./interfaces/OnboardProposalDependencies.sol";
+import "./OnboardProposalParameters.sol";
+import "./OnboardProposalDependencies.sol";
 
-import "../interfaces/ExternalTokenDependencies.sol";
+import "../../interfaces/ExternalTokenDependencies.sol";
 
+/**
+ * @notice Onboard Proposal
+ */
 contract OnboardProposal is
     OnboardProposalParameters,
-    OnboardProposalDependencies,
     ExternalTokenDependencies,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    OnboardProposalDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -133,11 +136,11 @@ contract OnboardProposal is
         _setExecutor(_executor);
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setProposalCenter(address _proposalCenter) external onlyOwner {
@@ -163,9 +166,7 @@ contract OnboardProposal is
         uint256 _basePremiumRatio // 10000 == 100% premium anual cost
     ) external {
         require(
-            !IInsurancePoolFactory(insurancePoolFactory).tokenRegistered(
-                _token
-            ),
+            !IPriorityPoolFactory(priorityPoolFactory).tokenRegistered(_token),
             "Protocol already protected"
         );
         require(
@@ -316,7 +317,6 @@ contract OnboardProposal is
 
         userVote.claimed = true;
     }
-
 
     /**
      * @notice Get the final voting result

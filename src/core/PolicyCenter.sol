@@ -276,11 +276,11 @@ contract PolicyCenter is
     }
 
     //TODO: rename insurance pool factory to priority pool factory?
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     /**
@@ -295,7 +295,7 @@ contract PolicyCenter is
         address _token,
         uint256 _poolId
     ) external {
-        require(msg.sender == insurancePoolFactory, "Only factory can store");
+        require(msg.sender == priorityPoolFactory, "Only factory can store");
 
         // maps token address to pool id
         tokenByPoolId[_poolId] = _token;
@@ -327,8 +327,8 @@ contract PolicyCenter is
      */
     function approvePoolToken(address _token) external {
         require(
-            msg.sender == owner() || msg.sender == insurancePoolFactory,
-            "Only owner or insurancePoolFactory can approve"
+            msg.sender == owner() || msg.sender == priorityPoolFactory,
+            "Only owner or priorityPoolFactory can approve"
         );
         _approvePoolToken(_token);
     }
@@ -426,8 +426,8 @@ contract PolicyCenter is
     {
         crToken = coverTokenByPoolId[_poolId];
         if (crToken == address(0)) {
-            (string memory poolName, , , , ) = IInsurancePoolFactory(
-                insurancePoolFactory
+            (string memory poolName, , , , ) = IPriorityPoolFactory(
+                priorityPoolFactory
             ).pools(_poolId);
 
             uint256 expiry = block.timestamp + _length;

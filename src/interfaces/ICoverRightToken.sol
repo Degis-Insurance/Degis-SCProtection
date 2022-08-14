@@ -18,7 +18,7 @@ interface ICoverRightToken {
     function getClaimableOf(address _user) view external returns (uint256);
     function getExcludedCoverageOf(address _user) view external returns (uint256 exclusion);
     function incidentReport() view external returns (address);
-    function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+
     function mint(uint256 _poolId, address _user, uint256 _amount) external;
     function burn(uint256 _poolId, address _user, uint256 _amount) external;
     function name() view external returns (string memory);

@@ -5,12 +5,12 @@ pragma solidity ^0.8.13;
 import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IInsurancePool.sol";
 import "../../interfaces/IProtectionPool.sol";
-import "../../interfaces/IInsurancePoolFactory.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 
 abstract contract IncidentReportDependencies {
     address public policyCenter;
     address public protectionPool;
-    address public insurancePoolFactory;
+    address public priorityPoolFactory;
 
     function _setPolicyCenter(address _policyCenter) internal virtual {
         policyCenter = _policyCenter;
@@ -20,10 +20,10 @@ abstract contract IncidentReportDependencies {
         protectionPool = _protectionPool;
     }
 
-    function _setInsurancePoolFactory(address _insurancePoolFactory)
+    function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual
     {
-        insurancePoolFactory = _insurancePoolFactory;
+        priorityPoolFactory = _priorityPoolFactory;
     }
 }

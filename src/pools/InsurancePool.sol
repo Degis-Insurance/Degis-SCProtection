@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "../util/PausableWithoutContext.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/InsurancePoolDependencies.sol";
@@ -53,16 +53,13 @@ import "forge-std/console.sol";
  */
 contract InsurancePool is
     ERC20,
-    InsurancePoolDependencies,
     OwnableWithoutContext,
-    Pausable
+    PausableWithoutContext,
+    InsurancePoolDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // Time to distribute premium payments to liquidity providers
-    uint256 public constant DISTRIBUTION_PERIOD = 30;
 
     // Time users have to claim payout when pool is liquidated
     uint256 public constant CLAIM_PERIOD = 30;
@@ -253,13 +250,13 @@ contract InsurancePool is
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _newAmount) * SCALE) /
-                IProtectionPool(protectionPool).totalCovered();
+                IProtectionPool(protectionPool).getTotalCovered();
 
             // LP Token ratio = LP token in this pool / Total lp token
             uint256 tokenRatio = (totalSupply() * SCALE) /
-                IProtectionPool(protectionPool).totalSupply();
+                IERC20(protectionPool).totalSupply();
 
-            uint256 numofPools = IInsurancePoolFactory(insurancePoolFactory)
+            uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
                 .dynamicPoolCounter();
 
             // Dynamic premium ratio
@@ -300,11 +297,11 @@ contract InsurancePool is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -375,11 +372,8 @@ contract InsurancePool is
             (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"
         );
-        if (_paused) {
-            _pause();
-        } else {
-            _unpause();
-        }
+
+        _pause(_paused);
     }
 
     /**
@@ -394,20 +388,64 @@ contract InsurancePool is
      * @notice Sets this insurance pool status to liquidated
      *         Only callable by executor
      *         Only after the report has passed the voting
+     *
+     * @param _amount Payout amount to be moved out
      */
-    function liquidatePool() external onlyExecutor {
+    function liquidatePool(uint256 _amount) external onlyExecutor {
         // changes the status of the insurance pool to liquidated and allows payout claims
         _setLiquidationStatus(true);
-
-        // when liquidated, totalSupply does not change. liquidity providers keep LP tokens.
-        // LP tokens represent their share of remaining liquidity after payout is done.
-        uint256 amount = totalSupply();
 
         // Set end liquidation date
         // Users will have CLAIM_PERIOD days to claim payout.
         endLiquidationDate = block.timestamp + CLAIM_PERIOD * 1 days;
 
-        emit Liquidation(amount, endLiquidationDate);
+        _retrievePayout(_amount);
+
+        emit Liquidation(_amount, endLiquidationDate);
+    }
+
+    function _retrievePayout(uint256 _amount) internal {
+        // Current lp amount
+        uint256 currentLP = IERC20(protectionPool).balanceOf(address(this));
+
+        address shield = IPriorityPoolFactory(priorityPoolFactory).shield();
+
+        uint256 price = IERC20(shield).balanceOf(protectionPool) /
+            totalSupply();
+
+        uint256 neededLPAmount = (_amount * SCALE) / price;
+
+        address payoutPool = IPriorityPoolFactory(priorityPoolFactory)
+            .payoutPool();
+
+        uint256 totalPayout;
+
+        // If the shield from current lp is enough
+        if (neededLPAmount < currentLP) {
+            totalPayout = IProtectionPool(protectionPool).removedLiquidity(
+                neededLPAmount,
+                payoutPool
+            );
+        } else {
+            uint256 shieldGot = IProtectionPool(protectionPool)
+                .removedLiquidity(currentLP, address(this));
+
+            uint256 remainingPayout = _amount - shieldGot;
+
+            IProtectionPool(protectionPool).removedLiquidityWhenClaimed(
+                remainingPayout,
+                payoutPool
+            );
+
+            totalPayout = remainingPayout + shieldGot;
+        }
+
+        // Set a ratio used when claiming with crTokens
+        // E.g. ratio is 1e11
+        //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
+        uint256 payoutRatio = (_amount * SCALE) / activeCovered();
+
+        IPayoutPool(payoutPool).newPayout(_amount, payoutRatio);
     }
 
     /**
@@ -459,7 +497,7 @@ contract InsurancePool is
         uint256 fromStart = block.timestamp - startTime;
 
         if (fromStart > 7 days && !passedBasePeriod) {
-            IInsurancePoolFactory(insurancePoolFactory).addDynamicCounter();
+            IPriorityPoolFactory(priorityPoolFactory).addDynamicCounter();
             passedBasePeriod = true;
         }
     }

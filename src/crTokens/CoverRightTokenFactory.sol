@@ -12,6 +12,8 @@ import "../util/OwnableWithoutContext.sol";
 contract CoverRightTokenFactory is OwnableWithoutContext {
     mapping(bytes32 => bool) deployed;
 
+    mapping(bytes32 => address) saltToAddress;
+
     address public policyCenter;
 
     event NewCRTokenDeployed(

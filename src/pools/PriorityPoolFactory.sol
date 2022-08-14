@@ -22,7 +22,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/InsurancePoolFactoryDependencies.sol";
+import "./interfaces/PriorityPoolFactoryDependencies.sol";
 
 import "../util/OwnableWithoutContext.sol";
 
@@ -38,8 +38,8 @@ import "./InsurancePool.sol";
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Protocol Protection
  */
-contract InsurancePoolFactory is
-    InsurancePoolFactoryDependencies,
+contract PriorityPoolFactory is
+    PriorityPoolFactoryDependencies,
     ExternalTokenDependencies,
     OwnableWithoutContext
 {
@@ -92,12 +92,15 @@ contract InsurancePoolFactory is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool
+        address _protectionPool,
+        address _payoutPool
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
         protectionPool = _protectionPool;
+
+        payoutPool = _payoutPool;
 
         // Protection pool as pool 0
         pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
@@ -245,8 +248,6 @@ contract InsurancePoolFactory is
         tokenRegistered[_protocolToken] = true;
         poolRegistered[newPoolAddress] = true;
 
-        
-
         // Store pool information in Policy Center
         IPolicyCenter(policyCenter).storePoolInformation(
             newPoolAddress,
@@ -278,7 +279,6 @@ contract InsurancePoolFactory is
 
         return newPoolAddress;
     }
-
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //

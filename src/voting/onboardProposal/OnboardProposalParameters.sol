@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./VotingParameters.sol";
+import "../interfaces/VotingParameters.sol";
 
 abstract contract OnboardProposalParameters is VotingParameters {
     // TODO: change parameters

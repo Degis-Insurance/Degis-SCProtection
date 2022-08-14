@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
@@ -25,7 +25,7 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ExecutorTest is Test, IncidentReportParameters {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
@@ -70,7 +70,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         );
 
         // Insurance pool factory init
-        insurancePoolFactory = new InsurancePoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
@@ -102,35 +102,35 @@ contract ExecutorTest is Test, IncidentReportParameters {
         shield.transfer(address(exchange), 1000 ether);
         ptp.transfer(address(exchange), 1000 ether);
 
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
-        insurancePoolFactory.setExecutor(address(executor));
-     
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setExecutor(address(executor));
+
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setPolicyCenter(address(policyCenter));
-         
+
         policyCenter.setExecutor(address(executor));
         policyCenter.setProtectionPool(address(protectionPool));
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
-        
+
         onboardProposal.setExecutor(address(executor));
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
-      
+        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
+
         incidentReport.setPolicyCenter(address(policyCenter));
         incidentReport.setProtectionPool(address(protectionPool));
-        incidentReport.setInsurancePoolFactory(address(insurancePoolFactory));
-      
+        incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
         executor.setProtectionPool(address(protectionPool));
-        executor.setInsurancePoolFactory(address(insurancePoolFactory));
+        executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);
 
-        pool1 = insurancePoolFactory.deployPool(
+        pool1 = priorityPoolFactory.deployPool(
             "Platypus",
             address(ptp),
             1000 ether,
@@ -138,11 +138,10 @@ contract ExecutorTest is Test, IncidentReportParameters {
         );
 
         // set addresses for pool1
-        
+
         InsurancePool(pool1).setExecutor(address(executor));
         InsurancePool(pool1).setIncidentReport(address(incidentReport));
         InsurancePool(pool1).setPolicyCenter(address(policyCenter));
-
 
         // report pool
         deg.transfer(address(this), 10000 ether);
@@ -202,19 +201,17 @@ contract ExecutorTest is Test, IncidentReportParameters {
 
         onboardProposal.settle(PROPOSAL_ID);
     }
-    
+
     function testChangeBuffer() public {
-            
-            vm.warp(8 days);
-            // change buffer to time
-            executor.setBuffers(1 days, 1 days);
-            // expect that pool1 is now in the liquidation state
-            assertEq(executor.reportBuffer(), 1 days);
-            assertEq(executor.proposalBuffer(), 1 days);
+        vm.warp(8 days);
+        // change buffer to time
+        executor.setBuffers(1 days, 1 days);
+        // expect that pool1 is now in the liquidation state
+        assertEq(executor.reportBuffer(), 1 days);
+        assertEq(executor.proposalBuffer(), 1 days);
     }
 
     function testExecuteProposal() public {
-
         vm.warp(8 days);
         // execute proposal
         pool2 = executor.executeProposal(PROPOSAL_ID);
@@ -231,5 +228,4 @@ contract ExecutorTest is Test, IncidentReportParameters {
         // expect that pool1 is now in the liquidation state
         assertEq(InsurancePool(pool1).liquidated() == true, true);
     }
-    
 }

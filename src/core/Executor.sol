@@ -44,11 +44,6 @@ contract Executor is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // if chosen to, executor report could have a buffer timer to prevent abuse of the system
-    // from team or organization members
-    uint256 public reportBuffer;
-    uint256 public proposalBuffer;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -67,21 +62,11 @@ contract Executor is
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @notice              sets pool and report time buffers
-     * @param _proposalBuffer   time in unix
-     * @param _reportBuffer time in unix
-     */
-    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer) public {
-        proposalBuffer = _proposalBuffer;
-        reportBuffer = _reportBuffer;
-    }
-
-    function setInsurancePoolFactory(address _insurancePoolFactory)
+    function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setInsurancePoolFactory(_insurancePoolFactory);
+        _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setProtectionPool(address _protectionPool) external onlyOwner {
@@ -106,8 +91,9 @@ contract Executor is
      *         Execution means:
      *             1) Give 10% of protocol income to reporter (SHIELD)
      *             2) Mark the priority pool as "liquidated"
+     *             3) Move the total payout amount out of the priority pool (to payout pool)
      *
-     *
+     *         Can not execute a report before the previous liquidation ended
      *
      * @param _reportId Id of the report to be executed
      */
@@ -123,7 +109,8 @@ contract Executor is
             ,
             uint256 status,
             uint256 result,
-
+            ,
+            uint256 payout
         ) = IIncidentReport(incidentReport).reports(_reportId);
 
         require(status == SETTLED_STATUS, "Report is not ready to be executed");
@@ -132,23 +119,20 @@ contract Executor is
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(reporter);
 
-        IInsurancePoolFactory factory = IInsurancePoolFactory(
-            insurancePoolFactory
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
         );
 
         // execute the pool
-        (, address poolAddress, address tokenAddress, , ) = factory.pools(
-            poolId
+        (, address poolAddress, , , ) = factory.pools(poolId);
+
+        require(
+            block.timestamp > IInsurancePool(poolAddress).endLiquidationDate(),
+            "Previous liquidation not end"
         );
 
         // Mark the pool as liquidated
-        IInsurancePool(poolAddress).liquidatePool();
-
-        // remove pool from protocol registry in insurance pool factory
-        // that allows the creation of new pools for that protocol
-        IInsurancePoolFactory(insurancePoolFactory).deregisterAddress(
-            tokenAddress
-        );
+        IInsurancePool(poolAddress).liquidatePool(payout);
 
         // emit the event
         emit ReportExecuted(poolAddress, poolId, _reportId);
@@ -169,13 +153,12 @@ contract Executor is
         require(proposal.result == 1, "Has not been approved");
 
         // execute the proposal
-        address newPool = IInsurancePoolFactory(insurancePoolFactory)
-            .deployPool(
-                proposal.name,
-                proposal.protocolAddress,
-                proposal.maxCapacity,
-                proposal.priceRatio
-            );
+        address newPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(
+            proposal.name,
+            proposal.protocolAddress,
+            proposal.maxCapacity,
+            proposal.priceRatio
+        );
 
         // emit the event
         emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);

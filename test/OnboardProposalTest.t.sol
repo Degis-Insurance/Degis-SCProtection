@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/InsurancePoolFactory.sol";
+import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/OnboardProposal.sol";
@@ -25,7 +25,7 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract OnboardProposalVotingTest is Test {
-    InsurancePoolFactory public insurancePoolFactory;
+    PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
@@ -96,7 +96,7 @@ contract OnboardProposalVotingTest is Test {
             address(vedeg),
             address(shield)
         );
-        insurancePoolFactory = new InsurancePoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
@@ -124,32 +124,32 @@ contract OnboardProposalVotingTest is Test {
         shield.approve(address(policyCenter), 20000 ether);
         deg.approve(address(policyCenter), 10000 ether);
 
-        insurancePoolFactory.setExecutor(address(executor));
-        insurancePoolFactory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setExecutor(address(executor));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
 
         protectionPool.setPolicyCenter(address(policyCenter));
-        protectionPool.setInsurancePoolFactory(address(insurancePoolFactory));
+        protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
 
         policyCenter.setExecutor(address(executor));
         policyCenter.setExchange(address(exchange));
 
         policyCenter.setProtectionPool(address(protectionPool));
-        policyCenter.setInsurancePoolFactory(address(insurancePoolFactory));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
 
         onboardProposal.setExecutor(address(executor));
-        onboardProposal.setInsurancePoolFactory(address(insurancePoolFactory));
+        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
         executor.setProtectionPool(address(protectionPool));
-        executor.setInsurancePoolFactory(address(insurancePoolFactory));
+        executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
         policyCenter.provideLiquidity(10000 ether);
 
         // create insurance pool
-        pool1 = insurancePoolFactory.deployPool(
+        pool1 = priorityPoolFactory.deployPool(
             "Platypus",
             address(ptp),
             10000 ether,

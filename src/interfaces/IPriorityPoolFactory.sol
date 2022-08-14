@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-interface IInsurancePoolFactory {
+interface IPriorityPoolFactory {
     event OwnershipTransferred(
         address indexed previousOwner,
         address indexed newOwner
@@ -24,8 +24,6 @@ interface IInsurancePoolFactory {
         uint256 e;
     }
 
-    function administrator() external view returns (address);
-
     function deg() external view returns (address);
 
     function deregisterAddress(address _tokenAddress) external;
@@ -45,7 +43,7 @@ interface IInsurancePoolFactory {
 
     function incidentReport() external view returns (address);
 
-    function insurancePoolFactory() external view returns (address);
+    function priorityPoolFactory() external view returns (address);
 
     function maxCapacity() external view returns (uint256);
 
@@ -78,7 +76,7 @@ interface IInsurancePoolFactory {
 
     function setIncidentReport(address _incidentReport) external;
 
-    function setInsurancePoolFactory(address _insurancePoolFactory) external;
+    function setPriorityPoolFactory(address _priorityPoolFactory) external;
 
     function setPolicyCenter(address _policyCenter) external;
 
@@ -114,4 +112,6 @@ interface IInsurancePoolFactory {
             uint256 maxCapacity,
             uint256 basePremiumRatio
         );
+
+    function payoutPool() external view returns (address);
 }
