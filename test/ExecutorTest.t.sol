@@ -6,8 +6,8 @@ import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -19,10 +19,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -36,7 +36,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     Exchange public exchange;
     Executor public executor;
     ERC20 public ptp;
@@ -144,9 +144,9 @@ contract ExecutorTest is Test, IncidentReportParameters {
 
         // set addresses for pool1
 
-        InsurancePool(pool1).setExecutor(address(executor));
-        InsurancePool(pool1).setIncidentReport(address(incidentReport));
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setExecutor(address(executor));
+        PriorityPool(pool1).setIncidentReport(address(incidentReport));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         // report pool
         deg.transfer(address(this), 10000 ether);
@@ -212,7 +212,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         // execute proposal
         pool2 = executor.executeProposal(PROPOSAL_ID);
         // expect that pool2 is deployed
-        address insuredToken = IInsurancePool(pool2).insuredToken();
+        address insuredToken = IPriorityPool(pool2).insuredToken();
         assertEq(insuredToken, address(yeti));
     }
 
@@ -222,6 +222,6 @@ contract ExecutorTest is Test, IncidentReportParameters {
         executor.executeReport(POOL_ID);
 
         // expect that pool1 is now in the liquidation state
-        assertEq(InsurancePool(pool1).liquidated() == true, true);
+        assertEq(PriorityPool(pool1).liquidated() == true, true);
     }
 }

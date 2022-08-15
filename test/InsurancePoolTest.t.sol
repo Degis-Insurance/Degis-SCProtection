@@ -11,21 +11,21 @@ import "src/mock/MockExchange.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockVeDEG.sol";
 
-import "src/pools/InsurancePool.sol";
-import "src/pools/ProtectionPool.sol";
-import "src/pools/PriorityPoolFactory.sol";
+import "src/pools/priorityPool/PriorityPool.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/PayoutPool.sol";
 
 
 import "src/core/PolicyCenter.sol";
 
-contract InsurancePoolTest is BaseTest {
+contract PriorityPoolTest is BaseTest {
     address alice = mkaddr("alice");
     address bob = mkaddr("bob");
 
     ProtectionPool public protectionPool;
     PriorityPoolFactory public factory;
-    InsurancePool public pool;
+    PriorityPool public pool;
     PayoutPool public payoutPool;
 
     PolicyCenter public policyCenter;
@@ -102,7 +102,7 @@ contract InsurancePoolTest is BaseTest {
         );
         assertEq(allowance, type(uint256).max);
 
-        pool = InsurancePool(newPoolAddress);
+        pool = PriorityPool(newPoolAddress);
 
         (uint256 price, uint256 length) = pool.coverPrice(10 ether, 90);
         console.log("price", price);

@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -17,11 +17,11 @@ import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IPayoutPool.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -38,7 +38,7 @@ contract InitialContractDeploymentTest is Test {
     MockDEG public deg;
     MockVeDEG public vedeg;
     ERC20Mock public ptp;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     Executor public executor;
     PayoutPool public payoutPool;
 
@@ -167,7 +167,7 @@ contract SecondaryContractDeploymentTest is Test {
         assertEq(priorityPoolFactory.poolCounter() == 0, true);
     }
 
-    function testDeployInsurancePool() public {
+    function testDeployPriorityPool() public {
         policyCenter = new PolicyCenter(
             address(deg),
             address(0),

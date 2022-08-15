@@ -22,7 +22,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../interfaces/IExchange.sol";
 import "../interfaces/IProtectionPool.sol";
-import "../interfaces/IInsurancePool.sol";
+import "../interfaces/IPriorityPool.sol";
 import "../interfaces/IPriorityPoolFactory.sol";
 import "../interfaces/IOnboardProposal.sol";
 import "../interfaces/IIncidentReport.sol";

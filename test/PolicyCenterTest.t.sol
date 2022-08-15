@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -18,10 +18,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -31,7 +31,7 @@ import "forge-std/console.sol";
 @notice Tests user Interactions from user side.
         Initial
 */
-contract PostInsurancePoolDeploymentTest is Test {
+contract PostPriorityPoolDeploymentTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
@@ -41,7 +41,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     // added exchange for mock swapping tokens
     Exchange public exchange;
     Executor public executor;
@@ -166,9 +166,9 @@ contract PostInsurancePoolDeploymentTest is Test {
         );
         // set addreses for ptp pool
 
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
-        InsurancePool(pool1).setIncidentReport(address(incidentReport));
+        PriorityPool(pool1).setIncidentReport(address(incidentReport));
     }
 
     function testGetPoolAddressList() public {
@@ -202,13 +202,13 @@ contract PostInsurancePoolDeploymentTest is Test {
         );
     }
 
-    function testProvideLiquidityInsurancePool() public {
+    function testProvideLiquidityPriorityPool() public {
         // user should be able to provide liquidity to ptp pool in ptp
         shield.approve(address(policyCenter), 10000 ether);
 
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
-        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
     }
 
     function testUnstakeBeforeBufferTimeEndInsnsurancePool() public {
@@ -217,20 +217,20 @@ contract PostInsurancePoolDeploymentTest is Test {
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
         // user should not be able to remove liquidity and liquidities should remain the same.
-        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
-        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
     }
 
-    function testUnstakeAfterBufferTimeEndsInsurancePool() public {
+    function testUnstakeAfterBufferTimeEndsPriorityPool() public {
         // provide liquidity
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
-        assertEq(InsurancePool(pool1).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
         // change block timestamp to after buffer time
         vm.warp(7 days + 1);
 
-        console.log(InsurancePool(pool1).totalSupply());
+        console.log(PriorityPool(pool1).totalSupply());
         policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
     }
 
@@ -238,27 +238,27 @@ contract PostInsurancePoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         ptp.approve(address(policyCenter), 10000 ether);
 
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(10000 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(10000 ether, 90);
 
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
         policyCenter.buyCover(POOL_ID, 10000 ether, 90, price);
     }
 
-    // function testStakeDirectlyToInsurancePool() public {
+    // function testStakeDirectlyToPriorityPool() public {
     //     shield.approve(address(policyCenter), 10000 ether);
     //     // user should not be able to provide liquidity directly to insurance pool
     //     vm.expectRevert("Only policy center can call this function");
-    //     InsurancePool(pool1).stakeLiquidityPoolToken(10000, address(this));
+    //     PriorityPool(pool1).stakeLiquidityPoolToken(10000, address(this));
     // }
 
-    // function testUnstakeDirectlyFromInsurancePool() public {
+    // function testUnstakeDirectlyFromPriorityPool() public {
     //     shield.approve(address(policyCenter), 10000 ether);
     //     policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
     //     vm.warp(604801);
     //     // user should not be able to provide liquidity directly to insurance pool
     //     vm.expectRevert("Only policy center can call this function");
-    //     InsurancePool(pool1).unstakeLiquidityPoolToken(10000, address(this));
+    //     PriorityPool(pool1).unstakeLiquidityPoolToken(10000, address(this));
     // }
 
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
@@ -271,7 +271,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         uint256 amount = 100 ether;
         uint256 length = 90;
         // get coverage price and returns it
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(amount, length);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(amount, length);
         uint256 expectedPrice = (length * POOL_PRICE_RATIO * amount) / 3650000;
 
         assertEq(price == expectedPrice, true);
@@ -295,7 +295,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // get price
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(1000 ether, 90);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -335,7 +335,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         vm.prank(alice);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(100 ether, 90);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -413,7 +413,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
 
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(1000 ether, 90);
 
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 1000 ether, 90, price);

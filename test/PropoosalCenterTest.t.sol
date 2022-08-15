@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/pools/PayoutPool.sol";
 
@@ -19,10 +19,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 
 import "src/interfaces/IExecutor.sol";
@@ -179,7 +179,7 @@ contract ProposalCenterTest is Test {
         );
 
         // set insurance pool addresses
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         deg.transfer(address(this), 1000 ether);
 

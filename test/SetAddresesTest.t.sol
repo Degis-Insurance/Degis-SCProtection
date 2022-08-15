@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/pools/PayoutPool.sol";
 
@@ -18,10 +18,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -35,7 +35,7 @@ contract setAddressesTest is Test {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     Exchange public exchange;
     Executor public executor;
     ERC20 public ptp;
@@ -154,23 +154,23 @@ contract setAddressesTest is Test {
 
     // test setting pool max capacity
     function testSetMaxCapacity() public {
-        InsurancePool(pool1).setMaxCapacity(1000);
-        assertEq(InsurancePool(pool1).maxCapacity() == 1000, true);
+        PriorityPool(pool1).setMaxCapacity(1000);
+        assertEq(PriorityPool(pool1).maxCapacity() == 1000, true);
     }
 
     function testGetMaxCapacity() public {
-        assertEq(InsurancePool(pool1).maxCapacity() == 1000 ether, true);
+        assertEq(PriorityPool(pool1).maxCapacity() == 1000 ether, true);
     }
 
-    function testSetExecutorInsurancePool() public {
-        InsurancePool(pool1).setExecutor(address(executor));
-        assertEq(InsurancePool(pool1).executor() == address(executor), true);
+    function testSetExecutorPriorityPool() public {
+        PriorityPool(pool1).setExecutor(address(executor));
+        assertEq(PriorityPool(pool1).executor() == address(executor), true);
     }
 
     function testSetIncidentReport() public {
-        InsurancePool(pool1).setIncidentReport(address(incidentReport));
+        PriorityPool(pool1).setIncidentReport(address(incidentReport));
         assertEq(
-            InsurancePool(pool1).incidentReport() == address(incidentReport),
+            PriorityPool(pool1).incidentReport() == address(incidentReport),
             true
         );
     }

@@ -131,12 +131,12 @@ contract Executor is
         (, address poolAddress, , , ) = factory.pools(poolId);
 
         require(
-            block.timestamp > IInsurancePool(poolAddress).endLiquidationDate(),
+            block.timestamp > IPriorityPool(poolAddress).endLiquidationDate(),
             "Previous liquidation not end"
         );
 
         // Mark the pool as liquidated
-        IInsurancePool(poolAddress).liquidatePool(payout);
+        IPriorityPool(poolAddress).liquidatePool(payout);
 
         // emit the event
         emit ReportExecuted(poolAddress, poolId, _reportId);
