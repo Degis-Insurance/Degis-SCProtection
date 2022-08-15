@@ -7,6 +7,7 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -27,6 +28,8 @@ contract ClaimPayoutTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
+
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -74,7 +77,8 @@ contract ClaimPayoutTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
@@ -204,7 +208,7 @@ contract ClaimPayoutTest is Test {
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-        uint256 price = InsurancePool(pool2).coverPrice(10000 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool2).coverPrice(10000 ether, 90);
         policyCenter.buyCover(2, 100 ether, 90, price);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);

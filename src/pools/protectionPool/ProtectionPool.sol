@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./ProtectionPoolDependencies.sol";
 import "../../interfaces/ExternalTokenDependencies.sol";
@@ -28,6 +28,9 @@ import "../../interfaces/ExternalTokenDependencies.sol";
 import "../../util/OwnableWithoutContext.sol";
 import "../../util/PausableWithoutContext.sol";
 import "../../util/FlashLoanPool.sol";
+
+import "src/pools/protectionPool/ProtectionPool.sol";
+
 
 import "../../libraries/DateTime.sol";
 
@@ -71,7 +74,7 @@ contract ProtectionPool is
     uint256 public price;
 
     // Year => Month => Speed
-    mapping(uint256 => mapping(uint256 => uint256)) rewardSpeed;
+    mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
  
 
@@ -288,6 +291,9 @@ contract ProtectionPool is
      * @notice Update the price of PRO_LP token
      */
     function _updatePrice() internal {
+        if (totalSupply() == 0){
+            price = SCALE;
+        }
         price =
             (IERC20(shield).balanceOf(address(this)) * SCALE) /
             totalSupply();
@@ -313,13 +319,16 @@ contract ProtectionPool is
         uint256 tempMonth = lastRewardMonth;
 
         if (monthPassed == 0) {
-            totalReward +=
+            if (rewardSpeed[currentYear][currentMonth] > 0) {
+                totalReward +=
                 (block.timestamp - lastRewardTimestamp) *
                 rewardSpeed[currentYear][currentMonth];
+            }
+            
         } else {
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
-                if (i == 0) {
+                if (i == 0 && rewardSpeed[lastRewardYear][lastRewardMonth] > 0) {
                     // End timestamp of the first month
                     uint256 endTimestamp = DateTimeLibrary
                         .timestampFromDateTime(
@@ -335,7 +344,7 @@ contract ProtectionPool is
                         rewardSpeed[lastRewardYear][lastRewardMonth];
                 }
                 // Last month reward
-                if (i == monthPassed) {
+                if (i == monthPassed && rewardSpeed[lastRewardYear][lastRewardMonth] > 0) {
                     uint256 startTimestamp = DateTimeLibrary
                         .timestampFromDateTime(tempYear, tempMonth, 1, 0, 0, 0);
 
@@ -349,10 +358,11 @@ contract ProtectionPool is
                         tempYear,
                         tempMonth
                     );
-
-                    totalReward +=
-                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                    if (rewardSpeed[lastRewardYear][lastRewardMonth] > 0){
+                        totalReward +=
+                            (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
+                            rewardSpeed[lastRewardYear][lastRewardMonth];
+                    }
                 }
 
                 unchecked {

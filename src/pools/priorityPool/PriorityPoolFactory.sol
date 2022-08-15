@@ -20,12 +20,24 @@
 
 pragma solidity ^0.8.13;
 
+<<<<<<< HEAD:src/pools/priorityPool/PriorityPoolFactory.sol
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import "./PriorityPoolFactoryDependencies.sol";
+
+
+import "../../util/OwnableWithoutContext.sol";
+
+import "../../interfaces/ExternalTokenDependencies.sol";
+
+=======
 import "./PriorityPoolFactoryDependencies.sol";
 
 import "../../util/OwnableWithoutContext.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
+>>>>>>> 36877f9200442a800c555af493a3c721fbed514b:src/pools/PriorityPoolFactory.sol
 import "./PriorityPool.sol";
 
 /**

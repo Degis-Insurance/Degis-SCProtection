@@ -7,6 +7,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
+
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -33,6 +35,7 @@ contract PostInsurancePoolDeploymentTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -83,7 +86,8 @@ contract PostInsurancePoolDeploymentTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
@@ -234,7 +238,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         ptp.approve(address(policyCenter), 10000 ether);
 
-        uint256 price = InsurancePool(pool1).coverPrice(10000 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(10000 ether, 90);
 
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
@@ -267,7 +271,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         uint256 amount = 100 ether;
         uint256 length = 90;
         // get coverage price and returns it
-        uint256 price = InsurancePool(pool1).coverPrice(amount, length);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(amount, length);
         uint256 expectedPrice = (length * POOL_PRICE_RATIO * amount) / 3650000;
 
         assertEq(price == expectedPrice, true);
@@ -291,7 +295,7 @@ contract PostInsurancePoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // get price
-        uint256 price = InsurancePool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(1000 ether, 90);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -331,7 +335,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         vm.prank(alice);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
-        uint256 price = InsurancePool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(100 ether, 90);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -409,7 +413,7 @@ contract PostInsurancePoolDeploymentTest is Test {
 
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
 
-        uint256 price = InsurancePool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(1000 ether, 90);
 
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 1000 ether, 90, price);

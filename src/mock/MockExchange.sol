@@ -3,6 +3,11 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+<<<<<<< HEAD
+
+import "../interfaces/IVeDEG.sol";
+=======
+>>>>>>> 36877f9200442a800c555af493a3c721fbed514b
 
 contract Exchange {
     string public name;
