@@ -21,17 +21,6 @@
 pragma solidity ^0.8.13;
 
 interface IExecutor {
-    event NewPoolEecuted(
-        address poolAddress,
-        uint256 proposalId,
-        address protocol
-    );
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
-
     function deg() external view returns (address);
 
     function executeProposal(uint256 _proposalId) external returns (address);
@@ -46,22 +35,11 @@ interface IExecutor {
 
     function onboardProposal() external view returns (address);
 
-    function owner() external view returns (address);
-
     function policyCenter() external view returns (address);
-
-    function poolBuffer() external view returns (uint256);
 
     function proposalBuffer() external view returns (uint256);
 
     function protectionPool() external view returns (address);
-
-    function renounceOwnership() external;
-
-    function reportBuffer() external view returns (uint256);
-
-    function setBuffers(uint256 _proposalBuffer, uint256 _reportBuffer)
-        external;
 
     function setDeg(address _deg) external;
 
@@ -78,8 +56,6 @@ interface IExecutor {
     function setProtectionPool(address _protectionPool) external;
 
     function shield() external view returns (address);
-
-    function transferOwnership(address newOwner) external;
 
     function veDeg() external view returns (address);
 }

@@ -15,4 +15,5 @@ abstract contract VotingParameters {
     uint256 constant PASS_RESULT = 1;
     uint256 constant REJECT_RESULT = 2;
     uint256 constant TIED_RESULT = 3;
+    uint256 constant FAILED_RESULT = 4;
 }

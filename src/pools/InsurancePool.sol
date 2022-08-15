@@ -404,6 +404,11 @@ contract InsurancePool is
         emit Liquidation(_amount, endLiquidationDate);
     }
 
+    /**
+     * @notice Retrieve assets from Protection Pool for payout
+     *
+     * @param _amount Amount of SHIELD to retrieve
+     */
     function _retrievePayout(uint256 _amount) internal {
         // Current lp amount
         uint256 currentLP = IERC20(protectionPool).balanceOf(address(this));

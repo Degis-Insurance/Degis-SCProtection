@@ -4,17 +4,17 @@ pragma solidity ^0.8.13;
 
 import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/IERC20.sol";
 
 /**
  * @notice Payout Pool
  *
  *         Every time there is a report passed, some assets will be moved to this pool
  *         It is stored as a Payout struct
- *         - amount Total amount of this payout
- *         - remaining Remaining amount
+ *         - amount       Total amount of this payout
+ *         - remaining    Remaining amount
  *         - endTimestamp After this timestamp, no more claims
- *         - ratio Max ratio of a user's crToken
+ *         - ratio        Max ratio of a user's crToken
  */
 contract PayoutPool {
     uint256 public constant SCALE = 1e12;
@@ -68,7 +68,7 @@ contract PayoutPool {
         // TODO: how to store the payout id
         uint256 id;
         claimed = (ava * payouts[id].ratio) / SCALE;
-        
+
         IERC20(shield).transfer(_user, claimed);
     }
 }
