@@ -9,8 +9,8 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
-import "src/voting/OnboardProposal.sol";
-import "src/voting/IncidentReport.sol";
+import "src/voting/onboardProposal/OnboardProposal.sol";
+import "src/voting/incidentReport/IncidentReport.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -24,7 +24,7 @@ import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
-import "src/voting/interfaces/IncidentReportParameters.sol";
+import "src/voting/incidentReport/IncidentReportParameters.sol";
 
 abstract contract Events {
     event ReportCreated(
