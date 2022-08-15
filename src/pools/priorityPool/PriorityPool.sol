@@ -26,11 +26,8 @@ import "../../util/PausableWithoutContext.sol";
 import "../../util/OwnableWithoutContext.sol";
 
 import "./PriorityPoolDependencies.sol";
-<<<<<<< HEAD:src/pools/priorityPool/PriorityPool.sol
-import "src/pools/priorityPool/PriorityPool.sol";
-=======
->>>>>>> 36877f9200442a800c555af493a3c721fbed514b:src/pools/InsurancePool.sol
 
+import "src/pools/priorityPool/PriorityPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 
 import "../../libraries/DateTime.sol";
@@ -372,7 +369,7 @@ contract PriorityPool is
      *
      * @param _paused True to pause, false to unpause
      */
-    function pauseInsurancePool(bool _paused) external {
+    function pausePriorityPool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == incidentReport),
             "Only owner or Incident Report can call this function"

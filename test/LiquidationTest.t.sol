@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -18,10 +18,10 @@ import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -146,9 +146,9 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             260
         );
 
-        InsurancePool(pool1).setExecutor(address(executor));
-        InsurancePool(pool1).setIncidentReport(address(incidentReport));
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setExecutor(address(executor));
+        PriorityPool(pool1).setIncidentReport(address(incidentReport));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(onboardProposal), 1000 ether);
@@ -167,7 +167,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
 
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(100 ether, 90);
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);
@@ -216,21 +216,21 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
     function testUnpauseLiquidatedPool() public {
         vm.warp(1383402);
-        InsurancePool(pool1).pauseInsurancePool(false);
+        PriorityPool(pool1).pausePriorityPool(false);
 
         // pool remains liquidated but unpaused
-        assertTrue(IInsurancePool(pool1).liquidated());
-        assertTrue(!IInsurancePool(pool1).paused());
+        assertTrue(IPriorityPool(pool1).liquidated());
+        assertTrue(!IPriorityPool(pool1).paused());
 
-        uint256 endDate = IInsurancePool(pool1).endLiquidationDate();
+        uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
         console.log(endDate);
 
         vm.warp(
             REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
         );
-        IInsurancePool(pool1).endLiquidation();
+        IPriorityPool(pool1).endLiquidation();
 
-        assertEq(IInsurancePool(pool1).liquidated() == false, true);
+        assertEq(IPriorityPool(pool1).liquidated() == false, true);
     }
 
     function testRemoveLiquidityAfterClaimPayoutPeriod() public {
@@ -241,7 +241,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.prank(alice);
         policyCenter.claimPayout(1);
 
-        uint256 lpBalance = IInsurancePool(pool1).balanceOf(address(this));
+        uint256 lpBalance = IPriorityPool(pool1).balanceOf(address(this));
         uint256 shieldBalance = shield.balanceOf(address(this));
 
         vm.warp(
@@ -249,10 +249,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
         incidentReport.unpausePools(address(pool1));
 
-        IInsurancePool(pool1).endLiquidation();
+        IPriorityPool(pool1).endLiquidation();
         policyCenter.unstakeLiquidityPoolToken(1, lpBalance);
 
-        assertEq(InsurancePool(pool1).liquidated() == false, true);
+        assertEq(PriorityPool(pool1).liquidated() == false, true);
 
         // Liquidity provider is able to remove left over liquidity proportional to
         // how much liquidity they provided and how much is left in the pool

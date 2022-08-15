@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -17,10 +17,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -35,7 +35,7 @@ contract ClaimPayoutTest is Test {
     MockDEG public deg;
     MockVeDEG public vedeg;
     IncidentReport public incidentReport;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     Exchange public exchange;
     Executor public executor;
     ERC20 public ptp;
@@ -141,8 +141,8 @@ contract ClaimPayoutTest is Test {
             260
         );
 
-        InsurancePool(pool1).setExecutor(address(executor));
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setExecutor(address(executor));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         // fund exchange
         deg.transfer(address(exchange), 1000 ether);
@@ -183,14 +183,14 @@ contract ClaimPayoutTest is Test {
         vm.warp(START_TIME + VOTE_PERIOD + EXECUTE_PERIOD + 2);
         pool2 = executor.executeProposal(1);
 
-        InsurancePool(pool2).setExecutor(address(executor));
-        InsurancePool(pool2).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool2).setExecutor(address(executor));
+        PriorityPool(pool2).setPolicyCenter(address(policyCenter));
     }
 
     function testPresenceNewPool() public {
         // check if pool is created
-        string memory name = InsurancePool(pool2).name();
-        uint256 maxCapacity = InsurancePool(pool2).maxCapacity();
+        string memory name = PriorityPool(pool2).name();
+        uint256 maxCapacity = PriorityPool(pool2).maxCapacity();
 
         assertEq(maxCapacity == 10000 ether, true);
     }
@@ -201,14 +201,14 @@ contract ClaimPayoutTest is Test {
         policyCenter.stakeLiquidityPoolToken(2, 10000);
 
         // check if pool has received tokens
-        assertEq(InsurancePool(pool2).totalSupply() == 10000, true);
+        assertEq(PriorityPool(pool2).totalSupply() == 10000, true);
         // check if owner has receive minted tokens
-        assertEq(InsurancePool(pool2).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPool(pool2).balanceOf(address(this)) == 10000, true);
     }
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-        (uint256 price, uint256 priceLength) = InsurancePool(pool2).coverPrice(10000 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool2).coverPrice(10000 ether, 90);
         policyCenter.buyCover(2, 100 ether, 90, price);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);

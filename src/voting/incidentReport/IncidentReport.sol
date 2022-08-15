@@ -447,7 +447,7 @@ contract IncidentReport is
 
     function unpausePools(address _pool) external {
         require(
-            IInsurancePool(_pool).endLiquidationDate() < block.timestamp,
+            IPriorityPool(_pool).endLiquidationDate() < block.timestamp,
             "Pool is still in payout period"
         );
         _unpausePools(_pool);
@@ -701,7 +701,7 @@ contract IncidentReport is
      * @param _pool Project pool address
      */
     function _pausePools(address _pool) internal {
-        IInsurancePool(_pool).pauseInsurancePool(true);
+        IPriorityPool(_pool).pausePriorityPool(true);
     }
 
     /**
@@ -711,6 +711,6 @@ contract IncidentReport is
      * @param _pool Project pool address
      */
     function _unpausePools(address _pool) internal {
-        IInsurancePool(_pool).pauseInsurancePool(false);
+        IPriorityPool(_pool).pausePriorityPool(false);
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IPolicyCenter.sol";
-import "../../interfaces/IInsurancePool.sol";
+import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 
 abstract contract ProtectionPoolDependencies {

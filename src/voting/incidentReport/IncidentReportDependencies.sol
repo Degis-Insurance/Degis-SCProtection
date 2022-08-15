@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "../../interfaces/IPolicyCenter.sol";
-import "../../interfaces/IInsurancePool.sol";
+import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 

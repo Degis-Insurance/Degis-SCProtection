@@ -145,7 +145,7 @@ contract ProtectionPool is
             (, address poolAddress, , , ) = factory.pools(i);
 
             if (factory.alreadyDynamic(poolAddress)) {
-                covered += IInsurancePool(poolAddress).activeCovered();
+                covered += IPriorityPool(poolAddress).activeCovered();
             }
 
             unchecked {

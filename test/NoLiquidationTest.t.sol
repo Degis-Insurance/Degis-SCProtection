@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/PriorityPoolFactory.sol";
-import "src/pools/ProtectionPool.sol";
+import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -17,10 +17,10 @@ import "src/mock/MockVeDEG.sol";
 import "src/core/Executor.sol";
 import "src/mock/MockExchange.sol";
 
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IInsurancePool.sol";
+import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
@@ -33,7 +33,7 @@ contract NoLiquidationTest is Test {
     MockSHIELD public shield;
     MockDEG public deg;
     MockVeDEG public vedeg;
-    InsurancePool public insurancePool;
+    PriorityPool public insurancePool;
     IncidentReport public incidentReport;
     Exchange public exchange;
     Executor public executor;
@@ -132,8 +132,8 @@ contract NoLiquidationTest is Test {
             260
         );
 
-        InsurancePool(pool1).setExecutor(address(executor));
-        InsurancePool(pool1).setPolicyCenter(address(policyCenter));
+        PriorityPool(pool1).setExecutor(address(executor));
+        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         deg.transfer(address(this), 1000 ether);
         deg.transfer(address(policyCenter), 100);
@@ -177,7 +177,7 @@ contract NoLiquidationTest is Test {
         shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
-        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(10 ether, 90);
+        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(10 ether, 90);
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);

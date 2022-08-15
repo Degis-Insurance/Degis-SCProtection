@@ -189,7 +189,7 @@ contract PolicyCenter is
             emissionEndTime,
             emissionRate,
             maxCapacity
-        ) = IInsurancePool(insurancePools[_poolId]).poolInfo();
+        ) = IPriorityPool(insurancePools[_poolId]).poolInfo();
     }
 
     /**
@@ -232,7 +232,7 @@ contract PolicyCenter is
         view
         returns (uint256)
     {   
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
         // Calculate reward amount based on user's liquidity and acc reward per share.
         uint256 reward = (_amount * pool.accumulatedRewardPerShare()) -
             _debt;
@@ -414,7 +414,7 @@ contract PolicyCenter is
             _coverDuration,
             timestampDuration
         );
-        IInsurancePool(insurancePools[_poolId]).updateWhenBuy(
+        IPriorityPool(insurancePools[_poolId]).updateWhenBuy(
             premiumToPriorityPool,
             _coverDuration,
             timestampDuration
@@ -484,7 +484,7 @@ contract PolicyCenter is
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
 
         // emits tokens to user from insurnace pool
-        IInsurancePool(insurancePools[_poolId]).stakedLiquidity(
+        IPriorityPool(insurancePools[_poolId]).stakedLiquidity(
             _amount,
             msg.sender
         );
@@ -555,11 +555,11 @@ contract PolicyCenter is
         _claimReward(_poolId, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply = IInsurancePool(insurancePools[_poolId])
+        uint256 totalSupply = IPriorityPool(insurancePools[_poolId])
             .totalSupply();
 
         // burns the full amount of liquidity tokens in users account from insurance pool
-        IInsurancePool(insurancePools[_poolId]).unstakedLiquidity(
+        IPriorityPool(insurancePools[_poolId]).unstakedLiquidity(
             _amount,
             msg.sender
         );
@@ -675,14 +675,14 @@ contract PolicyCenter is
      */
     function _claimReward(uint256 _poolId, address _provider) internal {
         require(
-            !IInsurancePool(insurancePools[_poolId]).liquidated(),
+            !IPriorityPool(insurancePools[_poolId]).liquidated(),
             "Pool liquidated"
         );
-        IInsurancePool(insurancePools[_poolId]).updateRewards();
+        IPriorityPool(insurancePools[_poolId]).updateRewards();
 
         // User's liquidity
         Liquidity storage liquidity = liquidities[_poolId][_provider];
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
 
         // Calculate reward amount based on user's liquidity and acc reward per share.
         uint256 reward = (liquidity.amount * pool.accumulatedRewardPerShare()) -
@@ -762,10 +762,10 @@ contract PolicyCenter is
 
         address fromToken = tokenByPoolId[_poolId];
 
-        uint256 toInsurancePool = (_totalSplit * premiumSplits[0]) / 10000;
+        uint256 toPriorityPool = (_totalSplit * premiumSplits[0]) / 10000;
 
         // amount to swap for shield and store as reward to protection pool and treasury
-        uint256 toSwap = _totalSplit - toInsurancePool;
+        uint256 toSwap = _totalSplit - toPriorityPool;
 
         // swap native for degis
         uint256 swapped = _swapTokens(toSwap, fromToken, shield);
@@ -775,12 +775,12 @@ contract PolicyCenter is
         uint256 toTreasury = swapped - toProtectionPool;
 
         // protection pool is pool 0
-        rewardsByPoolId[_poolId] += toInsurancePool;
+        rewardsByPoolId[_poolId] += toPriorityPool;
         rewardsByPoolId[0] += toProtectionPool;
 
         treasury += toTreasury;
 
-        return (toInsurancePool, toProtectionPool);
+        return (toPriorityPool, toProtectionPool);
     }
 
     /**
@@ -806,7 +806,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration
     ) internal view returns (uint256 price, uint256 timestampDuration) {
-        (price, timestampDuration) = IInsurancePool(insurancePools[_poolId])
+        (price, timestampDuration) = IPriorityPool(insurancePools[_poolId])
             .coverPrice(_coverAmount, _coverDuration);
     }
 
@@ -820,7 +820,7 @@ contract PolicyCenter is
         internal
         view
     {
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
         require(
             pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
             "Insufficient capacity"
