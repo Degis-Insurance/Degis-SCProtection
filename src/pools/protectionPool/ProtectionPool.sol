@@ -22,17 +22,15 @@ pragma solidity ^0.8.13;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/ProtectionPoolDependencies.sol";
-import "./interfaces/IPremiumRewardPool.sol";
+import "./ProtectionPoolDependencies.sol";
+import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "../util/OwnableWithoutContext.sol";
-import "../util/PausableWithoutContext.sol";
+import "../../util/OwnableWithoutContext.sol";
+import "../../util/PausableWithoutContext.sol";
+import "../../util/FlashLoanPool.sol";
+import "src/pools/protectionPool/ProtectionPool.sol";
 
-import "../util/FlashLoanPool.sol";
-
-import "../interfaces/ExternalTokenDependencies.sol";
-
-import "../libraries/DateTime.sol";
+import "../../libraries/DateTime.sol";
 
 import "forge-std/console.sol";
 
@@ -43,9 +41,10 @@ import "forge-std/console.sol";
  *
  * @notice This is the protection pool contract for Degis Protocol Protection
  *
- *         Users can provide liquidity to protection pool and get PRO_LP token.
- *         If the insurance pool is unable to fulfil the insurance, the reinsurance pool
- *         will be able to provide the insurance to the user.
+ *         Users can provide liquidity to protection pool and get PRO-LP token
+ *
+ *         If the priority pool is unable to fulfil the cover amount,
+ *         Protection Pool will be able to provide the remaining part
  */
 contract ProtectionPool is
     ERC20,
@@ -75,7 +74,7 @@ contract ProtectionPool is
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
-    address public premiumRewardPool;
+ 
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -103,7 +102,7 @@ contract ProtectionPool is
         address _veDeg,
         address _shield
     )
-        ERC20("ProtectionPool", "PRO_LP")
+        ERC20("ProtectionPool", "PRO-LP")
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
@@ -382,8 +381,8 @@ contract ProtectionPool is
     /**
      * @notice Update reward speed
      *
-     * @param _premium          New premium received
-     * @param _length           Cover length in months
+     * @param _premium         New premium received
+     * @param _length          Cover length in months
      * @param _timestampLength Cover length in seconds
      */
     function _updateRewardSpeed(

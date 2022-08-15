@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/IVeDEG.sol";
 
-
 /**
  * @notice Payout Pool
  *
