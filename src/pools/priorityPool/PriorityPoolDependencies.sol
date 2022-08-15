@@ -7,7 +7,7 @@ import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPayoutPool.sol";
 
-abstract contract InsurancePoolDependencies {
+abstract contract PriorityPoolDependencies {
     uint256 constant SCALE = 1e12;
 
     uint256 constant SECONDS_PER_YEAR = 86400 * 365;

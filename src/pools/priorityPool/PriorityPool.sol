@@ -22,13 +22,15 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/InsurancePoolDependencies.sol";
-import "./interfaces/IPremiumRewardPool.sol";
+import "../../util/PausableWithoutContext.sol";
+import "../../util/OwnableWithoutContext.sol";
 
-import "../util/PausableWithoutContext.sol";
-import "../util/OwnableWithoutContext.sol";
+import "./PriorityPoolDependencies.sol";
+import "src/pools/priorityPool/PriorityPool.sol";
 
-import "../libraries/DateTime.sol";
+import "../../interfaces/IPremiumRewardPool.sol";
+
+import "../../libraries/DateTime.sol";
 
 import "forge-std/console.sol";
 
@@ -51,11 +53,11 @@ import "forge-std/console.sol";
  *         If that is enough, no more redeeming.
  *         If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
  */
-contract InsurancePool is
+contract PriorityPool is
     ERC20,
     OwnableWithoutContext,
     PausableWithoutContext,
-    InsurancePoolDependencies
+    PriorityPoolDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //

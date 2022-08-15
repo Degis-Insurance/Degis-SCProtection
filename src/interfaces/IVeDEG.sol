@@ -15,6 +15,4 @@ interface IVeDEG is IERC20 {
 
     // Unlock veDEG
     function unlockVeDEG(address _to, uint256 _amount) external;
-    
-    function users(uint256 _pool, address _user) external view returns (uint256, uint256);
 }
