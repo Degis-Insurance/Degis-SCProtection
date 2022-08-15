@@ -20,8 +20,6 @@
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "../interfaces/IDegisToken.sol";
-import "../interfaces/IVeDEG.sol";
 import "../interfaces/IExchange.sol";
 import "../interfaces/IProtectionPool.sol";
 import "../interfaces/IInsurancePool.sol";

@@ -37,6 +37,8 @@ interface IInsurancePool {
 
     function priorityPoolFactory() external view returns (address);
 
+    function accumulatedRewardPerShare() external view returns (uint256);
+
     function insuredToken() external view returns (address);
 
     function lastRewardTimestamp() external view returns (uint256);

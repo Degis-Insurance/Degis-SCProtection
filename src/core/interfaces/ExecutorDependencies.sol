@@ -15,11 +15,16 @@ abstract contract ExecutorDependencies {
     address public priorityPoolFactory;
     address public incidentReport;
     address public onboardProposal;
+    address public policyCenter;
 
     address public treasury;
 
     function _setProtectionPool(address _protectionPool) internal virtual {
         protectionPool = _protectionPool;
+    }
+
+    function _setPolicyCenter(address _policyCenter) internal virtual {
+        policyCenter = _policyCenter;
     }
 
     function _setPriorityPoolFactory(address _priorityPoolFactory)

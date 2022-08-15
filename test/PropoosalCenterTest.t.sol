@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/core/PolicyCenter.sol";
+import "src/pools/PayoutPool.sol";
+
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/ProposalCenter.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -29,6 +31,8 @@ contract ProposalCenterTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
+
     OnboardProposal public onboardProposal;
     ProposalCenter public proposalCenter;
     IncidentReport public incidentReport;
@@ -109,7 +113,8 @@ contract ProposalCenterTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),

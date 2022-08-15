@@ -7,6 +7,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
+
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -28,6 +30,7 @@ contract OnboardProposalVotingTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -100,7 +103,8 @@ contract OnboardProposalVotingTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),

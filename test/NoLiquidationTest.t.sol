@@ -7,6 +7,7 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -27,6 +28,7 @@ contract NoLiquidationTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -59,11 +61,13 @@ contract NoLiquidationTest is Test {
             address(vedeg),
             address(shield)
         );
+        payoutPool = new PayoutPool();
         priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
         policyCenter = new PolicyCenter(
             address(deg),
@@ -173,7 +177,7 @@ contract NoLiquidationTest is Test {
         shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
-        uint256 price = InsurancePool(pool1).coverPrice(10 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(10 ether, 90);
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);
