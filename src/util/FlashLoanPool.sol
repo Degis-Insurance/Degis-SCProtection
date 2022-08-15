@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.13;
 
-import "../interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
 
 abstract contract FlashLoanPool is IERC3156FlashLender {
-    address constant SHIELD = address(0x10);
-    uint256 constant FEE = 10;
+    address constant public SHIELD = address(0x10);
+    uint256 constant public FEE = 10;
 
     event FlashLoanBorrowed(
         address indexed lender,

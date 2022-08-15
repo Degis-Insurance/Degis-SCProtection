@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 
 import "../interfaces/ExternalTokenDependencies.sol";
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 contract Treasury is ExternalTokenDependencies {
     address public executor;
 
