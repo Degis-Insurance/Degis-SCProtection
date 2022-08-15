@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @notice Premium Reward Pool

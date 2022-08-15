@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./IERC20.sol";
-
-interface IDegisToken is IERC20 {
+interface IDegisToken  {
     // Mint degis token
     function mintDegis(address _account, uint256 _amount) external;
 

@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./IERC20.sol";
-
 /**
  * @dev Interface of the VeDEG
  */
-interface IVeDEG is IERC20 {
+interface IVeDEG {
     // Get the locked amount of a user's veDeg
     function locked(address _user) external view returns (uint256);
 
@@ -15,6 +13,4 @@ interface IVeDEG is IERC20 {
 
     // Unlock veDEG
     function unlockVeDEG(address _to, uint256 _amount) external;
-    
-    function users(uint256 _pool, address _user) external view returns (uint256, uint256);
 }

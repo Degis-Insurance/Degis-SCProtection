@@ -20,15 +20,13 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./PriorityPoolFactoryDependencies.sol";
 
-import "./interfaces/PriorityPoolFactoryDependencies.sol";
+import "../../util/OwnableWithoutContext.sol";
 
-import "../util/OwnableWithoutContext.sol";
+import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "../interfaces/ExternalTokenDependencies.sol";
-
-import "./InsurancePool.sol";
+import "./PriorityPool.sol";
 
 /**
  * @title Insurance Pool Factory
@@ -37,6 +35,14 @@ import "./InsurancePool.sol";
  *
  * @notice This is the factory contract for deploying new insurance pools
  *         Each pool represents a project that has joined Degis Protocol Protection
+ *
+ *         Liquidity providers of Protection Pool can stake their LP tokens into priority pools
+ *         Benefit:
+ *             - Share the 45% part of the premium income (in native token form)
+ *         Risk:
+ *             - Will be liquidated first to pay for the claim amount
+ *
+ *
  */
 contract PriorityPoolFactory is
     PriorityPoolFactoryDependencies,
@@ -255,6 +261,7 @@ contract PriorityPoolFactory is
             currentPoolId
         );
 
+        // Register token in premium reward pool
         IPremiumRewardPool(premiumRewardPool).register(
             newPoolAddress,
             _protocolToken
@@ -304,7 +311,7 @@ contract PriorityPoolFactory is
         string memory _symbol,
         uint256 _poolId
     ) internal view virtual returns (bytes memory) {
-        bytes memory bytecode = type(InsurancePool).creationCode;
+        bytes memory bytecode = type(PriorityPool).creationCode;
 
         // Encodepacked the parameters
         // The minter is set to be the policyCore address
