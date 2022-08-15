@@ -28,6 +28,9 @@ import "./IncidentReportErrorEvent.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
+import "../../interfaces/IDegisToken.sol";
+import "../../interfaces/IVeDEG.sol";
+
 import "forge-std/console.sol";
 
 /**

@@ -7,6 +7,7 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -28,6 +29,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PayoutPool public payoutPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -70,11 +72,14 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             address(shield)
         );
 
+        payoutPool = new PayoutPool();
+
         priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
 
         incidentReport = new IncidentReport(
@@ -162,7 +167,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
 
-        uint256 price = InsurancePool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 priceLength) = InsurancePool(pool1).coverPrice(100 ether, 90);
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);

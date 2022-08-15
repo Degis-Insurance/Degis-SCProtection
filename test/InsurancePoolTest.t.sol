@@ -14,6 +14,8 @@ import "src/mock/MockVeDEG.sol";
 import "src/pools/InsurancePool.sol";
 import "src/pools/ProtectionPool.sol";
 import "src/pools/PriorityPoolFactory.sol";
+import "src/pools/PayoutPool.sol";
+
 
 import "src/core/PolicyCenter.sol";
 
@@ -21,9 +23,10 @@ contract InsurancePoolTest is BaseTest {
     address alice = mkaddr("alice");
     address bob = mkaddr("bob");
 
-    ProtectionPool protectionPool;
-    PriorityPoolFactory factory;
-    InsurancePool pool;
+    ProtectionPool public protectionPool;
+    PriorityPoolFactory public factory;
+    InsurancePool public pool;
+    PayoutPool public payoutPool;
 
     PolicyCenter public policyCenter;
 
@@ -55,7 +58,8 @@ contract InsurancePoolTest is BaseTest {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
 
         policyCenter = new PolicyCenter(
@@ -100,7 +104,7 @@ contract InsurancePoolTest is BaseTest {
 
         pool = InsurancePool(newPoolAddress);
 
-        uint256 price = pool.coverPrice(10 ether, 90);
+        (uint256 price, uint256 length) = pool.coverPrice(10 ether, 90);
         console.log("price", price);
     }
 }

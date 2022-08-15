@@ -28,6 +28,11 @@ import "./OnboardProposalErrorEvent.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
+import "../../interfaces/IDegisToken.sol";
+import "../../interfaces/IVeDEG.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /**
  * @notice Onboard Proposal
  */

@@ -20,13 +20,14 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/ProtectionPoolDependencies.sol";
 import "./interfaces/IPremiumRewardPool.sol";
 
 import "../util/OwnableWithoutContext.sol";
 import "../util/PausableWithoutContext.sol";
+
 import "../util/FlashLoanPool.sol";
 
 import "../interfaces/ExternalTokenDependencies.sol";
@@ -72,7 +73,7 @@ contract ProtectionPool is
     uint256 public price;
 
     // Year => Month => Speed
-    mapping(uint256 => mapping(uint256 => uint256)) rewardSpeed;
+    mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
     address public premiumRewardPool;
 

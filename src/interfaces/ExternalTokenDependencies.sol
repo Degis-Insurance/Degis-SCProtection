@@ -2,9 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-import "./IDegisToken.sol";
-import "./IVeDEG.sol";
-
 /**
  * @notice External token dependencies
  *         Include the tokens that are not deployed by this repo

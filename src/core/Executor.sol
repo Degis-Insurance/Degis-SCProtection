@@ -69,6 +69,10 @@ contract Executor is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
     function setProtectionPool(address _protectionPool) external onlyOwner {
         _setProtectionPool(_protectionPool);
     }

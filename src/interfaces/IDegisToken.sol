@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IDegisToken is IERC20 {
     // Mint degis token

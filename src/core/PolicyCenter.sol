@@ -27,6 +27,7 @@ import "../mock/MockExchange.sol";
 import "./interfaces/PolicyCenterDependencies.sol";
 
 import "../interfaces/ExternalTokenDependencies.sol";
+
 import "../interfaces/IPriceGetter.sol";
 
 import "../libraries/DateTime.sol";
@@ -224,6 +225,19 @@ contract PolicyCenter is
 
         // TODO: calculate payout according to Cover Index
         return amount;
+    }
+
+    function calculateReward(uint256 _poolId, uint256 _amount, uint256 _debt)
+        public
+        view
+        returns (uint256)
+    {   
+        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        // Calculate reward amount based on user's liquidity and acc reward per share.
+        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) -
+            _debt;
+
+        return reward;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -619,18 +633,18 @@ contract PolicyCenter is
      *
      * @param _poolId Pool id
      */
-    function claimPayout(uint256 _poolId, address _crToken)
+    function claimPayout(uint256 _poolId)
         public
         poolExists(_poolId)
     {
         require(_poolId > 0, "PoolId must be greater than 0");
 
-        IInsurancePool pool = IInsurancePool(insurancePools[_poolId]);
+        address crToken = coverTokenByPoolId[_poolId];
 
         // Claim payout from payout pool
         uint256 amount = IPayoutPool(payoutPool).claim(
             msg.sender,
-            _crToken,
+            crToken,
             _poolId
         );
 

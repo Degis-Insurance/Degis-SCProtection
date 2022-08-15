@@ -8,6 +8,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
+
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -29,6 +31,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     OnboardProposal public onboardProposal;
+    PayoutPool public payoutPool;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -61,7 +64,8 @@ contract ExecutorTest is Test, IncidentReportParameters {
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
-
+        
+        payoutPool = new PayoutPool();
         // Reinsurance pool init
         protectionPool = new ProtectionPool(
             address(deg),
@@ -74,7 +78,8 @@ contract ExecutorTest is Test, IncidentReportParameters {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
 
         policyCenter = new PolicyCenter(
@@ -200,15 +205,6 @@ contract ExecutorTest is Test, IncidentReportParameters {
         incidentReport.settle(POOL_ID);
 
         onboardProposal.settle(PROPOSAL_ID);
-    }
-
-    function testChangeBuffer() public {
-        vm.warp(8 days);
-        // change buffer to time
-        executor.setBuffers(1 days, 1 days);
-        // expect that pool1 is now in the liquidation state
-        assertEq(executor.reportBuffer(), 1 days);
-        assertEq(executor.proposalBuffer(), 1 days);
     }
 
     function testExecuteProposal() public {

@@ -7,6 +7,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/PriorityPoolFactory.sol";
 import "src/pools/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
+
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -17,6 +19,7 @@ import "src/core/Executor.sol";
 
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IPolicyCenter.sol";
+import "src/interfaces/IPayoutPool.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IInsurancePool.sol";
 import "src/interfaces/IOnboardProposal.sol";
@@ -37,6 +40,7 @@ contract InitialContractDeploymentTest is Test {
     ERC20Mock public ptp;
     InsurancePool public insurancePool;
     Executor public executor;
+    PayoutPool public payoutPool;
 
     function setUp() public {}
 
@@ -82,11 +86,6 @@ contract InitialContractDeploymentTest is Test {
         );
     }
 
-    function testDeployExecutor() public {
-        executor = new Executor();
-        assertEq(executor.proposalBuffer() == 0 days, true);
-    }
-
     function testDeployOnboardProposal() public {
         onboardProposal = new OnboardProposal(
             address(0),
@@ -100,6 +99,10 @@ contract InitialContractDeploymentTest is Test {
         incidentReport = new IncidentReport(address(0), address(0), address(0));
         assertEq(address(incidentReport) == address(0), false);
     }
+
+    function testDeployPayoutPool() public {
+        payoutPool = new PayoutPool();
+    }
 }
 
 /** 
@@ -112,6 +115,7 @@ contract SecondaryContractDeploymentTest is Test {
     PolicyCenter public policyCenter;
     Executor public executor;
     Exchange public exchange;
+    PayoutPool public payoutPool;
 
     // tokens
     MockSHIELD public shield;
@@ -156,8 +160,10 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0),
             address(deg),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
+        
         assertEq(priorityPoolFactory.poolCounter() == 0, true);
     }
 
@@ -179,7 +185,8 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0),
             address(deg),
-            address(protectionPool)
+            address(protectionPool),
+            address(payoutPool)
         );
 
         policyCenter = new PolicyCenter(

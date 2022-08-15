@@ -20,12 +20,12 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/PausableWithoutContext.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/InsurancePoolDependencies.sol";
 import "./interfaces/IPremiumRewardPool.sol";
 
+import "../util/PausableWithoutContext.sol";
 import "../util/OwnableWithoutContext.sol";
 
 import "../libraries/DateTime.sol";
