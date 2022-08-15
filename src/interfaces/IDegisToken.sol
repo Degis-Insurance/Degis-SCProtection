@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IDegisToken is IERC20 {
 
+
     // Mint degis token
     function mintDegis(address _account, uint256 _amount) external;
 

@@ -26,7 +26,10 @@ import "../../util/PausableWithoutContext.sol";
 import "../../util/OwnableWithoutContext.sol";
 
 import "./PriorityPoolDependencies.sol";
+<<<<<<< HEAD:src/pools/priorityPool/PriorityPool.sol
 import "src/pools/priorityPool/PriorityPool.sol";
+=======
+>>>>>>> 36877f9200442a800c555af493a3c721fbed514b:src/pools/InsurancePool.sol
 
 import "../../interfaces/IPremiumRewardPool.sol";
 
