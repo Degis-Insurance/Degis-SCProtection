@@ -24,6 +24,7 @@ import "../../util/OwnableWithoutContext.sol";
 
 import "./OnboardProposalParameters.sol";
 import "./OnboardProposalDependencies.sol";
+import "./OnboardProposalErrorEvent.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
@@ -32,6 +33,7 @@ import "../../interfaces/ExternalTokenDependencies.sol";
  */
 contract OnboardProposal is
     OnboardProposalParameters,
+    OnboardProposalErrorEvent,
     ExternalTokenDependencies,
     OwnableWithoutContext,
     OnboardProposalDependencies
@@ -46,28 +48,29 @@ contract OnboardProposal is
     uint256 public proposalCounter;
 
     struct Proposal {
-        string name;
-        address protocolToken;
-        address proposer;
-        uint256 proposeTimestamp;
-        uint256 voteTimestamp;
+        string name; // Pool name ("JOE", "GMX")
+        address protocolToken; // Protocol native token address
+        address proposer; // Proposer address
+        uint256 proposeTimestamp; // Timestamp when proposing
+        uint256 voteTimestamp; // Timestamp when start voting
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 maxCapacity; // Max capacity ratio
         uint256 basePremiumRatio; // Base annual premium ratio
-        uint256 poolId;
-        uint256 status;
-        uint256 result;
+        uint256 poolId; // Priority pool id
+        uint256 status; // Current status (PENDING, VOTING, SETTLED, CLOSED)
+        uint256 result; // Final result (PASSED, REJECTED, TIED)
     }
     // Proposal ID => Proposal
     mapping(uint256 => Proposal) public proposals;
 
     // Protocol token => Whether proposed
+    // A protocol can only have one pool
     mapping(address => bool) public poolProposed;
 
     struct UserVote {
         uint256 choice; // 1: vote for, 2: vote against
-        uint256 amount;
+        uint256 amount; // veDEG amount for voting
         bool claimed; // Voting reward already claimed
     }
     // User address => report id => user's voting info
@@ -76,24 +79,6 @@ contract OnboardProposal is
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    event NewProposal(
-        string name,
-        address token,
-        uint256 maxCapacity,
-        uint256 priceRatio
-    );
-
-    event VotingStart(uint256 proposalId, uint256 timestamp);
-
-    event ProposalVoted(
-        uint256 proposalId,
-        address indexed user,
-        uint256 voteFor,
-        uint256 amount
-    );
-
-    event ProposalSettled(uint256 proposalId, uint256 result);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -113,7 +98,7 @@ contract OnboardProposal is
     // ---------------------------------------------------------------------------------------- //
 
     function getProposal(uint256 _proposalId)
-        public
+        external
         view
         returns (Proposal memory)
     {
@@ -121,7 +106,7 @@ contract OnboardProposal is
     }
 
     function getUserProposalVote(address _user, uint256 _proposalId)
-        public
+        external
         view
         returns (uint256)
     {
@@ -156,14 +141,14 @@ contract OnboardProposal is
      *
      * @param _name             New project name
      * @param _token            Native token address
-     * @param _maxCapacity      Max capacity for the project pool
+     * @param _maxCapacity      Max capacity ratio for the project pool
      * @param _basePremiumRatio Base annual ratio of the premium
      */
     function propose(
         string calldata _name,
         address _token,
         uint256 _maxCapacity,
-        uint256 _basePremiumRatio // 10000 == 100% premium anual cost
+        uint256 _basePremiumRatio // 10000 == 100% premium annual cost
     ) external {
         require(
             !IPriorityPoolFactory(priorityPoolFactory).tokenRegistered(_token),
@@ -192,11 +177,23 @@ contract OnboardProposal is
         proposal.maxCapacity = _maxCapacity;
         proposal.basePremiumRatio = _basePremiumRatio;
 
-        emit NewProposal(_name, _token, _maxCapacity, _basePremiumRatio);
+        emit NewProposal(
+            _name,
+            _token,
+            msg.sender,
+            _maxCapacity,
+            _basePremiumRatio
+        );
     }
 
+    /**
+     * @notice Start the voting process
+     *         Need the approval of dev team
+     *
+     * @param _id Proposal id to start voting
+     */
     function startVoting(uint256 _id) external onlyOwner {
-        Proposal storage proposal = proposals[proposalCounter];
+        Proposal storage proposal = proposals[_id];
 
         require(proposal.status == PENDING_STATUS, "Not pending status");
 
@@ -204,6 +201,22 @@ contract OnboardProposal is
         proposal.voteTimestamp = block.timestamp;
 
         emit VotingStart(_id, block.timestamp);
+    }
+
+    /**
+     * @notice Close a pending proposal
+     *
+     * @param _id Proposal id
+     */
+    function closeProposal(uint256 _id) external onlyOwner {
+        Proposal storage proposal = proposals[_id];
+
+        // require current proposal to be settled
+        require(proposal.status == PENDING_STATUS, "Not pending status");
+
+        proposal.status = CLOSE_STATUS;
+
+        emit ProposalClosed(_id);
     }
 
     /**
@@ -218,10 +231,15 @@ contract OnboardProposal is
         uint256 _isFor,
         uint256 _amount
     ) external {
-        // Should be manually switched on the voting process
-        require(proposals[_id].status == VOTING_STATUS, "Not voting status");
+        Proposal storage proposal = proposals[_id];
 
+        // Should be manually switched on the voting process
+        require(proposal.status == VOTING_STATUS, "Not voting status");
         require(_isFor == 1 || _isFor == 2, "Wrong choice");
+        require(
+            !_passedVotingPeriod(proposal.voteTimestamp),
+            "Passed voting period"
+        );
 
         _enoughVeDEG(msg.sender, _amount);
 
@@ -229,94 +247,87 @@ contract OnboardProposal is
         IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
 
         // Record the user's choice
-        UserVote storage userProposalVote = votes[msg.sender][_id];
-        if (userProposalVote.amount > 0) {
-            require(
-                userProposalVote.choice == _isFor,
-                "Can not choose both sides"
-            );
+        UserVote storage userVote = votes[msg.sender][_id];
+        if (userVote.amount > 0) {
+            require(userVote.choice == _isFor, "Can not choose both sides");
         } else {
-            userProposalVote.choice = _isFor;
+            userVote.choice = _isFor;
         }
 
-        Proposal storage currentProposal = proposals[_id];
         // Record the vote for this report
         if (_isFor == 1) {
-            currentProposal.numFor += _amount;
+            proposal.numFor += _amount;
         } else {
-            currentProposal.numAgainst += _amount;
+            proposal.numAgainst += _amount;
         }
 
         emit ProposalVoted(_id, msg.sender, _isFor, _amount);
     }
 
     /**
-     * @notice Settle the proposal
+     * @notice Settle the proposal result
      *
-     * @param _proposalId Proposal id
+     * @param _id Proposal id
      */
-    function settle(uint256 _proposalId) external {
-        Proposal storage currentProposal = proposals[_proposalId];
+    function settle(uint256 _id) external {
+        Proposal storage proposal = proposals[_id];
 
-        require(currentProposal.status == VOTING_STATUS, "Not voting status");
-
-        // Check has passed the voting period
+        require(proposal.status == VOTING_STATUS, "Not voting status");
         require(
-            _passedVotingPeriod(currentProposal.proposeTimestamp),
+            _passedVotingPeriod(proposal.voteTimestamp),
             "Not reached settlement"
         );
+        require(proposal.result == 0, "Already settled");
 
-        require(currentProposal.result == 0, "Already settled");
+        // If reached quorum, settle the result
+        if (_checkQuorum(proposal.numFor + proposal.numAgainst)) {
+            uint256 res = _getVotingResult(
+                proposal.numFor,
+                proposal.numAgainst
+            );
 
-        _checkQuorum(currentProposal.numFor + currentProposal.numAgainst);
+            proposal.result = res;
+            proposal.status = SETTLED_STATUS;
 
-        uint256 res = _getVotingResult(
-            currentProposal.numFor,
-            currentProposal.numAgainst
-        );
+            // allow for new proposals to be proposed for this protocol
+            poolProposed[proposal.protocolToken] = false;
 
-        currentProposal.result = res;
-        currentProposal.status = SETTLED_STATUS;
+            emit ProposalSettled(_id, res);
+        }
+        // Else, set the result as "FAILED"
+        else {
+            proposal.result = FAILED_RESULT;
+            proposal.status = SETTLED_STATUS;
 
-        // allow for new proposals to be proposed for this protocol
-        poolProposed[currentProposal.protocolToken] = false;
-        emit ProposalSettled(_proposalId, res);
-    }
+            poolProposed[proposal.protocolToken] = false;
 
-    function closeProposal(uint256 _proposalId) external onlyOwner {
-        Proposal storage currentProposal = proposals[_proposalId];
-
-        // require current proposal to be settled
-        require(
-            currentProposal.status == PENDING_STATUS,
-            "Not pending or settled status"
-        );
-
-        // Must close the report before pending period ends
-        require(
-            !_passedVotingPeriod(currentProposal.proposeTimestamp),
-            "Already passed pending period"
-        );
-
-        currentProposal.status = CLOSE_STATUS;
+            emit ProposalFailed(_id);
+        }
     }
 
     /**
      * @notice Claim back veDEG after voting result settled
      *
-     * @param _proposalId Proposal id
+     * @param _id Proposal id
      */
-    function claim(uint256 _proposalId) external {
-        Proposal storage currentProposal = proposals[_proposalId];
+    function claim(uint256 _id) external {
+        Proposal storage proposal = proposals[_id];
 
-        require(currentProposal.status == SETTLED_STATUS, "Not settled status");
+        require(proposal.status == SETTLED_STATUS, "Not settled status");
 
-        UserVote storage userVote = votes[msg.sender][_proposalId];
-
+        UserVote storage userVote = votes[msg.sender][_id];
+        // Unlock the veDEG used for voting
+        // No reward / punishment
         IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
 
         userVote.claimed = true;
+
+        emit Claimed(_id, msg.sender, userVote.amount);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Get the final voting result
@@ -339,17 +350,16 @@ contract OnboardProposal is
     /**
      * @notice Check whether has passed the voting time period
      *
-     * @param _reportTime Start timestamp of the report
+     * @param _voteTimestamp Start timestamp of the voting
      *
      * @return hasPassed True for passing
      */
-    function _passedVotingPeriod(uint256 _reportTime)
+    function _passedVotingPeriod(uint256 _voteTimestamp)
         internal
         view
         returns (bool)
     {
-        uint256 endTime = _reportTime + VOTING_PERIOD;
-
+        uint256 endTime = _voteTimestamp + VOTING_PERIOD;
         return block.timestamp > endTime;
     }
 
@@ -359,15 +369,14 @@ contract OnboardProposal is
      *
      * @param _totalVotes Total vote numbers
      */
-    function _checkQuorum(uint256 _totalVotes) internal view {
-        require(
-            _totalVotes >= (IVeDEG(veDeg).totalSupply() * QUORUM_RATIO) / 100,
-            "Not reached quorum"
-        );
+    function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
+        return
+            _totalVotes >= (IVeDEG(veDeg).totalSupply() * QUORUM_RATIO) / 100;
     }
 
     /**
      * @notice Check veDEG to be enough
+     *         Only unlocked veDEG will be counted
      *
      * @param _user   User address
      * @param _amount Amount to fulfill
