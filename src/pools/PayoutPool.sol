@@ -6,7 +6,9 @@ import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+
 import "../interfaces/IVeDEG.sol";
+
 
 /**
  * @notice Payout Pool
