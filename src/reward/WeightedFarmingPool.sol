@@ -21,7 +21,7 @@ import "../libraries/DateTime.sol";
  *
  *         Different generations of PRI-LP-1-JOE-G1
  */
-abstract contract WeightedFarmingPool {
+contract WeightedFarmingPool {
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
