@@ -24,7 +24,7 @@ import "../../util/OwnableWithoutContext.sol";
 
 import "./OnboardProposalParameters.sol";
 import "./OnboardProposalDependencies.sol";
-import "./OnboardProposalErrorEvent.sol";
+import "./OnboardProposalEventError.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
@@ -38,7 +38,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 contract OnboardProposal is
     OnboardProposalParameters,
-    OnboardProposalErrorEvent,
+    OnboardProposalEventError,
     ExternalTokenDependencies,
     OwnableWithoutContext,
     OnboardProposalDependencies

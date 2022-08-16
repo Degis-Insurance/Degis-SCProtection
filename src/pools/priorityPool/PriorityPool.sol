@@ -20,12 +20,12 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "../../util/PausableWithoutContext.sol";
 import "../../util/OwnableWithoutContext.sol";
 
 import "./PriorityPoolDependencies.sol";
+import "./PriorityPoolEventError.sol";
+import "./PriorityPoolToken.sol";
 
 import "src/pools/priorityPool/PriorityPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
@@ -54,6 +54,7 @@ import "forge-std/console.sol";
  *         If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
  */
 contract PriorityPool is
+    PriorityPoolEventError,
     ERC20,
     OwnableWithoutContext,
     PausableWithoutContext,
@@ -84,8 +85,8 @@ contract PriorityPool is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Admin address, set to be the owner of factory
-    address public admin;
+    // Every time there is a report and liquidation, generation += 1
+    uint256 public generation;
 
     // Address of insured token
     address public insuredToken;
@@ -119,19 +120,11 @@ contract PriorityPool is
     // Has already passed the base premium ratio period
     bool public passedBasePeriod;
 
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
+    // Generation => crToken address
+    mapping(uint256 => address) public crTokenAddress;
 
-    event LiquidityProvision(uint256 amount, address sender);
-    event LiquidityRemoved(uint256 amount, address sender);
-    event Liquidation(uint256 amount, uint256 endDate);
-    event EmissionRateUpdated(
-        uint256 newEmissionRate,
-        uint256 newEmissionEndTime
-    );
-    event AccRewardsPerShareUpdated(uint256 amount);
-    event LiquidationEnded(uint256 timestamp);
+    // Generation => lp token address
+    mapping(uint256 => address) public lpTokenAddress;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -140,12 +133,11 @@ contract PriorityPool is
     constructor(
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _name,
-        string memory _symbol,
+        string memory _poolName,
         uint256 _baseRatio,
         address _admin,
         uint256 _poolId
-    ) ERC20(_name, _symbol) OwnableWithoutContext(_admin) {
+    ) OwnableWithoutContext(_admin) {
         // token address insured by pool
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
@@ -158,6 +150,8 @@ contract PriorityPool is
         // TODO: change length
         maxLength = 3;
         minLength = 1;
+
+        _deployNewGeneration(_poolName, _poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -476,6 +470,22 @@ contract PriorityPool is
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    function _deployNewGeneration(string calldata _poolName, uint256 _poolId)
+        internal
+    {
+        uint256 currentGeneration = generation++;
+        string memory _name = string.concat(
+            "PRI-LP-",
+            _toString(_poolId),
+            "-",
+            _poolName,
+            _toString(currentGeneration)
+        );
+        address newLPAddress = new PriorityPoolToken(_name);
+
+        emit NewGenerationLPTokenDeployed(_poolName, _poolId, currentGeneration, newLPAddress);
+    }
+
     /**
      * @notice Update cover record info when new covers come in
      *
@@ -663,5 +673,27 @@ contract PriorityPool is
                 59,
                 59
             );
+    }
+
+    function _toString(uint256 value) internal pure returns (string memory) {
+        // Inspired by OraclizeAPI's implementation - MIT licence
+        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
+
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }
