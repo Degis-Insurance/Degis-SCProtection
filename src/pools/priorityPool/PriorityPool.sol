@@ -20,6 +20,7 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../util/PausableWithoutContext.sol";
 import "../../util/OwnableWithoutContext.sol";
 
@@ -155,7 +156,7 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
-        _deployNewGeneration(_poolName, _poolId);
+        _deployNewGenerationLP(_poolName, _poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -257,8 +258,9 @@ contract PriorityPool is
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
                 IProtectionPool(protectionPool).getTotalCovered();
 
+            address lp = currentLPAddress();
             // LP Token ratio = LP token in this pool / Total lp token
-            uint256 tokenRatio = (totalSupply() * SCALE) /
+            uint256 tokenRatio = (IERC20(lp).totalSupply() * SCALE) /
                 IERC20(protectionPool).totalSupply();
 
             // Total dynamic pools
@@ -352,7 +354,8 @@ contract PriorityPool is
         // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
         require(_amount > 0, "amount should be greater than 0");
-        _burn(_provider, _amount);
+        address lp = currentLPAddress();
+        ILPToken(lp).burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
@@ -424,7 +427,8 @@ contract PriorityPool is
         address shield = IPriorityPoolFactory(priorityPoolFactory).shield();
 
         uint256 price = IERC20(shield).balanceOf(protectionPool) /
-            totalSupply();
+            IERC20(protectionPool).totalSupply();
+
 
         uint256 neededLPAmount = (_amount * SCALE) / price;
 
@@ -488,9 +492,9 @@ contract PriorityPool is
      * @param _poolName Pool name
      * @param _poolId   Pool id
      *
-     * @return _newLPAddress The deployed lp token address
+     * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP(string calldata _poolName, uint256 _poolId)
+    function _deployNewGenerationLP(string memory _poolName, uint256 _poolId)
         internal
         returns (address newLPAddress)
     {
@@ -505,7 +509,9 @@ contract PriorityPool is
             "-G",
             currentGeneration._toString()
         );
-        address newLPAddress = new PriorityPoolToken(_name);
+        PriorityPoolToken newPriorityPoolToken = new PriorityPoolToken(_name);
+        newLPAddress = address(newPriorityPoolToken);
+        lpTokenAddress[currentGeneration] = newLPAddress;
 
         emit NewGenerationLPTokenDeployed(
             _poolName,
@@ -524,7 +530,7 @@ contract PriorityPool is
     function _mintLP(address _user, uint256 _amount) internal {
         // Get current generation lp token address and mint tokens
         address lp = currentLPAddress();
-        IERC20(lp).mint(_user, _amount);
+        ILPToken(lp).mint(_user, _amount);
     }
 
     /**
@@ -681,7 +687,7 @@ contract PriorityPool is
 
         if (day >= 25) {
             // Add one month
-            monthToAdd += 1;
+            monthsToAdd += 1;
         }
 
         return _getFutureMonthEndTime(_now, monthsToAdd);
