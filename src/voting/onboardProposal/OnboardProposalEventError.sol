@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-interface OnboardProposalErrorEvent {
+interface OnboardProposalEventError {
     event NewProposal(
         string name,
         address token,
