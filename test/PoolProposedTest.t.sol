@@ -189,7 +189,7 @@ contract ClaimPayoutTest is Test {
 
     function testPresenceNewPool() public {
         // check if pool is created
-        string memory name = PriorityPool(pool2).name();
+        string memory name = PriorityPool(pool2).poolName();
         uint256 maxCapacity = PriorityPool(pool2).maxCapacity();
 
         assertEq(maxCapacity == 10000 ether, true);
@@ -200,10 +200,10 @@ contract ClaimPayoutTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(2, 10000);
 
-        // check if pool has received tokens
-        assertEq(PriorityPool(pool2).totalSupply() == 10000, true);
+        address currentLPToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(PriorityPoolToken(currentLPToken).totalSupply() == 10000, true);
         // check if owner has receive minted tokens
-        assertEq(PriorityPool(pool2).balanceOf(address(this)) == 10000, true);
+        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
 
     function testBuyCoverNewPool() public {

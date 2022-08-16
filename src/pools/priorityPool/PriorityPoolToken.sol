@@ -4,6 +4,10 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+interface ILPToken {
+    function mint(address _account, uint256 _amount) external;
+    function burn(address _account, uint256 _amount) external;
+}
 /**
  * @notice LP token for priority pools
  *

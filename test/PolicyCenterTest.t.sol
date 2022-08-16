@@ -207,8 +207,8 @@ contract PostPriorityPoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
 
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
-
-        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
+        address currentLPToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
 
     function testUnstakeBeforeBufferTimeEndInsnsurancePool() public {
@@ -217,8 +217,8 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
         // user should not be able to remove liquidity and liquidities should remain the same.
-        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
-        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
+        address currentLPToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
 
     function testUnstakeAfterBufferTimeEndsPriorityPool() public {
@@ -226,11 +226,12 @@ contract PostPriorityPoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
-        assertEq(PriorityPool(pool1).balanceOf(address(this)) == 10000, true);
+        address currentLPToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
         // change block timestamp to after buffer time
         vm.warp(7 days + 1);
 
-        console.log(PriorityPool(pool1).totalSupply());
+        console.log(PriorityPoolToken(currentLPToken).totalSupply());
         policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
     }
 
