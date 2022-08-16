@@ -47,8 +47,6 @@ contract OnboardProposal is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public proposalCenter;
-
     // Total number of reports
     uint256 public proposalCounter;
 
@@ -80,10 +78,6 @@ contract OnboardProposal is
     }
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
-
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -118,6 +112,24 @@ contract OnboardProposal is
         return votes[_user][_proposalId].choice;
     }
 
+    function getAllProposals()
+        external
+        view
+        returns (Proposal[] memory allProposals)
+    {
+        uint256 totalProposal = proposalCounter;
+
+        allProposals = new Proposal[](totalProposal);
+
+        for (uint256 i; i < totalProposal; ) {
+            allProposals[i] = proposals[i];
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -134,7 +146,7 @@ contract OnboardProposal is
     }
 
     function setProposalCenter(address _proposalCenter) external onlyOwner {
-        proposalCenter = _proposalCenter;
+        _setProposalCenter(_proposalCenter);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -258,6 +270,7 @@ contract OnboardProposal is
         } else {
             userVote.choice = _isFor;
         }
+        userVote.amount += _amount;
 
         // Record the vote for this report
         if (_isFor == 1) {

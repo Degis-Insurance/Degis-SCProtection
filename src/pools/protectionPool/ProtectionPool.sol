@@ -144,7 +144,7 @@ contract ProtectionPool is
         for (uint256 i; i < poolAmount; ) {
             (, address poolAddress, , , ) = factory.pools(i);
 
-            if (factory.alreadyDynamic(poolAddress)) {
+            if (factory.dynamic(poolAddress)) {
                 covered += IPriorityPool(poolAddress).activeCovered();
             }
 

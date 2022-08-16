@@ -96,11 +96,11 @@ interface IPriorityPoolFactory {
 
     function veDeg() external view returns (address);
 
-    function addDynamicCounter() external;
+    function updateDynamicPool(uint256 _poolId) external;
 
     function dynamicPoolCounter() external view returns (uint256);
 
-    function alreadyDynamic(address _pool) external view returns (bool);
+    function dynamic(address _pool) external view returns (bool);
 
     function pools(uint256 _poolId)
         external
