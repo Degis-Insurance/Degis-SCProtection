@@ -27,7 +27,6 @@ import "./IncidentReportDependencies.sol";
 import "./IncidentReportEventError.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
-
 import "../../interfaces/IDegisToken.sol";
 import "../../interfaces/IVeDEG.sol";
 
@@ -66,6 +65,13 @@ import "forge-std/console.sol";
  *              PASSED: Get back REPORT_THRESHOLD and get extra REPORT_REWARD & 10% of total treasury income
  *              REJECTED: Lose REPORT_THRESHOLD to whom vote against
  *              TIED: Lose REPORT_THRESHOLD
+ *
+ *         When an incident report has passed and been executed
+ *         The corresponding priority pool will be liquidated which means:
+ *             - Move out some assets for users to claim
+ *             - Deploy new generation of crTokens and PRI-LP tokens
+ *             - Update the farming weights for the priority farming pool
+ *
  */
 contract IncidentReport is
     IncidentReportParameters,
@@ -79,6 +85,7 @@ contract IncidentReport is
     // ---------------------------------------------------------------------------------------- //
 
     address public proposalCenter;
+    
     // Total number of reports
     uint256 public reportCounter;
 
@@ -327,7 +334,6 @@ contract IncidentReport is
         } else {
             userReportVote.choice = _isFor;
         }
-
         userReportVote.amount += _amount;
 
         Report storage currentReport = reports[_reportId];

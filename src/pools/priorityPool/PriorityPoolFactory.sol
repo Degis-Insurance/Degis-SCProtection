@@ -20,10 +20,9 @@
 
 pragma solidity ^0.8.13;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./PriorityPoolFactoryDependencies.sol";
-
 
 import "../../util/OwnableWithoutContext.sol";
 
@@ -72,10 +71,14 @@ contract PriorityPoolFactory is
     // poolId => Pool Information
     mapping(uint256 => PoolInfo) public pools;
 
+    mapping(address => uint256) public poolAddressToId;
+
     uint256 public poolCounter;
     uint256 public sumOfMaxCapacities;
 
-    mapping(address => bool) public alreadyDynamic;
+    // Whether a pool is already dynamic
+    mapping(address => bool) public dynamic;
+
     uint256 public dynamicPoolCounter;
 
     // Record whether a protocol token or pool address has been registered
@@ -97,7 +100,11 @@ contract PriorityPoolFactory is
         uint256 policyPricePerShield
     );
 
-    event DynamicPoolCounterUpdate(address pool, uint256 dynamicPoolCounter);
+    event DynamicPoolUpdate(
+        uint256 poolId,
+        address pool,
+        uint256 dynamicPoolCounter
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -197,25 +204,14 @@ contract PriorityPoolFactory is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function addDynamicCounter() external {
-        require(poolRegistered[msg.sender], "Only priority pool");
-
-        unchecked {
-            ++dynamicPoolCounter;
-        }
-
-        alreadyDynamic[msg.sender] = true;
-
-        emit DynamicPoolCounterUpdate(msg.sender, dynamicPoolCounter);
-    }
-
     /**
-     * @notice Creates a new insurance pool
+     * @notice Create a new priority pool
+     *         Called by executor when an onboard proposal has passed
      *
-     * @param _name          Name of the protocol
-     * @param _protocolToken Address of the token used for the protocol
-     * @param _maxCapacity   Maximum capacity of the pool
-     * @param _basePremiumRatio    Initial policy price per shield
+     * @param _name             Name of the protocol
+     * @param _protocolToken    Address of the token used for the protocol
+     * @param _maxCapacity      Maximum capacity of the pool
+     * @param _basePremiumRatio Initial policy price per shield
      *
      * @return address Address of the new insurance pool
      */
@@ -262,6 +258,7 @@ contract PriorityPoolFactory is
 
         tokenRegistered[_protocolToken] = true;
         poolRegistered[newPoolAddress] = true;
+        poolAddressToId[newPoolAddress] = currentPoolId;
 
         // Store pool information in Policy Center
         IPolicyCenter(policyCenter).storePoolInformation(
@@ -294,6 +291,27 @@ contract PriorityPoolFactory is
         );
 
         return newPoolAddress;
+    }
+
+    /**
+     * @notice Update a priority pool status to dynamic
+     *         Only sent from priority pool
+     *         "Dynamic" means:
+     *              The priority pool will be counted in the dynamic premium formula
+     *
+     * @param _poolId Pool id
+     */
+    function updateDynamicPool(uint256 _poolId) external {
+        require(poolRegistered[msg.sender], "Only priority pool");
+        require(!dynamic[msg.sender], "Already dynamic");
+
+        dynamic[msg.sender] = true;
+
+        unchecked {
+            ++dynamicPoolCounter;
+        }
+
+        emit DynamicPoolUpdate(_poolId, msg.sender, dynamicPoolCounter);
     }
 
     // ---------------------------------------------------------------------------------------- //

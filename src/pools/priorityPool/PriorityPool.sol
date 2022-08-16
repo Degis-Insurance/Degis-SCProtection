@@ -31,6 +31,7 @@ import "src/pools/priorityPool/PriorityPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 
 import "../../libraries/DateTime.sol";
+import "../../libraries/StringUtils.sol";
 
 import "forge-std/console.sol";
 
@@ -55,11 +56,11 @@ import "forge-std/console.sol";
  */
 contract PriorityPool is
     PriorityPoolEventError,
-    ERC20,
     OwnableWithoutContext,
     PausableWithoutContext,
     PriorityPoolDependencies
 {
+    using StringUtils for uint256;
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -84,6 +85,8 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    string public poolName;
 
     // Every time there is a report and liquidation, generation += 1
     uint256 public generation;
@@ -146,6 +149,7 @@ contract PriorityPool is
         basePremiumRatio = _baseRatio;
 
         poolId = _poolId;
+        poolName = _poolName;
 
         // TODO: change length
         maxLength = 3;
@@ -180,23 +184,27 @@ contract PriorityPool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    function currentLPAddress() public view returns (address) {
+        return lpTokenAddress[generation];
+    }
+
     /**
      * @notice Cost to buy a cover for a given period of time and amount of tokens
      *
-     * @param _amount Amount being covered
-     * @param _length Cover length in month
+     * @param _amount        Amount being covered
+     * @param _coverDuration Cover length in month
      */
-    function coverPrice(uint256 _amount, uint256 _length)
+    function coverPrice(uint256 _amount, uint256 _coverDuration)
         external
         view
         returns (uint256 price, uint256 length)
     {
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
-        require(_withinLength(_length), "Wrong cover length");
+        require(_withinLength(_coverDuration), "Wrong cover length");
 
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        uint256 endTimestamp = getExpiryDateInternal(block.timestamp, _length);
+        uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
         length = endTimestamp - block.timestamp;
 
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
@@ -204,8 +212,9 @@ contract PriorityPool is
 
     /**
      * @notice Get current active cover amount
+     *         Active cover amount = sum of the nearest 3 months' covers
      *
-     * @return covered Total active cover
+     * @return covered Total active cover amount
      */
     function activeCovered() public view returns (uint256 covered) {
         (uint256 currentYear, uint256 currentMonth, ) = DateTimeLibrary
@@ -230,11 +239,11 @@ contract PriorityPool is
      *         Depends on the covers sold and liquidity amount
      *         For the first 48 hours, use the base premium ratio
      *
-     * @param _newAmount New cover amount being bought
+     * @param _coverAmount New cover amount being bought
      *
      * @return ratio The dynamic ratio
      */
-    function dynamicPremiumRatio(uint256 _newAmount)
+    function dynamicPremiumRatio(uint256 _coverAmount)
         public
         view
         returns (uint256 ratio)
@@ -245,13 +254,14 @@ contract PriorityPool is
         // Then use dynamic ratio
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
-            uint256 coveredRatio = ((activeCovered() + _newAmount) * SCALE) /
+            uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
                 IProtectionPool(protectionPool).getTotalCovered();
 
             // LP Token ratio = LP token in this pool / Total lp token
             uint256 tokenRatio = (totalSupply() * SCALE) /
                 IERC20(protectionPool).totalSupply();
 
+            // Total dynamic pools
             uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
                 .dynamicPoolCounter();
 
@@ -309,7 +319,7 @@ contract PriorityPool is
      *         Only callable through policyCenter
      *         Can not provide new liquidity when liquidated / paused
      *
-     * @param _amount   Amount of liquidity to provide
+     * @param _amount   Amount of liquidity (PRO-LP token) to provide
      * @param _provider Liquidity provider adress
      */
     function stakedLiquidity(uint256 _amount, address _provider)
@@ -319,10 +329,9 @@ contract PriorityPool is
         onlyPolicyCenter
     {
         _updateDynamic();
-        // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
         // Mint lp tokens to the provider
-        _mint(_provider, _amount);
+        _mintLP(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
 
@@ -388,8 +397,11 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        // changes the status of the insurance pool to liquidated and allows payout claims
+        // Change the status of the insurance pool to liquidated and allows payout claims
         _setLiquidationStatus(true);
+
+        // Deploy new lp tokens
+        _deployNewGenerationLP(poolName, poolId);
 
         // Set end liquidation date
         // Users will have CLAIM_PERIOD days to claim payout.
@@ -470,27 +482,56 @@ contract PriorityPool is
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function _deployNewGeneration(string calldata _poolName, uint256 _poolId)
+    /**
+     * @notice Deploy a new generation lp token
+     *
+     * @param _poolName Pool name
+     * @param _poolId   Pool id
+     *
+     * @return _newLPAddress The deployed lp token address
+     */
+    function _deployNewGenerationLP(string calldata _poolName, uint256 _poolId)
         internal
+        returns (address newLPAddress)
     {
         uint256 currentGeneration = generation++;
+
+        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id
         string memory _name = string.concat(
             "PRI-LP-",
-            _toString(_poolId),
+            _poolId._toString(),
             "-",
             _poolName,
-            _toString(currentGeneration)
+            "-G",
+            currentGeneration._toString()
         );
         address newLPAddress = new PriorityPoolToken(_name);
 
-        emit NewGenerationLPTokenDeployed(_poolName, _poolId, currentGeneration, newLPAddress);
+        emit NewGenerationLPTokenDeployed(
+            _poolName,
+            _poolId,
+            currentGeneration,
+            newLPAddress
+        );
+    }
+
+    /**
+     * @notice Mint current generation lp tokens
+     *
+     * @param _user   User address
+     * @param _amount LP token amount
+     */
+    function _mintLP(address _user, uint256 _amount) internal {
+        // Get current generation lp token address and mint tokens
+        address lp = currentLPAddress();
+        IERC20(lp).mint(_user, _amount);
     }
 
     /**
      * @notice Update cover record info when new covers come in
      *
      * @param _amount Cover amount
-     * @param _length Cover length
+     * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
         (
@@ -503,18 +544,23 @@ contract PriorityPool is
 
         for (uint256 i; i < _length; ) {
             coverInMonth[currentYear][currentMonth + i] += _amount;
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
     /**
-     * @notice Update dynamic status of this pool
+     * @notice Check & update dynamic status of this pool
      *         Record this pool as "already dynamic" in factory
+     *
+     *         Every time there is a new interaction, will do this check
      */
     function _updateDynamic() internal {
-        uint256 fromStart = block.timestamp - startTime;
-
-        if (fromStart > 7 days && !passedBasePeriod) {
-            IPriorityPoolFactory(priorityPoolFactory).addDynamicCounter();
+        // Put the cheaper check in the first place
+        if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
+            IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
     }
@@ -616,13 +662,13 @@ contract PriorityPool is
     }
 
     /**
-     * @notice Get the expiry date based on cover duration
+     * @notice Get the expiry timestamp based on cover duration
      *
      * @param _now           Current timestamp
      * @param _coverDuration Months to cover: 1-3
      */
-    function getExpiryDateInternal(uint256 _now, uint256 _coverDuration)
-        public
+    function _getExpiry(uint256 _now, uint256 _coverDuration)
+        internal
         pure
         returns (uint256)
     {
@@ -631,69 +677,64 @@ contract PriorityPool is
 
         // Cover duration of 1 month means current month
         // unless today is the 25th calendar day or later
-        uint256 monthToAdd = _coverDuration - 1;
+        uint256 monthsToAdd = _coverDuration - 1;
 
         if (day >= 25) {
             // Add one month
             monthToAdd += 1;
         }
 
-        return _getNextMonthEndDate(_now, monthToAdd);
+        return _getFutureMonthEndTime(_now, monthsToAdd);
     }
 
-    function _getNextMonthEndDate(uint256 date, uint256 monthsToAdd)
+    /**
+     * @notice Get the end timestamp of a future month
+     *
+     * @param _timestamp   Current timestamp
+     * @param _monthsToAdd Months to be added
+     *
+     * @return endTimestamp End timestamp of a future month
+     */
+    function _getFutureMonthEndTime(uint256 _timestamp, uint256 _monthsToAdd)
         private
         pure
-        returns (uint256)
+        returns (uint256 endTimestamp)
     {
-        uint256 futureDate = DateTimeLibrary.addMonths(date, monthsToAdd);
-        return _getMonthEndTimestamp(futureDate);
+        uint256 futureTimestamp = DateTimeLibrary.addMonths(
+            _timestamp,
+            _monthsToAdd
+        );
+        endTimestamp = _getMonthEndTimestamp(futureTimestamp);
     }
 
-    function _getMonthEndTimestamp(uint256 _date)
+    /**
+     * @notice Get the last second of a month
+     *
+     * @param _timestamp Timestamp to be calculated
+     *
+     * @return endTimestamp End timestamp of the month
+     */
+    function _getMonthEndTimestamp(uint256 _timestamp)
         private
         pure
-        returns (uint256)
+        returns (uint256 endTimestamp)
     {
         // Get the year and month from the date
         (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
-            _date
+            _timestamp
         );
 
         // Count the total number of days of that month and year
         uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(year, month);
 
         // Get the month end timestamp
-        return
-            DateTimeLibrary.timestampFromDateTime(
-                year,
-                month,
-                daysInMonth,
-                23,
-                59,
-                59
-            );
-    }
-
-    function _toString(uint256 value) internal pure returns (string memory) {
-        // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
+        endTimestamp = DateTimeLibrary.timestampFromDateTime(
+            year,
+            month,
+            daysInMonth,
+            23,
+            59,
+            59
+        );
     }
 }
