@@ -69,7 +69,7 @@ contract OnboardProposal is
 
     // Protocol token => Whether proposed
     // A protocol can only have one pool
-    mapping(address => bool) public poolProposed;
+    mapping(address => bool) public proposed;
 
     struct UserVote {
         uint256 choice; // 1: vote for, 2: vote against
@@ -168,27 +168,24 @@ contract OnboardProposal is
         uint256 _basePremiumRatio // 10000 == 100% premium annual cost
     ) external {
         require(
-            !IPriorityPoolFactory(priorityPoolFactory).tokenRegistered(_token),
+            !priorityPoolFactory.tokenRegistered(_token),
             "Protocol already protected"
         );
         require(
-            _maxCapacity > 0 
-            && _maxCapacity <= MAX_CAPACITY_RATIO
-             ,
-            "Wrong capacity"
+            _maxCapacity > 0 && _maxCapacity <= MAX_CAPACITY_RATIO,
+            "Wrong capacity range"
         );
         require(_basePremiumRatio < 10000, "Wrong premium ratio");
-        require(!poolProposed[_token], "Protocol already proposed");
+        require(!proposed[_token], "Protocol already proposed");
 
         // Burn degis tokens to start a proposal
         deg.burnDegis(msg.sender, REPORT_THRESHOLD);
 
-        poolProposed[_token] = true;
+        proposed[_token] = true;
 
-        uint256 currentProposalCounter = ++proposalCounter;
-
+        uint256 currentCounter = ++proposalCounter;
         // Record the proposal info
-        Proposal storage proposal = proposals[currentProposalCounter];
+        Proposal storage proposal = proposals[currentCounter];
         proposal.protocolToken = _token;
         proposal.proposer = msg.sender;
         proposal.proposeTimestamp = block.timestamp;
@@ -207,7 +204,7 @@ contract OnboardProposal is
 
     /**
      * @notice Start the voting process
-     *         Need the approval of dev team
+     *         Need the approval of dev team (onlyOwner)
      *
      * @param _id Proposal id to start voting
      */
@@ -224,6 +221,7 @@ contract OnboardProposal is
 
     /**
      * @notice Close a pending proposal
+     *         Need the approval of dev team (onlyOwner)
      *
      * @param _id Proposal id
      */
@@ -263,7 +261,7 @@ contract OnboardProposal is
         _enoughVeDEG(msg.sender, _amount);
 
         // Lock vedeg until this report is settled
-        IVeDEG(veDeg).lockVeDEG(msg.sender, _amount);
+        veDeg.lockVeDEG(msg.sender, _amount);
 
         // Record the user's choice
         UserVote storage userVote = votes[msg.sender][_id];
@@ -309,9 +307,6 @@ contract OnboardProposal is
             proposal.result = res;
             proposal.status = SETTLED_STATUS;
 
-            // allow for new proposals to be proposed for this protocol
-            poolProposed[proposal.protocolToken] = false;
-
             emit ProposalSettled(_id, res);
         }
         // Else, set the result as "FAILED"
@@ -319,10 +314,11 @@ contract OnboardProposal is
             proposal.result = FAILED_RESULT;
             proposal.status = SETTLED_STATUS;
 
-            poolProposed[proposal.protocolToken] = false;
-
             emit ProposalFailed(_id);
         }
+
+        // Allow for new proposals to be proposed for this protocol
+        proposed[proposal.protocolToken] = false;
     }
 
     /**
@@ -338,7 +334,7 @@ contract OnboardProposal is
         UserVote storage userVote = votes[msg.sender][_id];
         // Unlock the veDEG used for voting
         // No reward / punishment
-        IVeDEG(veDeg).unlockVeDEG(msg.sender, userVote.amount);
+        veDeg.unlockVeDEG(msg.sender, userVote.amount);
 
         userVote.claimed = true;
 
@@ -391,7 +387,7 @@ contract OnboardProposal is
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
-            _totalVotes >= (IERC20(veDeg).totalSupply() * QUORUM_RATIO) / 100;
+            _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 100;
     }
 
     /**
@@ -402,8 +398,8 @@ contract OnboardProposal is
      * @param _amount Amount to fulfill
      */
     function _enoughVeDEG(address _user, uint256 _amount) internal view {
-        uint256 unlockedBalance = IERC20(veDeg).balanceOf(_user) -
-            IVeDEG(veDeg).locked(_user);
+        uint256 unlockedBalance = veDeg.balanceOf(_user) -
+            veDeg.locked(_user);
         require(unlockedBalance >= _amount, "Not enough veDEG");
     }
 }
