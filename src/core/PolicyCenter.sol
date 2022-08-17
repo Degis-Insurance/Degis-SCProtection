@@ -768,7 +768,7 @@ contract PolicyCenter is
         uint256 toSwap = _totalSplit - toPriorityPool;
 
         // swap native for degis
-        uint256 swapped = _swapTokens(toSwap, fromToken, shield);
+        uint256 swapped = _swapTokens(toSwap, fromToken, address(shield));
 
         uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) *
             premiumSplits[1];

@@ -36,6 +36,12 @@ interface IncidentReportEventError {
         uint256 unlockAmount
     );
 
+    event VotingRewardSettled(
+        uint256 reportId,
+        uint256 totalRewardToVoters,
+        uint256 totalRewardReserved
+    );
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //

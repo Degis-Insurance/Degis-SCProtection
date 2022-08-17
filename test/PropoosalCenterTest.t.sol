@@ -165,10 +165,10 @@ contract ProposalCenterTest is Test {
         onboardProposal.setExecutor(address(executor));
         onboardProposal.setProposalCenter(address(proposalCenter));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
+
         incidentReport.setProposalCenter(address(proposalCenter));
-        incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+        
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));

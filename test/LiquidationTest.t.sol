@@ -135,8 +135,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setProtectionPool(address(protectionPool));
+       
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
