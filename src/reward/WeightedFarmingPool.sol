@@ -54,6 +54,8 @@ contract WeightedFarmingPool {
     }
     mapping(uint256 => mapping(address => UserInfo)) public users;
 
+    // Keccak256(poolId, token) => Whether supported
+    // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
     event PoolAdded(uint256 poolId, address token);

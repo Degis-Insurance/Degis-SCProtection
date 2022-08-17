@@ -57,3 +57,22 @@ task("startVoting", "Start voting process of a proposal")
 
     console.log("Tx details:", await tx.wait());
   });
+
+task("settle", "Settle a voting")
+  .addParam("id", "Proposal id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const onboardProposal: OnboardProposal = new OnboardProposal__factory(
+      dev_account
+    ).attach(addressList[network.name].OnboardProposal);
+
+    const tx = await onboardProposal.settle(taskArgs.id);
+    console.log("Tx details:", await tx.wait())
+  });

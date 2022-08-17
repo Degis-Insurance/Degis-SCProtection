@@ -4,10 +4,12 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-interface ILPToken {
+interface IPriorityPoolToken {
     function mint(address _account, uint256 _amount) external;
+
     function burn(address _account, uint256 _amount) external;
 }
+
 /**
  * @notice LP token for priority pools
  *
@@ -34,5 +36,10 @@ contract PriorityPoolToken is ERC20 {
     function mint(address _user, uint256 _amount) external {
         require(msg.sender == priorityPool, "Only priority pool");
         _mint(_user, _amount);
+    }
+
+    function burn(address _user, uint256 _amount) external {
+        require(msg.sender == priorityPool, "Only priority pool");
+        _burn(_user, _amount);
     }
 }

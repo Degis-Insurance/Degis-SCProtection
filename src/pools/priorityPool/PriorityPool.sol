@@ -299,7 +299,10 @@ contract PriorityPool is
         _setIncidentReport(_incidentReport);
     }
 
-    function setPremiumRewardPool(address _premiumRewardPool) external onlyOwner {
+    function setPremiumRewardPool(address _premiumRewardPool)
+        external
+        onlyOwner
+    {
         _setPremiumRewardPool(_premiumRewardPool);
     }
 
@@ -357,7 +360,7 @@ contract PriorityPool is
 
         require(_amount > 0, "amount should be greater than 0");
         address lp = currentLPAddress();
-        ILPToken(lp).burn(_provider, _amount);
+        IPriorityPoolToken(lp).burn(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
@@ -430,7 +433,6 @@ contract PriorityPool is
 
         uint256 price = IERC20(shield).balanceOf(protectionPool) /
             IERC20(protectionPool).totalSupply();
-
 
         uint256 neededLPAmount = (_amount * SCALE) / price;
 
@@ -511,9 +513,10 @@ contract PriorityPool is
             "-G",
             currentGeneration._toString()
         );
-        PriorityPoolToken newPriorityPoolToken = new PriorityPoolToken(_name);
-        newLPAddress = address(newPriorityPoolToken);
-        lpTokenAddress[currentGeneration] = newLPAddress;
+
+        address newLP = address(new PriorityPoolToken(_name));
+
+        lpTokenAddress[currentGeneration] = newLP;
 
         emit NewGenerationLPTokenDeployed(
             _poolName,
@@ -532,7 +535,7 @@ contract PriorityPool is
     function _mintLP(address _user, uint256 _amount) internal {
         // Get current generation lp token address and mint tokens
         address lp = currentLPAddress();
-        ILPToken(lp).mint(_user, _amount);
+        IPriorityPoolToken(lp).mint(_user, _amount);
     }
 
     /**
