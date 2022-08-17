@@ -24,7 +24,7 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant QUORUM_RATIO = 30;
 
     // DEG threshold for starting a report
-    uint256 constant REPORT_THRESHOLD = 1000 ether;
+    uint256 constant REPORT_THRESHOLD = 10000 ether;
 
     // DEG reward for correct reporter
     uint256 constant REPORTER_REWARD = 1000 ether;

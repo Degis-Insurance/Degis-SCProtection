@@ -118,9 +118,6 @@ contract IncidentReport is
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
 
-    // User address => cool down for report until
-    mapping(address => uint256) public userCoolDownUntil;
-
     // Pool address => whether the pool is being reported
     mapping(address => bool) public reported;
 
@@ -204,7 +201,6 @@ contract IncidentReport is
      *
      * @param _poolId Pool id to report incident
      */
-
     function report(uint256 _poolId) external {
         // Check pool can be reported
         address pool = _checkPoolStatus(_poolId);
@@ -263,7 +259,8 @@ contract IncidentReport is
     /**
      * @notice Close a pending report
      *
-     *         Can only be started after the pending period
+     *         Only owner can close a pending report
+     *         Can only be closed before the pending period ends
      *         Will change the status from PENDING to CLOSED
      *
      * @param _id Report id
@@ -284,9 +281,10 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Vote on currently pending reports
+     * @notice Vote on current reports
      *
      *         Voting power is decided by the (unlocked) balance of veDEG
+     *         Once voted, those veDEG will be locked
      *         Rewarded if votes with majority
      *         Punished if votes against majority
      *
@@ -310,16 +308,13 @@ contract IncidentReport is
         _lockVeDEG(msg.sender, _amount);
 
         // Record the user's choice
-        UserVote storage userReportVote = votes[msg.sender][_id];
-        if (userReportVote.amount > 0) {
-            require(
-                userReportVote.choice == _isFor,
-                "Can not choose both sides"
-            );
+        UserVote storage userVote = votes[msg.sender][_id];
+        if (userVote.amount > 0) {
+            require(userVote.choice == _isFor, "Can not choose both sides");
         } else {
-            userReportVote.choice = _isFor;
+            userVote.choice = _isFor;
         }
-        userReportVote.amount += _amount;
+        userVote.amount += _amount;
 
         Report storage currentReport = reports[_id];
         // Record the vote for this report
@@ -376,9 +371,7 @@ contract IncidentReport is
 
         if (res > 0) {
             _settleVotingReward(_id);
-
             currentReport.status = SETTLED_STATUS;
-
             emit ReportSettled(_id, res);
         } else {
             emit ReportExtended(_id, currentReport.round);
@@ -466,7 +459,6 @@ contract IncidentReport is
         uint256 result = currentReport.result;
 
         uint256 totalRewardToVoters;
-        uint256 totalRewardReserved;
 
         if (result == PASS_RESULT) {
             // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
@@ -478,8 +470,6 @@ contract IncidentReport is
             // 40% of total deg reward to the opposite
             totalRewardToVoters = (numAgainst * REWARD_RATIO) / 100;
 
-            totalRewardReserved = (numAgainst * RESERVE_RATIO) / 100;
-
             // Update deg reward for those who vote for
             currentReport.votingReward = (totalRewardToVoters * SCALE) / numFor;
         } else if (result == REJECT_RESULT) {
@@ -489,15 +479,13 @@ contract IncidentReport is
                 (numFor * REWARD_RATIO) /
                 100;
 
-            totalRewardReserved = (numFor * RESERVE_RATIO) / 100;
-
             // Update deg reward for those who vote against
             currentReport.votingReward =
                 (totalRewardToVoters * SCALE) /
                 numAgainst;
         }
 
-        emit VotingRewardSettled(_id, totalRewardToVoters, totalRewardReserved);
+        emit VotingRewardSettled(_id, totalRewardToVoters);
     }
 
     /**
