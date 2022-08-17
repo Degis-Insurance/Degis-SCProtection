@@ -71,7 +71,7 @@ contract setAddressesTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
@@ -98,7 +98,7 @@ contract setAddressesTest is Test {
         // required to provide liquidity
         protectionPool.setPolicyCenter(address(policyCenter));
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        //  policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -130,7 +130,8 @@ contract setAddressesTest is Test {
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         console.log(priorityPoolFactory.premiumRewardPool());
         assertEq(
-            priorityPoolFactory.premiumRewardPool() == address(premiumRewardPool),
+            priorityPoolFactory.premiumRewardPool() ==
+                address(premiumRewardPool),
             true
         );
     }
@@ -138,7 +139,7 @@ contract setAddressesTest is Test {
     function testSetPriorityPoolFactory() public {
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
         assertEq(
-            onboardProposal.priorityPoolFactory() ==
+            address(onboardProposal.priorityPoolFactory()) ==
                 address(priorityPoolFactory),
             true
         );

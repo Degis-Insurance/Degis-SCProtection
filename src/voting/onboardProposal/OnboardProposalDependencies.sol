@@ -7,7 +7,7 @@ import "../../interfaces/IPriorityPoolFactory.sol";
 
 abstract contract OnboardProposalDependencies {
     address public executor;
-    address public priorityPoolFactory;
+    IPriorityPoolFactory public priorityPoolFactory;
     address public proposalCenter;
 
     function _setExecutor(address _executor) internal virtual {
@@ -18,7 +18,7 @@ abstract contract OnboardProposalDependencies {
         internal
         virtual
     {
-        priorityPoolFactory = _priorityPoolFactory;
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function _setProposalCenter(address _proposalCenter) internal virtual {
