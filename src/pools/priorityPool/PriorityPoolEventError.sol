@@ -17,6 +17,7 @@ interface PriorityPoolEventError {
         string poolName,
         uint256 poolId,
         uint256 currentGeneration,
+        string name,
         address newLPAddress
     );
 }
