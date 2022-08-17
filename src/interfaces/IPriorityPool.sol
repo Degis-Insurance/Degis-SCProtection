@@ -25,6 +25,8 @@ interface IPriorityPool {
 
     function deg() external view returns (address);
 
+    function dynamicPremiumRatio() external view returns (uint256);
+
     function emissionEndTime() external view returns (uint256);
 
     function emissionRate() external view returns (uint256);

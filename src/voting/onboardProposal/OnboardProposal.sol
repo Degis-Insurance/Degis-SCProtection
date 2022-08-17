@@ -172,7 +172,9 @@ contract OnboardProposal is
             "Protocol already protected"
         );
         require(
-            _maxCapacity > 0 && _maxCapacity < MAX_CAPACITY_RATIO,
+            _maxCapacity > 0 
+            && _maxCapacity <= MAX_CAPACITY_RATIO
+             ,
             "Wrong capacity"
         );
         require(_basePremiumRatio < 10000, "Wrong premium ratio");

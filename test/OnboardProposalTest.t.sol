@@ -183,7 +183,7 @@ contract OnboardProposalVotingTest is Test {
         deg.approve(address(onboardProposal), 10000 ether);
 
         vm.warp(0);
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
 
         shield.transfer(alice, 3000 ether);
     }
@@ -307,7 +307,7 @@ contract OnboardProposalVotingTest is Test {
         // pool proposal should not be proposed twice
         vm.prank(alice);
         vm.expectRevert("Protocol already protected");
-        onboardProposal.propose("Platypus", address(ptp), 100 ether, 1);
+        onboardProposal.propose("Platypus", address(ptp), 100, 1);
     }
 
     function testProposePoolAlreadyProposed() public {
@@ -319,7 +319,7 @@ contract OnboardProposalVotingTest is Test {
         vedeg.approve(address(onboardProposal), 10000 ether);
         vm.prank(alice);
         vm.expectRevert("Protocol already proposed");
-        onboardProposal.propose("Yeti", address(yeti), 100 ether, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
     }
 
     function testProposePoolAfterFailedProposal() public {
@@ -342,7 +342,7 @@ contract OnboardProposalVotingTest is Test {
         assertEq(proposal1.status == SETTLED_STATUS, true);
 
         // propose new pool after settling proposal
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
         // pool proposal is not pending and was false.
         OnboardProposal.Proposal memory proposal2 = onboardProposal.getProposal(
             2
@@ -372,6 +372,6 @@ contract OnboardProposalVotingTest is Test {
         executor.executeProposal(1);
 
         vm.expectRevert("Protocol already protected");
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
     }
 }
