@@ -334,7 +334,7 @@ contract ProposalCenterTest is Test {
         // pool proposal should not be proposed twice
         vm.prank(alice);
         vm.expectRevert("Protocol already protected");
-        onboardProposal.propose("Platypus", address(ptp), 100 ether, 1);
+        onboardProposal.propose("Platypus", address(ptp), 100, 1);
     }
 
     function testProposePoolAlreadyProposed() public {
@@ -347,7 +347,7 @@ contract ProposalCenterTest is Test {
         vedeg.approve(address(onboardProposal), 10000 ether);
         vm.prank(alice);
         vm.expectRevert("Protocol already proposed");
-        onboardProposal.propose("Yeti", address(yeti), 100 ether, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
     }
 
     function testProposePoolAfterFailedProposal() public {

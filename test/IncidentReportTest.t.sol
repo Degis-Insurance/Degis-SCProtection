@@ -162,6 +162,8 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
         policyCenter.setExecutor(address(executor));
 
+        incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+
         policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
@@ -422,6 +424,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     }
 
     function testClaimRewardAndPayDebtAfterPassed() public {
+        
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
         incidentReport.startVoting(POOL_ID);
 
