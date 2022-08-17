@@ -600,9 +600,11 @@ contract PriorityPool is
         uint256 tempMonth = lastRewardMonth;
 
         if (monthPassed == 0) {
+            if (rewardSpeed[currentYear][currentMonth] > 0){
             totalReward +=
                 (block.timestamp - lastRewardTimestamp) *
                 rewardSpeed[currentYear][currentMonth];
+            }
         } else {
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
@@ -617,18 +619,22 @@ contract PriorityPool is
                             59,
                             59
                         );
-                    totalReward +=
-                        (endTimestamp - lastRewardTimestamp) *
-                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                    if (rewardSpeed[currentYear][currentMonth] > 0){
+                        totalReward +=
+                            (block.timestamp - lastRewardTimestamp) *
+                            rewardSpeed[currentYear][currentMonth];
+                        }
                 }
                 // Last month reward
                 else if (i == monthPassed) {
                     uint256 startTimestamp = DateTimeLibrary
                         .timestampFromDateTime(tempYear, tempMonth, 1, 0, 0, 0);
 
-                    totalReward +=
-                        (block.timestamp - startTimestamp) *
-                        rewardSpeed[tempYear][tempMonth];
+                    if (rewardSpeed[currentYear][currentMonth] > 0){
+                        totalReward +=
+                            (block.timestamp - lastRewardTimestamp) *
+                            rewardSpeed[currentYear][currentMonth];
+                        }
                 }
                 // Middle month reward
                 else {
@@ -637,9 +643,11 @@ contract PriorityPool is
                         tempMonth
                     );
 
-                    totalReward +=
-                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                    if (rewardSpeed[currentYear][currentMonth] > 0){
+                        totalReward +=
+                            (block.timestamp - lastRewardTimestamp) *
+                            rewardSpeed[currentYear][currentMonth];
+                        }
                 }
 
                 unchecked {

@@ -8,6 +8,7 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 
@@ -31,6 +32,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     PayoutPool public payoutPool;
     IncidentReport public incidentReport;
@@ -83,6 +85,12 @@ contract ExecutorTest is Test, IncidentReportParameters {
             address(payoutPool)
         );
 
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory),
+            address(protectionPool)
+        );
+
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -110,6 +118,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
 
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setExecutor(address(executor));
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
 
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPolicyCenter(address(policyCenter));
@@ -175,7 +184,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         vm.warp(REPORT_START_TIME);
 
         // propose pool
-        onboardProposal.propose("Yeti", address(yeti), 10000, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
 
         // report pool
         incidentReport.report(1);

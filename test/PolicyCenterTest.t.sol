@@ -63,6 +63,7 @@ contract PostPriorityPoolDeploymentTest is Test {
     uint256 public constant POOL_ID = 1;
     // 2.6% pool ratio
     uint256 public constant POOL_PRICE_RATIO = 260;
+    uint256 constant SECONDS_PER_YEAR = 86400 * 365;
     uint256 constant SCALE = 1e12;
 
     uint256 public constant VOTING_START_TIME = 3 days;
@@ -250,7 +251,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(10000 ether, 3);
 
         // test should revert and emit message
-        vm.expectRevert("exceeds max capacity");
+        vm.expectRevert("Insufficient capacity");
         policyCenter.buyCover(POOL_ID, 10000 ether, 3, price);
     }
 
@@ -281,7 +282,9 @@ contract PostPriorityPoolDeploymentTest is Test {
         uint256 length = 3;
         // get coverage price and returns it
         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(amount, length);
-        uint256 expectedPrice = (length * POOL_PRICE_RATIO * amount) / 3650000;
+        uint256 dynamicRatio = PriorityPool(pool1).dynamicPremiumRatio(amount);
+
+        uint256 expectedPrice = (dynamicRatio * amount * coverLength) / (SECONDS_PER_YEAR * SCALE);
 
         assertEq(price == expectedPrice, true);
     }
