@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -29,6 +30,7 @@ contract NoLiquidationTest is Test {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
     MockDEG public deg;
@@ -69,6 +71,12 @@ contract NoLiquidationTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -123,7 +131,7 @@ contract NoLiquidationTest is Test {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -177,11 +185,11 @@ contract NoLiquidationTest is Test {
         shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(10 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(10 ether, 3);
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);
-        policyCenter.buyCover(1, 10 ether, 90, price);
+        policyCenter.buyCover(1, 10 ether, 3, price);
         vm.warp(30 days);
     }
 }

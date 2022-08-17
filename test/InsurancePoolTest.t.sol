@@ -13,6 +13,7 @@ import "src/mock/MockVeDEG.sol";
 
 import "src/pools/priorityPool/PriorityPool.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/PayoutPool.sol";
 
@@ -25,6 +26,7 @@ contract PriorityPoolTest is BaseTest {
 
     ProtectionPool public protectionPool;
     PriorityPoolFactory public factory;
+    PremiumRewardPool public premiumRewardPool;
     PriorityPool public pool;
     PayoutPool public payoutPool;
 
@@ -62,6 +64,13 @@ contract PriorityPoolTest is BaseTest {
             address(payoutPool)
         );
 
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(factory), 
+            address(protectionPool)
+        );
+        factory.setPremiumRewardPool(address(premiumRewardPool));
+
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -75,7 +84,7 @@ contract PriorityPoolTest is BaseTest {
         protectionPool.setPolicyCenter(address(policyCenter));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
     }
 
     function testFactorySetUp() public {
@@ -89,6 +98,7 @@ contract PriorityPoolTest is BaseTest {
     }
 
     function testDeployPool() public {
+        
         address newPoolAddress = factory.deployPool(
             "gmx pool",
             address(gmx),
@@ -104,7 +114,7 @@ contract PriorityPoolTest is BaseTest {
 
         pool = PriorityPool(newPoolAddress);
 
-        (uint256 price, uint256 length) = pool.coverPrice(10 ether, 90);
+        (uint256 price, uint256 length) = pool.coverPrice(10 ether, 3);
         console.log("price", price);
     }
 }

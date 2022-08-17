@@ -7,6 +7,8 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/pools/PayoutPool.sol";
 
@@ -32,7 +34,7 @@ contract ProposalCenterTest is Test {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
-
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     ProposalCenter public proposalCenter;
     IncidentReport public incidentReport;
@@ -116,6 +118,12 @@ contract ProposalCenterTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -168,7 +176,7 @@ contract ProposalCenterTest is Test {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+        // policyCenter.provideLiquidity(10000 ether);
 
         // create insurance pool
         pool1 = priorityPoolFactory.deployPool(

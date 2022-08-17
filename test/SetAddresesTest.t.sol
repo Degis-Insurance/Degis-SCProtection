@@ -7,8 +7,10 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
-import "src/core/PolicyCenter.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
+
+import "src/core/PolicyCenter.sol";
 
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -30,6 +32,7 @@ contract setAddressesTest is Test {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -66,6 +69,12 @@ contract setAddressesTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -89,7 +98,7 @@ contract setAddressesTest is Test {
         // required to provide liquidity
         protectionPool.setPolicyCenter(address(policyCenter));
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -113,6 +122,15 @@ contract setAddressesTest is Test {
         console.log(policyCenter.priorityPoolFactory());
         assertEq(
             policyCenter.priorityPoolFactory() == address(priorityPoolFactory),
+            true
+        );
+    }
+
+    function testSetPremiumRewardPoolAddress() public {
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
+        console.log(priorityPoolFactory.premiumRewardPool());
+        assertEq(
+            priorityPoolFactory.premiumRewardPool() == address(premiumRewardPool),
             true
         );
     }

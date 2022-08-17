@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -29,6 +30,7 @@ contract ClaimPayoutTest is Test {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
 
     OnboardProposal public onboardProposal;
     MockSHIELD public shield;
@@ -80,6 +82,12 @@ contract ClaimPayoutTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -132,7 +140,7 @@ contract ClaimPayoutTest is Test {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -208,8 +216,8 @@ contract ClaimPayoutTest is Test {
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-        (uint256 price, uint256 priceLength) = PriorityPool(pool2).coverPrice(10000 ether, 90);
-        policyCenter.buyCover(2, 100 ether, 90, price);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool2).coverPrice(10000 ether, 3);
+        policyCenter.buyCover(2, 100 ether, 3, price);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);
     }
