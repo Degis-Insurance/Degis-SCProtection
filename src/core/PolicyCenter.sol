@@ -65,8 +65,6 @@ contract PolicyCenter is
         uint256 length;
     }
     mapping(uint256 => mapping(address => Cover)) public covers;
-    // poolId => Cover Address
-    mapping(uint256 => address) public coverTokenByPoolId;
 
     // poolId => user => Liquidity info
     struct Liquidity {
@@ -304,21 +302,6 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Store new cover token address for a given pool id
-     *
-     * @param _coverToken Cover token address
-     * @param _poolId     Pool id
-     */
-    function storeCoverTokenInformation(address _coverToken, uint256 _poolId)
-        external
-    {
-        require(msg.sender == coverRightTokenFactory, "Only factory can store");
-
-        // maps token address to pool id
-        coverTokenByPoolId[_poolId] = _coverToken;
-    }
-
-    /**
      * @notice Approve the exchange to swap tokens
      *
      * @param _token Address of the approved token
@@ -417,11 +400,18 @@ contract PolicyCenter is
         ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
     }
 
+    /**
+     * @notice Check cover right tokens
+     *         If the crToken does not exist, it will be deployed here
+     *
+     * @param _poolId Pool id
+     * @param _length Cover length in second
+     */
     function _checkCRToken(uint256 _poolId, uint256 _length)
         internal
         returns (address crToken)
     {
-        crToken = coverTokenByPoolId[_poolId];
+        crToken = _getCRTokenAddress(_poolId, _length);
         if (crToken == address(0)) {
             (string memory poolName, , , , ) = IPriorityPoolFactory(
                 priorityPoolFactory
@@ -445,6 +435,18 @@ contract PolicyCenter is
             crToken = ICoverRightTokenFactory(coverRightTokenFactory)
                 .deployCRToken(poolName, _poolId, tokenName, expiry);
         }
+    }
+
+    function _getCRTokenAddress(uint256 _poolId, uint256 _length)
+        internal
+        returns (address)
+    {
+        uint256 expiry = block.timestamp + _length;
+
+        bytes32 salt = keccak256(abi.encodePacked(_poolId, expiry));
+
+        return
+            ICoverRightTokenFactory(coverRightTokenFactory).saltToAddress(salt);
     }
 
     /**
@@ -623,17 +625,19 @@ contract PolicyCenter is
     /**
      * @notice Claim payout
      *
-     * @param _poolId Pool id
+     * @param _poolId  Pool id
+     * @param _crToken Cover right token address
      */
-    function claimPayout(uint256 _poolId) public poolExists(_poolId) {
+    function claimPayout(uint256 _poolId, address _crToken)
+        public
+        poolExists(_poolId)
+    {
         require(_poolId > 0, "PoolId must be greater than 0");
-
-        address crToken = coverTokenByPoolId[_poolId];
 
         // Claim payout from payout pool
         uint256 amount = IPayoutPool(payoutPool).claim(
             msg.sender,
-            crToken,
+            _crToken,
             _poolId
         );
 
