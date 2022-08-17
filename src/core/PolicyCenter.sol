@@ -55,7 +55,7 @@ contract PolicyCenter is
 
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
-    mapping(uint256 => address) public insurancePools;
+    mapping(uint256 => address) public priorityPools;
     mapping(uint256 => address) public tokenByPoolId;
 
     // poolId => user => Cover info
@@ -67,9 +67,6 @@ contract PolicyCenter is
     mapping(uint256 => mapping(address => Cover)) public covers;
     // poolId => Cover Address
     mapping(uint256 => address) public coverTokenByPoolId;
-
-    //
-    mapping(uint256 => uint256) public rewardsByPoolId;
 
     // poolId => user => Liquidity info
     struct Liquidity {
@@ -86,12 +83,6 @@ contract PolicyCenter is
     // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
-    // uint256 public pendingPremiumToTreasury;
-    // uint256 public pendingPremiumToProtectionPool;
-
-    // amount of degis in treasury
-    uint256 public treasury;
-
     address public priceGetter;
 
     // Year => Month => Total Cover Amount
@@ -104,13 +95,20 @@ contract PolicyCenter is
     event Reward(uint256 _amount, address _address);
     event Payout(uint256 _amount, address _address);
     event CoverBought(
-        address buyer,
-        uint256 poolId,
+        address indexed buyer,
+        uint256 indexed poolId,
         uint256 coverDuration,
         uint256 coverAmount,
-        uint256 premium
+        uint256 premiumInShield,
+        uint256 premiumInNative
     );
     event MoveLiquidity(uint256 _poolId, uint256 _amount);
+
+    event PremiumSplitted(
+        uint256 toPriority,
+        uint256 toProtection,
+        uint256 toTreasury
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -125,8 +123,8 @@ contract PolicyCenter is
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
-        // initializes required protection address and degis token as protection token
-        insurancePools[0] = _protectionPool;
+        // Peotection pool as pool 0 and with shield token
+        priorityPools[0] = _protectionPool;
         tokenByPoolId[0] = _shield;
 
         _setProtectionPool(_protectionPool);
@@ -142,7 +140,7 @@ contract PolicyCenter is
 
     // veirifies if pool exists. used throughout insurance contracts
     modifier poolExists(uint256 _poolId) {
-        require(insurancePools[_poolId] != address(0), "Pool not found");
+        require(priorityPools[_poolId] != address(0), "Pool not found");
         _;
     }
 
@@ -189,7 +187,7 @@ contract PolicyCenter is
             emissionEndTime,
             emissionRate,
             maxCapacity
-        ) = IPriorityPool(insurancePools[_poolId]).poolInfo();
+        ) = IPriorityPool(priorityPools[_poolId]).poolInfo();
     }
 
     /**
@@ -227,15 +225,14 @@ contract PolicyCenter is
         return amount;
     }
 
-    function calculateReward(uint256 _poolId, uint256 _amount, uint256 _debt)
-        public
-        view
-        returns (uint256)
-    {   
-        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
+    function calculateReward(
+        uint256 _poolId,
+        uint256 _amount,
+        uint256 _debt
+    ) public view returns (uint256) {
+        IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
         // Calculate reward amount based on user's liquidity and acc reward per share.
-        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) -
-            _debt;
+        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) - _debt;
 
         return reward;
     }
@@ -301,7 +298,7 @@ contract PolicyCenter is
         // maps token address to pool id
         tokenByPoolId[_poolId] = _token;
         // maps pool address to pool id
-        insurancePools[_poolId] = _pool;
+        priorityPools[_poolId] = _pool;
         // approve token swapping for internal funds management
         _approvePoolToken(_token);
     }
@@ -376,11 +373,11 @@ contract PolicyCenter is
             tokenByPoolId[_poolId]
         );
 
-        Cover storage cover = covers[_poolId][msg.sender];
+        // Cover storage cover = covers[_poolId][msg.sender];
 
-        cover.amount += _coverAmount;
-        cover.buyDate = block.timestamp + 7 days;
-        cover.length = _coverDuration;
+        // cover.amount += _coverAmount;
+        // cover.buyDate = block.timestamp + 7 days;
+        // cover.length = _coverDuration;
 
         // Pay native tokens
         IERC20(tokenByPoolId[_poolId]).transferFrom(
@@ -394,31 +391,30 @@ contract PolicyCenter is
             _poolId,
             _coverDuration,
             _coverAmount,
-            premium
+            premium,
+            premiumInNativeToken
         );
 
-        ICoverRightToken(coverTokenByPoolId[_poolId]).mint(
-            _poolId,
-            msg.sender,
-            _coverAmount
-        );
+        ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
         // Split the premium income and update the pool status
         (
             uint256 premiumToProtectionPool,
-            uint256 premiumToPriorityPool
-        ) = _splitPremium(_poolId, _coverAmount);
+            uint256 premiumToPriorityPool,
+            uint256 premiumToTreasury
+        ) = _splitPremium(_poolId, premiumInNativeToken);
 
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
             _coverDuration,
             timestampDuration
         );
-        IPriorityPool(insurancePools[_poolId]).updateWhenBuy(
+        IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
             premiumToPriorityPool,
             _coverDuration,
             timestampDuration
         );
+        ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
     }
 
     function _checkCRToken(uint256 _poolId, uint256 _length)
@@ -446,12 +442,8 @@ contract PolicyCenter is
                 _toString(month)
             );
 
-            ICoverRightTokenFactory(coverRightTokenFactory).deployCRToken(
-                poolName,
-                _poolId,
-                tokenName,
-                expiry
-            );
+            crToken = ICoverRightTokenFactory(coverRightTokenFactory)
+                .deployCRToken(poolName, _poolId, tokenName, expiry);
         }
     }
 
@@ -484,7 +476,7 @@ contract PolicyCenter is
         Liquidity storage liquidity = liquidities[_poolId][msg.sender];
 
         // emits tokens to user from insurnace pool
-        IPriorityPool(insurancePools[_poolId]).stakedLiquidity(
+        IPriorityPool(priorityPools[_poolId]).stakedLiquidity(
             _amount,
             msg.sender
         );
@@ -555,11 +547,11 @@ contract PolicyCenter is
         _claimReward(_poolId, msg.sender);
 
         // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply = IPriorityPool(insurancePools[_poolId])
+        uint256 totalSupply = IPriorityPool(priorityPools[_poolId])
             .totalSupply();
 
         // burns the full amount of liquidity tokens in users account from insurance pool
-        IPriorityPool(insurancePools[_poolId]).unstakedLiquidity(
+        IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
             _amount,
             msg.sender
         );
@@ -633,10 +625,7 @@ contract PolicyCenter is
      *
      * @param _poolId Pool id
      */
-    function claimPayout(uint256 _poolId)
-        public
-        poolExists(_poolId)
-    {
+    function claimPayout(uint256 _poolId) public poolExists(_poolId) {
         require(_poolId > 0, "PoolId must be greater than 0");
 
         address crToken = coverTokenByPoolId[_poolId];
@@ -651,18 +640,6 @@ contract PolicyCenter is
         emit Payout(amount, msg.sender);
     }
 
-    /**
-     * @notice method to remove treasury funds by contract owner
-     *
-     * @param _amount       amount to be removed
-     */
-    function claimTreasury(uint256 _amount) external onlyOwner {
-        require(treasury > 0, "No funds to claim");
-        require(_amount <= treasury, "Amount exceeds treasury balance");
-        treasury -= _amount;
-        IERC20(shield).transfer(msg.sender, _amount);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -675,20 +652,18 @@ contract PolicyCenter is
      */
     function _claimReward(uint256 _poolId, address _provider) internal {
         require(
-            !IPriorityPool(insurancePools[_poolId]).liquidated(),
+            !IPriorityPool(priorityPools[_poolId]).liquidated(),
             "Pool liquidated"
         );
-        IPriorityPool(insurancePools[_poolId]).updateRewards();
+        IPriorityPool(priorityPools[_poolId]).updateRewards();
 
         // User's liquidity
         Liquidity storage liquidity = liquidities[_poolId][_provider];
-        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
+        IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
 
         // Calculate reward amount based on user's liquidity and acc reward per share.
         uint256 reward = (liquidity.amount * pool.accumulatedRewardPerShare()) -
             liquidity.userDebt;
-
-        rewardsByPoolId[_poolId] -= reward;
 
         liquidity.userDebt =
             liquidity.amount *
@@ -702,27 +677,28 @@ contract PolicyCenter is
     /**
      * @notice Swap tokens
      *
-     * @param _amount    Amount of liquidity to request
-     * @param _fromToken Token address to exchange from
-     * @param _toToken   Token address to exchange to
+     * @param _amount    Amount of token to swap from
+     * @param _fromToken Token address to swap from
      */
-    function _swapTokens(
-        uint256 _amount,
-        address _fromToken,
-        address _toToken
-    ) internal returns (uint256 receives) {
+    function _swapTokens(uint256 _amount, address _fromToken)
+        internal
+        returns (uint256 receives)
+    {
         address[] memory path = new address[](2);
         path[0] = _fromToken;
-        path[1] = _toToken;
+        path[1] = USDC;
 
         // exchange tokens for deg and return amount of deg received
         receives = IExchange(exchange).swapExactTokensForTokens(
             _amount,
-            ((_amount * 99) / 100),
+            ((_amount * (1000 - SLIPPAGE)) / 1000),
             path,
             address(this),
             block.timestamp + 1
         );
+
+        // Deposit USDC and get back shield
+        shield.deposit(1, USDC, receives, receives);
     }
 
     /**
@@ -752,35 +728,37 @@ contract PolicyCenter is
      * @notice Split premium for a pool
      *
      * @param _poolId     Pool id
-     * @param _totalSplit Amount of premium to split
+     * @param _totalSplit Amount of premium to split (in native tokens)
+     *
+     * @return toPriority   Premium to priority pool
+     * @return toProtection Premium to protection pool
+     * @return toTreasury   Premium to treasury
      */
     function _splitPremium(uint256 _poolId, uint256 _totalSplit)
         internal
-        returns (uint256, uint256)
+        returns (
+            uint256 toPriority,
+            uint256 toProtection,
+            uint256 toTreasury
+        )
     {
         require(_totalSplit > 0, "No funds to split");
 
         address fromToken = tokenByPoolId[_poolId];
 
-        uint256 toPriorityPool = (_totalSplit * premiumSplits[0]) / 10000;
+        toPriority = (_totalSplit * PREMIUM_TO_PRIORITY) / 10000;
 
-        // amount to swap for shield and store as reward to protection pool and treasury
-        uint256 toSwap = _totalSplit - toPriorityPool;
+        // Swap native tokens to shield
+        uint256 amountToSwap = _totalSplit - toPriority;
+        uint256 amountReceived = _swapTokens(amountToSwap, fromToken);
 
-        // swap native for degis
-        uint256 swapped = _swapTokens(toSwap, fromToken, address(shield));
+        toProtection =
+            (amountReceived * PREMIUM_TO_PROTECTION) /
+            (PREMIUM_TO_PROTECTION + PREMIUM_TO_TREASURY);
 
-        uint256 toProtectionPool = (swapped / 10000 - premiumSplits[0]) *
-            premiumSplits[1];
-        uint256 toTreasury = swapped - toProtectionPool;
+        toTreasury = amountReceived - toProtection;
 
-        // protection pool is pool 0
-        rewardsByPoolId[_poolId] += toPriorityPool;
-        rewardsByPoolId[0] += toProtectionPool;
-
-        treasury += toTreasury;
-
-        return (toPriorityPool, toProtectionPool);
+        emit PremiumSplitted(toPriority, toProtection, toTreasury);
     }
 
     /**
@@ -806,7 +784,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration
     ) internal view returns (uint256 price, uint256 timestampDuration) {
-        (price, timestampDuration) = IPriorityPool(insurancePools[_poolId])
+        (price, timestampDuration) = IPriorityPool(priorityPools[_poolId])
             .coverPrice(_coverAmount, _coverDuration);
     }
 
@@ -820,7 +798,7 @@ contract PolicyCenter is
         internal
         view
     {
-        IPriorityPool pool = IPriorityPool(insurancePools[_poolId]);
+        IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
         require(
             pool.maxCapacity() >= _coverAmount + pool.activeCovered(),
             "Insufficient capacity"

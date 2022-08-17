@@ -60,6 +60,7 @@ contract PriorityPool is
     PriorityPoolDependencies
 {
     using StringUtils for uint256;
+    using DateTimeLibrary for uint256;
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -69,7 +70,7 @@ contract PriorityPool is
 
     uint256 public constant MIN_COVER_AMOUNT = 1 ether;
 
-    // Max time length in days of granted protection
+    // Max time length in months of granted protection
     uint256 public immutable maxLength;
 
     // Min time length in days
@@ -85,6 +86,7 @@ contract PriorityPool is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Pool name
     string public poolName;
 
     // Every time there is a report and liquidation, generation += 1
@@ -202,8 +204,8 @@ contract PriorityPool is
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
         uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
-        length = endTimestamp - block.timestamp;
 
+        length = endTimestamp - block.timestamp;
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * SCALE);
     }
 
@@ -214,8 +216,9 @@ contract PriorityPool is
      * @return covered Total active cover amount
      */
     function activeCovered() public view returns (uint256 covered) {
-        (uint256 currentYear, uint256 currentMonth, ) = DateTimeLibrary
-            .timestampToDate(block.timestamp);
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
 
         for (uint256 i; i < 3; ) {
             covered += coverInMonth[currentYear][currentMonth];
@@ -518,6 +521,7 @@ contract PriorityPool is
             _poolName,
             _poolId,
             currentGeneration,
+            _name,
             newLPAddress
         );
     }
@@ -553,11 +557,9 @@ contract PriorityPool is
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (
-            uint256 currentYear,
-            uint256 currentMonth,
-            uint256 currentDay
-        ) = DateTimeLibrary.timestampToDate(block.timestamp);
+        (uint256 currentYear, uint256 currentMonth, uint256 currentDay) = block
+            .timestamp
+            .timestampToDate();
 
         if (currentDay >= 25) ++_length;
 
@@ -610,7 +612,7 @@ contract PriorityPool is
         returns (uint256)
     {
         // Get the day of the month
-        (, , uint256 day) = DateTimeLibrary.timestampToDate(_now);
+        (, , uint256 day) = _now.timestampToDate();
 
         // Cover duration of 1 month means current month
         // unless today is the 25th calendar day or later
@@ -637,10 +639,8 @@ contract PriorityPool is
         pure
         returns (uint256 endTimestamp)
     {
-        uint256 futureTimestamp = DateTimeLibrary.addMonths(
-            _timestamp,
-            _monthsToAdd
-        );
+        uint256 futureTimestamp = _timestamp.addMonths(_monthsToAdd);
+
         endTimestamp = _getMonthEndTimestamp(futureTimestamp);
     }
 
@@ -657,12 +657,10 @@ contract PriorityPool is
         returns (uint256 endTimestamp)
     {
         // Get the year and month from the date
-        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
-            _timestamp
-        );
+        (uint256 year, uint256 month, ) = _timestamp.timestampToDate();
 
         // Count the total number of days of that month and year
-        uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(year, month);
+        uint256 daysInMonth = year._getDaysInMonth(month);
 
         // Get the month end timestamp
         endTimestamp = DateTimeLibrary.timestampFromDateTime(

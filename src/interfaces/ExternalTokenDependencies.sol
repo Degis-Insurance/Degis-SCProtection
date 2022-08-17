@@ -5,6 +5,8 @@ pragma solidity ^0.8.13;
 import "./IVeDEG.sol";
 import "./IDegisToken.sol";
 
+import "./IShield.sol";
+
 /**
  * @notice External token dependencies
  *         Include the tokens that are not deployed by this repo
@@ -17,7 +19,7 @@ abstract contract ExternalTokenDependencies {
 
     IDegisToken public immutable deg;
     IVeDEG public immutable veDeg;
-    IERC20 public immutable shield;
+    IShield public immutable shield;
 
     constructor(
         address _deg,
@@ -26,6 +28,6 @@ abstract contract ExternalTokenDependencies {
     ) {
         deg = IDegisToken(_deg);
         veDeg = IVeDEG(_veDeg);
-        shield = IERC20(_shield);
+        shield = IShield(_shield);
     }
 }

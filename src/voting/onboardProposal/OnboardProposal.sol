@@ -31,8 +31,6 @@ import "../../interfaces/ExternalTokenDependencies.sol";
 import "../../interfaces/IDegisToken.sol";
 import "../../interfaces/IVeDEG.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 /**
  * @notice Onboard Proposal
  */
@@ -133,10 +131,6 @@ contract OnboardProposal is
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    function setExecutor(address _executor) external onlyOwner {
-        _setExecutor(_executor);
-    }
 
     function setPriorityPoolFactory(address _priorityPoolFactory)
         external
@@ -386,8 +380,7 @@ contract OnboardProposal is
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
-        return
-            _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 100;
+        return _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 100;
     }
 
     /**
@@ -398,8 +391,7 @@ contract OnboardProposal is
      * @param _amount Amount to fulfill
      */
     function _enoughVeDEG(address _user, uint256 _amount) internal view {
-        uint256 unlockedBalance = veDeg.balanceOf(_user) -
-            veDeg.locked(_user);
+        uint256 unlockedBalance = veDeg.balanceOf(_user) - veDeg.locked(_user);
         require(unlockedBalance >= _amount, "Not enough veDEG");
     }
 }
