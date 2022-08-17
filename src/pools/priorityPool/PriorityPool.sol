@@ -356,11 +356,9 @@ contract PriorityPool is
         onlyPolicyCenter
     {
         _updateDynamic();
-        // require(_amount + totalSupply() <= maxCapacity, "Exceed max capacity");
 
-        require(_amount > 0, "amount should be greater than 0");
-        address lp = currentLPAddress();
-        IPriorityPoolToken(lp).burn(_provider, _amount);
+        // Burn lp tokens to the provider
+        _burnLP(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
@@ -539,6 +537,18 @@ contract PriorityPool is
     }
 
     /**
+     * @notice Burn current generation lp tokens
+     *
+     * @param _user   User address
+     * @param _amount LP token amount
+     */
+    function _burnLP(address _user, uint256 _amount) internal {
+        // Get current generation lp token address and mint tokens
+        address lp = currentLPAddress();
+        IPriorityPoolToken(lp).burn(_user, _amount);
+    }
+
+    /**
      * @notice Update cover record info when new covers come in
      *
      * @param _amount Cover amount
@@ -574,96 +584,6 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
-    }
-
-    /**
-     * @notice Update rewards
-     */
-
-    function _updateRewards() internal {
-        (
-            uint256 lastRewardYear,
-            uint256 lastRewardMonth,
-            uint256 lastRewardDay
-        ) = DateTimeLibrary.timestampToDate(lastRewardTimestamp);
-
-        (
-            uint256 currentYear,
-            uint256 currentMonth,
-            uint256 currentDay
-        ) = DateTimeLibrary.timestampToDate(block.timestamp);
-
-        uint256 monthPassed = currentMonth - lastRewardMonth;
-
-        uint256 totalReward;
-        uint256 tempYear = lastRewardYear;
-        uint256 tempMonth = lastRewardMonth;
-
-        if (monthPassed == 0) {
-            if (rewardSpeed[currentYear][currentMonth] > 0){
-            totalReward +=
-                (block.timestamp - lastRewardTimestamp) *
-                rewardSpeed[currentYear][currentMonth];
-            }
-        } else {
-            for (uint256 i; i < monthPassed + 1; ) {
-                // First month reward
-                if (i == 0) {
-                    // End timestamp of the first month
-                    uint256 endTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(
-                            lastRewardYear,
-                            lastRewardMonth,
-                            lastRewardDay,
-                            23,
-                            59,
-                            59
-                        );
-                    if (rewardSpeed[currentYear][currentMonth] > 0){
-                        totalReward +=
-                            (block.timestamp - lastRewardTimestamp) *
-                            rewardSpeed[currentYear][currentMonth];
-                        }
-                }
-                // Last month reward
-                else if (i == monthPassed) {
-                    uint256 startTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(tempYear, tempMonth, 1, 0, 0, 0);
-
-                    if (rewardSpeed[currentYear][currentMonth] > 0){
-                        totalReward +=
-                            (block.timestamp - lastRewardTimestamp) *
-                            rewardSpeed[currentYear][currentMonth];
-                        }
-                }
-                // Middle month reward
-                else {
-                    uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
-                        tempYear,
-                        tempMonth
-                    );
-
-                    if (rewardSpeed[currentYear][currentMonth] > 0){
-                        totalReward +=
-                            (block.timestamp - lastRewardTimestamp) *
-                            rewardSpeed[currentYear][currentMonth];
-                        }
-                }
-
-                unchecked {
-                    if (++tempMonth == 12) {
-                        ++tempYear;
-                        tempMonth = 1;
-                    }
-                }
-            }
-        }
-
-        // Distribute reward to Priority Pool
-        IPremiumRewardPool(premiumRewardPool).distributeToken(
-            insuredToken,
-            totalReward
-        );
     }
 
     /**

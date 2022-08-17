@@ -74,5 +74,8 @@ task("settle", "Settle a voting")
     ).attach(addressList[network.name].OnboardProposal);
 
     const tx = await onboardProposal.settle(taskArgs.id);
-    console.log("Tx details:", await tx.wait())
+    console.log("Tx details:", await tx.wait());
+
+    // const p = await onboardProposal.proposals(2);
+    // console.log(p.result);
   });
