@@ -391,7 +391,7 @@ contract OnboardProposal is
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
-            _totalVotes >= (IVeDEG(veDeg).totalSupply() * QUORUM_RATIO) / 100;
+            _totalVotes >= (IERC20(veDeg).totalSupply() * QUORUM_RATIO) / 100;
     }
 
     /**

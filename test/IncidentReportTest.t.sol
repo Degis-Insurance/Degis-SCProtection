@@ -148,11 +148,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         );
         console.log("incidentReportOwner", incidentReport.owner());
         console.log(address(this));
-        // Set incident report
-
-        incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setProtectionPool(address(protectionPool));
-
+      
         // approve incident report interaction
         deg.approve(address(incidentReport), 10000 ether);
         vedeg.approve(address(incidentReport), 10000 ether);

@@ -30,6 +30,8 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant REPORTER_REWARD = 1000 ether;
 
     // Punishment for those who vote wrong
-    uint256 constant PUNISHMENT_RATIO = 40; // 40% go to winners, 40% reserve
+    uint256 constant REWARD_RATIO = 40; // 40% go to winners, 40% reserve
+    uint256 constant RESERVE_RATIO = 40;
+
     uint256 constant DEBT_RATIO = 80; // 80% as the debt to unlock veDEG
 }

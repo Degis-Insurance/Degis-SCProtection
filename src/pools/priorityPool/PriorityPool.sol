@@ -20,7 +20,6 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../util/PausableWithoutContext.sol";
 import "../../util/OwnableWithoutContext.sol";
 
@@ -28,7 +27,6 @@ import "./PriorityPoolDependencies.sol";
 import "./PriorityPoolEventError.sol";
 import "./PriorityPoolToken.sol";
 
-import "src/pools/priorityPool/PriorityPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 
 import "../../libraries/DateTime.sol";
@@ -392,7 +390,7 @@ contract PriorityPool is
      *         updates all state variables to reflect current reward emission.
      */
     function updateRewards() public onlyPolicyCenter {
-        _updateRewards();
+        // _updateRewards();
     }
 
     /**

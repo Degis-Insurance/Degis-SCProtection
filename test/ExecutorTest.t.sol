@@ -132,8 +132,6 @@ contract ExecutorTest is Test, IncidentReportParameters {
         onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        incidentReport.setPolicyCenter(address(policyCenter));
-        incidentReport.setProtectionPool(address(protectionPool));
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
