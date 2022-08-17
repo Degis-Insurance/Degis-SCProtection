@@ -173,7 +173,7 @@ contract ClaimPayoutTest is Test {
         policyCenter.stakeLiquidityPoolToken(1, 10000);
 
         vm.warp(0);
-        onboardProposal.propose("Yeti", address(yeti), 10000 ether, 1);
+        onboardProposal.propose("Yeti", address(yeti), 100, 1);
 
         vm.warp(START_TIME + VOTE_PERIOD);
         onboardProposal.startVoting(PROPOSAL_ID);
