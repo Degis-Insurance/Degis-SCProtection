@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -30,6 +31,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -81,6 +83,13 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             address(protectionPool),
             address(payoutPool)
         );
+
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
 
         incidentReport = new IncidentReport(
             address(deg),
@@ -137,7 +146,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -167,7 +176,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
 
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);
@@ -177,7 +186,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 100000 ether);
 
         // Alice buys coverage for 100 ether
-        policyCenter.buyCover(1, 100 ether, 90, price);
+        policyCenter.buyCover(1, 100 ether, 3, price);
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);

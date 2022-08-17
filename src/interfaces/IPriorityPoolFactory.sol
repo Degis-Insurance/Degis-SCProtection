@@ -78,6 +78,8 @@ interface IPriorityPoolFactory {
 
     function setPriorityPoolFactory(address _priorityPoolFactory) external;
 
+    function setPremiumRewardPool(address _premiumRewardPool) external;
+
     function setPolicyCenter(address _policyCenter) external;
 
     function setProposalCenter(address _proposalCenter) external;

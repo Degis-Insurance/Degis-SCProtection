@@ -119,8 +119,6 @@ contract PriorityPool is
 
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
-    address public premiumRewardPool;
-
     // Has already passed the base premium ratio period
     bool public passedBasePeriod;
 
@@ -208,7 +206,7 @@ contract PriorityPool is
         uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
         length = endTimestamp - block.timestamp;
 
-        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
+        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * SCALE);
     }
 
     /**
@@ -299,6 +297,10 @@ contract PriorityPool is
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
+    }
+
+    function setPremiumRewardPool(address _premiumRewardPool) external onlyOwner {
+        _setPremiumRewardPool(_premiumRewardPool);
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {

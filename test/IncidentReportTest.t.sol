@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -64,6 +65,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -117,6 +119,11 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -139,6 +146,8 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             address(vedeg),
             address(shield)
         );
+        console.log("incidentReportOwner", incidentReport.owner());
+        console.log(address(this));
         // Set incident report
 
         incidentReport.setPolicyCenter(address(policyCenter));
@@ -160,6 +169,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         priorityPoolFactory.setExecutor(address(executor));
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setProtectionPool(address(protectionPool));
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
 
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setIncidentReport(address(incidentReport));
@@ -172,7 +182,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setIncidentReport(address(incidentReport));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         //deploy ptp pool
         pool1 = priorityPoolFactory.deployPool(

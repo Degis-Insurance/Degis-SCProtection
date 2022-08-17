@@ -7,6 +7,7 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -23,6 +24,7 @@ import "src/interfaces/IPayoutPool.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
+import "src/interfaces/IPremiumRewardPool.sol";
 import "src/interfaces/IExecutor.sol";
 
 /** 
@@ -32,6 +34,7 @@ contract InitialContractDeploymentTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -113,6 +116,7 @@ contract SecondaryContractDeploymentTest is Test {
     OnboardProposal public onboardProposal;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    PremiumRewardPool public premiumRewardPool;
     Executor public executor;
     Exchange public exchange;
     PayoutPool public payoutPool;
@@ -167,7 +171,23 @@ contract SecondaryContractDeploymentTest is Test {
         assertEq(priorityPoolFactory.poolCounter() == 0, true);
     }
 
+    function testDeployPremiumRewardPool() public {
+        priorityPoolFactory = new PriorityPoolFactory(
+            address(0),
+            address(0),
+            address(deg),
+            address(protectionPool),
+            address(payoutPool)
+        );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+    }
+
     function testDeployPriorityPool() public {
+
         policyCenter = new PolicyCenter(
             address(deg),
             address(0),
@@ -177,7 +197,7 @@ contract SecondaryContractDeploymentTest is Test {
         policyCenter.setProtectionPool(address(protectionPool));
         protectionPool.setPolicyCenter(address(policyCenter));
         // To deploy an insurance pool, a minnimum liquidity must be provided to protection pool
-        policyCenter.provideLiquidity(10000 ether);
+        // policyCenter.provideLiquidity(10000 ether);
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, protectionPool,
         // policyCenter and priorityPoolFactory being deployed.
@@ -189,6 +209,14 @@ contract SecondaryContractDeploymentTest is Test {
             address(payoutPool)
         );
 
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+
+
+
         policyCenter = new PolicyCenter(
             address(0),
             address(0),
@@ -198,6 +226,7 @@ contract SecondaryContractDeploymentTest is Test {
         exchange = new Exchange();
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         address pool1 = priorityPoolFactory.deployPool(
             "Platypus",

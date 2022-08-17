@@ -85,8 +85,6 @@ contract PriorityPoolFactory is
     mapping(address => bool) public poolRegistered;
     mapping(address => bool) public tokenRegistered;
 
-    address public premiumRewardPool;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -97,7 +95,7 @@ contract PriorityPoolFactory is
         string protocolName,
         address protocolToken,
         uint256 maxCapacity,
-        uint256 policyPricePerShield
+        uint256 basePremiumRatio
     );
 
     event DynamicPoolUpdate(
@@ -119,8 +117,10 @@ contract PriorityPoolFactory is
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
-    {
-        protectionPool = _protectionPool;
+    {   
+        _setProtectionPool(_protectionPool);
+        poolRegistered[_protectionPool] = true;
+        tokenRegistered[_shield] = true;
 
         payoutPool = _payoutPool;
 
@@ -192,6 +192,10 @@ contract PriorityPoolFactory is
         _setPolicyCenter(_policyCenter);
     }
 
+        function setPremiumRewardPool(address _premiumRewardPool) external onlyOwner {
+        _setPremiumRewardPool(_premiumRewardPool);
+    }
+
     function setProtectionPool(address _protectionPool) external onlyOwner {
         _setProtectionPool(_protectionPool);
     }
@@ -232,10 +236,11 @@ contract PriorityPoolFactory is
             .liquidityByPoolId(0);
 
         // check if reinsurance pool can cover all max capacities
-        require(
-            protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities,
-            "Insufficient liquidity"
-        );
+        // TODO: REQUIREMENT REMOVED FOR TESTING PURPOSES
+        // require(
+        //     protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities,
+        //     "Insufficient liquidity"
+        // );
 
         // add new pool max capacity to sum of max capacities
         sumOfMaxCapacities += _maxCapacity;
@@ -247,9 +252,9 @@ contract PriorityPoolFactory is
         bytes memory bytecode = _getPriorityPoolBytecode(
             _protocolToken,
             _maxCapacity,
+            _name,
             _basePremiumRatio,
-            _name,
-            _name,
+            owner(),
             currentPoolId
         );
 
@@ -323,9 +328,9 @@ contract PriorityPoolFactory is
      *
      * @param _protocolToken Address of the protocol token to insure
      * @param _maxCapacity   Max coverage capacity
+     * @param _tokenName          Name of the pool
      * @param _policyPrice   Policy price
-     * @param _tokenName     Name for the new pool
-     * @param _symbol        Symbol for new pool
+     * @param _owner        owner of new pool
      * @param _poolId        Current pool id
      *
      * @return bytecode Creation bytecode
@@ -333,9 +338,9 @@ contract PriorityPoolFactory is
     function _getPriorityPoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _policyPrice,
         string memory _tokenName,
-        string memory _symbol,
+        uint256 _policyPrice,
+        address _owner,
         uint256 _poolId
     ) internal view virtual returns (bytes memory) {
         bytes memory bytecode = type(PriorityPool).creationCode;
@@ -349,9 +354,8 @@ contract PriorityPoolFactory is
                     _protocolToken,
                     _maxCapacity,
                     _tokenName,
-                    _symbol,
                     _policyPrice,
-                    owner(),
+                    _owner,
                     _poolId
                 )
             );

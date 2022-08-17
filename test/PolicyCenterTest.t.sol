@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/pools/PremiumRewardPool.sol";
 
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -36,6 +37,7 @@ contract PostPriorityPoolDeploymentTest is Test {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     PayoutPool public payoutPool;
+    PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     IncidentReport public incidentReport;
     MockSHIELD public shield;
@@ -89,6 +91,12 @@ contract PostPriorityPoolDeploymentTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
+        premiumRewardPool = new PremiumRewardPool(
+            address(shield),
+            address(priorityPoolFactory), 
+            address(protectionPool)
+        );
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
         policyCenter = new PolicyCenter(
             address(deg),
             address(vedeg),
@@ -155,7 +163,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+      //  policyCenter.provideLiquidity(10000 ether);
 
         // deploy ptp pool
         pool1 = priorityPoolFactory.deployPool(
@@ -239,11 +247,11 @@ contract PostPriorityPoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         ptp.approve(address(policyCenter), 10000 ether);
 
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(10000 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(10000 ether, 3);
 
         // test should revert and emit message
         vm.expectRevert("exceeds max capacity");
-        policyCenter.buyCover(POOL_ID, 10000 ether, 90, price);
+        policyCenter.buyCover(POOL_ID, 10000 ether, 3, price);
     }
 
     // function testStakeDirectlyToPriorityPool() public {
@@ -270,9 +278,9 @@ contract PostPriorityPoolDeploymentTest is Test {
 
     function testGetCoverPrice() public {
         uint256 amount = 100 ether;
-        uint256 length = 90;
+        uint256 length = 3;
         // get coverage price and returns it
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(amount, length);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(amount, length);
         uint256 expectedPrice = (length * POOL_PRICE_RATIO * amount) / 3650000;
 
         assertEq(price == expectedPrice, true);
@@ -296,14 +304,14 @@ contract PostPriorityPoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // get price
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(1000 ether, 3);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCover(POOL_ID, 1000 ether, 90, price);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 3, price);
 
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
             POOL_ID,
@@ -336,14 +344,14 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         vm.prank(alice);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(100 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
 
         //; approve ptp to buy coverage
         vm.prank(alice);
         ptp.approve(address(policyCenter), 10000 ether);
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
-        policyCenter.buyCover(POOL_ID, 100 ether, 90, price);
+        policyCenter.buyCover(POOL_ID, 100 ether, 3, price);
         (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
             POOL_ID,
             alice
@@ -414,10 +422,10 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
 
-        (uint256 price, uint256 priceLength) = PriorityPool(pool1).coverPrice(1000 ether, 90);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(1000 ether, 3);
 
         vm.prank(alice);
-        policyCenter.buyCover(POOL_ID, 1000 ether, 90, price);
+        policyCenter.buyCover(POOL_ID, 1000 ether, 3, price);
 
         console.log(ptp.balanceOf(address(policyCenter)));
 
