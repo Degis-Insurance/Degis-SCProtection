@@ -181,7 +181,7 @@ contract OnboardProposal is
         require(!poolProposed[_token], "Protocol already proposed");
 
         // Burn degis tokens to start a proposal
-        IDegisToken(deg).burnDegis(msg.sender, REPORT_THRESHOLD);
+        deg.burnDegis(msg.sender, REPORT_THRESHOLD);
 
         poolProposed[_token] = true;
 
