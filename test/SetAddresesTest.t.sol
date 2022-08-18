@@ -146,8 +146,8 @@ contract setAddressesTest is Test {
     }
 
     function testSetExecutor() public {
-        onboardProposal.setExecutor(address(executor));
-        assertEq(onboardProposal.executor() == address(executor), true);
+        policyCenter.setExecutor(address(executor));
+        assertEq(policyCenter.executor() == address(executor), true);
     }
 
     function testSetPolicyCenterNotOwner() public {
@@ -168,7 +168,7 @@ contract setAddressesTest is Test {
         // use a random address to make sure it doesn't work
         vm.prank(address(0x0000abcdef));
         vm.expectRevert("Ownable: caller is not the owner");
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
     }
 
     // test setting pool max capacity

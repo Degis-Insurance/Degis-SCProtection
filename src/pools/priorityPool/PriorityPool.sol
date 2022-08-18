@@ -339,7 +339,7 @@ contract PriorityPool is
         _updateDynamic();
 
         // Mint lp tokens to the provider
-        _mintLP(_provider, _amount);
+        // _mintLP(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
 

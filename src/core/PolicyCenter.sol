@@ -331,7 +331,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration,
         uint256 _maxPayment
-    ) external poolExists(_poolId) {
+    ) external poolExists(_poolId) returns (address crToken) {
         require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_coverDuration), "Wrong cover length");
         require(_poolId > 0, "Wrong pool id");
@@ -345,7 +345,7 @@ contract PolicyCenter is
             _coverDuration
         );
 
-        address crToken = _checkCRToken(_poolId, timestampDuration);
+        crToken = _checkCRToken(_poolId, timestampDuration);
 
         // Check if premium cost is within limits given by user
         require(premium <= _maxPayment, "Premium too high");
@@ -438,7 +438,7 @@ contract PolicyCenter is
     }
 
     function _getCRTokenAddress(uint256 _poolId, uint256 _length)
-        internal
+        internal view
         returns (address)
     {
         uint256 expiry = block.timestamp + _length;

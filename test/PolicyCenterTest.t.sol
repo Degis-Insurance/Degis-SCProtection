@@ -149,8 +149,7 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setIncidentReport(address(incidentReport));
-        protectionPool.setPolicyCenter(address(policyCenter));
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
 
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
@@ -212,18 +211,29 @@ contract PostPriorityPoolDeploymentTest is Test {
     function testProvideLiquidityPriorityPool() public {
         // user should be able to provide liquidity to ptp pool in ptp
         shield.approve(address(policyCenter), 10000 ether);
-
+        policyCenter.provideLiquidity(10000);
+        // get current lp address to approve expence
+        protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
 
-    function testUnstakeBeforeBufferTimeEndInsnsurancePool() public {
+    function testUnstakeBeforeBufferTimeEndPriorityPool() public {
+        vm.prank(alice);
         shield.approve(address(policyCenter), 10000 ether);
+        vm.prank(alice);
+        policyCenter.provideLiquidity(10000);
+        // get current lp address to approve expence
+        vm.prank(alice);
+        protectionPool.approve(address(policyCenter), 10000 ether);
+        vm.prank(alice);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
+        vm.prank(alice);
         policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
         // user should not be able to remove liquidity and liquidities should remain the same.
+        // TODO: current LP is returning 0 address
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
@@ -231,6 +241,9 @@ contract PostPriorityPoolDeploymentTest is Test {
     function testUnstakeAfterBufferTimeEndsPriorityPool() public {
         // provide liquidity
         shield.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(10000);
+        // get current lp address to approve expence
+        protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
@@ -438,11 +451,14 @@ contract PostPriorityPoolDeploymentTest is Test {
 
     function testUnstakeAfterReport() public {
         // user should not be able to remove liquidity if pool has been reported
+        deg.transfer(address(this), 1000 ether);
         shield.approve(address(policyCenter), 10000 ether);
         ptp.approve(address(policyCenter), 10000 ether);
         deg.approve(address(policyCenter), 10000 ether);
         deg.approve(address(incidentReport), 10000 ether);
-
+        policyCenter.provideLiquidity(10000);
+        // get current lp address to approve expence
+        protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
         vm.warp(7 days + 1);

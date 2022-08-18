@@ -162,7 +162,7 @@ contract ProposalCenterTest is Test {
         policyCenter.setExchange(address(exchange));
         policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
         onboardProposal.setProposalCenter(address(proposalCenter));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
