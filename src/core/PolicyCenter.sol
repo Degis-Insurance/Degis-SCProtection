@@ -32,6 +32,8 @@ import "../interfaces/IPriceGetter.sol";
 
 import "../libraries/DateTime.sol";
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "forge-std/console.sol";
 
 /**
@@ -49,6 +51,8 @@ contract PolicyCenter is
     ExternalTokenDependencies,
     OwnableWithoutContext
 {
+    using SafeERC20 for IERC20;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -107,6 +111,8 @@ contract PolicyCenter is
         uint256 toProtection,
         uint256 toTreasury
     );
+
+    event PremiumSwapped(address fromToken, uint256 amount, uint256 received);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -321,6 +327,10 @@ contract PolicyCenter is
     /**
      * @notice Buy new cover for a given pool
      *
+     *         Select a pool with parameter "poolId"
+     *         Cover amount is in shield and duration is in month
+     *         The premium ratio may be dynamic so "maxPayment" is similar to "slippage"
+     *
      * @param _poolId        Pool id
      * @param _coverAmount   Amount to cover
      * @param _coverDuration Cover duration in month (1 ~ 3)
@@ -338,54 +348,32 @@ contract PolicyCenter is
 
         _checkCapacity(_poolId, _coverAmount);
 
-        // Premium in USD (shield)
+        // Premium in USD (shield) and duration in second
         (uint256 premium, uint256 timestampDuration) = _getCoverPrice(
             _poolId,
             _coverAmount,
             _coverDuration
         );
-
-        address crToken = _checkCRToken(_poolId, timestampDuration);
-
         // Check if premium cost is within limits given by user
         require(premium <= _maxPayment, "Premium too high");
 
-        // Premium in project native token
+        // Mint cover right tokens to buyer
+        address crToken = _checkCRToken(_poolId, timestampDuration);
+        ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
+
+        address nativeToken = tokenByPoolId[_poolId];
+        // Premium in project native token (paid in internal function)
         uint256 premiumInNativeToken = _getNativeTokenAmount(
             premium,
-            tokenByPoolId[_poolId]
+            nativeToken
         );
-
-        // Cover storage cover = covers[_poolId][msg.sender];
-
-        // cover.amount += _coverAmount;
-        // cover.buyDate = block.timestamp + 7 days;
-        // cover.length = _coverDuration;
-
-        // Pay native tokens
-        IERC20(tokenByPoolId[_poolId]).transferFrom(
-            msg.sender,
-            address(this),
-            premiumInNativeToken
-        );
-
-        emit CoverBought(
-            msg.sender,
-            _poolId,
-            _coverDuration,
-            _coverAmount,
-            premium,
-            premiumInNativeToken
-        );
-
-        ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
         // Split the premium income and update the pool status
         (
             uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool,
             uint256 premiumToTreasury
-        ) = _splitPremium(_poolId, premiumInNativeToken);
+        ) = _splitPremium(nativeToken, premiumInNativeToken);
 
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
@@ -398,6 +386,15 @@ contract PolicyCenter is
             timestampDuration
         );
         ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
+
+        emit CoverBought(
+            msg.sender,
+            _poolId,
+            _coverDuration,
+            _coverAmount,
+            premium,
+            premiumInNativeToken
+        );
     }
 
     /**
@@ -437,8 +434,16 @@ contract PolicyCenter is
         }
     }
 
+    /**
+     * @notice Get cover right token address
+     *         The address is determined by poolId and expiry(last second of each month)
+     *
+     * @param _poolId Pool id
+     * @param _length Length in second
+     */
     function _getCRTokenAddress(uint256 _poolId, uint256 _length)
         internal
+        view
         returns (address)
     {
         uint256 expiry = block.timestamp + _length;
@@ -491,16 +496,12 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Provide liquidity to a give protection pool
+     * @notice Provide liquidity to Protection Pool
      *
-     * @param _amount Amount of liquidity to provide
+     * @param _amount Amount of liquidity(shield) to provide
      */
     function provideLiquidity(uint256 _amount) external {
-        require(_amount > 0, "Amount must be greater than 0");
-
-        // claim rewards. user debt is updated in _claimReward
-        // reward is not claimable on protection pool
-        // _claimReward(0, msg.sender);
+        require(_amount > 0, "Zero amount");
 
         // adds liquidity to insurance or protection pool
         liquidityByPoolId[0] += _amount;
@@ -511,7 +512,8 @@ contract PolicyCenter is
         IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
 
         // transfers shield from user to contract
-        IERC20(shield).transferFrom(msg.sender, address(this), _amount);
+        IERC20(shield).transferFrom(msg.sender, protectionPool, _amount);
+
         // upsates user provided amount and last claim
         liquidity.amount += _amount;
         liquidity.lastClaim = block.timestamp;
@@ -679,21 +681,21 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Swap tokens
+     * @notice Swap tokens to USDC and then to shield
      *
-     * @param _amount    Amount of token to swap from
      * @param _fromToken Token address to swap from
+     * @param _amount    Amount of token to swap from
      */
-    function _swapTokens(uint256 _amount, address _fromToken)
+    function _swapTokens(address _fromToken, uint256 _amount)
         internal
-        returns (uint256 receives)
+        returns (uint256 received)
     {
         address[] memory path = new address[](2);
         path[0] = _fromToken;
         path[1] = USDC;
 
-        // exchange tokens for deg and return amount of deg received
-        receives = IExchange(exchange).swapExactTokensForTokens(
+        // Swap for USDC and return the received amount
+        received = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * (1000 - SLIPPAGE)) / 1000),
             path,
@@ -702,7 +704,9 @@ contract PolicyCenter is
         );
 
         // Deposit USDC and get back shield
-        shield.deposit(1, USDC, receives, receives);
+        shield.deposit(1, USDC, received, received);
+
+        emit PremiumSwapped(_fromToken, _amount, received);
     }
 
     /**
@@ -720,25 +724,32 @@ contract PolicyCenter is
      */
     function _getNativeTokenAmount(uint256 _premium, address _token)
         internal
-        returns (uint256)
+        returns (uint256 premiumInNativeToken)
     {
         // Price in 18 decimals
         uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
 
-        return (_premium * 1e12) / price;
+        premiumInNativeToken = (_premium * 1e12) / price;
+
+        // Pay native tokens
+        IERC20(_token).safeTransferFrom(
+            msg.sender,
+            address(this),
+            premiumInNativeToken
+        );
     }
 
     /**
      * @notice Split premium for a pool
      *
-     * @param _poolId     Pool id
+     * @param _fromToken  Protocol native token to be swapped
      * @param _totalSplit Amount of premium to split (in native tokens)
      *
      * @return toPriority   Premium to priority pool
      * @return toProtection Premium to protection pool
      * @return toTreasury   Premium to treasury
      */
-    function _splitPremium(uint256 _poolId, uint256 _totalSplit)
+    function _splitPremium(address _fromToken, uint256 _totalSplit)
         internal
         returns (
             uint256 toPriority,
@@ -748,13 +759,11 @@ contract PolicyCenter is
     {
         require(_totalSplit > 0, "No funds to split");
 
-        address fromToken = tokenByPoolId[_poolId];
-
         toPriority = (_totalSplit * PREMIUM_TO_PRIORITY) / 10000;
 
         // Swap native tokens to shield
         uint256 amountToSwap = _totalSplit - toPriority;
-        uint256 amountReceived = _swapTokens(amountToSwap, fromToken);
+        uint256 amountReceived = _swapTokens(_fromToken, amountToSwap);
 
         toProtection =
             (amountReceived * PREMIUM_TO_PROTECTION) /
