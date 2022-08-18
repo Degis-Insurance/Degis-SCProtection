@@ -118,7 +118,7 @@ contract NoLiquidationTest is Test {
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));

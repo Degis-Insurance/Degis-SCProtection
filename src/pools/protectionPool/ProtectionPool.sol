@@ -58,6 +58,7 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
+    using DateTimeLibrary for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -185,7 +186,8 @@ contract ProtectionPool is
         external
         onlyPolicyCenter
     {
-        _updateReward();
+        // TODO: fix update reward
+        // _updateReward();
         _updatePrice();
 
         // Mint PRO_LP tokens to the user
@@ -292,7 +294,7 @@ contract ProtectionPool is
             price = SCALE;
         }
         price =
-            (IERC20(shield).balanceOf(address(this)) * SCALE) /
+            (IERC20(shield).balanceOf(address(this))) /
             totalSupply();
     }
 
