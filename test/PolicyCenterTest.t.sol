@@ -214,7 +214,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         policyCenter.provideLiquidity(10000);
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(POOL_ID, 10000);
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
     }
@@ -228,10 +228,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
         protectionPool.approve(address(policyCenter), 10000 ether);
         vm.prank(alice);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(POOL_ID, 10000);
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         vm.prank(alice);
-        policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.unstakeLiquidity(POOL_ID, 10000);
         // user should not be able to remove liquidity and liquidities should remain the same.
         // TODO: current LP is returning 0 address
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
@@ -244,7 +244,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         policyCenter.provideLiquidity(10000);
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(POOL_ID, 10000);
 
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
@@ -252,7 +252,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.warp(7 days + 1);
 
         console.log(PriorityPoolToken(currentLPToken).totalSupply());
-        policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.unstakeLiquidity(POOL_ID, 10000);
     }
 
     function testExceedMaxCapacity() public {
@@ -285,7 +285,7 @@ contract PostPriorityPoolDeploymentTest is Test {
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
-        policyCenter.unstakeLiquidityPoolToken(POOL_ID, 1);
+        policyCenter.unstakeLiquidity(POOL_ID, 1);
     }
 
     function testGetCoverPrice() public {
@@ -357,7 +357,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         // Owner address provides liquidity to ptp pool
 
         vm.prank(alice);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
+        policyCenter.stakeLiquidity(POOL_ID, 1000);
         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
 
         //; approve ptp to buy coverage
@@ -459,14 +459,14 @@ contract PostPriorityPoolDeploymentTest is Test {
         policyCenter.provideLiquidity(10000);
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(POOL_ID, 10000);
 
         vm.warp(7 days + 1);
 
         incidentReport.report(1);
 
         vm.expectRevert("Pausable: paused");
-        policyCenter.unstakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.unstakeLiquidity(POOL_ID, 10000);
     }
 
     function testClaimRewardsFromLiquidityProvisionNoRewards() public {
@@ -478,7 +478,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
         shield.approve(address(policyCenter), 1000 ether);
         vm.prank(alice);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
+        policyCenter.stakeLiquidity(POOL_ID, 1000);
         vm.warp(30 days);
         vm.prank(alice);
 
@@ -507,7 +507,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
         shield.approve(address(policyCenter), 1000 ether);
         vm.prank(alice);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 1000);
+        policyCenter.stakeLiquidity(POOL_ID, 1000);
         vm.warp(30 days);
         vm.prank(alice);
 

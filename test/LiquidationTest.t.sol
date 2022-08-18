@@ -178,7 +178,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         // provide liquidity to protection pool
         policyCenter.provideLiquidity(10000);
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(1, 10000);
+        policyCenter.stakeLiquidity(1, 10000);
 
         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
 
@@ -263,7 +263,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         incidentReport.unpausePools(address(pool1));
 
         IPriorityPool(pool1).endLiquidation();
-        policyCenter.unstakeLiquidityPoolToken(1, lpBalance);
+        policyCenter.unstakeLiquidity(1, lpBalance);
 
         assertEq(PriorityPool(pool1).liquidated() == false, true);
 

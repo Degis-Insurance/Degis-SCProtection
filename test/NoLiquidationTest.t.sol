@@ -172,7 +172,7 @@ contract NoLiquidationTest is Test {
         vm.prank(alice);
         shield.approve(address(policyCenter), 10000 ether);
         vm.prank(alice);
-        policyCenter.stakeLiquidityPoolToken(1, 1 ether);
+        policyCenter.stakeLiquidity(1, 1 ether);
 
         // bob provides liqudity to reinsurance pool
         vm.prank(bob);
