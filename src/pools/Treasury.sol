@@ -11,6 +11,8 @@ contract Treasury is ExternalTokenDependencies {
 
     uint256 public constant REPORTER_REWARD = 10;
 
+    mapping(uint256 => uint256) public poolIncome;
+
     event ReporterRewarded(address reporter, uint256 amount);
 
     constructor(
@@ -24,17 +26,40 @@ contract Treasury is ExternalTokenDependencies {
         owner = msg.sender;
     }
 
-    function rewardReporter(address _reporter) external {
+    /**
+     * @notice Reward the correct reporter
+     *         Part of the priority pool income will be given to the reporter
+     *         Only called from executor when executing a report
+     *
+     * @param _poolId   Pool id
+     * @param _reporter Reporter address
+     */
+    function rewardReporter(uint256 _poolId, address _reporter) external {
         require(msg.sender == executor, "Only executor");
 
-        uint256 amount = (shield.balanceOf(address(this)) * REPORTER_REWARD) /
-            100;
+        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 100;
 
+        poolIncome[_poolId] -= amount;
         IERC20(shield).transfer(_reporter, amount);
 
         emit ReporterRewarded(_reporter, amount);
     }
 
+    /**
+     * @notice Record when receiving new premium income
+     *
+     * @param _poolId Pool id
+     * @param _amount Premium amount (shield)
+     */
+    function premiumIncome(uint256 _poolId, uint256 _amount) external {
+        poolIncome[_poolId] += _amount;
+    }
+
+    /**
+     * @notice Claim shield by the owner
+     *
+     * @param _amount Amount to claim
+     */
     function claim(uint256 _amount) external {
         require(msg.sender == owner, "Only owner");
 
