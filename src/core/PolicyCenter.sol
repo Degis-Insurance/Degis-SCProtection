@@ -32,6 +32,8 @@ import "../interfaces/IPriceGetter.sol";
 
 import "../libraries/DateTime.sol";
 
+import "../libraries/StringUtils.sol";
+
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "forge-std/console.sol";
@@ -52,6 +54,7 @@ contract PolicyCenter is
     OwnableWithoutContext
 {
     using SafeERC20 for IERC20;
+    using StringUtils for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -276,8 +279,8 @@ contract PolicyCenter is
     /**
      * @notice Store new pool information
      *
-     * @param _pool   Address of the insurance pool
-     * @param _token  Address of token that a pool negotiates in
+     * @param _pool   Address of the priority pool
+     * @param _token  Address of the priority pool's native token
      * @param _poolId Pool id
      */
     function storePoolInformation(
@@ -287,11 +290,9 @@ contract PolicyCenter is
     ) external {
         require(msg.sender == priorityPoolFactory, "Only factory can store");
 
-        // maps token address to pool id
         tokenByPoolId[_poolId] = _token;
-        // maps pool address to pool id
         priorityPools[_poolId] = _pool;
-        // approve token swapping for internal funds management
+
         _approvePoolToken(_token);
     }
 
@@ -300,11 +301,7 @@ contract PolicyCenter is
      *
      * @param _token Address of the approved token
      */
-    function approvePoolToken(address _token) external {
-        require(
-            msg.sender == owner() || msg.sender == priorityPoolFactory,
-            "Only owner or priorityPoolFactory can approve"
-        );
+    function approvePoolToken(address _token) external onlyOwner {
         _approvePoolToken(_token);
     }
 
@@ -329,7 +326,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration,
         uint256 _maxPayment
-    ) external poolExists(_poolId) returns (address crToken) {
+    ) external poolExists(_poolId) {
         require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_coverDuration), "Wrong cover length");
         require(_poolId > 0, "Wrong pool id");
@@ -419,27 +416,26 @@ contract PolicyCenter is
 
     /**
      * @notice Unstake Protection Pool LP from priority pools
+     *         There may be different generations of priority lp tokens
      *
-     * @param _poolId Pool id
-     * @param _amount Amount of LP tokens to withdraw
+     * @param _poolId     Pool id
+     * @param _priorityLP Priority lp token address to withdraw
+     * @param _amount     Amount of LP(priority lp) tokens to withdraw
      */
-    function unstakeLiquidity(uint256 _poolId, uint256 _amount)
-        external
-        poolExists(_poolId)
-    {
+    function unstakeLiquidity(
+        uint256 _poolId,
+        address _priorityLP,
+        uint256 _amount
+    ) external poolExists(_poolId) {
         require(_amount > 0, "Zero amount");
-
-    
 
         // burns the full amount of liquidity tokens in users account from insurance pool
         IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
+            _priorityLP,
             _amount,
             msg.sender
         );
-
-        IERC20(shield).transfer(msg.sender, 0);
     }
-
 
     /**
      * @notice Remove liquidity from protection pool
@@ -448,9 +444,6 @@ contract PolicyCenter is
      */
     function removeLiquidity(uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
-
-        // totalSupply that wil be used to calculate the amount of shield to be removed
-        uint256 totalSupply = IERC20(protectionPool).totalSupply();
 
         // burns the full amount of liquidity tokens in users account from protection pool
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
@@ -550,9 +543,9 @@ contract PolicyCenter is
                 "CR-",
                 poolName,
                 "-",
-                _toString(year),
+                year._toString(),
                 "-",
-                _toString(month)
+                month._toString()
             );
 
             crToken = ICoverRightTokenFactory(coverRightTokenFactory)
@@ -653,7 +646,7 @@ contract PolicyCenter is
      * @notice Get cover price from insurance pool
      *
      * @param _poolId        Pool id
-     * @param _coverAmount   Cover amount
+     * @param _coverAmount   Cover amount (shield)
      * @param _coverDuration Cover length in months (1,2,3)
      */
     function _getCoverPrice(
@@ -669,7 +662,7 @@ contract PolicyCenter is
      * @notice Check priority pool capacity
      *
      * @param _poolId      Pool id
-     * @param _coverAmount Amount to cover
+     * @param _coverAmount Amount (shield) to cover
      */
     function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
         internal
@@ -684,27 +677,5 @@ contract PolicyCenter is
             maxCapacityAmount >= _coverAmount + pool.activeCovered(),
             "Insufficient capacity"
         );
-    }
-
-    function _toString(uint256 value) internal pure returns (string memory) {
-        // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
     }
 }

@@ -152,6 +152,36 @@ contract ProtectionPool is
         }
     }
 
+    /**
+     * @notice Update index cut when claim happened
+     */
+    function updateIndexCut() public {
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
+        );
+
+        uint256 poolAmount = factory.poolCounter();
+
+        uint256 currentReserved = IShield(shield).balanceOf(address(this));
+
+        uint256 indexToCut;
+
+        for (uint256 i; i < poolAmount; ) {
+            (, address poolAddress, , , ) = factory.pools(i);
+
+            minRequirement = IPriorityPool(poolAddress).minAssetRequirement();
+
+            if (minRequirement > currentReserved) {
+                indexToCut = (currentReserved * SCALE) / minRequirement;
+                IPriorityPool(poolAddress).setCoverIndex(indexToCut);
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
