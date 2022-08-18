@@ -20,4 +20,6 @@ interface PriorityPoolEventError {
         string name,
         address newLPAddress
     );
+
+    event CoverIndexChanged(uint256 oldIndex, uint256 newIndex);
 }

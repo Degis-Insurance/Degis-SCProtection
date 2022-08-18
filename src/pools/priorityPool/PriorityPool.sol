@@ -128,6 +128,17 @@ contract PriorityPool is
     // Generation => lp token address
     mapping(uint256 => address) public lpTokenAddress;
 
+    mapping(address => bool) public isLPToken;
+
+    // Index for cover amount
+    uint256 public coverIndex;
+
+    // Price of lp tokens
+    uint256 public priceIndex;
+
+    // Sum of total lp supply (including different generations)
+    uint256 public totalLPSupply;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -153,6 +164,8 @@ contract PriorityPool is
         // TODO: change length
         maxLength = 3;
         minLength = 1;
+
+        priceIndex = SCALE;
 
         _deployNewGenerationLP(_poolName, _poolId);
     }
@@ -232,6 +245,13 @@ contract PriorityPool is
                 ++i;
             }
         }
+    }
+
+    /**
+     * @notice Current minimum asset requirement for Protection Pool
+     */
+    function minAssetRequirement() public view returns (uint256) {
+        return (activeCovered() * 100) / maxCapacity;
     }
 
     /**
@@ -319,6 +339,13 @@ contract PriorityPool is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
+    function setCoverIndex(uint256 _newIndex) external {
+        require(msg.sender == protectionPool, "Only protection pool");
+
+        emit CoverIndexChanged(coverIndex, _newIndex);
+        coverIndex = _newIndex;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -350,19 +377,21 @@ contract PriorityPool is
      * @notice Remove liquidity from insurance pool
      *         Only callable through policyCenter
      *
-     * @param _amount   Amount of liquidity to remove
+     * @param _lpToken  Address of lp token
+     * @param _amount   Amount of liquidity (current generation lp) to remove
      * @param _provider Provider address
      */
-    function unstakedLiquidity(uint256 _amount, address _provider)
-        external
-        whenNotPaused
-        whenNotLiquidated
-        onlyPolicyCenter
-    {
+    function unstakedLiquidity(
+        address _lpToken,
+        uint256 _amount,
+        address _provider
+    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
+        require(isLPToken[_lpToken], "Wrong lp token");
+        
         _updateDynamic();
 
         // Burn current genration lp tokens to the provider
-        _burnLP(_provider, _amount);
+        _burnLP(_lpToken, _provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
@@ -561,6 +590,7 @@ contract PriorityPool is
         address newLP = address(new PriorityPoolToken(_name));
 
         lpTokenAddress[currentGeneration] = newLP;
+        isLPToken[newLP] = true;
 
         emit NewGenerationLPTokenDeployed(
             _poolName,
@@ -581,18 +611,28 @@ contract PriorityPool is
         // Get current generation lp token address and mint tokens
         address lp = currentLPAddress();
         IPriorityPoolToken(lp).mint(_user, _amount);
+
+        totalLPSupply += _amount;
     }
 
     /**
-     * @notice Burn current generation lp tokens
+     * @notice Burn lp tokens
+     *         Need specific generation lp token address as parameter
      *
-     * @param _user   User address
-     * @param _amount LP token amount
+     * @param _lpToken LP token adderss
+     * @param _user    User address
+     * @param _amount  LP token amount
      */
-    function _burnLP(address _user, uint256 _amount) internal {
-        // Get current generation lp token address and mint tokens
-        address lp = currentLPAddress();
-        IPriorityPoolToken(lp).burn(_user, _amount);
+    function _burnLP(
+        address _lpToken,
+        address _user,
+        uint256 _amount
+    ) internal {
+        uint256 proLPAmount = (priceIndex * _amount) / SCALE;
+        IERC20(protectionPool).transfer(_user, proLPAmount);
+
+        IPriorityPoolToken(_lpToken).burn(_user, _amount);
+        totalLPSupply -= _amount;
     }
 
     /**
@@ -719,5 +759,11 @@ contract PriorityPool is
             59,
             59
         );
+    }
+
+    function _updatePriceIndex() internal {
+        priceIndex =
+            (IERC20(protectionPool).balanceOf(address(this)) * SCALE) /
+            totalLPSupply;
     }
 }

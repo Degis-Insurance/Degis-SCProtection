@@ -81,7 +81,11 @@ interface IPriorityPool {
 
     function protectionPool() external view returns (address);
 
-    function unstakedLiquidity(uint256 _amount, address _provider) external;
+    function unstakedLiquidity(
+        address _lpToken,
+        uint256 _amount,
+        address _provider
+    ) external;
 
     function renounceOwnership() external;
 
@@ -135,4 +139,6 @@ interface IPriorityPool {
         uint256 _length,
         uint256 _timestampLength
     ) external;
+
+    function coverIndex() external view returns (uint256);
 }
