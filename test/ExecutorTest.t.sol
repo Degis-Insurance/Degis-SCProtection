@@ -179,7 +179,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         policyCenter.provideLiquidity(10000);
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(POOL_ID, 10000);
 
         // approve deg usage to report and propose pools
         deg.approve(address(incidentReport), 100000 ether);

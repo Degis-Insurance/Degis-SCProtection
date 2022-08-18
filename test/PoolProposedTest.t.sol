@@ -171,7 +171,7 @@ contract PoolProposedTest is Test {
         policyCenter.provideLiquidity(10000 ether);
         protectionPool.approve(address(policyCenter), 10000 ether);
 
-        policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
+        policyCenter.stakeLiquidity(1, 10000 ether);
 
         vm.warp(0);
         onboardProposal.propose("Yeti", address(yeti), 100, 1);
@@ -207,7 +207,7 @@ contract PoolProposedTest is Test {
     function testProvideLiquidityNewPool() public {
         // approve shield usage for new pool
         shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(2, 10000);
+        policyCenter.stakeLiquidity(2, 10000);
 
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).totalSupply() == 10000, true);

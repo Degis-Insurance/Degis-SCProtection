@@ -141,4 +141,8 @@ interface IPriorityPool {
     ) external;
 
     function coverIndex() external view returns (uint256);
+
+    function minAssetRequirement() external view returns (uint256);
+
+    function setCoverIndex(uint256 _newIndex) external;
 }

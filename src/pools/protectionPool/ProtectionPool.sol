@@ -165,6 +165,7 @@ contract ProtectionPool is
         uint256 currentReserved = IShield(shield).balanceOf(address(this));
 
         uint256 indexToCut;
+        uint256 minRequirement;
 
         for (uint256 i; i < poolAmount; ) {
             (, address poolAddress, , , ) = factory.pools(i);
@@ -352,7 +353,7 @@ contract ProtectionPool is
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
                 if (
-                    i == 0 && rewardSpeed[lastRewardYear][lastRewardMonth] > 0
+                    i == 0 && rewardSpeed[lastY][lastM] > 0
                 ) {
                     // End timestamp of the first month
                     uint256 endTimestamp = DateTimeLibrary
@@ -373,7 +374,7 @@ contract ProtectionPool is
                 }
                 // Middle month reward
                 else {
-                    uint256 daysInMonth = lastY._getDaysInMonth(tempMonth);
+                    uint256 daysInMonth = lastY._getDaysInMonth(lastM);
 
                     if (rewardSpeed[lastY][lastM] > 0) {
                         totalReward +=
