@@ -148,7 +148,7 @@ contract OnboardProposalVotingTest is Test {
         policyCenter.setProtectionPool(address(protectionPool));
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));

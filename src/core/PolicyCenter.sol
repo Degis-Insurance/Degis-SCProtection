@@ -329,7 +329,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration,
         uint256 _maxPayment
-    ) external poolExists(_poolId) {
+    ) external poolExists(_poolId) returns (address crToken) {
         require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_coverDuration), "Wrong cover length");
         require(_poolId > 0, "Wrong pool id");
@@ -489,6 +489,7 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
+     * @param _fromToken Token address to swap from
      */
     function _swapTokens(address _fromToken, uint256 _amount)
         internal

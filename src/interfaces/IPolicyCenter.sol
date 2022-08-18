@@ -24,7 +24,7 @@ interface IPolicyCenter {
         uint256 _coverAmount,
         uint256 _length,
         uint256 _maxPayment
-    ) external;
+    ) external returns (address);
 
     function calculatePayout(uint256 _poolId, address _insured)
         external
