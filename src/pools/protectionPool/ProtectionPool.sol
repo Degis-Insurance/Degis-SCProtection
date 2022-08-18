@@ -59,6 +59,7 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
+    using DateTimeLibrary for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -188,7 +189,8 @@ contract ProtectionPool is
         external
         onlyPolicyCenter
     {
-        _updateReward();
+        // TODO: fix update reward
+        // _updateReward();
         _updatePrice();
 
         // Mint PRO_LP tokens to the user
@@ -292,10 +294,11 @@ contract ProtectionPool is
      */
     function _updatePrice() internal {
         if (totalSupply() == 0){
-            price = SCALE;
+            price = 1;
+            return;
         }
         price =
-            (IERC20(shield).balanceOf(address(this)) * SCALE) /
+            (IERC20(shield).balanceOf(address(this))) /
             totalSupply();
     }
 
@@ -311,8 +314,8 @@ contract ProtectionPool is
             uint256 currentMonth,
             uint256 currentDay
         ) = DateTimeLibrary.timestampToDate(block.timestamp);
-
-        uint256 monthPassed = currentMonth - lastRewardMonth;
+        uint256 yearPassed = currentYear - lastRewardYear;
+        uint256 monthPassed = (yearPassed * 12) + currentMonth - lastRewardMonth;
 
         uint256 totalReward;
         uint256 tempYear = lastRewardYear;
@@ -339,9 +342,11 @@ contract ProtectionPool is
                             59,
                             59
                         );
-                    totalReward +=
-                        (endTimestamp - lastRewardTimestamp) *
-                        rewardSpeed[lastRewardYear][lastRewardMonth];
+                    if (rewardSpeed[currentYear][currentMonth] > 0) {
+                        totalReward +=
+                        (block.timestamp - lastRewardTimestamp) *
+                        rewardSpeed[currentYear][currentMonth];
+                    }
                 }
                 // Last month reward
                 if (i == monthPassed && rewardSpeed[lastRewardYear][lastRewardMonth] > 0) {

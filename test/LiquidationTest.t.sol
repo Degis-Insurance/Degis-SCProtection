@@ -57,7 +57,9 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     address public carol = address(0x133703);
     // pool1 address
     address public pool1;
+    address public crToken1;
     address public pool2;
+    address public crToken2;
 
     function setUp() public {
         shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
@@ -131,7 +133,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
 
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
@@ -173,7 +175,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         shield.transfer(address(this), 1000);
         shield.approve(address(policyCenter), 10000 ether);
 
-        policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
+        // provide liquidity to protection pool
+        policyCenter.provideLiquidity(10000);
+        protectionPool.approve(address(policyCenter), 10000 ether);
+        policyCenter.stakeLiquidityPoolToken(1, 10000);
 
         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
 
@@ -184,8 +189,8 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.prank(alice);
         ptp.approve(address(policyCenter), 100000 ether);
 
-        // Alice buys coverage for 100 ether
-        policyCenter.buyCover(1, 100 ether, 3, price);
+        // Alice buys coverage for 100 ether and receives token address
+        crToken1 = policyCenter.buyCover(1, 100 ether, 3, price);
 
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);
@@ -214,12 +219,12 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         uint256 amount = policyCenter.calculatePayout(1, address(this));
 
         vm.prank(alice);
-        policyCenter.claimPayout(1);
+        policyCenter.claimPayout(1, crToken1);
     }
 
     function testClaimPayoutUnexsistentPool() public {
         vm.expectRevert("Pool not found");
-        policyCenter.claimPayout(2);
+        policyCenter.claimPayout(2, crToken1);
     }
 
     function testUnpauseLiquidatedPool() public {
@@ -247,7 +252,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         uint256 amount = policyCenter.calculatePayout(1, address(this));
 
         vm.prank(alice);
-        policyCenter.claimPayout(1);
+        policyCenter.claimPayout(1, crToken1);
 
         uint256 lpBalance = IPriorityPool(pool1).balanceOf(address(this));
         uint256 shieldBalance = shield.balanceOf(address(this));

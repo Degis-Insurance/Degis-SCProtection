@@ -25,7 +25,7 @@ import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
-contract ClaimPayoutTest is Test {
+contract PoolProposedTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
@@ -127,7 +127,7 @@ contract ClaimPayoutTest is Test {
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -168,7 +168,10 @@ contract ClaimPayoutTest is Test {
         // owner provides liquidity
         shield.transfer(address(this), 10000);
         shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidityPoolToken(1, 10000);
+        policyCenter.provideLiquidity(10000 ether);
+        protectionPool.approve(address(policyCenter), 10000 ether);
+
+        policyCenter.stakeLiquidityPoolToken(1, 10000 ether);
 
         vm.warp(0);
         onboardProposal.propose("Yeti", address(yeti), 100, 1);

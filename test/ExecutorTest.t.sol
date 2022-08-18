@@ -129,7 +129,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
 
-        onboardProposal.setExecutor(address(executor));
+        // onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -174,6 +174,11 @@ contract ExecutorTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 10000 ether);
         yeti.approve(address(policyCenter), 10000 ether);
 
+        // first provide liquidity to protection pool
+        shield.approve(address(policyCenter), 10000 ether);
+        policyCenter.provideLiquidity(10000);
+        // get current lp address to approve expence
+        protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidityPoolToken(POOL_ID, 10000);
 
         // approve deg usage to report and propose pools
