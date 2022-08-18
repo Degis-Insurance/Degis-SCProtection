@@ -187,11 +187,11 @@ contract ProtectionPool is
         onlyPolicyCenter
     {
         // TODO: fix update reward
-        // _updateReward();
+        _updateReward();
         _updatePrice();
 
         // Mint PRO_LP tokens to the user
-        uint256 amountToMint = _amount / price;
+        uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
 
         emit LiquidityProvision(_amount, amountToMint, _provider);
@@ -216,7 +216,7 @@ contract ProtectionPool is
         _updatePrice();
 
         // Burn PRO_LP tokens to the user
-        shieldToTransfer = _amount / price;
+        shieldToTransfer = (_amount * price) / SCALE;
         require(
             IERC20(shield).balanceOf(address(this)) >=
                 getTotalCovered() + shieldToTransfer,
@@ -292,9 +292,10 @@ contract ProtectionPool is
     function _updatePrice() internal {
         if (totalSupply() == 0) {
             price = SCALE;
+            return;
         }
         price =
-            (IERC20(shield).balanceOf(address(this))) /
+            ((IERC20(shield).balanceOf(address(this))) * SCALE) /
             totalSupply();
     }
 
