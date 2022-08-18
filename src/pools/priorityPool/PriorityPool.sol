@@ -267,6 +267,7 @@ contract PriorityPool is
                 .dynamicPoolCounter();
 
             // Dynamic premium ratio
+            // ( N = total dynamic pools ≤ total pools )
             //
             //                      Covered          1
             //                   --------------- + -----
@@ -336,9 +337,11 @@ contract PriorityPool is
         whenNotLiquidated
         onlyPolicyCenter
     {
+        // Check whether this priority should be dynamic
+        // If so, update it
         _updateDynamic();
 
-        // Mint lp tokens to the provider
+        // Mint current generation lp tokens to the provider
         _mintLP(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
@@ -358,20 +361,70 @@ contract PriorityPool is
     {
         _updateDynamic();
 
-        // Burn lp tokens to the provider
+        // Burn current genration lp tokens to the provider
         _burnLP(_provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
 
-    function updateWhenBuy(uint256 _amount, uint256 _length)
-        external
-        whenNotPaused
-        whenNotLiquidated
-        onlyPolicyCenter
-    {
-        _updateCoverInfo(_amount, _length);
-        // coverInMonth[]
+    /**
+     * @notice Update the record when new policy is bought
+     *         Only called from policy center
+     *
+     * @param _amount          Cover amount (shield)
+     * @param _premium         Premium for priority pool
+     * @param _length          Cover length (in month)
+     * @param _timestampLength Cover length (in second)
+     */
+    function updateWhenBuy(
+        uint256 _amount,
+        uint256 _premium,
+        uint256 _length,
+        uint256 _timestampLength
+    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
         _updateDynamic();
+
+        // Record cover amount in each month
+        _updateCoverInfo(_amount, _length);
+
+        // Update the weighted farming pool speed for this priority pool
+        _updateWeightedFarmingSpeed(_length, _premium / _timestampLength);
+    }
+
+    /**
+     * @notice Update the farming speed in WeightedFarmingPool
+     *
+     * @param _length   Length in month
+     * @param _newSpeed Speed to be added
+     */
+    function _updateWeightedFarmingSpeed(uint256 _length, uint256 _newSpeed)
+        internal
+    {
+        uint256[] memory _years = new uint256[](_length);
+        uint256[] memory _months = new uint256[](_length);
+
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
+
+        for (uint256 i; i < _length; ) {
+            _years[i] = currentYear;
+            _months[i] = currentMonth;
+
+            unchecked {
+                if (++currentMonth > 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
+                ++i;
+            }
+        }
+
+        IWeightedFarmingPool(weightedFarmingPool).updateRewardSpeed(
+            poolId,
+            _newSpeed,
+            _years,
+            _months
+        );
     }
 
     /**
@@ -386,14 +439,6 @@ contract PriorityPool is
         );
 
         _pause(_paused);
-    }
-
-    /**
-     * @notice Called when liqudity is provided, removed or coverage is bought.
-     *         updates all state variables to reflect current reward emission.
-     */
-    function updateRewards() public onlyPolicyCenter {
-        // _updateRewards();
     }
 
     /**
@@ -552,21 +597,24 @@ contract PriorityPool is
 
     /**
      * @notice Update cover record info when new covers come in
+     *         Record the total cover amount in each month
      *
      * @param _amount Cover amount
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, uint256 currentDay) = block
+        (uint256 currentYear, uint256 currentMonth, ) = block
             .timestamp
             .timestampToDate();
 
-        if (currentDay >= 25) ++_length;
-
         for (uint256 i; i < _length; ) {
-            coverInMonth[currentYear][currentMonth + i] += _amount;
+            coverInMonth[currentYear][currentMonth] += _amount;
 
             unchecked {
+                if (++currentMonth > 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
                 ++i;
             }
         }

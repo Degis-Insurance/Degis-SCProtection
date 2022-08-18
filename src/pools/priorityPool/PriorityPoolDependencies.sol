@@ -8,6 +8,8 @@ import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 import "../../interfaces/IPayoutPool.sol";
 
+import "../../interfaces/IWeightedFarmingPool.sol";
+
 abstract contract PriorityPoolDependencies {
     uint256 constant SCALE = 1e12;
 
@@ -19,6 +21,8 @@ abstract contract PriorityPoolDependencies {
     address public priorityPoolFactory;
     address public premiumRewardPool;
     address public protectionPool;
+
+    address public weightedFarmingPool;
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
