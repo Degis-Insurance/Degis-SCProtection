@@ -131,6 +131,7 @@ interface IPriorityPool {
 
     function updateWhenBuy(
         uint256 _amount,
+        uint256 _premium,
         uint256 _length,
         uint256 _timestampLength
     ) external;

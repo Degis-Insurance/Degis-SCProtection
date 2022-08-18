@@ -117,6 +117,23 @@ contract WeightedFarmingPool {
         emit WeightChanged(_id);
     }
 
+    function updateRewardSpeed(
+        uint256 _id,
+        uint256 _newSpeed,
+        uint256[] memory _years,
+        uint256[] memory _months
+    ) external {
+        require(_years.length == _months.length, "Wrong length");
+        uint256 length = _years.length;
+        for (uint256 i; i < length; ) {
+            speed[_id][_years[i]][_months[i]] += _newSpeed;
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     function deposit(
         uint256 _id,
         address _token,
@@ -288,7 +305,7 @@ contract WeightedFarmingPool {
                 }
 
                 unchecked {
-                    if (++lastM == 12) {
+                    if (++lastM > 12) {
                         ++lastY;
                         lastM = 1;
                     }
@@ -325,7 +342,7 @@ contract WeightedFarmingPool {
             speed[_id][currentY][currentM] += _newSpeed;
 
             unchecked {
-                if (++currentM == 12) {
+                if (++currentM > 12) {
                     ++currentY;
                     currentM = 1;
                 }
