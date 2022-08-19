@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 interface PriorityPoolEventError {
     event LiquidityProvision(uint256 amount, address sender);
     event LiquidityRemoved(uint256 amount, address sender);
-    event Liquidation(uint256 amount, uint256 endDate);
+    event Liquidation(uint256 amount);
     event EmissionRateUpdated(
         uint256 newEmissionRate,
         uint256 newEmissionEndTime
