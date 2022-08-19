@@ -326,7 +326,7 @@ contract PolicyCenter is
         uint256 _coverAmount,
         uint256 _coverDuration,
         uint256 _maxPayment
-    ) external poolExists(_poolId) {
+    ) external poolExists(_poolId) returns (address) {
         require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
         require(_withinLength(_coverDuration), "Wrong cover length");
         require(_poolId > 0, "Wrong pool id");
@@ -372,15 +372,17 @@ contract PolicyCenter is
             timestampDuration
         );
         ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
+        //TODO: commented because stack too deep
+        // emit CoverBought(
+        //     msg.sender,
+        //     _poolId,
+        //     _coverDuration,
+        //     _coverAmount,
+        //     premium,
+        //     premiumInNativeToken
+        // );
 
-        emit CoverBought(
-            msg.sender,
-            _poolId,
-            _coverDuration,
-            _coverAmount,
-            premium,
-            premiumInNativeToken
-        );
+        return crToken;
     }
 
     /**
@@ -409,8 +411,10 @@ contract PolicyCenter is
         require(_amount > 0, "Zero amount");
 
         address pool = priorityPools[_poolId];
+        address token = tokenByPoolId[_poolId];
         // Update status and mint Prority Pool LP tokens
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
+        IWeightedFarmingPool(weightedFarmingPool).stakedLiquidity(_poolId, _amount, token, msg.sender);
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
     }
 
@@ -429,12 +433,15 @@ contract PolicyCenter is
     ) external poolExists(_poolId) {
         require(_amount > 0, "Zero amount");
 
-        // burns the full amount of liquidity tokens in users account from insurance pool
+        address token = tokenByPoolId[_poolId];
+        // burns the full amount of liquidity tokens in users account from priority pool
         IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
             _priorityLP,
             _amount,
             msg.sender
         );
+        IWeightedFarmingPool(weightedFarmingPool).unstakedLiquidity(_poolId, _amount, token, msg.sender);
+
     }
 
     /**
@@ -469,6 +476,8 @@ contract PolicyCenter is
 
         emit Payout(amount, msg.sender);
     }
+
+
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
@@ -554,8 +563,9 @@ contract PolicyCenter is
      * @notice Get cover right token address
      *         The address is determined by poolId and expiry(last second of each month)
      *
-     * @param _poolId Pool id
-     * @param _length Length in second
+     * @param _poolId   Pool id
+     * @param _length   Length in second
+     * @return address  Cover right token address
      */
     function _getCRTokenAddress(uint256 _poolId, uint256 _length)
         internal

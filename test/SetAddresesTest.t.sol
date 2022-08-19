@@ -9,6 +9,7 @@ import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/reward/WeightedFarmingPool.sol";
 
 import "src/core/PolicyCenter.sol";
 
@@ -31,6 +32,7 @@ contract setAddressesTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    WeightedFarmingPool public weightedFarmingPool;
     PayoutPool public payoutPool;
     PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
