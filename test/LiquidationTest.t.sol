@@ -13,6 +13,7 @@ import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 import "src/voting/incidentReport/IncidentReport.sol";
+import "src/crTokens/CoverRightTokenFactory.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
@@ -25,6 +26,7 @@ import "src/interfaces/IPolicyCenter.sol";
 import "src/interfaces/IProtectionPool.sol";
 import "src/interfaces/IPriorityPool.sol";
 import "src/interfaces/IOnboardProposal.sol";
+import "src/interfaces/ICoverRightTokenFactory.sol";
 import "src/interfaces/IExecutor.sol";
 
 contract ClaimPayoutTest is Test, IncidentReportParameters {
@@ -32,6 +34,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
     WeightedFarmingPool public weightedFarmingPool;
+    CoverRightTokenFactory public coverRightTokenFactory;
     PayoutPool public payoutPool;
     PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
@@ -86,6 +89,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
             address(shield),
             address(protectionPool),
             address(payoutPool)
+        );
+
+        coverRightTokenFactory = new CoverRightTokenFactory(
+            address(policyCenter)
         );
 
         premiumRewardPool = new PremiumRewardPool(
@@ -192,8 +199,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 100000 ether);
 
         // Alice buys coverage for 100 ether and receives token address
-        crToken1 = policyCenter.buyCover(1, 100 ether, 3, price);
-
+        
+        policyCenter.buyCover(1, 100 ether, 3, price);
+        bytes32 salt = keccak256(abi.encodePacked(POOL_ID, block.timestamp + coverLength));
+        crToken1 = coverRightTokenFactory.saltToAddress(salt);
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);
 
