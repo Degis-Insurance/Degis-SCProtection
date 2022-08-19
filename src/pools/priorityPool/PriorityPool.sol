@@ -146,7 +146,7 @@ contract PriorityPool is
     constructor(
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _poolName,
+        string memory _name,
         uint256 _baseRatio,
         address _admin,
         uint256 _poolId
@@ -159,7 +159,7 @@ contract PriorityPool is
         basePremiumRatio = _baseRatio;
 
         poolId = _poolId;
-        poolName = _poolName;
+        poolName = _name;
 
         // TODO: change length
         maxLength = 3;
@@ -167,7 +167,7 @@ contract PriorityPool is
 
         priceIndex = SCALE;
 
-        _deployNewGenerationLP(_poolName, _poolId);
+         (_name, _poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -575,7 +575,7 @@ contract PriorityPool is
         internal
         returns (address newLPAddress)
     {
-        uint256 currentGeneration = generation++;
+        uint256 currentGeneration = ++generation;
 
         // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id
         string memory _name = string.concat(
@@ -587,10 +587,11 @@ contract PriorityPool is
             currentGeneration._toString()
         );
 
-        address newLP = address(new PriorityPoolToken(_name));
+        newLPAddress = address(new PriorityPoolToken(_name));
 
-        lpTokenAddress[currentGeneration] = newLP;
-        isLPToken[newLP] = true;
+        lpTokenAddress[currentGeneration] = newLPAddress;
+        IWeightedFarmingPool(weightedFarmingPool).addToken(poolId, newLPAddress, coverIndex);
+        isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(
             _poolName,

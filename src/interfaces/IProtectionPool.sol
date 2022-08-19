@@ -57,6 +57,8 @@ interface IProtectionPool {
 
     function startTime() external view returns (uint256);
 
+    function totalSupply() external view returns (uint256);
+
     function updateRewards() external;
 
     function veDeg() external view returns (address);
