@@ -445,10 +445,7 @@ contract PolicyCenter is
     function removeLiquidity(uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
 
-        // burns the full amount of liquidity tokens in users account from protection pool
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
-
-        IERC20(shield).transfer(msg.sender, 0);
     }
 
     /**

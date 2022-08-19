@@ -68,7 +68,8 @@ contract PriorityPool is
     // Time users have to claim payout when pool is liquidated
     uint256 public constant CLAIM_PERIOD = 30;
 
-    uint256 public constant MIN_COVER_AMOUNT = 1 ether;
+    // Mininum cover amount 10U
+    uint256 public constant MIN_COVER_AMOUNT = 10e6;
 
     // Max time length in months of granted protection
     uint256 public immutable maxLength;
@@ -104,17 +105,6 @@ contract PriorityPool is
     // Timestamp of pool creation
     uint256 public startTime;
 
-    // Accumulated reward per lp token
-    uint256 public accumulatedRewardPerShare;
-
-    uint256 public lastRewardTimestamp;
-
-    uint256 public emissionEndTime;
-
-    uint256 public emissionRate;
-
-    uint256 public endLiquidationDate;
-
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
 
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
@@ -133,8 +123,8 @@ contract PriorityPool is
     // Index for cover amount
     uint256 public coverIndex;
 
-    // Price of lp tokens
-    uint256 public priceIndex;
+    // Generation => Price of lp tokens 
+    mapping(uint256 => uint256) public priceIndex;
 
     // Sum of total lp supply (including different generations)
     uint256 public totalLPSupply;
@@ -165,7 +155,8 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
-        priceIndex = SCALE;
+        // Generation 0, price starts from 1
+        priceIndex[0] = SCALE;
 
         _deployNewGenerationLP(_poolName, _poolId);
     }
@@ -212,14 +203,13 @@ contract PriorityPool is
         returns (uint256 price, uint256 length)
     {
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
-        require(_withinLength(_coverDuration), "Wrong cover length");
 
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
         uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
 
         length = endTimestamp - block.timestamp;
-        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * SCALE);
+        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
 
     /**
@@ -237,7 +227,7 @@ contract PriorityPool is
             covered += coverInMonth[currentYear][currentMonth];
 
             unchecked {
-                if (++currentMonth == 12) {
+                if (++currentMonth > 12) {
                     ++currentYear;
                     currentMonth = 1;
                 }
@@ -275,7 +265,8 @@ contract PriorityPool is
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                IProtectionPool(protectionPool).getTotalCovered();
+                (IProtectionPool(protectionPool).getTotalCovered() +
+                    _coverAmount);
 
             address lp = currentLPAddress();
             // LP Token ratio = LP token in this pool / Total lp token
@@ -387,7 +378,7 @@ contract PriorityPool is
         address _provider
     ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
         require(isLPToken[_lpToken], "Wrong lp token");
-        
+
         _updateDynamic();
 
         // Burn current genration lp tokens to the provider
@@ -565,6 +556,7 @@ contract PriorityPool is
 
     /**
      * @notice Deploy a new generation lp token
+     *         Generation starts from 0
      *
      * @param _poolName Pool name
      * @param _poolId   Pool id
@@ -629,6 +621,7 @@ contract PriorityPool is
         uint256 _amount
     ) internal {
         uint256 proLPAmount = (priceIndex * _amount) / SCALE;
+
         IERC20(protectionPool).transfer(_user, proLPAmount);
 
         IPriorityPoolToken(_lpToken).burn(_user, _amount);
@@ -679,13 +672,6 @@ contract PriorityPool is
      */
     function _setLiquidationStatus(bool _liquidated) internal {
         liquidated = _liquidated;
-    }
-
-    /**
-     * @notice Check the cover length is ok
-     */
-    function _withinLength(uint256 _length) internal view returns (bool) {
-        return _length >= minLength && _length <= maxLength;
     }
 
     /**

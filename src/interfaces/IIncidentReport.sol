@@ -3,33 +3,6 @@
 pragma solidity ^0.8.13;
 
 interface IIncidentReport {
-    event DebtPaid(
-        address payer,
-        address user,
-        uint256 debt,
-        uint256 unlockAmount
-    );
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event ReportClosed(uint256 reportId, uint256 closeTimestamp);
-    event ReportCreated(
-        uint256 reportId,
-        uint256 indexed poolId,
-        uint256 reportTimestamp,
-        address indexed reporter
-    );
-    event ReportExtended(uint256 reportId, uint256 round);
-    event ReportSettled(uint256 reportId, uint256 result);
-    event ReportVoted(
-        uint256 reportId,
-        address indexed user,
-        uint256 voteFor,
-        uint256 amount
-    );
-    event VotingStart(uint256 reportId, uint256 startTimestamp);
-
     struct Report {
         uint256 poolId; // Project pool id
         uint256 reportTimestamp; // Time of starting report
@@ -95,9 +68,7 @@ interface IIncidentReport {
 
     function renounceOwnership() external;
 
-    function report(uint256 _poolId) external;
-
-    function report(uint256 _poolId, address _msgsender) external;
+    function report(uint256 _poolId, uint256 _payout) external;
 
     function reportCounter() external view returns (uint256);
 
@@ -168,12 +139,6 @@ interface IIncidentReport {
         uint256 _amount
     ) external;
 
-    function vote(
-        uint256 _reportId,
-        uint256 _isFor,
-        uint256 _amount,
-        address _msgsender
-    ) external;
 
     function poolReports(uint256 _poolId, uint256 _index)
         external
