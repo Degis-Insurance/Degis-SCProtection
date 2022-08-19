@@ -65,9 +65,6 @@ contract PriorityPool is
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Time users have to claim payout when pool is liquidated
-    uint256 public constant CLAIM_PERIOD = 30;
-
     // Mininum cover amount 10U
     uint256 public constant MIN_COVER_AMOUNT = 10e6;
 
@@ -96,9 +93,6 @@ contract PriorityPool is
     // Address of insured token
     address public insuredToken;
 
-    // If the pool has been liquidated
-    bool public liquidated;
-
     // Max amount of bought protection in shield
     uint256 public maxCapacity;
 
@@ -123,8 +117,9 @@ contract PriorityPool is
     // Index for cover amount
     uint256 public coverIndex;
 
-    // Generation => Price of lp tokens 
-    mapping(uint256 => uint256) public priceIndex;
+    // Generation => Price of lp tokens
+    // PRI-LP token amount * Price Index = PRO-LP token amount
+    mapping(address => uint256) public priceIndex;
 
     // Sum of total lp supply (including different generations)
     uint256 public totalLPSupply;
@@ -155,10 +150,8 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
-        // Generation 0, price starts from 1
-        priceIndex[0] = SCALE;
-
-         (_name, _poolId);
+        // Generation 1, price starts from 1
+        priceIndex[_deployNewGenerationLP(_name, _poolId)] = SCALE;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -175,11 +168,6 @@ contract PriorityPool is
             msg.sender == policyCenter,
             "Only policy center can call this function"
         );
-        _;
-    }
-
-    modifier whenNotLiquidated() {
-        require(!liquidated, "Liquidated");
         _;
     }
 
@@ -344,7 +332,7 @@ contract PriorityPool is
     /**
      * @notice Provide liquidity to priority pool
      *         Only callable through policyCenter
-     *         Can not provide new liquidity when liquidated / paused
+     *         Can not provide new liquidity when paused
      *
      * @param _amount   Amount of liquidity (PRO-LP token) to provide
      * @param _provider Liquidity provider adress
@@ -352,7 +340,6 @@ contract PriorityPool is
     function stakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
-        whenNotLiquidated
         onlyPolicyCenter
     {
         // Check whether this priority should be dynamic
@@ -376,7 +363,7 @@ contract PriorityPool is
         address _lpToken,
         uint256 _amount,
         address _provider
-    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
+    ) external whenNotPaused onlyPolicyCenter {
         require(isLPToken[_lpToken], "Wrong lp token");
 
         _updateDynamic();
@@ -400,7 +387,7 @@ contract PriorityPool is
         uint256 _premium,
         uint256 _length,
         uint256 _timestampLength
-    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
+    ) external whenNotPaused onlyPolicyCenter {
         _updateDynamic();
 
         // Record cover amount in each month
@@ -462,26 +449,19 @@ contract PriorityPool is
     }
 
     /**
-     * @notice Sets this insurance pool status to liquidated
+     * @notice Liquidate pool
      *         Only callable by executor
      *         Only after the report has passed the voting
      *
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        // Change the status of the insurance pool to liquidated and allows payout claims
-        _setLiquidationStatus(true);
-
         // Deploy new lp tokens
         _deployNewGenerationLP(poolName, poolId);
 
-        // Set end liquidation date
-        // Users will have CLAIM_PERIOD days to claim payout.
-        endLiquidationDate = block.timestamp + CLAIM_PERIOD * 1 days;
-
         _retrievePayout(_amount);
 
-        emit Liquidation(_amount, endLiquidationDate);
+        emit Liquidation(_amount);
     }
 
     /**
@@ -533,30 +513,13 @@ contract PriorityPool is
         IPayoutPool(payoutPool).newPayout(_amount, payoutRatio);
     }
 
-    /**
-     * @notice End the liquidation period
-     *         Users can redeem remaining capacity when ending liquidation
-     */
-    function endLiquidation() external {
-        require(liquidated, "Pool has not been liquidated");
-        require(
-            block.timestamp > endLiquidationDate,
-            "Pool has not ended liquidation"
-        );
-
-        // liquidation has ended. payout claims cannot be made.
-        _setLiquidationStatus(false);
-
-        emit LiquidationEnded(block.timestamp);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Deploy a new generation lp token
-     *         Generation starts from 0
+     *         Generation starts from 1
      *
      * @param _poolName Pool name
      * @param _poolId   Pool id
@@ -569,7 +532,7 @@ contract PriorityPool is
     {
         uint256 currentGeneration = ++generation;
 
-        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id
+        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
         string memory _name = string.concat(
             "PRI-LP-",
             _poolId._toString(),
@@ -582,7 +545,12 @@ contract PriorityPool is
         newLPAddress = address(new PriorityPoolToken(_name));
 
         lpTokenAddress[currentGeneration] = newLPAddress;
-        IWeightedFarmingPool(weightedFarmingPool).addToken(poolId, newLPAddress, coverIndex);
+        // TODO: add token in weighted farming pool
+        IWeightedFarmingPool(weightedFarmingPool).addToken(
+            poolId,
+            newLPAddress,
+            coverIndex
+        );
         isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(
@@ -612,19 +580,20 @@ contract PriorityPool is
      * @notice Burn lp tokens
      *         Need specific generation lp token address as parameter
      *
-     * @param _lpToken LP token adderss
+     * @param _lpToken PRI-LP token adderss
      * @param _user    User address
-     * @param _amount  LP token amount
+     * @param _amount  PRI-LP token amount to burn
      */
     function _burnLP(
         address _lpToken,
         address _user,
         uint256 _amount
     ) internal {
-        uint256 proLPAmount = (priceIndex * _amount) / SCALE;
-
+        // Transfer PRO-LP token to user
+        uint256 proLPAmount = (priceIndex[_lpToken] * _amount) / SCALE;
         IERC20(protectionPool).transfer(_user, proLPAmount);
 
+        // Burn PRI-LP token
         IPriorityPoolToken(_lpToken).burn(_user, _amount);
         totalLPSupply -= _amount;
     }
@@ -666,13 +635,6 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
-    }
-
-    /**
-     * @notice Set liquidation status
-     */
-    function _setLiquidationStatus(bool _liquidated) internal {
-        liquidated = _liquidated;
     }
 
     /**

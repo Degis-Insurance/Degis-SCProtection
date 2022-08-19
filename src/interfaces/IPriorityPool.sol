@@ -127,8 +127,6 @@ interface IPriorityPool {
 
     function veDeg() external view returns (address);
 
-    function endLiquidation() external;
-
     function lockedAmount() external view returns (uint256);
 
     function activeCovered() external view returns (uint256);
