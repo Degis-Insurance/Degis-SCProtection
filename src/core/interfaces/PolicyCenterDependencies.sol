@@ -8,6 +8,7 @@ import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/ICoverRightToken.sol";
 import "../../interfaces/ICoverRightTokenFactory.sol";
 import "../../interfaces/IPayoutPool.sol";
+import "../../interfaces/IWeightedFarmingPool.sol";
 
 import "../../interfaces/ITreasury.sol";
 import "../../interfaces/IExchange.sol";
@@ -31,6 +32,7 @@ abstract contract PolicyCenterDependencies {
     address public protectionPool;
     address public priorityPoolFactory;
     address public coverRightTokenFactory;
+    address public weightedFarmingPool;
     address public exchange;
     address public payoutPool;
 

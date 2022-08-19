@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/reward/WeightedFarmingPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -30,6 +31,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    WeightedFarmingPool public weightedFarmingPool;
     PayoutPool public payoutPool;
     PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
@@ -263,7 +265,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         incidentReport.unpausePools(address(pool1));
 
         IPriorityPool(pool1).endLiquidation();
-        policyCenter.unstakeLiquidity(1, lpBalance);
+        policyCenter.unstakeLiquidity(1, pool1, lpBalance);
 
         assertEq(PriorityPool(pool1).liquidated() == false, true);
 

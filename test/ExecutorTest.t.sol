@@ -10,6 +10,7 @@ import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/reward/WeightedFarmingPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -32,6 +33,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    WeightedFarmingPool public weightedFarmingPool;
     PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
     PayoutPool public payoutPool;

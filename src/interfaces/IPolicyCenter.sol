@@ -33,8 +33,6 @@ interface IPolicyCenter {
 
     function claimPayout(uint256 _poolId) external;
 
-    function claimReward(uint256 _poolId) external;
-
     function coverages(uint256, address)
         external
         view
@@ -72,15 +70,6 @@ interface IPolicyCenter {
     function priorityPoolFactory() external view returns (address);
 
     function insurancePools(uint256) external view returns (address);
-
-    function liquidities(uint256, address)
-        external
-        view
-        returns (
-            uint256 amount,
-            uint256 userDebt,
-            uint256 lastClaim
-        );
 
     function liquidityByPoolId(uint256) external view returns (uint256);
 

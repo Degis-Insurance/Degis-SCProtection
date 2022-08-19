@@ -230,8 +230,8 @@ contract PriorityPoolFactory is
         require(!tokenRegistered[_protocolToken], "Already registered");
 
         // retrieve reinsurance pool liquidity
-        uint256 protectionPoolLiquidity = IPolicyCenter(policyCenter)
-            .liquidityByPoolId(0);
+        uint256 protectionPoolLiquidity = IProtectionPool(protectionPool)
+            .totalSupply();
 
         // check if reinsurance pool can cover all max capacities
         // TODO: REQUIREMENT REMOVED FOR TESTING PURPOSES
@@ -326,8 +326,8 @@ contract PriorityPoolFactory is
      *
      * @param _protocolToken Address of the protocol token to insure
      * @param _maxCapacity   Max coverage capacity
-     * @param _tokenName          Name of the pool
-     * @param _policyPrice   Policy price
+     * @param _name          Name of the pool
+     * @param _baseRatio   Policy price
      * @param _owner        owner of new pool
      * @param _poolId        Current pool id
      *
@@ -336,8 +336,8 @@ contract PriorityPoolFactory is
     function _getPriorityPoolBytecode(
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _tokenName,
-        uint256 _policyPrice,
+        string memory _name,
+        uint256 _baseRatio,
         address _owner,
         uint256 _poolId
     ) internal view virtual returns (bytes memory) {
@@ -351,8 +351,8 @@ contract PriorityPoolFactory is
                 abi.encode(
                     _protocolToken,
                     _maxCapacity,
-                    _tokenName,
-                    _policyPrice,
+                    _name,
+                    _baseRatio,
                     _owner,
                     _poolId
                 )
