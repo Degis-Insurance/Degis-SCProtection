@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
+import "src/reward/WeightedFarmingPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 
 import "src/core/PolicyCenter.sol";
@@ -36,6 +37,7 @@ contract PostPriorityPoolDeploymentTest is Test {
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
+    WeightedFarmingPool public weightedFarmingPool;
     PayoutPool public payoutPool;
     PremiumRewardPool public premiumRewardPool;
     OnboardProposal public onboardProposal;
@@ -231,8 +233,8 @@ contract PostPriorityPoolDeploymentTest is Test {
         policyCenter.stakeLiquidity(POOL_ID, 10000);
         vm.expectRevert("cannot remove liquidity within 7 days of last claim");
         vm.prank(alice);
-        policyCenter.unstakeLiquidity(POOL_ID, 10000);
-        // user should not be able to remove liquidity and liquidities should remain the same.
+        policyCenter.unstakeLiquidity(POOL_ID, pool1, 10000);
+        // user should not be able to remove liquidity and user info should remain the same.
         // TODO: current LP is returning 0 address
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
         assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
@@ -252,7 +254,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.warp(7 days + 1);
 
         console.log(PriorityPoolToken(currentLPToken).totalSupply());
-        policyCenter.unstakeLiquidity(POOL_ID, 10000);
+        policyCenter.unstakeLiquidity(POOL_ID, pool1, 10000);
     }
 
     function testExceedMaxCapacity() public {
@@ -285,7 +287,7 @@ contract PostPriorityPoolDeploymentTest is Test {
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
-        policyCenter.unstakeLiquidity(POOL_ID, 1);
+        policyCenter.unstakeLiquidity(POOL_ID, pool1, 1);
     }
 
     function testGetCoverPrice() public {
@@ -466,10 +468,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         incidentReport.report(1);
 
         vm.expectRevert("Pausable: paused");
-        policyCenter.unstakeLiquidity(POOL_ID, 10000);
+        policyCenter.unstakeLiquidity(POOL_ID, pool1, 10000);
     }
 
-    function testClaimRewardsFromLiquidityProvisionNoRewards() public {
+    function testHaverstRewardsFromLiquidityProvisionNoRewards() public {
         // claim rewards for liquidity provision in a non liquidated pool
         // no coverage bought, therefore no rewards are available
 
@@ -482,23 +484,22 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.warp(30 days);
         vm.prank(alice);
 
-        (uint256 amount, uint256 userDebt, uint256 lastClaim) = policyCenter
-            .liquidities(POOL_ID, alice);
+        (uint256 amount, uint256 userDebt) = weightedFarmingPool
+            .users(POOL_ID, alice);
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = policyCenter.calculateReward(
+        uint256 reward = weightedFarmingPool.estimateHarvest(
             POOL_ID,
-            amount,
-            userDebt
+            alice
         );
 
         assertEq(reward == 0, true);
         // no user should be able to claim rewards
 
         vm.prank(alice);
-        policyCenter.claimReward(POOL_ID);
+        weightedFarmingPool.harvest(POOL_ID, alice);
     }
 
-    function testClaimRewardsFromLiquidityProvisionOneDayReward() public {
+    function testHarvestRewradsFromLiquidityProvisionOneDayReward() public {
         // claim rewards for liquidity provision in a non liquidated pool
         // no coverage bought, therefore no rewards are available
 
@@ -512,18 +513,17 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
 
         vm.warp(31 days);
-        (uint256 amount, uint256 userDebt, uint256 lastClaim) = policyCenter
-            .liquidities(POOL_ID, alice);
+        (uint256 amount, uint256 userDebt) = weightedFarmingPool
+            .users(POOL_ID, alice);
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = policyCenter.calculateReward(
+        uint256 reward = weightedFarmingPool.estimateHarvest(
             POOL_ID,
-            amount,
-            userDebt
+            alice
         );
 
         console.log("reward", reward);
         // no user should be able to claim rewards
         vm.prank(alice);
-        policyCenter.claimReward(POOL_ID);
+        weightedFarmingPool.harvest(POOL_ID, alice);
     }
 }

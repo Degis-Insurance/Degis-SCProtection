@@ -10,9 +10,11 @@ import "../util/OwnableWithoutContext.sol";
  * @notice Factory for deploying crTokens
  */
 contract CoverRightTokenFactory is OwnableWithoutContext {
-    mapping(bytes32 => bool) deployed;
 
-    mapping(bytes32 => address) saltToAddress;
+    mapping(bytes32 => bool) public deployed;
+
+    mapping(bytes32 => address) public saltToAddress;
+
 
     address public policyCenter;
 
@@ -52,7 +54,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         );
 
         newCRToken = _deploy(bytecode, salt);
-        IPolicyCenter(policyCenter).storeCoverTokenInformation(newCRToken, _poolId);
+        saltToAddress[salt] = newCRToken;
 
         emit NewCRTokenDeployed(_poolId, _tokenName, _expiry, newCRToken);
     }

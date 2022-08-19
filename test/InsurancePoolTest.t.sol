@@ -16,6 +16,7 @@ import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/PayoutPool.sol";
+import "src/reward/WeightedFarmingPool.sol";
 
 
 import "src/core/PolicyCenter.sol";
