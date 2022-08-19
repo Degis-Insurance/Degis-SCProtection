@@ -201,8 +201,9 @@ contract IncidentReport is
      *         If the report is wrong, reporter loses 1000DEG to those who vote against
      *
      * @param _poolId Pool id to report incident
+     * @param _payout Payout amount of this report
      */
-    function report(uint256 _poolId) external {
+    function report(uint256 _poolId, uint256 _payout) external {
         // Check pool can be reported
         address pool = _checkPoolStatus(_poolId);
 
@@ -216,6 +217,7 @@ contract IncidentReport is
         newReport.reportTimestamp = block.timestamp;
         newReport.reporter = msg.sender;
         newReport.status = PENDING_STATUS;
+        newReport.payout = _payout;
 
         // Burn degis tokens to start a report
         // Need to add this smart contract to burner list
@@ -223,7 +225,13 @@ contract IncidentReport is
 
         poolReports[_poolId].push(currentId);
 
-        emit ReportCreated(currentId, _poolId, block.timestamp, msg.sender);
+        emit ReportCreated(
+            currentId,
+            _poolId,
+            block.timestamp,
+            msg.sender,
+            _payout
+        );
     }
 
     /**
@@ -366,14 +374,18 @@ contract IncidentReport is
 
         require(currentReport.result == 0, "Already settled");
 
-        _checkQuorum(currentReport.numFor + currentReport.numAgainst);
-
         uint256 res = _checkRoundExtended(_id, currentReport.round);
 
         if (res > 0) {
-            _settleVotingReward(_id);
             currentReport.status = SETTLED_STATUS;
-            emit ReportSettled(_id, res);
+            if (_checkQuorum(currentReport.numFor + currentReport.numAgainst)) {
+                currentReport.result = res;
+                _settleVotingReward(_id);
+                emit ReportSettled(_id, res);
+            } else {
+                currentReport.result = FAILED_RESULT;
+                emit ReportFailed(_id);
+            }
         } else {
             emit ReportExtended(_id, currentReport.round);
         }
@@ -495,11 +507,9 @@ contract IncidentReport is
      *
      * @param _totalVotes Total vote numbers
      */
-    function _checkQuorum(uint256 _totalVotes) internal view {
-        require(
-            _totalVotes >= (IERC20(veDeg).totalSupply() * QUORUM_RATIO) / 100,
-            "Not reached quorum"
-        );
+    function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
+        return
+            _totalVotes >= (IERC20(veDeg).totalSupply() * QUORUM_RATIO) / 100;
     }
 
     /**
@@ -561,34 +571,15 @@ contract IncidentReport is
         returns (uint256 result)
     {
         bool hasChanged = tempResults[_id].hasChanged;
+
         if (!hasChanged) {
-            result = _settleResult(
-                _id,
+            result = _getVotingResult(
                 reports[_id].numFor,
                 reports[_id].numAgainst
             );
         } else if (hasChanged && _round < 2) {
             _extendRound(_id);
         } else revert("Extend round error");
-    }
-
-    /**
-     * @notice Settle the result for a report
-     *
-     * @param _id   Report id
-     * @param _numFor     Number of votes voting for
-     * @param _numAgainst Number of votes voting against
-     *
-     * @return result 0 for pass, 1 for reject and 2 for tied
-     */
-    function _settleResult(
-        uint256 _id,
-        uint256 _numFor,
-        uint256 _numAgainst
-    ) internal returns (uint256 result) {
-        result = _getVotingResult(_numFor, _numAgainst);
-
-        reports[_id].result = result;
     }
 
     /**

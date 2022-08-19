@@ -121,7 +121,7 @@ contract Executor is
         require(result == 1, "Report is not passed");
 
         // Give 10% of treasury to the reporter
-        ITreasury(treasury).rewardReporter(reporter);
+        ITreasury(treasury).rewardReporter(poolId, reporter);
 
         IPriorityPoolFactory factory = IPriorityPoolFactory(
             priorityPoolFactory
@@ -153,7 +153,6 @@ contract Executor is
         ).getProposal(_proposalId);
 
         require(proposal.status == SETTLED_STATUS, "Not settled");
-
         require(proposal.result == 1, "Has not been approved");
 
         // execute the proposal

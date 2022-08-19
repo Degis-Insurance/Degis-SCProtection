@@ -20,7 +20,7 @@ import "../interfaces/IVeDEG.sol";
 contract PayoutPool {
     uint256 public constant SCALE = 1e12;
 
-    uint256 public constant CLAIM_PERIOD = 7 days;
+    uint256 public constant CLAIM_PERIOD = 30 days;
 
     address public shield;
 
