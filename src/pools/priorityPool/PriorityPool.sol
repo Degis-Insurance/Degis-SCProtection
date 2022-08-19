@@ -151,7 +151,7 @@ contract PriorityPool is
         minLength = 1;
 
         // Generation 1, price starts from 1
-        priceIndex[_deployNewGenerationLP(_name, _poolId)] = SCALE;
+        priceIndex[_deployNewGenerationLP()] = SCALE;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -456,9 +456,6 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        // Deploy new lp tokens
-        _deployNewGenerationLP(poolName, poolId);
-
         _retrievePayout(_amount);
 
         emit Liquidation(_amount);
@@ -471,13 +468,16 @@ contract PriorityPool is
      */
     function _retrievePayout(uint256 _amount) internal {
         // Current lp amount
-        uint256 currentLP = IERC20(protectionPool).balanceOf(address(this));
+        uint256 currentLPAmount = IERC20(protectionPool).balanceOf(
+            address(this)
+        );
 
         address shield = IPriorityPoolFactory(priorityPoolFactory).shield();
 
         uint256 price = IERC20(shield).balanceOf(protectionPool) /
             IERC20(protectionPool).totalSupply();
 
+        // Need how many PRO-LP tokens to cover the _amount
         uint256 neededLPAmount = (_amount * SCALE) / price;
 
         address payoutPool = IPriorityPoolFactory(priorityPoolFactory)
@@ -485,15 +485,20 @@ contract PriorityPool is
 
         uint256 totalPayout;
 
-        // If the shield from current lp is enough
-        if (neededLPAmount < currentLP) {
+        // If current PRO-LP inside priority pool is enough
+        // Remove part of the liquidity from Protection Pool
+        if (neededLPAmount < currentLPAmount) {
             totalPayout = IProtectionPool(protectionPool).removedLiquidity(
                 neededLPAmount,
                 payoutPool
             );
+
+            priceIndex[currentLPAddress()] =
+                ((currentLPAmount - neededLPAmount) * SCALE) /
+                currentLPAmount;
         } else {
             uint256 shieldGot = IProtectionPool(protectionPool)
-                .removedLiquidity(currentLP, address(this));
+                .removedLiquidity(currentLPAmount, address(this));
 
             uint256 remainingPayout = _amount - shieldGot;
 
@@ -503,7 +508,11 @@ contract PriorityPool is
             );
 
             totalPayout = remainingPayout + shieldGot;
+
+            priceIndex[currentLPAddress()] = 0;
         }
+
+        _deployNewGenerationLP();
 
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
@@ -521,23 +530,17 @@ contract PriorityPool is
      * @notice Deploy a new generation lp token
      *         Generation starts from 1
      *
-     * @param _poolName Pool name
-     * @param _poolId   Pool id
-     *
      * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP(string memory _poolName, uint256 _poolId)
-        internal
-        returns (address newLPAddress)
-    {
+    function _deployNewGenerationLP() internal returns (address newLPAddress) {
         uint256 currentGeneration = ++generation;
 
         // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
         string memory _name = string.concat(
             "PRI-LP-",
-            _poolId._toString(),
+            poolId._toString(),
             "-",
-            _poolName,
+            poolName,
             "-G",
             currentGeneration._toString()
         );
@@ -554,8 +557,8 @@ contract PriorityPool is
         isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(
-            _poolName,
-            _poolId,
+            poolName,
+            poolId,
             currentGeneration,
             _name,
             newLPAddress
@@ -708,11 +711,5 @@ contract PriorityPool is
             59,
             59
         );
-    }
-
-    function _updatePriceIndex() internal {
-        priceIndex =
-            (IERC20(protectionPool).balanceOf(address(this)) * SCALE) /
-            totalLPSupply;
     }
 }
