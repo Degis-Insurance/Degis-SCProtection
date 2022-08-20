@@ -15,9 +15,9 @@ import "src/pools/priorityPool/PriorityPool.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
+import "src/reward/WeightedFarmingPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
-
 
 import "src/core/PolicyCenter.sol";
 
@@ -28,6 +28,7 @@ contract PriorityPoolTest is BaseTest {
     ProtectionPool public protectionPool;
     PriorityPoolFactory public factory;
     PremiumRewardPool public premiumRewardPool;
+    WeightedFarmingPool public weightedFarmingPool;
     PriorityPool public pool;
     PayoutPool public payoutPool;
 
@@ -46,7 +47,7 @@ contract PriorityPoolTest is BaseTest {
         deg = new MockDEG(0, "DegisToken", 18, "DEG");
         gmx = new ERC20Mock("GMX", "GMX", address(this), 0);
 
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
         vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
 
         exchange = new Exchange();
@@ -67,7 +68,7 @@ contract PriorityPoolTest is BaseTest {
 
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(factory), 
+            address(factory),
             address(protectionPool)
         );
         factory.setPremiumRewardPool(address(premiumRewardPool));
@@ -80,12 +81,19 @@ contract PriorityPoolTest is BaseTest {
         );
 
         factory.setPolicyCenter(address(policyCenter));
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        factory.setWeightedFarmingPool(address(weightedFarmingPool));
         policyCenter.setPriorityPoolFactory(address(factory));
         policyCenter.setExchange(address(exchange));
         protectionPool.setPolicyCenter(address(policyCenter));
 
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
     }
 
     function testFactorySetUp() public {
@@ -99,7 +107,6 @@ contract PriorityPoolTest is BaseTest {
     }
 
     function testDeployPool() public {
-        
         address newPoolAddress = factory.deployPool(
             "gmx pool",
             address(gmx),

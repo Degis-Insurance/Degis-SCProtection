@@ -95,7 +95,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
 
     function setUp() public {
         // deploys tokens
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
 
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
 
@@ -123,7 +123,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         policyCenter = new PolicyCenter(
@@ -148,9 +148,19 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             address(vedeg),
             address(shield)
         );
+
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+
         console.log("incidentReportOwner", incidentReport.owner());
         console.log(address(this));
-      
+
         // approve incident report interaction
         deg.approve(address(incidentReport), 10000 ether);
         vedeg.approve(address(incidentReport), 10000 ether);
@@ -181,8 +191,10 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
         executor.setIncidentReport(address(incidentReport));
 
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         //deploy ptp pool
         pool1 = priorityPoolFactory.deployPool(
@@ -422,7 +434,6 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     }
 
     function testClaimRewardAndPayDebtAfterPassed() public {
-        
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
         incidentReport.startVoting(POOL_ID);
 

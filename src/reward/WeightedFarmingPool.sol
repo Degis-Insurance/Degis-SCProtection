@@ -79,7 +79,11 @@ contract WeightedFarmingPool {
         policyCenter = _policyCenter;
     }
 
-    function estimateHarvest(uint256 _id, address _user) external view returns (uint256) {
+    function estimateHarvest(uint256 _id, address _user)
+        external
+        view
+        returns (uint256)
+    {
         PoolInfo memory pool = pools[_id];
         UserInfo memory user = users[_id][_user];
 
@@ -89,15 +93,13 @@ contract WeightedFarmingPool {
         return toHarvest;
     }
 
-    function addPool(address _token) external {
+    function addPool(address _rewardToken) external {
         uint256 currentId = ++counter;
 
         PoolInfo storage pool = pools[currentId];
-        pool.tokens.push(_token);
+        pool.rewardToken = _rewardToken;
 
-        addToken(currentId, _token, BASE_WEIGHT);
-
-        emit PoolAdded(currentId, _token);
+        emit PoolAdded(currentId, _rewardToken);
     }
 
     function addToken(
@@ -109,7 +111,7 @@ contract WeightedFarmingPool {
         require(!supported[key], "Already supported");
 
         supported[key] = true;
-
+        pools[_id].tokens.push(_token);
         pools[_id].weight.push(_weight);
 
         emit NewTokenAdded(_id, _token, _weight);
@@ -158,7 +160,10 @@ contract WeightedFarmingPool {
     ) external {
         require(_amount > 0, "Zero amount");
         require(_id <= counter, "Pool not exists");
-        require(msg.sender == policyCenter, "Only policyCenter can call stakedLiquidity");
+        require(
+            msg.sender == policyCenter,
+            "Only policyCenter can call stakedLiquidity"
+        );
 
         updatePool(_id);
 
@@ -195,7 +200,10 @@ contract WeightedFarmingPool {
     ) external {
         require(_amount > 0, "Zero amount");
         require(_id <= counter, "Pool not exists");
-        require(msg.sender == policyCenter, "Only policyCenter can call stakedLiquidity");
+        require(
+            msg.sender == policyCenter,
+            "Only policyCenter can call stakedLiquidity"
+        );
 
         updatePool(_id);
 

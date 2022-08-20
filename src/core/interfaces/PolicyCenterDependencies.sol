@@ -50,6 +50,13 @@ abstract contract PolicyCenterDependencies {
         protectionPool = _protectionPool;
     }
 
+    function _setWeightedFarmingPool(address _weightedFarmingPool)
+        internal
+        virtual
+    {
+        weightedFarmingPool = _weightedFarmingPool;
+    }
+
     function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal
         virtual

@@ -97,6 +97,8 @@ interface IPolicyCenter {
 
     function setIncidentReport(address _incidentReport) external;
 
+    function setWeightedFarmingPool(address _weightedFarmingPool) external;
+
     function setPriorityPoolFactory(address _priorityPoolFactory) external;
 
     function setOnboardProposal(address _onboardProposal) external;

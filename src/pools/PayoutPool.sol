@@ -6,7 +6,6 @@ import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
 import "../interfaces/IVeDEG.sol";
 
-
 /**
  * @notice Payout Pool
  *

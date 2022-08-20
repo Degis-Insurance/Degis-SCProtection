@@ -7,7 +7,6 @@ import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
 import "../../interfaces/IPayoutPool.sol";
-
 import "../../interfaces/IWeightedFarmingPool.sol";
 
 abstract contract PriorityPoolDependencies {
@@ -21,7 +20,6 @@ abstract contract PriorityPoolDependencies {
     address public priorityPoolFactory;
     address public premiumRewardPool;
     address public protectionPool;
-
     address public weightedFarmingPool;
 
     function _setExecutor(address _executor) internal virtual {
@@ -32,12 +30,22 @@ abstract contract PriorityPoolDependencies {
         incidentReport = _incidentReport;
     }
 
-    function _setPremiumRewardPool(address _premiumRewardPool) internal virtual {
+    function _setPremiumRewardPool(address _premiumRewardPool)
+        internal
+        virtual
+    {
         premiumRewardPool = _premiumRewardPool;
     }
 
     function _setPolicyCenter(address _policyCenter) internal virtual {
         policyCenter = _policyCenter;
+    }
+
+    function _setWeightedFarmingPool(address _weightedFarmingPool)
+        internal
+        virtual
+    {
+        weightedFarmingPool = _weightedFarmingPool;
     }
 
     function _setPriorityPoolFactory(address _priorityPoolFactory)

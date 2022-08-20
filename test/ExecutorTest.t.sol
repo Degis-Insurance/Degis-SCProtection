@@ -69,7 +69,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
         yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
-        
+
         payoutPool = new PayoutPool();
         // Reinsurance pool init
         protectionPool = new ProtectionPool(
@@ -142,8 +142,19 @@ contract ExecutorTest is Test, IncidentReportParameters {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 1000000 ether);
         // pools require initial liquidity input to Protection pool
-        // policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -169,16 +180,10 @@ contract ExecutorTest is Test, IncidentReportParameters {
         vedeg.transfer(bob, 3000 ether);
         vedeg.transfer(carol, 3000 ether);
 
-        // have shield on main contract
-        shield.transfer(address(this), 1000 ether);
-        shield.approve(address(policyCenter), 10000 ether);
         // mint and approve tokens for pool1 and pool2
         ptp.approve(address(policyCenter), 10000 ether);
         yeti.approve(address(policyCenter), 10000 ether);
 
-        // first provide liquidity to protection pool
-        shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.provideLiquidity(10000);
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidity(POOL_ID, 10000);

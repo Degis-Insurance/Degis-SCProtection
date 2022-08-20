@@ -84,7 +84,7 @@ contract OnboardProposalVotingTest is Test {
     address public pool1;
 
     function setUp() public {
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
 
         vedeg = new MockVeDEG(10000 ether, "VeDEG", 18, "VEDEG");
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
@@ -112,7 +112,7 @@ contract OnboardProposalVotingTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
@@ -159,8 +159,19 @@ contract OnboardProposalVotingTest is Test {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         // create insurance pool
         pool1 = priorityPoolFactory.deployPool(

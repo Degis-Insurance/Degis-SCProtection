@@ -75,8 +75,7 @@ contract PostPriorityPoolDeploymentTest is Test {
 
     function setUp() public {
         // deploys tokens
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
-
+        shield = new MockSHIELD(100000 ether, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         deg.transfer(address(this), 100 ether);
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
@@ -96,7 +95,7 @@ contract PostPriorityPoolDeploymentTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
@@ -162,8 +161,19 @@ contract PostPriorityPoolDeploymentTest is Test {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
 
         // deploy ptp pool
         pool1 = priorityPoolFactory.deployPool(
@@ -218,7 +228,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidity(POOL_ID, 10000);
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
-        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
+        assertEq(
+            PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000,
+            true
+        );
     }
 
     function testUnstakeBeforeBufferTimeEndPriorityPool() public {
@@ -237,7 +250,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         // user should not be able to remove liquidity and user info should remain the same.
         // TODO: current LP is returning 0 address
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
-        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
+        assertEq(
+            PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000,
+            true
+        );
     }
 
     function testUnstakeAfterBufferTimeEndsPriorityPool() public {
@@ -249,7 +265,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         policyCenter.stakeLiquidity(POOL_ID, 10000);
 
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
-        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
+        assertEq(
+            PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000,
+            true
+        );
         // change block timestamp to after buffer time
         vm.warp(7 days + 1);
 
@@ -261,7 +280,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         shield.approve(address(policyCenter), 10000 ether);
         ptp.approve(address(policyCenter), 10000 ether);
 
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(10000 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            10000 ether,
+            3
+        );
 
         // test should revert and emit message
         vm.expectRevert("Insufficient capacity");
@@ -287,17 +309,22 @@ contract PostPriorityPoolDeploymentTest is Test {
     function testRemoveLiquidityWithoutProvidingLiquidity() public {
         // user should not be able to remove liquidity without providing liquidity
         vm.expectRevert("Amount must be less than provided liquidity");
-        policyCenter.unstakeLiquidity(POOL_ID, pool1, 1);
+        address currentLPToken = PriorityPool(pool1).currentLPAddress();
+        policyCenter.unstakeLiquidity(POOL_ID, currentLPToken, 1);
     }
 
     function testGetCoverPrice() public {
         uint256 amount = 100 ether;
         uint256 length = 3;
         // get coverage price and returns it
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(amount, length);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            amount,
+            length
+        );
         uint256 dynamicRatio = PriorityPool(pool1).dynamicPremiumRatio(amount);
 
-        uint256 expectedPrice = (dynamicRatio * amount * coverLength) / (SECONDS_PER_YEAR * SCALE);
+        uint256 expectedPrice = (dynamicRatio * amount * coverLength) /
+            (SECONDS_PER_YEAR * SCALE);
 
         assertEq(price == expectedPrice, true);
     }
@@ -320,7 +347,10 @@ contract PostPriorityPoolDeploymentTest is Test {
         vedeg.approve(address(policyCenter), 10000 ether);
 
         // get price
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(1000 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            1000 ether,
+            3
+        );
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -360,7 +390,10 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         vm.prank(alice);
         policyCenter.stakeLiquidity(POOL_ID, 1000);
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            100 ether,
+            3
+        );
 
         //; approve ptp to buy coverage
         vm.prank(alice);
@@ -438,7 +471,10 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         uint256 prevBalance = ptp.balanceOf(address(policyCenter));
 
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(1000 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            1000 ether,
+            3
+        );
 
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 1000 ether, 3, price);
@@ -484,13 +520,12 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.warp(30 days);
         vm.prank(alice);
 
-        (uint256 amount, uint256 userDebt) = weightedFarmingPool
-            .users(POOL_ID, alice);
-        // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = weightedFarmingPool.estimateHarvest(
+        (uint256 amount, uint256 userDebt) = weightedFarmingPool.users(
             POOL_ID,
             alice
         );
+        // claiming on the same block as provisioning should not give any rewards
+        uint256 reward = weightedFarmingPool.estimateHarvest(POOL_ID, alice);
 
         assertEq(reward == 0, true);
         // no user should be able to claim rewards
@@ -513,13 +548,12 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
 
         vm.warp(31 days);
-        (uint256 amount, uint256 userDebt) = weightedFarmingPool
-            .users(POOL_ID, alice);
-        // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = weightedFarmingPool.estimateHarvest(
+        (uint256 amount, uint256 userDebt) = weightedFarmingPool.users(
             POOL_ID,
             alice
         );
+        // claiming on the same block as provisioning should not give any rewards
+        uint256 reward = weightedFarmingPool.estimateHarvest(POOL_ID, alice);
 
         console.log("reward", reward);
         // no user should be able to claim rewards

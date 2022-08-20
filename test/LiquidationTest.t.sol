@@ -97,10 +97,14 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
+
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
 
         incidentReport = new IncidentReport(
             address(deg),
@@ -127,6 +131,11 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         shield.transfer(address(exchange), 1000 ether);
         ptp.transfer(address(exchange), 1000 ether);
 
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setProtectionPool(address(protectionPool));
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
@@ -146,7 +155,6 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
-       
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
         executor.setPolicyCenter(address(policyCenter));
@@ -155,8 +163,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -189,7 +199,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         protectionPool.approve(address(policyCenter), 10000 ether);
         policyCenter.stakeLiquidity(1, 10000);
 
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(100 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            100 ether,
+            3
+        );
 
         // Alice approves ptp usage to buy coverage
         ptp.approve(address(policyCenter), 100000 ether);
@@ -199,9 +212,11 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         ptp.approve(address(policyCenter), 100000 ether);
 
         // Alice buys coverage for 100 ether and receives token address
-        
+
         policyCenter.buyCover(1, 100 ether, 3, price);
-        bytes32 salt = keccak256(abi.encodePacked(POOL_ID, block.timestamp + coverLength));
+        bytes32 salt = keccak256(
+            abi.encodePacked(POOL_ID, block.timestamp + coverLength)
+        );
         crToken1 = coverRightTokenFactory.saltToAddress(salt);
         vm.warp(REPORT_START_TIME);
         incidentReport.report(1);

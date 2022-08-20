@@ -144,6 +144,7 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     constructor(
+        address _weightedFarmingPool,
         address _protocolToken,
         uint256 _maxCapacity,
         string memory _name,
@@ -152,6 +153,7 @@ contract PriorityPool is
         uint256 _poolId
     ) OwnableWithoutContext(_admin) {
         // token address insured by pool
+        weightedFarmingPool = _weightedFarmingPool;
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
@@ -167,7 +169,7 @@ contract PriorityPool is
 
         priceIndex = SCALE;
 
-         (_name, _poolId);
+        _deployNewGenerationLP(_name, _poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -387,7 +389,7 @@ contract PriorityPool is
         address _provider
     ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
         require(isLPToken[_lpToken], "Wrong lp token");
-        
+
         _updateDynamic();
 
         // Burn current genration lp tokens to the provider
@@ -587,10 +589,15 @@ contract PriorityPool is
             currentGeneration._toString()
         );
 
-        newLPAddress = address(new PriorityPoolToken(_name));
+        PriorityPoolToken priorityPoolToken = new PriorityPoolToken(_name);
+        newLPAddress = address(priorityPoolToken);
+        lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
-        lpTokenAddress[currentGeneration] = newLPAddress;
-        IWeightedFarmingPool(weightedFarmingPool).addToken(poolId, newLPAddress, coverIndex);
+        IWeightedFarmingPool(weightedFarmingPool).addToken(
+            _poolId,
+            newLPAddress,
+            coverIndex
+        );
         isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(
@@ -611,6 +618,7 @@ contract PriorityPool is
     function _mintLP(address _user, uint256 _amount) internal {
         // Get current generation lp token address and mint tokens
         address lp = currentLPAddress();
+        console.log(lp);
         IPriorityPoolToken(lp).mint(_user, _amount);
 
         totalLPSupply += _amount;
@@ -647,7 +655,7 @@ contract PriorityPool is
         (uint256 currentYear, uint256 currentMonth, ) = block
             .timestamp
             .timestampToDate();
-
+        console.log(currentYear, currentMonth);
         for (uint256 i; i < _length; ) {
             coverInMonth[currentYear][currentMonth] += _amount;
 

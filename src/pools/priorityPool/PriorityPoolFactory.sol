@@ -115,7 +115,7 @@ contract PriorityPoolFactory is
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
-    {   
+    {
         _setProtectionPool(_protectionPool);
         poolRegistered[_protectionPool] = true;
         tokenRegistered[_shield] = true;
@@ -190,8 +190,18 @@ contract PriorityPoolFactory is
         _setPolicyCenter(_policyCenter);
     }
 
-        function setPremiumRewardPool(address _premiumRewardPool) external onlyOwner {
+    function setPremiumRewardPool(address _premiumRewardPool)
+        external
+        onlyOwner
+    {
         _setPremiumRewardPool(_premiumRewardPool);
+    }
+
+    function setWeightedFarmingPool(address _weightedFarmingPool)
+        external
+        onlyOwner
+    {
+        _setWeightedFarmingPool(_weightedFarmingPool);
     }
 
     function setProtectionPool(address _protectionPool) external onlyOwner {
@@ -248,6 +258,7 @@ contract PriorityPoolFactory is
         uint256 currentPoolId = ++poolCounter;
 
         bytes memory bytecode = _getPriorityPoolBytecode(
+            weightedFarmingPool,
             _protocolToken,
             _maxCapacity,
             _name,
@@ -275,6 +286,8 @@ contract PriorityPoolFactory is
             newPoolAddress,
             _protocolToken
         );
+
+        IWeightedFarmingPool(weightedFarmingPool).addPool(_protocolToken);
 
         pools[currentPoolId] = PoolInfo(
             _name,
@@ -324,16 +337,17 @@ contract PriorityPoolFactory is
     /**
      * @notice Get bytecode for insurance pool creation according to parameters
      *
-     * @param _protocolToken Address of the protocol token to insure
-     * @param _maxCapacity   Max coverage capacity
-     * @param _name          Name of the pool
-     * @param _baseRatio   Policy price
-     * @param _owner        owner of new pool
-     * @param _poolId        Current pool id
+     * @param _protocolToken    Address of the protocol token to insure
+     * @param _maxCapacity      Max coverage capacity
+     * @param _name             Name of the pool
+     * @param _baseRatio        Policy price
+     * @param _owner            Owner of new pool
+     * @param _poolId           Current pool id
      *
      * @return bytecode Creation bytecode
      */
     function _getPriorityPoolBytecode(
+        address _weightedFarmingPool,
         address _protocolToken,
         uint256 _maxCapacity,
         string memory _name,
@@ -349,6 +363,7 @@ contract PriorityPoolFactory is
             abi.encodePacked(
                 bytecode,
                 abi.encode(
+                    _weightedFarmingPool,
                     _protocolToken,
                     _maxCapacity,
                     _name,
