@@ -134,9 +134,7 @@ contract PoolProposedTest is Test {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         weightedFarmingPool = new WeightedFarmingPool(

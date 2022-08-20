@@ -175,7 +175,6 @@ contract ProposalCenterTest is Test {
         executor.setPolicyCenter(address(policyCenter));
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
-        executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         weightedFarmingPool = new WeightedFarmingPool(

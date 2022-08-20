@@ -157,10 +157,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setPolicyCenter(address(policyCenter));
+        
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
-        executor.setProtectionPool(address(protectionPool));
+       
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         shield.transfer(address(this), 10000 ether);
@@ -219,7 +219,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
         crToken1 = coverRightTokenFactory.saltToAddress(salt);
         vm.warp(REPORT_START_TIME);
-        incidentReport.report(1);
+        incidentReport.report(1, 100 ether);
 
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
         incidentReport.startVoting(POOL_ID);
@@ -253,24 +253,23 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         policyCenter.claimPayout(2, crToken1);
     }
 
-    function testUnpauseLiquidatedPool() public {
-        vm.warp(1383402);
-        PriorityPool(pool1).pausePriorityPool(false);
+    // function testUnpauseLiquidatedPool() public {
+    //     vm.warp(1383402);
+    //     PriorityPool(pool1).pausePriorityPool(false);
 
-        // pool remains liquidated but unpaused
-        assertTrue(IPriorityPool(pool1).liquidated());
-        assertTrue(!IPriorityPool(pool1).paused());
+    //     // pool remains liquidated but unpaused
+    //     assertTrue(IPriorityPool(pool1).liquidated());
+    //     assertTrue(!IPriorityPool(pool1).paused());
 
-        uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
-        console.log(endDate);
+    //     uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
+    //     console.log(endDate);
 
-        vm.warp(
-            REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
-        );
-        IPriorityPool(pool1).endLiquidation();
+    //     vm.warp(
+    //         REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+    //     );
 
-        assertEq(IPriorityPool(pool1).liquidated() == false, true);
-    }
+    //     assertEq(IPriorityPool(pool1).liquidated() == false, true);
+    // }
 
     function testRemoveLiquidityAfterClaimPayoutPeriod() public {
         // claim payout during claiming period
@@ -288,10 +287,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
         incidentReport.unpausePools(address(pool1));
 
-        IPriorityPool(pool1).endLiquidation();
+     
         policyCenter.unstakeLiquidity(1, pool1, lpBalance);
 
-        assertEq(PriorityPool(pool1).liquidated() == false, true);
+    
 
         // Liquidity provider is able to remove left over liquidity proportional to
         // how much liquidity they provided and how much is left in the pool
