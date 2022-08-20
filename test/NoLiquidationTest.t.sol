@@ -125,9 +125,9 @@ contract NoLiquidationTest is Test {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setPolicyCenter(address(policyCenter));
+    
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setProtectionPool(address(protectionPool));
+ 
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool

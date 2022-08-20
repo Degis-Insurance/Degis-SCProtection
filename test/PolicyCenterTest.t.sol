@@ -157,9 +157,8 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setPolicyCenter(address(policyCenter));
+     
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
@@ -465,7 +464,7 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         vm.warp(7 days + 1);
 
-        incidentReport.report(1);
+        incidentReport.report(1, 100 ether);
 
         vm.expectRevert("Pausable: paused");
         policyCenter.unstakeLiquidity(POOL_ID, pool1, 10000);

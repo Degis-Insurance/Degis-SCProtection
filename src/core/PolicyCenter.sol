@@ -36,6 +36,8 @@ import "../libraries/StringUtils.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "./interfaces/PolicyCenterEventError.sol";
+
 import "forge-std/console.sol";
 
 /**
@@ -49,9 +51,10 @@ import "forge-std/console.sol";
  *
  */
 contract PolicyCenter is
-    PolicyCenterDependencies,
+    PolicyCenterEventError,
     ExternalTokenDependencies,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    PolicyCenterDependencies
 {
     using SafeERC20 for IERC20;
     using StringUtils for uint256;
@@ -80,30 +83,6 @@ contract PolicyCenter is
 
     // Year => Month => Total Cover Amount
     mapping(uint256 => mapping(uint256 => uint256)) coverInMonth;
-
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    event Reward(uint256 _amount, address _address);
-    event Payout(uint256 _amount, address _address);
-    event CoverBought(
-        address indexed buyer,
-        uint256 indexed poolId,
-        uint256 coverDuration,
-        uint256 coverAmount,
-        uint256 premiumInShield,
-        uint256 premiumInNative
-    );
-    event MoveLiquidity(uint256 _poolId, uint256 _amount);
-
-    event PremiumSplitted(
-        uint256 toPriority,
-        uint256 toProtection,
-        uint256 toTreasury
-    );
-
-    event PremiumSwapped(address fromToken, uint256 amount, uint256 received);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -346,19 +325,12 @@ contract PolicyCenter is
         address crToken = _checkCRToken(_poolId, timestampDuration);
         ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
-        address nativeToken = tokenByPoolId[_poolId];
-        // Premium in project native token (paid in internal function)
-        uint256 premiumInNativeToken = _getNativeTokenAmount(
-            premium,
-            nativeToken
-        );
-
         // Split the premium income and update the pool status
         (
             uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool,
             uint256 premiumToTreasury
-        ) = _splitPremium(nativeToken, premiumInNativeToken);
+        ) = _splitPremium(_poolId, premium);
 
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
@@ -372,15 +344,14 @@ contract PolicyCenter is
             timestampDuration
         );
         ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
-        //TODO: commented because stack too deep
-        // emit CoverBought(
-        //     msg.sender,
-        //     _poolId,
-        //     _coverDuration,
-        //     _coverAmount,
-        //     premium,
-        //     premiumInNativeToken
-        // );
+
+        emit CoverBought(
+            msg.sender,
+            _poolId,
+            _coverDuration,
+            _coverAmount,
+            premium
+        );
 
         return crToken;
     }
@@ -414,7 +385,12 @@ contract PolicyCenter is
         address token = tokenByPoolId[_poolId];
         // Update status and mint Prority Pool LP tokens
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
-        IWeightedFarmingPool(weightedFarmingPool).stakedLiquidity(_poolId, _amount, token, msg.sender);
+        IWeightedFarmingPool(weightedFarmingPool).stakedLiquidity(
+            _poolId,
+            _amount,
+            token,
+            msg.sender
+        );
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
     }
 
@@ -440,8 +416,12 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
-        IWeightedFarmingPool(weightedFarmingPool).unstakedLiquidity(_poolId, _amount, token, msg.sender);
-
+        IWeightedFarmingPool(weightedFarmingPool).unstakedLiquidity(
+            _poolId,
+            _amount,
+            token,
+            msg.sender
+        );
     }
 
     /**
@@ -476,8 +456,6 @@ contract PolicyCenter is
 
         emit Payout(amount, msg.sender);
     }
-
-
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
@@ -605,15 +583,17 @@ contract PolicyCenter is
 
     /**
      * @notice Split premium for a pool
+     *         To priority pool is paid in native token
+     *         To protection pool and treasury is paid in shield
      *
-     * @param _fromToken  Protocol native token to be swapped
-     * @param _totalSplit Amount of premium to split (in native tokens)
+     * @param _poolId  Pool id
+     * @param _premiumInUSD Premium in USD
      *
      * @return toPriority   Premium to priority pool
      * @return toProtection Premium to protection pool
      * @return toTreasury   Premium to treasury
      */
-    function _splitPremium(address _fromToken, uint256 _totalSplit)
+    function _splitPremium(uint256 _poolId, uint256 _premiumInUSD)
         internal
         returns (
             uint256 toPriority,
@@ -621,18 +601,27 @@ contract PolicyCenter is
             uint256 toTreasury
         )
     {
-        require(_totalSplit > 0, "No funds to split");
+        require(_premiumInUSD > 0, "No funds to split");
 
-        toPriority = (_totalSplit * PREMIUM_TO_PRIORITY) / 10000;
+        address nativeToken = tokenByPoolId[_poolId];
+        // Premium in project native token (paid in internal function)
+        uint256 premiumInNativeToken = _getNativeTokenAmount(
+            _premiumInUSD,
+            nativeToken
+        );
+
+        // Native tokens to Priority pool
+        toPriority = (premiumInNativeToken * PREMIUM_TO_PRIORITY) / 10000;
 
         // Swap native tokens to shield
-        uint256 amountToSwap = _totalSplit - toPriority;
-        uint256 amountReceived = _swapTokens(_fromToken, amountToSwap);
+        uint256 amountToSwap = premiumInNativeToken - toPriority;
+        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap);
 
+        // Shield to Protection Pool
         toProtection =
             (amountReceived * PREMIUM_TO_PROTECTION) /
             (PREMIUM_TO_PROTECTION + PREMIUM_TO_TREASURY);
-
+        // Shield to Treasury
         toTreasury = amountReceived - toProtection;
 
         emit PremiumSplitted(toPriority, toProtection, toTreasury);
