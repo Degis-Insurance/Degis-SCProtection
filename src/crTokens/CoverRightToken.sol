@@ -51,9 +51,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     mapping(address => mapping(uint256 => uint256)) public coverStartFrom;
 
     constructor(
-        string memory _name,
         string memory _poolName,
         uint256 _poolId,
+        string memory _name,
         uint256 _expiry
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
@@ -155,7 +155,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         );
 
         // Check those bought within 2 days
-        for (uint256 i; i < EXCLUDE_DAYS;) {
+        for (uint256 i; i < EXCLUDE_DAYS; ) {
             uint256 date = _getEOD(voteTimestamp - (i * 1 days));
 
             exclusion += coverStartFrom[_user][date];

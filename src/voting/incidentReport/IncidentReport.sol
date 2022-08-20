@@ -448,10 +448,6 @@ contract IncidentReport is
     }
 
     function unpausePools(address _pool) external {
-        require(
-            IPriorityPool(_pool).endLiquidationDate() < block.timestamp,
-            "Pool is still in payout period"
-        );
         _unpausePools(_pool);
     }
 
