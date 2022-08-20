@@ -11,7 +11,8 @@ interface IncidentReportEventError {
         uint256 reportId,
         uint256 indexed poolId,
         uint256 reportTimestamp,
-        address indexed reporter
+        address indexed reporter,
+        uint256 payout
     );
 
     event VotingStart(uint256 reportId, uint256 startTimestamp);
@@ -28,6 +29,8 @@ interface IncidentReportEventError {
     event ReportSettled(uint256 reportId, uint256 result);
 
     event ReportExtended(uint256 reportId, uint256 round);
+
+    event ReportFailed(uint256 reportId);
 
     event DebtPaid(
         address payer,

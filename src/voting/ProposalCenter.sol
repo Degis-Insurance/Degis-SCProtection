@@ -128,14 +128,16 @@ contract ProposalCenter is ProtocolProtection {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice Votes on currently pending report in proposal center.
-            voting power is decided by the amount of staked veDEG.
-            rewarded if votes with majority.
-            punished if votes against majority.
-    @param _reportId    Id of the report to be voted on
-    @param _isFor       True if yes, false if no
-    @param _amount      Amount of veDEG to be staked
-    */
+     * @notice Votes on currently pending report in proposal center.
+     *         voting power is decided by the amount of staked veDEG.
+     *         rewarded if votes with majority.
+     *         punished if votes against majority.
+     *
+     * @param _reportId Id of the report to be voted on
+     * @param _isFor    1 if "vote for", 0 if "vote against"
+     * @param _amount   Amount of veDEG to be used for voting
+     */
+
     function voteReport(
         uint256 _reportId,
         uint256 _isFor,
@@ -144,20 +146,20 @@ contract ProposalCenter is ProtocolProtection {
         IIncidentReport(incidentReport).vote(
             _reportId,
             _isFor,
-            _amount,
-            msg.sender
+            _amount
+            // msg.sender
         );
     }
 
     /**
-    @notice Votes on currently pending proposal in proposal center.
-            voting power is decided by the amount of staked veDEG.
-            no penalty nor rewards.
-    *
-    @param _proposalId  Id of the pool proposal to be voted on
-    @param _isFor       True if yes, false if no
-    @param _amount      Amount of veDEG to be locked and used as voting power
-    */
+     * @notice Votes on currently pending proposal in proposal center.
+     *         voting power is decided by the amount of staked veDEG.
+     *         no penalty nor rewards.
+     *
+     * @param _proposalId Id of the pool proposal to be voted on
+     * @param _isFor      1 if "vote for", 0 if "vote against"
+     * @param _amount     Amount of veDEG to be used for voting
+     */
     function votePoolProposal(
         uint256 _proposalId,
         uint256 _isFor,
@@ -172,14 +174,15 @@ contract ProposalCenter is ProtocolProtection {
     }
 
     /**
-    @notice Reports that a protocol has been compromised.
-            user notifies that pool should be liquidated.
-            1000 DEG tokens are held by the proposal center
-            until report is deemed truthful.
-    @param _poolId Id of the pool to be reported
-    */
-    function reportPool(uint256 _poolId) public {
-        IIncidentReport(incidentReport).report(_poolId, msg.sender);
+    * @notice Reports that a protocol has been compromised.
+     *         user notifies that pool should be liquidated.
+     *         1000 DEG tokens are held by the proposal center
+     *         until report is deemed truthful.
+     * @param _poolId   Id of the pool to be reported
+     * @param _payout   Amount of payout to be distributed if vote is truthful
+     */
+    function reportPool(uint256 _poolId, uint256 _payout) public {
+        IIncidentReport(incidentReport).report(_poolId, _payout);
     }
 
     /**
@@ -242,10 +245,17 @@ contract ProposalCenter is ProtocolProtection {
     }
 
     /**
+<<<<<<< HEAD
     @notice Claims reward or pays debt for a vote on a settled report.
             
 
     @param _reportId    Id of the report to be reward voters on.
+=======
+     * @notice Claim reward or pay debt for a vote on a settled report.
+     *
+     *
+     * @param _reportId Id of the report to be reward voters on.
+>>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
      */
     function resolveReportVote(uint256 _reportId) external {
         IIncidentReport.UserVote memory vote = IIncidentReport(incidentReport)
@@ -253,9 +263,9 @@ contract ProposalCenter is ProtocolProtection {
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
         if (report.result == vote.choice) {
-            IIncidentReport(incidentReport).claimReward(_reportId, msg.sender);
+            IIncidentReport(incidentReport).claimReward(_reportId);
         } else {
-            IIncidentReport(incidentReport).payDebt(_reportId, msg.sender);
+            IIncidentReport(incidentReport).payDebt(_reportId);
         }
     }
 
@@ -265,6 +275,6 @@ contract ProposalCenter is ProtocolProtection {
      * @param _proposalId Proposal id
      */
     function resolveProposalVote(uint256 _proposalId) external {
-        IOnboardProposal(onboardProposal).claim(_proposalId, msg.sender);
+        IOnboardProposal(onboardProposal).claim(_proposalId);
     }
 }

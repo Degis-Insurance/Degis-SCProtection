@@ -65,10 +65,8 @@ contract PriorityPool is
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Time users have to claim payout when pool is liquidated
-    uint256 public constant CLAIM_PERIOD = 30;
-
-    uint256 public constant MIN_COVER_AMOUNT = 1 ether;
+    // Mininum cover amount 10U
+    uint256 public constant MIN_COVER_AMOUNT = 10e6;
 
     // Max time length in months of granted protection
     uint256 public immutable maxLength;
@@ -95,25 +93,11 @@ contract PriorityPool is
     // Address of insured token
     address public insuredToken;
 
-    // If the pool has been liquidated
-    bool public liquidated;
-
     // Max amount of bought protection in shield
     uint256 public maxCapacity;
 
     // Timestamp of pool creation
     uint256 public startTime;
-
-    // Accumulated reward per lp token
-    uint256 public accumulatedRewardPerShare;
-
-    uint256 public lastRewardTimestamp;
-
-    uint256 public emissionEndTime;
-
-    uint256 public emissionRate;
-
-    uint256 public endLiquidationDate;
 
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
 
@@ -133,8 +117,9 @@ contract PriorityPool is
     // Index for cover amount
     uint256 public coverIndex;
 
-    // Price of lp tokens
-    uint256 public priceIndex;
+    // Generation => Price of lp tokens
+    // PRI-LP token amount * Price Index = PRO-LP token amount
+    mapping(address => uint256) public priceIndex;
 
     // Sum of total lp supply (including different generations)
     uint256 public totalLPSupply;
@@ -167,9 +152,14 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
+<<<<<<< HEAD
         priceIndex = SCALE;
 
         _deployNewGenerationLP(_name, _poolId);
+=======
+        // Generation 1, price starts from 1
+        priceIndex[_deployNewGenerationLP()] = SCALE;
+>>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -186,11 +176,6 @@ contract PriorityPool is
             msg.sender == policyCenter,
             "Only policy center can call this function"
         );
-        _;
-    }
-
-    modifier whenNotLiquidated() {
-        require(!liquidated, "Liquidated");
         _;
     }
 
@@ -214,14 +199,16 @@ contract PriorityPool is
         returns (uint256 price, uint256 length)
     {
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
-        require(_withinLength(_coverDuration), "Wrong cover length");
 
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
+        (, , uint256 endTimestamp) = DateTimeLibrary._getExpiry(
+            block.timestamp,
+            _coverDuration
+        );
 
         length = endTimestamp - block.timestamp;
-        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * SCALE);
+        price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
 
     /**
@@ -239,7 +226,7 @@ contract PriorityPool is
             covered += coverInMonth[currentYear][currentMonth];
 
             unchecked {
-                if (++currentMonth == 12) {
+                if (++currentMonth > 12) {
                     ++currentYear;
                     currentMonth = 1;
                 }
@@ -277,7 +264,8 @@ contract PriorityPool is
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                IProtectionPool(protectionPool).getTotalCovered();
+                (IProtectionPool(protectionPool).getTotalCovered() +
+                    _coverAmount);
 
             address lp = currentLPAddress();
             // LP Token ratio = LP token in this pool / Total lp token
@@ -355,7 +343,7 @@ contract PriorityPool is
     /**
      * @notice Provide liquidity to priority pool
      *         Only callable through policyCenter
-     *         Can not provide new liquidity when liquidated / paused
+     *         Can not provide new liquidity when paused
      *
      * @param _amount   Amount of liquidity (PRO-LP token) to provide
      * @param _provider Liquidity provider adress
@@ -363,7 +351,6 @@ contract PriorityPool is
     function stakedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
-        whenNotLiquidated
         onlyPolicyCenter
     {
         // Check whether this priority should be dynamic
@@ -387,7 +374,7 @@ contract PriorityPool is
         address _lpToken,
         uint256 _amount,
         address _provider
-    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
+    ) external whenNotPaused onlyPolicyCenter {
         require(isLPToken[_lpToken], "Wrong lp token");
 
         _updateDynamic();
@@ -411,7 +398,7 @@ contract PriorityPool is
         uint256 _premium,
         uint256 _length,
         uint256 _timestampLength
-    ) external whenNotPaused whenNotLiquidated onlyPolicyCenter {
+    ) external whenNotPaused onlyPolicyCenter {
         _updateDynamic();
 
         // Record cover amount in each month
@@ -473,26 +460,21 @@ contract PriorityPool is
     }
 
     /**
-     * @notice Sets this insurance pool status to liquidated
+     * @notice Liquidate pool
      *         Only callable by executor
      *         Only after the report has passed the voting
      *
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        // Change the status of the insurance pool to liquidated and allows payout claims
-        _setLiquidationStatus(true);
-
-        // Deploy new lp tokens
-        _deployNewGenerationLP(poolName, poolId);
-
-        // Set end liquidation date
-        // Users will have CLAIM_PERIOD days to claim payout.
-        endLiquidationDate = block.timestamp + CLAIM_PERIOD * 1 days;
-
         _retrievePayout(_amount);
 
-        emit Liquidation(_amount, endLiquidationDate);
+        // Generation ++
+        // Deploy the new generation lp token
+        // Those who stake liquidity into this priority pool will be given the new lp token
+        _deployNewGenerationLP();
+
+        emit Liquidation(_amount);
     }
 
     /**
@@ -501,30 +483,33 @@ contract PriorityPool is
      * @param _amount Amount of SHIELD to retrieve
      */
     function _retrievePayout(uint256 _amount) internal {
-        // Current lp amount
-        uint256 currentLP = IERC20(protectionPool).balanceOf(address(this));
+        // Current PRO-LP amount
+        uint256 currentLPAmount = IERC20(protectionPool).balanceOf(
+            address(this)
+        );
 
-        address shield = IPriorityPoolFactory(priorityPoolFactory).shield();
+        uint256 proLPPrice = IProtectionPool(protectionPool).getLatestPrice();
 
-        uint256 price = IERC20(shield).balanceOf(protectionPool) /
-            IERC20(protectionPool).totalSupply();
-
-        uint256 neededLPAmount = (_amount * SCALE) / price;
+        // Need how many PRO-LP tokens to cover the _amount
+        uint256 neededLPAmount = (_amount * SCALE) / proLPPrice;
 
         address payoutPool = IPriorityPoolFactory(priorityPoolFactory)
             .payoutPool();
 
-        uint256 totalPayout;
-
-        // If the shield from current lp is enough
-        if (neededLPAmount < currentLP) {
-            totalPayout = IProtectionPool(protectionPool).removedLiquidity(
+        // If current PRO-LP inside priority pool is enough
+        // Remove part of the liquidity from Protection Pool
+        if (neededLPAmount < currentLPAmount) {
+            IProtectionPool(protectionPool).removedLiquidity(
                 neededLPAmount,
                 payoutPool
             );
+
+            priceIndex[currentLPAddress()] =
+                ((currentLPAmount - neededLPAmount) * SCALE) /
+                currentLPAmount;
         } else {
             uint256 shieldGot = IProtectionPool(protectionPool)
-                .removedLiquidity(currentLP, address(this));
+                .removedLiquidity(currentLPAmount, address(this));
 
             uint256 remainingPayout = _amount - shieldGot;
 
@@ -533,7 +518,7 @@ contract PriorityPool is
                 payoutPool
             );
 
-            totalPayout = remainingPayout + shieldGot;
+            priceIndex[currentLPAddress()] = 0;
         }
 
         // Set a ratio used when claiming with crTokens
@@ -544,47 +529,25 @@ contract PriorityPool is
         IPayoutPool(payoutPool).newPayout(_amount, payoutRatio);
     }
 
-    /**
-     * @notice End the liquidation period
-     *         Users can redeem remaining capacity when ending liquidation
-     */
-    function endLiquidation() external {
-        require(liquidated, "Pool has not been liquidated");
-        require(
-            block.timestamp > endLiquidationDate,
-            "Pool has not ended liquidation"
-        );
-
-        // liquidation has ended. payout claims cannot be made.
-        _setLiquidationStatus(false);
-
-        emit LiquidationEnded(block.timestamp);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Deploy a new generation lp token
-     *
-     * @param _poolName Pool name
-     * @param _poolId   Pool id
+     *         Generation starts from 1
      *
      * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP(string memory _poolName, uint256 _poolId)
-        internal
-        returns (address newLPAddress)
-    {
+    function _deployNewGenerationLP() internal returns (address newLPAddress) {
         uint256 currentGeneration = ++generation;
 
-        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id
+        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
         string memory _name = string.concat(
             "PRI-LP-",
-            _poolId._toString(),
+            poolId._toString(),
             "-",
-            _poolName,
+            poolName,
             "-G",
             currentGeneration._toString()
         );
@@ -593,16 +556,23 @@ contract PriorityPool is
         newLPAddress = address(priorityPoolToken);
         lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
+<<<<<<< HEAD
         IWeightedFarmingPool(weightedFarmingPool).addToken(
             _poolId,
+=======
+        lpTokenAddress[currentGeneration] = newLPAddress;
+        // TODO: add token in weighted farming pool
+        IWeightedFarmingPool(weightedFarmingPool).addToken(
+            poolId,
+>>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
             newLPAddress,
             coverIndex
         );
         isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(
-            _poolName,
-            _poolId,
+            poolName,
+            poolId,
             currentGeneration,
             _name,
             newLPAddress
@@ -628,18 +598,20 @@ contract PriorityPool is
      * @notice Burn lp tokens
      *         Need specific generation lp token address as parameter
      *
-     * @param _lpToken LP token adderss
+     * @param _lpToken PRI-LP token adderss
      * @param _user    User address
-     * @param _amount  LP token amount
+     * @param _amount  PRI-LP token amount to burn
      */
     function _burnLP(
         address _lpToken,
         address _user,
         uint256 _amount
     ) internal {
-        uint256 proLPAmount = (priceIndex * _amount) / SCALE;
+        // Transfer PRO-LP token to user
+        uint256 proLPAmount = (priceIndex[_lpToken] * _amount) / SCALE;
         IERC20(protectionPool).transfer(_user, proLPAmount);
 
+        // Burn PRI-LP token
         IPriorityPoolToken(_lpToken).burn(_user, _amount);
         totalLPSupply -= _amount;
     }
@@ -681,98 +653,5 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
-    }
-
-    /**
-     * @notice Set liquidation status
-     */
-    function _setLiquidationStatus(bool _liquidated) internal {
-        liquidated = _liquidated;
-    }
-
-    /**
-     * @notice Check the cover length is ok
-     */
-    function _withinLength(uint256 _length) internal view returns (bool) {
-        return _length >= minLength && _length <= maxLength;
-    }
-
-    /**
-     * @notice Get the expiry timestamp based on cover duration
-     *
-     * @param _now           Current timestamp
-     * @param _coverDuration Months to cover: 1-3
-     */
-    function _getExpiry(uint256 _now, uint256 _coverDuration)
-        internal
-        pure
-        returns (uint256)
-    {
-        // Get the day of the month
-        (, , uint256 day) = _now.timestampToDate();
-
-        // Cover duration of 1 month means current month
-        // unless today is the 25th calendar day or later
-        uint256 monthsToAdd = _coverDuration - 1;
-
-        if (day >= 25) {
-            // Add one month
-            monthsToAdd += 1;
-        }
-
-        return _getFutureMonthEndTime(_now, monthsToAdd);
-    }
-
-    /**
-     * @notice Get the end timestamp of a future month
-     *
-     * @param _timestamp   Current timestamp
-     * @param _monthsToAdd Months to be added
-     *
-     * @return endTimestamp End timestamp of a future month
-     */
-    function _getFutureMonthEndTime(uint256 _timestamp, uint256 _monthsToAdd)
-        private
-        pure
-        returns (uint256 endTimestamp)
-    {
-        uint256 futureTimestamp = _timestamp.addMonths(_monthsToAdd);
-
-        endTimestamp = _getMonthEndTimestamp(futureTimestamp);
-    }
-
-    /**
-     * @notice Get the last second of a month
-     *
-     * @param _timestamp Timestamp to be calculated
-     *
-     * @return endTimestamp End timestamp of the month
-     */
-    function _getMonthEndTimestamp(uint256 _timestamp)
-        private
-        pure
-        returns (uint256 endTimestamp)
-    {
-        // Get the year and month from the date
-        (uint256 year, uint256 month, ) = _timestamp.timestampToDate();
-
-        // Count the total number of days of that month and year
-        uint256 daysInMonth = year._getDaysInMonth(month);
-
-        // Get the month end timestamp
-        endTimestamp = DateTimeLibrary.timestampFromDateTime(
-            year,
-            month,
-            daysInMonth,
-            23,
-            59,
-            59
-        );
-    }
-
-    function _updatePriceIndex() internal {
-        priceIndex =
-            (IERC20(protectionPool).balanceOf(address(this)) * SCALE) /
-            totalLPSupply;
     }
 }

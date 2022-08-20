@@ -5,13 +5,13 @@ pragma solidity ^0.8.13;
 interface IOnboardProposal {
     struct Proposal {
         string name;
-        address protocolAddress;
+        address protocolToken;
         address proposer;
         uint256 proposeTimestamp;
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 maxCapacity;
-        uint256 priceRatio;
+        uint256 basePremiumRatio;
         uint256 poolId;
         uint256 status;
         uint256 result;

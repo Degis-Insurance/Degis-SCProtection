@@ -298,4 +298,78 @@ library DateTimeLibrary {
         require(fromTimestamp <= toTimestamp);
         _seconds = toTimestamp - fromTimestamp;
     }
+
+
+    /**
+     * @notice Get the expiry timestamp based on cover duration
+     *
+     * @param _now           Current timestamp
+     * @param _coverDuration Months to cover: 1-3
+     */
+    function _getExpiry(uint256 _now, uint256 _coverDuration)
+        internal
+        pure
+        returns (uint256 endTimestamp, uint256 year, uint256 month)
+    {
+        // Get the day of the month
+        (, , uint256 day) = timestampToDate(_now);
+
+        // Cover duration of 1 month means current month
+        // unless today is the 25th calendar day or later
+        uint256 monthsToAdd = _coverDuration - 1;
+
+        if (day >= 25) {
+            // Add one month
+            monthsToAdd += 1;
+        }
+
+        return _getFutureMonthEndTime(_now, monthsToAdd);
+    }
+
+    /**
+     * @notice Get the end timestamp of a future month
+     *
+     * @param _timestamp   Current timestamp
+     * @param _monthsToAdd Months to be added
+     *
+     * @return endTimestamp End timestamp of a future month
+     */
+    function _getFutureMonthEndTime(uint256 _timestamp, uint256 _monthsToAdd)
+        private
+        pure
+        returns (uint256 endTimestamp, uint256 year, uint256 month)
+    {
+        uint256 futureTimestamp = addMonths(_timestamp,_monthsToAdd);
+
+        return  _getMonthEndTimestamp(futureTimestamp);
+    }
+
+    /**
+     * @notice Get the last second of a month
+     *
+     * @param _timestamp Timestamp to be calculated
+     *
+     * @return endTimestamp End timestamp of the month
+     */
+    function _getMonthEndTimestamp(uint256 _timestamp)
+        private
+        pure
+        returns (uint256 endTimestamp, uint256 year, uint256 month)
+    {
+        // Get the year and month from the date
+        ( year,  month, ) = timestampToDate(_timestamp);
+
+        // Count the total number of days of that month and year
+        uint256 daysInMonth = _getDaysInMonth(year, month);
+
+        // Get the month end timestamp
+        endTimestamp = timestampFromDateTime(
+            year,
+            month,
+            daysInMonth,
+            23,
+            59,
+            59
+        );
+    }
 }
