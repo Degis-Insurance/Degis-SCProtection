@@ -238,23 +238,23 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         policyCenter.claimPayout(2, crToken1);
     }
 
-    function testUnpauseLiquidatedPool() public {
-        vm.warp(1383402);
-        PriorityPool(pool1).pausePriorityPool(false);
+    // function testUnpauseLiquidatedPool() public {
+    //     vm.warp(1383402);
+    //     PriorityPool(pool1).pausePriorityPool(false);
 
-        // pool remains liquidated but unpaused
-        assertTrue(IPriorityPool(pool1).liquidated());
-        assertTrue(!IPriorityPool(pool1).paused());
+    //     // pool remains liquidated but unpaused
+    //     assertTrue(IPriorityPool(pool1).liquidated());
+    //     assertTrue(!IPriorityPool(pool1).paused());
 
-        uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
-        console.log(endDate);
+    //     uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
+    //     console.log(endDate);
 
-        vm.warp(
-            REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
-        );
+    //     vm.warp(
+    //         REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+    //     );
 
-        assertEq(IPriorityPool(pool1).liquidated() == false, true);
-    }
+    //     assertEq(IPriorityPool(pool1).liquidated() == false, true);
+    // }
 
     function testRemoveLiquidityAfterClaimPayoutPeriod() public {
         // claim payout during claiming period

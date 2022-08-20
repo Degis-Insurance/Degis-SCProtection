@@ -32,7 +32,7 @@ pragma solidity ^0.8.13;
  *
  * @notice This is the executor for degis Protocol Protection
  *         The executor is responsible for the execution of the reports and pool proposals
- *         Both administrators or users can execute proposals and reports out of self interest
+ *         Both administrators or users can execute proposals and reports 
  *
  */
 contract Executor is
@@ -106,11 +106,6 @@ contract Executor is
 
         // execute the pool
         (, address poolAddress, , , ) = factory.pools(report.poolId);
-
-        require(
-            block.timestamp > IPriorityPool(poolAddress).endLiquidationDate(),
-            "Previous liquidation not end"
-        );
 
         // Liquidate the pool
         IPriorityPool(poolAddress).liquidatePool(report.payout);

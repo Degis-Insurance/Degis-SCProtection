@@ -31,8 +31,6 @@ interface IPriorityPool {
 
     function emissionRate() external view returns (uint256);
 
-    function endLiquidationDate() external view returns (uint256);
-
     function executor() external view returns (address);
 
     function incidentReport() external view returns (address);
@@ -143,4 +141,6 @@ interface IPriorityPool {
     function minAssetRequirement() external view returns (uint256);
 
     function setCoverIndex(uint256 _newIndex) external;
+
+    function generation() external view returns (uint256);
 }

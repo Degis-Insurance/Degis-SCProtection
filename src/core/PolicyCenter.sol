@@ -322,7 +322,8 @@ contract PolicyCenter is
         require(premium <= _maxPayment, "Premium too high");
 
         // Mint cover right tokens to buyer
-        address crToken = _checkCRToken(_poolId, timestampDuration);
+        // CR token has different months and generations
+        address crToken = _checkCRToken(_poolId, _coverDuration);
         ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
         // Split the premium income and update the pool status
@@ -445,7 +446,7 @@ contract PolicyCenter is
         public
         poolExists(_poolId)
     {
-        require(_poolId > 0, "PoolId must be greater than 0");
+        require(_poolId > 0, "Zero pool id");
 
         // Claim payout from payout pool
         uint256 amount = IPayoutPool(payoutPool).claim(
@@ -466,7 +467,6 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
-     * @param _fromToken Token address to swap from
      */
     function _swapTokens(address _fromToken, uint256 _amount)
         internal
@@ -504,32 +504,39 @@ contract PolicyCenter is
      * @notice Check cover right tokens
      *         If the crToken does not exist, it will be deployed here
      *
-     * @param _poolId Pool id
-     * @param _length Cover length in second
+     * @param _poolId        Pool id
+     * @param _coverDuration Cover length in month
      */
-    function _checkCRToken(uint256 _poolId, uint256 _length)
+    function _checkCRToken(uint256 _poolId, uint256 _coverDuration)
         internal
         returns (address crToken)
     {
-        crToken = _getCRTokenAddress(_poolId, _length);
+        // Get the expiry timestamp
+        (uint256 year, uint256 month, uint256 expiry) = DateTimeLibrary
+            ._getExpiry(block.timestamp, _coverDuration);
+
+        crToken = _getCRTokenAddress(_poolId, expiry);
         if (crToken == address(0)) {
-            (string memory poolName, , , , ) = IPriorityPoolFactory(
-                priorityPoolFactory
-            ).pools(_poolId);
+            (
+                string memory poolName,
+                address poolAddress,
+                ,
+                ,
 
-            uint256 expiry = block.timestamp + _length;
+            ) = IPriorityPoolFactory(priorityPoolFactory).pools(_poolId);
 
-            (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
-                expiry
-            );
+            uint256 generation = IPriorityPool(poolAddress).generation();
 
+            // CR-JOE-2022-1-G1
             string memory tokenName = string.concat(
                 "CR-",
                 poolName,
                 "-",
                 year._toString(),
                 "-",
-                month._toString()
+                month._toString(),
+                "-G",
+                generation._toString()
             );
 
             crToken = ICoverRightTokenFactory(coverRightTokenFactory)
@@ -539,20 +546,20 @@ contract PolicyCenter is
 
     /**
      * @notice Get cover right token address
-     *         The address is determined by poolId and expiry(last second of each month)
+     *         The address is determined by poolId and expiry (last second of each month)
+     *         If token not exist, it will return zero address
      *
-     * @param _poolId   Pool id
-     * @param _length   Length in second
-     * @return address  Cover right token address
+     * @param _poolId Pool id
+     * @param _expiry Expiry timestamp
+     *
+     * @return crToken Cover right token address
      */
-    function _getCRTokenAddress(uint256 _poolId, uint256 _length)
+    function _getCRTokenAddress(uint256 _poolId, uint256 _expiry)
         internal
         view
         returns (address)
     {
-        uint256 expiry = block.timestamp + _length;
-
-        bytes32 salt = keccak256(abi.encodePacked(_poolId, expiry));
+        bytes32 salt = keccak256(abi.encodePacked(_poolId, _expiry));
 
         return
             ICoverRightTokenFactory(coverRightTokenFactory).saltToAddress(salt);
