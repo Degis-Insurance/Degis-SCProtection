@@ -206,6 +206,11 @@ contract ProtectionPool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    function getLatestPrice() external returns(uint256) {
+        _updatePrice();
+        return price;
+    }
+
     /**
      * @notice Finish providing liquidity
      *         Only callable through policyCenter
