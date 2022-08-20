@@ -194,7 +194,10 @@ contract PriorityPool is
 
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        uint256 endTimestamp = _getExpiry(block.timestamp, _coverDuration);
+        (, , uint256 endTimestamp) = DateTimeLibrary._getExpiry(
+            block.timestamp,
+            _coverDuration
+        );
 
         length = endTimestamp - block.timestamp;
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
@@ -458,6 +461,11 @@ contract PriorityPool is
     function liquidatePool(uint256 _amount) external onlyExecutor {
         _retrievePayout(_amount);
 
+        // Generation ++
+        // Deploy the new generation lp token
+        // Those who stake liquidity into this priority pool will be given the new lp token
+        _deployNewGenerationLP();
+
         emit Liquidation(_amount);
     }
 
@@ -467,28 +475,23 @@ contract PriorityPool is
      * @param _amount Amount of SHIELD to retrieve
      */
     function _retrievePayout(uint256 _amount) internal {
-        // Current lp amount
+        // Current PRO-LP amount
         uint256 currentLPAmount = IERC20(protectionPool).balanceOf(
             address(this)
         );
 
-        address shield = IPriorityPoolFactory(priorityPoolFactory).shield();
-
-        uint256 price = IERC20(shield).balanceOf(protectionPool) /
-            IERC20(protectionPool).totalSupply();
+        uint256 proLPPrice = IProtectionPool(protectionPool).getLatestPrice();
 
         // Need how many PRO-LP tokens to cover the _amount
-        uint256 neededLPAmount = (_amount * SCALE) / price;
+        uint256 neededLPAmount = (_amount * SCALE) / proLPPrice;
 
         address payoutPool = IPriorityPoolFactory(priorityPoolFactory)
             .payoutPool();
 
-        uint256 totalPayout;
-
         // If current PRO-LP inside priority pool is enough
         // Remove part of the liquidity from Protection Pool
         if (neededLPAmount < currentLPAmount) {
-            totalPayout = IProtectionPool(protectionPool).removedLiquidity(
+            IProtectionPool(protectionPool).removedLiquidity(
                 neededLPAmount,
                 payoutPool
             );
@@ -507,12 +510,8 @@ contract PriorityPool is
                 payoutPool
             );
 
-            totalPayout = remainingPayout + shieldGot;
-
             priceIndex[currentLPAddress()] = 0;
         }
-
-        _deployNewGenerationLP();
 
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
@@ -638,78 +637,5 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
-    }
-
-    /**
-     * @notice Get the expiry timestamp based on cover duration
-     *
-     * @param _now           Current timestamp
-     * @param _coverDuration Months to cover: 1-3
-     */
-    function _getExpiry(uint256 _now, uint256 _coverDuration)
-        internal
-        pure
-        returns (uint256)
-    {
-        // Get the day of the month
-        (, , uint256 day) = _now.timestampToDate();
-
-        // Cover duration of 1 month means current month
-        // unless today is the 25th calendar day or later
-        uint256 monthsToAdd = _coverDuration - 1;
-
-        if (day >= 25) {
-            // Add one month
-            monthsToAdd += 1;
-        }
-
-        return _getFutureMonthEndTime(_now, monthsToAdd);
-    }
-
-    /**
-     * @notice Get the end timestamp of a future month
-     *
-     * @param _timestamp   Current timestamp
-     * @param _monthsToAdd Months to be added
-     *
-     * @return endTimestamp End timestamp of a future month
-     */
-    function _getFutureMonthEndTime(uint256 _timestamp, uint256 _monthsToAdd)
-        private
-        pure
-        returns (uint256 endTimestamp)
-    {
-        uint256 futureTimestamp = _timestamp.addMonths(_monthsToAdd);
-
-        endTimestamp = _getMonthEndTimestamp(futureTimestamp);
-    }
-
-    /**
-     * @notice Get the last second of a month
-     *
-     * @param _timestamp Timestamp to be calculated
-     *
-     * @return endTimestamp End timestamp of the month
-     */
-    function _getMonthEndTimestamp(uint256 _timestamp)
-        private
-        pure
-        returns (uint256 endTimestamp)
-    {
-        // Get the year and month from the date
-        (uint256 year, uint256 month, ) = _timestamp.timestampToDate();
-
-        // Count the total number of days of that month and year
-        uint256 daysInMonth = year._getDaysInMonth(month);
-
-        // Get the month end timestamp
-        endTimestamp = DateTimeLibrary.timestampFromDateTime(
-            year,
-            month,
-            daysInMonth,
-            23,
-            59,
-            59
-        );
     }
 }

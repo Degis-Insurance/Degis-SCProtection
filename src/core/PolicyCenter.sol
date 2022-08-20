@@ -593,7 +593,7 @@ contract PolicyCenter is
      *         To priority pool is paid in native token
      *         To protection pool and treasury is paid in shield
      *
-     * @param _poolId  Pool id
+     * @param _poolId       Pool id
      * @param _premiumInUSD Premium in USD
      *
      * @return toPriority   Premium to priority pool
