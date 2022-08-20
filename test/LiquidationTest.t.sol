@@ -149,10 +149,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
        
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setPolicyCenter(address(policyCenter));
+        
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
-        executor.setProtectionPool(address(protectionPool));
+       
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         // pools require initial liquidity input to Protection pool
@@ -204,7 +204,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         bytes32 salt = keccak256(abi.encodePacked(POOL_ID, block.timestamp + coverLength));
         crToken1 = coverRightTokenFactory.saltToAddress(salt);
         vm.warp(REPORT_START_TIME);
-        incidentReport.report(1);
+        incidentReport.report(1, 100 ether);
 
         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
         incidentReport.startVoting(POOL_ID);
@@ -252,7 +252,6 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.warp(
             REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
         );
-        IPriorityPool(pool1).endLiquidation();
 
         assertEq(IPriorityPool(pool1).liquidated() == false, true);
     }
@@ -273,10 +272,10 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
         incidentReport.unpausePools(address(pool1));
 
-        IPriorityPool(pool1).endLiquidation();
+     
         policyCenter.unstakeLiquidity(1, pool1, lpBalance);
 
-        assertEq(PriorityPool(pool1).liquidated() == false, true);
+    
 
         // Liquidity provider is able to remove left over liquidity proportional to
         // how much liquidity they provided and how much is left in the pool

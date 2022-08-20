@@ -175,9 +175,9 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPolicyCenter(address(policyCenter));
 
-        executor.setPolicyCenter(address(policyCenter));
+
         executor.setOnboardProposal(address(onboardProposal));
-        executor.setProtectionPool(address(protectionPool));
+     
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
         executor.setIncidentReport(address(incidentReport));
 
@@ -197,11 +197,11 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
         vm.warp(REPORT_START_TIME);
-        incidentReport.report(POOL_ID);
+        incidentReport.report(POOL_ID, 100 ether);
     }
 
     function _report(uint256 _id) public {
-        incidentReport.report(_id);
+        incidentReport.report(_id, 100 ether);
     }
 
     function testExecuteReportBeforeBeingQueued() public {
