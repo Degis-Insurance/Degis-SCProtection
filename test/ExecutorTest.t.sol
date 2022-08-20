@@ -192,7 +192,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
         onboardProposal.propose("Yeti", address(yeti), 100, 1);
 
         // report pool
-        incidentReport.report(1);
+        incidentReport.report(1, 100 ether);
 
         // start voting
         vm.warp(REPORT_START_TIME + VOTING_PERIOD + 1);
@@ -235,8 +235,5 @@ contract ExecutorTest is Test, IncidentReportParameters {
         vm.warp(8 days);
         // execute report
         executor.executeReport(POOL_ID);
-
-        // expect that pool1 is now in the liquidation state
-        assertEq(PriorityPool(pool1).liquidated() == true, true);
     }
 }
