@@ -32,7 +32,6 @@ pragma solidity ^0.8.13;
  *         Users can evaluate proposals and reports and vote to pass them on weighted by their veDeg balance.
  */
 contract ProposalCenter is ProtocolProtection {
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -112,7 +111,10 @@ contract ProposalCenter is ProtocolProtection {
      * @notice Returns the number of proposals in the proposal center.
      * @return PoolProposal     Pool Proposal struct with all information about a current proposal
      */
-    function getPoolProposal(uint256 _proposalId) public view returns (IOnboardProposal.Proposal memory)
+    function getPoolProposal(uint256 _proposalId)
+        public
+        view
+        returns (IOnboardProposal.Proposal memory)
     {
         IOnboardProposal.Proposal memory proposal = IOnboardProposal(
             onboardProposal
@@ -120,58 +122,70 @@ contract ProposalCenter is ProtocolProtection {
 
         return proposal;
     }
-        
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    @notice Votes on currently pending report in proposal center.
-            voting power is decided by the amount of staked veDEG.
-            rewarded if votes with majority.
-            punished if votes against majority.
-    @param _reportId    id of the report to be voted on
-    @param _isFor       true if yes, false if no
-    @param _amount      amount of veDEG to be staked
-    */
-    function voteReport(uint256 _reportId, uint256 _isFor, uint256 _amount) external {
-        IIncidentReport(incidentReport).vote(_reportId, _isFor, _amount, msg.sender);
+     * @notice Votes on currently pending report in proposal center.
+     *         voting power is decided by the amount of staked veDEG.
+     *         rewarded if votes with majority.
+     *         punished if votes against majority.
+     *
+     * @param _reportId Id of the report to be voted on
+     * @param _isFor    1 if "vote for", 0 if "vote against"
+     * @param _amount   Amount of veDEG to be used for voting
+     */
+    function voteReport(
+        uint256 _reportId,
+        uint256 _isFor,
+        uint256 _amount
+    ) external {
+        IIncidentReport(incidentReport).vote(_reportId, _isFor, _amount);
     }
 
     /**
-    @notice Votes on currently pending proposal in proposal center.
-            voting power is decided by the amount of staked veDEG.
-            no penalty nor rewards.
-    *
-    @param _proposalId  id of the pool proposal to be voted on
-    @param _isFor       true if yes, false if no
-    @param _amount      amount of veDEG to be locked and used as voting power
-    */
-    function votePoolProposal(uint256 _proposalId, uint256 _isFor, uint256 _amount) external {
-        IOnboardProposal(onboardProposal).vote(_proposalId, _isFor, _amount, msg.sender);
-    }
-    
-
-    /**
-    @notice reports that a protocol has been compromised.
-            user notifies that pool should be liquidated.
-            1000 DEG tokens are held by the proposal center
-            until report is deemed truthful.
-    @param _poolId id of the pool to be reported
-    */
-    function reportPool(uint256 _poolId) public {
-        IIncidentReport(incidentReport).report(_poolId, msg.sender);
+     * @notice Votes on currently pending proposal in proposal center.
+     *         voting power is decided by the amount of staked veDEG.
+     *         no penalty nor rewards.
+     *
+     * @param _proposalId Id of the pool proposal to be voted on
+     * @param _isFor      1 if "vote for", 0 if "vote against"
+     * @param _amount     Amount of veDEG to be used for voting
+     */
+    function votePoolProposal(
+        uint256 _proposalId,
+        uint256 _isFor,
+        uint256 _amount
+    ) external {
+        IOnboardProposal(onboardProposal).vote(
+            _proposalId,
+            _isFor,
+            _amount,
+            msg.sender
+        );
     }
 
     /**
-    @notice proposes a new protocol to be insured.
+     * @notice reports that a protocol has been compromised.
+     *         user notifies that pool should be liquidated.
+     *         1000 DEG tokens are held by the proposal center
+     *         until report is deemed truthful.
+     * @param _poolId Id of the pool to be reported
+     */
+    function reportPool(uint256 _poolId, uint256 _payout) public {
+        IIncidentReport(incidentReport).report(_poolId, _payout);
+    }
 
-    @param _name                name of the protocol to be insured.
-    @param _protocolToken       address of token to receive have a new insurance pool.
-    @param _maxCapacity         maximum capacity of the insurance pool in native token.
-    @param _priceRatio          price of the policy in native token.
-    */
+    /**
+     * @notice proposes a new protocol to be insured.
+     *
+     * @param _name                name of the protocol to be insured.
+     * @param _protocolToken       address of token to receive have a new insurance pool.
+     * @param _maxCapacity         maximum capacity of the insurance pool in native token.
+     * @param _priceRatio          price of the policy in native token.
+     */
     function proposePool(
         string memory _name,
         address _protocolToken,
@@ -185,7 +199,6 @@ contract ProposalCenter is ProtocolProtection {
             _priceRatio,
             msg.sender
         );
-        
     }
 
     /**
@@ -225,18 +238,20 @@ contract ProposalCenter is ProtocolProtection {
     }
 
     /**
-    @notice claims reward or pays debt for a vote on a settled report.
-            
-
-    @param _reportId    id of the report to be reward voters on.
+     * @notice Claim reward or pay debt for a vote on a settled report.
+     *
+     *
+     * @param _reportId Id of the report to be reward voters on.
      */
     function resolveReportVote(uint256 _reportId) external {
-        IIncidentReport.UserVote memory vote = IIncidentReport(incidentReport).getUserVote(msg.sender, _reportId);
-        IIncidentReport.Report memory report = IIncidentReport(incidentReport).getReport(_reportId);
+        IIncidentReport.UserVote memory vote = IIncidentReport(incidentReport)
+            .getUserVote(msg.sender, _reportId);
+        IIncidentReport.Report memory report = IIncidentReport(incidentReport)
+            .getReport(_reportId);
         if (report.result == vote.choice) {
-            IIncidentReport(incidentReport).claimReward(_reportId, msg.sender);
+            IIncidentReport(incidentReport).claimReward(_reportId);
         } else {
-            IIncidentReport(incidentReport).payDebt(_reportId, msg.sender);
+            IIncidentReport(incidentReport).payDebt(_reportId);
         }
     }
 
@@ -246,6 +261,6 @@ contract ProposalCenter is ProtocolProtection {
      * @param _proposalId Proposal id
      */
     function resolveProposalVote(uint256 _proposalId) external {
-        IOnboardProposal(onboardProposal).claim(_proposalId, msg.sender);
+        IOnboardProposal(onboardProposal).claim(_proposalId);
     }
 }

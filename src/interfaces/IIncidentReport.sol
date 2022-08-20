@@ -14,6 +14,7 @@ interface IIncidentReport {
         uint256 status;
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
         uint256 votingReward; // Voting reward per veDEG if the report passed
+        uint256 payout;
     }
     struct TempResult {
         uint256 a;
@@ -29,8 +30,6 @@ interface IIncidentReport {
     function COOLDOWN_WRONG_REPORT() external view returns (uint256);
 
     function claimReward(uint256 _reportId) external;
-
-    function claimReward(uint256 _reportId, address _msgsender) external;
 
     function closeReport(uint256 _reportId) external;
 
@@ -58,7 +57,7 @@ interface IIncidentReport {
 
     function owner() external view returns (address);
 
-    function payDebt(uint256 _reportId, address _user) external;
+    function payDebt(uint256 _reportId) external;
 
     function policyCenter() external view returns (address);
 

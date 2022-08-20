@@ -41,10 +41,6 @@ contract Executor is
     OwnableWithoutContext
 {
     // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
@@ -69,14 +65,6 @@ contract Executor is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
-    }
-
-    function setProtectionPool(address _protectionPool) external onlyOwner {
-        _setProtectionPool(_protectionPool);
-    }
-
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
     }
@@ -94,8 +82,8 @@ contract Executor is
      *         The report must already been settled and the result is PASSED
      *         Execution means:
      *             1) Give 10% of protocol income to reporter (SHIELD)
-     *             2) Mark the priority pool as "liquidated"
-     *             3) Move the total payout amount out of the priority pool (to payout pool)
+     *             2) Move the total payout amount out of the priority pool (to payout pool)
+     *             3) Deploy new generations of CRTokens and PRI-LP tokens
      *
      *         Can not execute a report before the previous liquidation ended
      *
@@ -103,69 +91,63 @@ contract Executor is
      */
     function executeReport(uint256 _reportId) public {
         // Get the report
-        (
-            uint256 poolId,
-            ,
-            address reporter,
-            ,
-            ,
-            ,
-            ,
-            uint256 status,
-            uint256 result,
-            ,
-            uint256 payout
-        ) = IIncidentReport(incidentReport).reports(_reportId);
+        IIncidentReport.Report memory report = IIncidentReport(incidentReport)
+            .getReport(_reportId);
 
-        require(status == SETTLED_STATUS, "Report is not ready to be executed");
-        require(result == 1, "Report is not passed");
+        require(report.status == SETTLED_STATUS, "Not settled");
+        require(report.result == 1, "Not passed");
 
         // Give 10% of treasury to the reporter
-        ITreasury(treasury).rewardReporter(poolId, reporter);
+        ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
 
         IPriorityPoolFactory factory = IPriorityPoolFactory(
             priorityPoolFactory
         );
 
         // execute the pool
-        (, address poolAddress, , , ) = factory.pools(poolId);
+        (, address poolAddress, , , ) = factory.pools(report.poolId);
 
         require(
             block.timestamp > IPriorityPool(poolAddress).endLiquidationDate(),
             "Previous liquidation not end"
         );
 
-        // Mark the pool as liquidated
-        IPriorityPool(poolAddress).liquidatePool(payout);
+        // Liquidate the pool
+        IPriorityPool(poolAddress).liquidatePool(report.payout);
 
-        // emit the event
-        emit ReportExecuted(poolAddress, poolId, _reportId);
+        emit ReportExecuted(poolAddress, report.poolId, _reportId);
     }
 
     /**
-     * @notice Settle the proposal
+     * @notice Execute the proposal
+     *         The proposal must already been settled and the result is PASSED
+     *         New priority pool will be deployed with parameters
      *
      * @param _proposalId Proposal id
      */
-    function executeProposal(uint256 _proposalId) external returns (address) {
+    function executeProposal(uint256 _proposalId)
+        external
+        returns (address newPriorityPool)
+    {
         IOnboardProposal.Proposal memory proposal = IOnboardProposal(
             onboardProposal
         ).getProposal(_proposalId);
 
         require(proposal.status == SETTLED_STATUS, "Not settled");
-        require(proposal.result == 1, "Has not been approved");
+        require(proposal.result == 1, "Not passed");
 
-        // execute the proposal
-        address newPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(
+        // Execute the proposal
+        newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(
             proposal.name,
-            proposal.protocolAddress,
+            proposal.protocolToken,
             proposal.maxCapacity,
-            proposal.priceRatio
+            proposal.basePremiumRatio
         );
 
-        // emit the event
-        emit NewPoolExecuted(newPool, _proposalId, proposal.protocolAddress);
-
-        return newPool;
+        emit NewPoolExecuted(
+            newPriorityPool,
+            _proposalId,
+            proposal.protocolToken
+        );
     }
 }
