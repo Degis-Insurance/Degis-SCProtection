@@ -50,7 +50,7 @@ contract InitialContractDeploymentTest is Test {
     function setUp() public {}
 
     function testDeployShield() public {
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
         assertEq(
             keccak256(bytes(shield.name())) == keccak256(bytes("Shield")),
             true
@@ -170,7 +170,7 @@ contract SecondaryContractDeploymentTest is Test {
             address(protectionPool),
             address(payoutPool)
         );
-        
+
         assertEq(priorityPoolFactory.poolCounter() == 0, true);
     }
 
@@ -184,23 +184,36 @@ contract SecondaryContractDeploymentTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
+        );
+        assertEq(premiumRewardPool.shield(), address(shield));
+    }
+
+    function testDeployWeightedFarmingPool() public {
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        assertEq(
+            weightedFarmingPool.premiumRewardPool(),
+            address(premiumRewardPool)
         );
     }
 
     function testDeployPriorityPool() public {
-
         policyCenter = new PolicyCenter(
             address(deg),
-            address(0),
-            address(0),
+            address(vedeg),
+            address(shield),
             address(protectionPool)
         );
         policyCenter.setProtectionPool(address(protectionPool));
         protectionPool.setPolicyCenter(address(policyCenter));
+
+        shield.transfer(address(this), 1000 ether);
+        shield.approve(address(policyCenter), 1000 ether);
         // To deploy an insurance pool, a minnimum liquidity must be provided to protection pool
-        // policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(1000 ether);
         // Insurance pools are created by the insurance pool factory.
         // it is dependent on deg, protectionPool,
         // policyCenter and priorityPoolFactory being deployed.
@@ -214,11 +227,14 @@ contract SecondaryContractDeploymentTest is Test {
 
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
 
-
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
 
         policyCenter = new PolicyCenter(
             address(0),
@@ -230,6 +246,9 @@ contract SecondaryContractDeploymentTest is Test {
         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         address pool1 = priorityPoolFactory.deployPool(
             "Platypus",

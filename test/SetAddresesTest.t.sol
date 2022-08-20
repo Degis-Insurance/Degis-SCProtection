@@ -52,7 +52,7 @@ contract setAddressesTest is Test {
     address public pool1;
 
     function setUp() public {
-        shield = new MockSHIELD(10000 ether, "Shield", 18, "SHIELD");
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
@@ -99,8 +99,21 @@ contract setAddressesTest is Test {
         policyCenter.setExchange(address(exchange));
         // required to provide liquidity
         protectionPool.setPolicyCenter(address(policyCenter));
+
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 1000000 ether);
         // pools require initial liquidity input to Protection pool
-        //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
+
+        // setup weighted farming pool
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",

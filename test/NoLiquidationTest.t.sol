@@ -75,7 +75,7 @@ contract NoLiquidationTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
@@ -130,8 +130,20 @@ contract NoLiquidationTest is Test {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -185,7 +197,10 @@ contract NoLiquidationTest is Test {
         shield.approve(address(policyCenter), 1000000 ether);
 
         // carol buys coverage from pool 1
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(10 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+            10 ether,
+            3
+        );
         vm.prank(carol);
         ptp.approve(address(policyCenter), 1000000 ether);
         vm.prank(carol);

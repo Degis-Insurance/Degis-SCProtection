@@ -86,7 +86,7 @@ contract PoolProposedTest is Test {
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(priorityPoolFactory), 
+            address(priorityPoolFactory),
             address(protectionPool)
         );
         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
@@ -139,8 +139,19 @@ contract PoolProposedTest is Test {
         executor.setProtectionPool(address(protectionPool));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        weightedFarmingPool = new WeightedFarmingPool(
+            address(premiumRewardPool)
+        );
+        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setWeightedFarmingPool(
+            address(weightedFarmingPool)
+        );
+        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+
+        shield.transfer(address(this), 10000 ether);
+        shield.approve(address(policyCenter), 10000 ether);
         // pools require initial liquidity input to Protection pool
-      //  policyCenter.provideLiquidity(10000 ether);
+        policyCenter.provideLiquidity(10000 ether);
 
         pool1 = priorityPoolFactory.deployPool(
             "Platypus",
@@ -168,11 +179,8 @@ contract PoolProposedTest is Test {
         console.log("alice", vedeg.balanceOf(alice));
 
         // owner provides liquidity
-        shield.transfer(address(this), 10000);
-        shield.approve(address(policyCenter), 10000 ether);
-        policyCenter.provideLiquidity(10000 ether);
         protectionPool.approve(address(policyCenter), 10000 ether);
-
+        // owner stakes liquidity
         policyCenter.stakeLiquidity(1, 10000 ether);
 
         vm.warp(0);
@@ -212,14 +220,23 @@ contract PoolProposedTest is Test {
         policyCenter.stakeLiquidity(2, 10000);
 
         address currentLPToken = PriorityPool(pool1).currentLPAddress();
-        assertEq(PriorityPoolToken(currentLPToken).totalSupply() == 10000, true);
+        assertEq(
+            PriorityPoolToken(currentLPToken).totalSupply() == 10000,
+            true
+        );
         // check if owner has receive minted tokens
-        assertEq(PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000, true);
+        assertEq(
+            PriorityPoolToken(currentLPToken).balanceOf(address(this)) == 10000,
+            true
+        );
     }
 
     function testBuyCoverNewPool() public {
         yeti.approve(address(policyCenter), 10000 ether);
-        (uint256 price, uint256 coverLength) = PriorityPool(pool2).coverPrice(10000 ether, 3);
+        (uint256 price, uint256 coverLength) = PriorityPool(pool2).coverPrice(
+            10000 ether,
+            3
+        );
         policyCenter.buyCover(2, 100 ether, 3, price);
         (uint256 amount, , ) = policyCenter.covers(2, address(this));
         assertEq(amount == 100 ether, true);

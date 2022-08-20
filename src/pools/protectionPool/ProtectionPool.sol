@@ -352,9 +352,7 @@ contract ProtectionPool is
         } else {
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
-                if (
-                    i == 0 && rewardSpeed[lastY][lastM] > 0
-                ) {
+                if (i == 0 && rewardSpeed[lastY][lastM] > 0) {
                     // End timestamp of the first month
                     uint256 endTimestamp = DateTimeLibrary
                         .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);

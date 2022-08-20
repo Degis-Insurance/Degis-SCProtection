@@ -84,6 +84,8 @@ interface IPriorityPoolFactory {
 
     function setProposalCenter(address _proposalCenter) external;
 
+    function setWeightedFarmingPool(address _weightedFarmingPool) external;
+
     function setProtectionPool(address _protectionPool) external;
 
     function updateMaxCapacity(uint256 _maxCapacity) external;
