@@ -244,18 +244,12 @@ contract ProposalCenter is ProtocolProtection {
         IOnboardProposal(onboardProposal).settle(_proposalId);
     }
 
-    /**
-<<<<<<< HEAD
-    @notice Claims reward or pays debt for a vote on a settled report.
-            
-
-    @param _reportId    Id of the report to be reward voters on.
-=======
+    /** 
      * @notice Claim reward or pay debt for a vote on a settled report.
      *
      *
      * @param _reportId Id of the report to be reward voters on.
->>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
+
      */
     function resolveReportVote(uint256 _reportId) external {
         IIncidentReport.UserVote memory vote = IIncidentReport(incidentReport)
