@@ -152,14 +152,11 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
-<<<<<<< HEAD
+
         priceIndex = SCALE;
 
-        _deployNewGenerationLP(_name, _poolId);
-=======
         // Generation 1, price starts from 1
         priceIndex[_deployNewGenerationLP()] = SCALE;
->>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -556,15 +553,8 @@ contract PriorityPool is
         newLPAddress = address(priorityPoolToken);
         lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
-<<<<<<< HEAD
         IWeightedFarmingPool(weightedFarmingPool).addToken(
             _poolId,
-=======
-        lpTokenAddress[currentGeneration] = newLPAddress;
-        // TODO: add token in weighted farming pool
-        IWeightedFarmingPool(weightedFarmingPool).addToken(
-            poolId,
->>>>>>> 8785375be88a90b9d3de5acd6b0ff3dd0e2f4a9f
             newLPAddress,
             coverIndex
         );
