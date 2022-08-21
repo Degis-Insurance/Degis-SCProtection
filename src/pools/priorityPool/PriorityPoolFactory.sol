@@ -213,7 +213,7 @@ contract PriorityPoolFactory is
     ) public returns (address) {
         require(
             msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor contract can create a new priority pool"
+            "Only owner or executor"
         );
         require(!tokenRegistered[_protocolToken], "Already registered");
 

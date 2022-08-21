@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 
 import "../../interfaces/IPolicyCenter.sol";
 import "../../interfaces/IPremiumRewardPool.sol";
+import "../../interfaces/IWeightedFarmingPool.sol";
 
 abstract contract PriorityPoolFactoryDependencies {
     address public protectionPool;
