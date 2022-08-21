@@ -152,9 +152,6 @@ contract PriorityPool is
         maxLength = 3;
         minLength = 1;
 
-
-        priceIndex = SCALE;
-
         // Generation 1, price starts from 1
         priceIndex[_deployNewGenerationLP()] = SCALE;
     }
@@ -554,7 +551,7 @@ contract PriorityPool is
         lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
         IWeightedFarmingPool(weightedFarmingPool).addToken(
-            _poolId,
+            poolId,
             newLPAddress,
             coverIndex
         );
