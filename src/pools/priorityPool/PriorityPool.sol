@@ -27,8 +27,6 @@ import "./PriorityPoolDependencies.sol";
 import "./PriorityPoolEventError.sol";
 import "./PriorityPoolToken.sol";
 
-import "../../interfaces/IPremiumRewardPool.sol";
-
 import "../../libraries/DateTime.sol";
 import "../../libraries/StringUtils.sol";
 
@@ -133,14 +131,17 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     constructor(
-        address _weightedFarmingPool,
+        uint256 _poolId,
+        string memory _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _name,
         uint256 _baseRatio,
         address _admin,
-        uint256 _poolId
+        address _weightedFarmingPool
     ) OwnableWithoutContext(_admin) {
+        poolId = _poolId;
+        poolName = _name;
+
         // token address insured by pool
         weightedFarmingPool = _weightedFarmingPool;
         insuredToken = _protocolToken;
@@ -148,9 +149,6 @@ contract PriorityPool is
         startTime = block.timestamp;
 
         basePremiumRatio = _baseRatio;
-
-        poolId = _poolId;
-        poolName = _name;
 
         // TODO: change length
         maxLength = 3;
@@ -306,8 +304,23 @@ contract PriorityPool is
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {
+    function setMaxCapacity(bool _isUp, uint256 _maxCapacity)
+        external
+        onlyOwner
+    {
         maxCapacity = _maxCapacity;
+
+        uint256 diff;
+        if (_isUp) {
+            diff = _maxCapacity - maxCapacity;
+        } else {
+            diff = maxCapacity - _maxCapacity;
+        }
+
+        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
+            _isUp,
+            diff
+        );
     }
 
     function setExecutor(address _executor) external onlyOwner {
@@ -316,13 +329,6 @@ contract PriorityPool is
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
-    }
-
-    function setPremiumRewardPool(address _premiumRewardPool)
-        external
-        onlyOwner
-    {
-        _setPremiumRewardPool(_premiumRewardPool);
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {

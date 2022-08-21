@@ -88,7 +88,7 @@ interface IPriorityPoolFactory {
 
     function setProtectionPool(address _protectionPool) external;
 
-    function updateMaxCapacity(uint256 _maxCapacity) external;
+    function updateMaxCapacity(bool _isUp, uint256 _maxCapacity) external;
 
     function shield() external view returns (address);
 
