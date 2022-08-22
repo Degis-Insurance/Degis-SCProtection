@@ -415,15 +415,12 @@ contract PolicyCenter is
     ) public poolExists(_poolId) {
         require(_poolId > 0, "Zero pool id");
 
-        (
-            string memory poolName,
-            address poolAddress,
-            ,
-            ,
-
-        ) = IPriorityPoolFactory(priorityPoolFactory).pools(_poolId);
+        (string memory poolName, , , , ) = IPriorityPoolFactory(
+            priorityPoolFactory
+        ).pools(_poolId);
 
         // Claim payout from payout pool
+        // Get the actual claimed amount and new generation cr token to be minted
         (uint256 claimed, uint256 newGenerationCRAmount) = IPayoutPool(
             payoutPool
         ).claim(msg.sender, _crToken, _poolId, _generation);
@@ -446,42 +443,6 @@ contract PolicyCenter is
             msg.sender,
             newGenerationCRAmount
         );
-    }
-
-    function _checkNewCRToken(
-        uint256 _poolId,
-        string memory _poolName,
-        uint256 _expiry,
-        uint256 _newGeneration
-    ) internal returns (address newCRToken) {
-        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
-            _expiry
-        );
-
-        newCRToken = _getCRTokenAddress(_poolId, _expiry, _newGeneration);
-
-        if (newCRToken == address(0)) {
-            // CR-JOE-2022-1-G1
-            string memory tokenName = string.concat(
-                "CR-",
-                _poolName,
-                "-",
-                year._toString(),
-                "-",
-                month._toString(),
-                "-G",
-                _newGeneration._toString()
-            );
-
-            newCRToken = ICoverRightTokenFactory(coverRightTokenFactory)
-                .deployCRToken(
-                    _poolName,
-                    _poolId,
-                    tokenName,
-                    _expiry,
-                    _newGeneration
-                );
-        }
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -572,6 +533,42 @@ contract PolicyCenter is
                     tokenName,
                     expiry,
                     generation
+                );
+        }
+    }
+
+    function _checkNewCRToken(
+        uint256 _poolId,
+        string memory _poolName,
+        uint256 _expiry,
+        uint256 _newGeneration
+    ) internal returns (address newCRToken) {
+        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
+            _expiry
+        );
+
+        newCRToken = _getCRTokenAddress(_poolId, _expiry, _newGeneration);
+
+        if (newCRToken == address(0)) {
+            // CR-JOE-2022-1-G1
+            string memory tokenName = string.concat(
+                "CR-",
+                _poolName,
+                "-",
+                year._toString(),
+                "-",
+                month._toString(),
+                "-G",
+                _newGeneration._toString()
+            );
+
+            newCRToken = ICoverRightTokenFactory(coverRightTokenFactory)
+                .deployCRToken(
+                    _poolName,
+                    _poolId,
+                    tokenName,
+                    _expiry,
+                    _newGeneration
                 );
         }
     }
