@@ -199,20 +199,6 @@ contract IncidentReport is
      *         1000 DEG tokens are staked to start a report
      *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
      *         If the report is wrong, reporter loses 1000DEG to those who vote against
-     *
-     * @param _poolId Pool id to report incident
-     * @param _payout Payout amount of this report
-     */
-    function report(uint256 _poolId, uint256 _payout) external {
-        _report(_poolId, _payout, msg.sender);
-    }
-
-    /**
-     * @notice Start a new incident report
-     *
-     *         1000 DEG tokens are staked to start a report
-     *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
-     *         If the report is wrong, reporter loses 1000DEG to those who vote against
      *         Only callable through proposal center
      *
      * @param _poolId Pool id to report incident
