@@ -204,9 +204,8 @@ contract IncidentReport is
      * @param _poolId Pool id to report incident
      * @param _payout Payout amount of this report
      */
-    function report(uint256 _poolId, uint256 _payout, address _user) external {
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _report(_poolId, _payout, _user);
+    function report(uint256 _poolId, uint256 _payout) external {
+        _report(_poolId, _payout, msg.sender);
     }
 
     /**
@@ -260,7 +259,7 @@ contract IncidentReport is
         emit ReportClosed(_id, block.timestamp);
     }
 
-     /**
+    /**
      * @notice Vote on current reports
      *
      *         Voting power is decided by the (unlocked) balance of veDEG
@@ -272,16 +271,13 @@ contract IncidentReport is
      * @param _id     Id of the report to be voted on
      * @param _isFor  The user's choice (1: vote for, 2: vote against)
      * @param _amount Amount of veDEG used for this vote
-     * @param _user   User who is voting
      */
     function vote(
         uint256 _id,
         uint256 _isFor,
-        uint256 _amount,
-        address _user
+        uint256 _amount
     ) external {
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _vote(_id, _isFor, _amount, _user);
+        _vote(_id, _isFor, _amount, msg.sender);
     }
 
     /**
@@ -333,13 +329,10 @@ contract IncidentReport is
      * @notice Claim the voting reward
      *         Only callable through proposal center
      *
-     * @param _id   Report id
-     * @param _user User address to claim rewards from
+     * @param _id Report id
      */
-    function claimReward(uint256 _id, address _user) external {
-        // guarantees that rewards are not claimed by third party
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _claimReward(_id, _user);
+    function claimReward(uint256 _id) external {
+        _claimReward(_id, msg.sender);
     }
 
     /**
@@ -383,7 +376,11 @@ contract IncidentReport is
      * @param _poolId Pool id to report incident
      * @param _payout Payout amount of this report
      */
-    function _report(uint256 _poolId, uint256 _payout, address _user) internal {
+    function _report(
+        uint256 _poolId,
+        uint256 _payout,
+        address _user
+    ) internal {
         // Check pool can be reported
         address pool = _checkPoolStatus(_poolId);
 
@@ -405,13 +402,7 @@ contract IncidentReport is
 
         poolReports[_poolId].push(currentId);
 
-        emit ReportCreated(
-            currentId,
-            _poolId,
-            block.timestamp,
-            _user,
-            _payout
-        );
+        emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);
     }
 
     /**

@@ -27,7 +27,7 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant REPORT_THRESHOLD = 10000 ether;
 
     // DEG reward for correct reporter
-    uint256 constant REPORTER_REWARD = 1000 ether;
+    uint256 constant REPORTER_REWARD = 10000 ether;
 
     // Punishment for those who vote wrong
     uint256 constant REWARD_RATIO = 40; // 40% go to winners, 40% reserve

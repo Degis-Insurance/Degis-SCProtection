@@ -7,7 +7,8 @@ interface ICoverRightTokenFactory {
         string calldata _poolName,
         uint256 _poolId,
         string calldata _tokenName,
-        uint256 _expiry
+        uint256 _expiry,
+        uint256 _generation
     ) external returns (address newCRTokenAddress);
 
     function deployed(bytes32 _salt) external view returns (bool);

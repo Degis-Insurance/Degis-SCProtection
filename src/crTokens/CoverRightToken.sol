@@ -35,6 +35,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     address public incidentReport;
     address public policyCenter;
 
+    uint256 public immutable generation;
+
     // Expiry date
     uint256 public expiry;
 
@@ -54,12 +56,14 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         string memory _poolName,
         uint256 _poolId,
         string memory _name,
-        uint256 _expiry
+        uint256 _expiry,
+        uint256 _generation
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
         POOL_ID = _poolId;
+        generation = _generation;
     }
 
     modifier onlyPolicyCenter() {
@@ -111,13 +115,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         require(_amount > 0, "Zero Amount");
         require(_poolId == POOL_ID, "Wrong pool id");
 
-        uint256 effectiveFrom = _getEOD(
-            block.timestamp + EXCLUDE_DAYS * 1 days
-        );
-
-        coverStartFrom[_user][effectiveFrom] -= _amount;
-
-        _mint(_user, _amount);
+        _burn(_user, _amount);
     }
 
     /**

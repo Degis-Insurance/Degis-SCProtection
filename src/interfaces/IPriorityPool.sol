@@ -54,4 +54,6 @@ interface IPriorityPool {
         returns (uint256, uint256);
 
     function maxCapacity() external view returns (uint256);
+
+    function coverIndex() external view returns(uint256);
 }
