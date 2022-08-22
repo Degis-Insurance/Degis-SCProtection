@@ -244,12 +244,8 @@ contract IncidentReport is
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
 
-        (, address pool, , , ) = priorityPoolFactory.pools(
-            currentReport.poolId
-        );
-
         // Pause insurance pool and reinsurance pool
-        _pausePools(pool);
+        _pausePools(currentReport.poolId);
 
         emit VotingStart(_id, block.timestamp);
     }
@@ -331,8 +327,15 @@ contract IncidentReport is
                 currentReport.result = res;
                 _settleVotingReward(_id);
                 emit ReportSettled(_id, res);
+
+                // REJECT or TIED: unlock the priority pool & protection pool immediately
+                if (res != PASS_RESULT) {
+                    _unpausePools(currentReport.poolId);
+                }
             } else {
                 currentReport.result = FAILED_RESULT;
+                // FAILED: unlock the priority pool & protection pool immediately
+                _unpausePools(currentReport.poolId);
                 emit ReportFailed(_id);
             }
         } else {
@@ -378,10 +381,6 @@ contract IncidentReport is
         veDeg.unlockVeDEG(_user, userVote.amount);
 
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
-    }
-
-    function unpausePools(address _pool) external {
-        _unpausePools(_pool);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -748,24 +747,30 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Pause the related project pool
+     * @notice Pause the related priority pool and protection pool
      *         Once there is an incident reported and voting start
-     *         If the vote is closed or
      *
-     * @param _pool Project pool address
+     * @param _poolId Priority pool id
      */
-    function _pausePools(address _pool) internal {
-        IPriorityPool(_pool).pausePriorityPool(true);
+    function _pausePools(uint256 _poolId) internal {
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
+
+        IPriorityPool(pool).pausePriorityPool(true);
+        IProtectionPool(protectionPool).pauseProtectionPool(true);
     }
 
     /**
-     * @notice Pause the related project pool and the re-insurance pool
-     *         Once there is an incident reported
+     * @notice Unpause the related project pool and the re-insurance pool
+     *         When the report was REJECTED / TIED / FAILED, unlock immediately
+     *         When the report was PASSED, unlock when executor execute it
      *
-     * @param _pool Project pool address
+     * @param _poolId Priority pool id
      */
-    function _unpausePools(address _pool) internal {
-        IPriorityPool(_pool).pausePriorityPool(false);
+    function _unpausePools(uint256 _poolId) internal {
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
+
+        IPriorityPool(pool).pausePriorityPool(false);
+        IProtectionPool(protectionPool).pauseProtectionPool(false);
     }
 
     /**
