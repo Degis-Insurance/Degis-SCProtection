@@ -153,7 +153,7 @@ contract PriorityPool is
         // TODO: change length
         maxLength = 3;
         minLength = 1;
-        
+
         // Generation 1, price starts from 1 (SCALE)
 
         priceIndex[_deployNewGenerationLP()] = SCALE;
@@ -366,6 +366,7 @@ contract PriorityPool is
         external
         whenNotPaused
         onlyPolicyCenter
+        returns (address)
     {
         // Check whether this priority pool should be dynamic
         // If so, update it
@@ -375,6 +376,8 @@ contract PriorityPool is
         // PRI-LP amount always 1:1 to PRO-LP
         _mintLP(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
+
+        return currentLPAddress();
     }
 
     /**

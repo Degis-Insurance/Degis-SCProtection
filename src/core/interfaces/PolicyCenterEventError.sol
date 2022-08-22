@@ -7,8 +7,7 @@ interface PolicyCenterEventError {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event Reward(uint256 _amount, address _address);
-    event Payout(uint256 _amount, address _address);
+    event PayoutClaimed(uint256 _amount, address _address);
     event CoverBought(
         address indexed buyer,
         uint256 indexed poolId,

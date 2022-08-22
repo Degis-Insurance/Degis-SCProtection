@@ -9,13 +9,11 @@ import "../../interfaces/IIncidentReport.sol";
 import "../../interfaces/ITreasury.sol";
 
 abstract contract ExecutorDependencies {
-  
     address public priorityPoolFactory;
     address public incidentReport;
     address public onboardProposal;
 
     address public treasury;
-
 
     function _setPriorityPoolFactory(address _priorityPoolFactory)
         internal

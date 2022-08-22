@@ -28,9 +28,6 @@ import "./OnboardProposalEventError.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "../../interfaces/IDegisToken.sol";
-import "../../interfaces/IVeDEG.sol";
-
 /**
  * @notice Onboard Proposal
  */

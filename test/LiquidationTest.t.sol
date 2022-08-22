@@ -279,7 +279,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vm.prank(alice);
         policyCenter.claimPayout(1, crToken1);
 
-        uint256 lpBalance = IPriorityPool(pool1).balanceOf(address(this));
+        uint256 lpBalance = IERC20(pool1).balanceOf(address(this));
         uint256 shieldBalance = shield.balanceOf(address(this));
 
         vm.warp(

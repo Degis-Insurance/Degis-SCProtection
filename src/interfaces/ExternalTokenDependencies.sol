@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 
 import "./IVeDEG.sol";
 import "./IDegisToken.sol";
-
 import "./IShield.sol";
 
 /**
