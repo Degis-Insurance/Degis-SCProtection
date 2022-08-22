@@ -333,8 +333,8 @@ contract IncidentReport is
      * @notice Claim the voting reward
      *         Only callable through proposal center
      *
-     * @param _id       Report id
-     * @param _user     User address to claim rewards from
+     * @param _id   Report id
+     * @param _user User address to claim rewards from
      */
     function claimReward(uint256 _id, address _user) external {
         // guarantees that rewards are not claimed by third party
@@ -348,8 +348,8 @@ contract IncidentReport is
      *         For those who made a wrong voting choice
      *         The paid DEG will be burned and the veDEG will be unlocked
      *
-     * @param _id       Report id
-     * @param _user     User address (can pay debt for another user)
+     * @param _id   Report id
+     * @param _user User address (can pay debt for another user)
      */
     function payDebt(uint256 _id, address _user) external {
         UserVote memory userVote = votes[_user][_id];

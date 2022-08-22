@@ -21,9 +21,9 @@ interface IWeightedFarmingPool {
     function premiumRewardPool() view external returns (address);
     function setPolicyCenter(address _policyCenter) external;
     function setWeight(uint256 _id, uint256[] memory weights) external;
-    function stakedLiquidity(uint256 _id, uint256 _amount, address _token, address _msgsender) external;
+    function deposit(uint256 _id, address _token,uint256 _amount,  address _msgsender) external;
     function supported(bytes32) view external returns (bool);
-    function unstakedLiquidity(uint256 _id, uint256 _amount, address _token, address _msgsender) external;
+    function withdraw(uint256 _id, address _token,uint256 _amount,  address _msgsender) external;
     function updatePool(uint256 _id) external;
     function updateRewardSpeed(uint256 _id, uint256 _newSpeed, uint256[] memory _years, uint256[] memory _months) external;
     function users(uint256, address) view external returns (uint256 share, uint256 rewardDebt);

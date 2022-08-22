@@ -79,18 +79,18 @@ contract WeightedFarmingPool {
         policyCenter = _policyCenter;
     }
 
-    function estimateHarvest(uint256 _id, address _user)
+    function pendingReward(uint256 _id, address _user)
         external
         view
-        returns (uint256)
+        returns (uint256 pending)
     {
         PoolInfo memory pool = pools[_id];
         UserInfo memory user = users[_id][_user];
 
-        uint256 toHarvest = (user.share * pool.accRewardPerShare) /
+        pending =
+            (user.share * pool.accRewardPerShare) /
             SCALE -
             user.rewardDebt;
-        return toHarvest;
     }
 
     function addPool(address _rewardToken) external {
@@ -152,11 +152,19 @@ contract WeightedFarmingPool {
         }
     }
 
-    function stakedLiquidity(
+    /**
+     * @notice Deposit PRI-LP tokens
+     *
+     * @param _id     Farming pool id
+     * @param _token  PRI-LP token address
+     * @param _amount PRI-LP token amount
+     * @param _user   Real user address
+     */
+    function deposit(
         uint256 _id,
-        uint256 _amount,
         address _token,
-        address _msgsender
+        uint256 _amount,
+        address _user
     ) external {
         require(_amount > 0, "Zero amount");
         require(_id <= counter, "Pool not exists");
@@ -168,7 +176,7 @@ contract WeightedFarmingPool {
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
-        UserInfo storage user = users[_id][_msgsender];
+        UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
             uint256 pending = (user.share * pool.accRewardPerShare) /
@@ -177,11 +185,11 @@ contract WeightedFarmingPool {
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
-                _msgsender,
+                _user,
                 pending
             );
 
-            emit Harvest(_id, _msgsender, _msgsender, actualReward);
+            emit Harvest(_id, _user, _user, actualReward);
         }
 
         uint256 index = _getIndex(_id, _token);
@@ -192,11 +200,11 @@ contract WeightedFarmingPool {
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
 
-    function unstakedLiquidity(
+    function withdraw(
         uint256 _id,
-        uint256 _amount,
         address _token,
-        address _msgsender
+        uint256 _amount,
+        address _user
     ) external {
         require(_amount > 0, "Zero amount");
         require(_id <= counter, "Pool not exists");
@@ -208,7 +216,7 @@ contract WeightedFarmingPool {
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
-        UserInfo storage user = users[_id][_msgsender];
+        UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
             uint256 pending = (user.share * pool.accRewardPerShare) /
@@ -217,11 +225,11 @@ contract WeightedFarmingPool {
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
-                _msgsender,
+                _user,
                 pending
             );
 
-            emit Harvest(_id, _msgsender, _msgsender, actualReward);
+            emit Harvest(_id, _user, _user, actualReward);
         }
 
         uint256 index = _getIndex(_id, _token);

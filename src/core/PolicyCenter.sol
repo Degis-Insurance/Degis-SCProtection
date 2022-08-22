@@ -200,18 +200,6 @@ contract PolicyCenter is
         return amount;
     }
 
-    function calculateReward(
-        uint256 _poolId,
-        uint256 _amount,
-        uint256 _debt
-    ) public view returns (uint256) {
-        IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
-        // Calculate reward amount based on user's liquidity and acc reward per share.
-        uint256 reward = (_amount * pool.accumulatedRewardPerShare()) - _debt;
-
-        return reward;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -379,7 +367,12 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Stake Protection Pool LP (PRO-LP) to priority pools
+     * @notice Stake Protection Pool LP (PRO-LP) into priority pools
+     *         And automatically stake the PRI-LP tokens into weighted farming pool
+     *         With this function, no need for approval of PRI-LP tokens
+     *
+     *         If you want to hold the PRI-LP tokens for other usage
+     *         Call "stakeLiquidityWithoutFarming"
      *
      * @param _poolId Pool id
      * @param _amount Amount of PRO-LP tokens to stake
@@ -391,23 +384,46 @@ contract PolicyCenter is
         require(_amount > 0, "Zero amount");
 
         address pool = priorityPools[_poolId];
-        address token = tokenByPoolId[_poolId];
 
         // Update status and mint Prority Pool LP tokens
-        IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
+        // TODO: Directly mint pri-lp tokens to policy center
+        // TODO: And send the PRI-LP tokens to weighted farming pool
+        // TODO: no need for approval
+        address lpToken = IPriorityPool(pool).stakedLiquidity(
+            _amount,
+            address(this)
+        );
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
 
-        IWeightedFarmingPool(weightedFarmingPool).stakedLiquidity(
+        IWeightedFarmingPool(weightedFarmingPool).deposit(
             _poolId,
+            lpToken,
             _amount,
-            token,
             msg.sender
         );
+        IERC20(lpToken).transfer(weightedFarmingPool, _amount);
+    }
+
+    function stakeLiquidityWithoutFarming(uint256 _poolId, uint256 _amount)
+        public
+        poolExists(_poolId)
+    {
+        require(_amount > 0, "Zero amount");
+
+        address pool = priorityPools[_poolId];
+
+        // Mint PRI-LP tokens to the user directly
+        IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
+        IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
     }
 
     /**
      * @notice Unstake Protection Pool LP from priority pools
      *         There may be different generations of priority lp tokens
+     *
+     *         This function will first remove the PRI-LP token from farming pool
+     *         Ensure that your PRI-LP tokens are inside the farming pool
+     *         If the PRI-LP tokens are in your own wallet, use "unstakeLiquidityWithoutFarming"
      *
      * @param _poolId     Pool id
      * @param _priorityLP Priority lp token address to withdraw
@@ -420,17 +436,32 @@ contract PolicyCenter is
     ) external poolExists(_poolId) {
         require(_amount > 0, "Zero amount");
 
-        address token = tokenByPoolId[_poolId];
-        // burns the full amount of liquidity tokens in users account from priority pool
+        // First remove the PRI-LP token from weighted farming pool
+        IWeightedFarmingPool(weightedFarmingPool).withdraw(
+            _poolId,
+            _priorityLP,
+            _amount,
+            msg.sender
+        );
+
+        // Burn PRI-LP tokens and give back PRO-LP tokens
         IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
             _priorityLP,
             _amount,
             msg.sender
         );
-        IWeightedFarmingPool(weightedFarmingPool).unstakedLiquidity(
-            _poolId,
+    }
+
+    function unstakeLiquidityWithoutFarming(
+        uint256 _poolId,
+        address _priorityLP,
+        uint256 _amount
+    ) external poolExists(_poolId) {
+        require(_amount > 0, "Zero amount");
+
+        IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
+            _priorityLP,
             _amount,
-            token,
             msg.sender
         );
     }
@@ -465,7 +496,7 @@ contract PolicyCenter is
             _poolId
         );
 
-        emit Payout(amount, msg.sender);
+        emit PayoutClaimed(amount, msg.sender);
     }
 
     // ---------------------------------------------------------------------------------------- //
