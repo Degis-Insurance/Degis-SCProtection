@@ -146,8 +146,8 @@ contract ProposalCenter is ProtocolProtection {
         IIncidentReport(incidentReport).vote(
             _reportId,
             _isFor,
-            _amount
-            // msg.sender
+            _amount,
+            msg.sender
         );
     }
 
@@ -178,20 +178,21 @@ contract ProposalCenter is ProtocolProtection {
      *         user notifies that pool should be liquidated.
      *         1000 DEG tokens are held by the proposal center
      *         until report is deemed truthful.
+     *
      * @param _poolId   Id of the pool to be reported
      * @param _payout   Amount of payout to be distributed if vote is truthful
      */
     function reportPool(uint256 _poolId, uint256 _payout) public {
-        IIncidentReport(incidentReport).report(_poolId, _payout);
+        IIncidentReport(incidentReport).report(_poolId, _payout, msg.sender);
     }
 
     /**
-    @notice Proposes a new protocol to be insured.
-
-    @param _name                Name of the protocol to be insured.
-    @param _protocolToken       Address of token to receive have a new insurance pool.
-    @param _maxCapacity         Maximum capacity of the insurance pool in native token.
-    @param _priceRatio          Price of the policy in native token.
+     * @notice Proposes a new protocol to be insured.
+     *
+     * @param _name                Name of the protocol to be insured.
+     * @param _protocolToken       Address of token to receive have a new insurance pool.
+     * @param _maxCapacity         Maximum capacity of the insurance pool in native token.
+     * @param _priceRatio          Price of the policy in native token.
     */
     function proposePool(
         string memory _name,
@@ -257,9 +258,9 @@ contract ProposalCenter is ProtocolProtection {
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
         if (report.result == vote.choice) {
-            IIncidentReport(incidentReport).claimReward(_reportId);
+            IIncidentReport(incidentReport).claimReward(_reportId, msg.sender);
         } else {
-            IIncidentReport(incidentReport).payDebt(_reportId);
+            IIncidentReport(incidentReport).payDebt(_reportId, msg.sender);
         }
     }
 
@@ -269,6 +270,6 @@ contract ProposalCenter is ProtocolProtection {
      * @param _proposalId Proposal id
      */
     function resolveProposalVote(uint256 _proposalId) external {
-        IOnboardProposal(onboardProposal).claim(_proposalId);
+        IOnboardProposal(onboardProposal).claim(_proposalId, msg.sender);
     }
 }

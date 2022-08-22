@@ -149,6 +149,7 @@ contract OnboardProposal is
 
     /**
      * @notice Start a new proposal
+     *         Only callable through the proposal center
      *
      * @param _name             New project name
      * @param _token            Native token address
@@ -159,41 +160,11 @@ contract OnboardProposal is
         string calldata _name,
         address _token,
         uint256 _maxCapacity,
-        uint256 _basePremiumRatio // 10000 == 100% premium annual cost
+        uint256 _basePremiumRatio, // 10000 == 100% premium annual cost
+        address _user
     ) external {
-        require(
-            !priorityPoolFactory.tokenRegistered(_token),
-            "Protocol already protected"
-        );
-        require(
-            _maxCapacity > 0 && _maxCapacity <= MAX_CAPACITY_RATIO,
-            "Wrong capacity range"
-        );
-        require(_basePremiumRatio < 10000, "Wrong premium ratio");
-        require(!proposed[_token], "Protocol already proposed");
-
-        // Burn degis tokens to start a proposal
-        deg.burnDegis(msg.sender, REPORT_THRESHOLD);
-
-        proposed[_token] = true;
-
-        uint256 currentCounter = ++proposalCounter;
-        // Record the proposal info
-        Proposal storage proposal = proposals[currentCounter];
-        proposal.protocolToken = _token;
-        proposal.proposer = msg.sender;
-        proposal.proposeTimestamp = block.timestamp;
-        proposal.status = PENDING_STATUS;
-        proposal.maxCapacity = _maxCapacity;
-        proposal.basePremiumRatio = _basePremiumRatio;
-
-        emit NewProposal(
-            _name,
-            _token,
-            msg.sender,
-            _maxCapacity,
-            _basePremiumRatio
-        );
+        require(msg.sender == proposalCenter, "Not proposal center");
+        _propose(_name, _token, _maxCapacity, _basePremiumRatio, _user);
     }
 
     /**
@@ -232,6 +203,7 @@ contract OnboardProposal is
 
     /**
      * @notice Vote for a proposal
+     *         Only callable through the proposal center
      *
      * @param _id     Proposal id
      * @param _isFor  Voting choice
@@ -240,40 +212,11 @@ contract OnboardProposal is
     function vote(
         uint256 _id,
         uint256 _isFor,
-        uint256 _amount
+        uint256 _amount,
+        address _user
     ) external {
-        Proposal storage proposal = proposals[_id];
-
-        // Should be manually switched on the voting process
-        require(proposal.status == VOTING_STATUS, "Not voting status");
-        require(_isFor == 1 || _isFor == 2, "Wrong choice");
-        require(
-            !_passedVotingPeriod(proposal.voteTimestamp),
-            "Passed voting period"
-        );
-
-        _enoughVeDEG(msg.sender, _amount);
-
-        // Lock vedeg until this report is settled
-        veDeg.lockVeDEG(msg.sender, _amount);
-
-        // Record the user's choice
-        UserVote storage userVote = votes[msg.sender][_id];
-        if (userVote.amount > 0) {
-            require(userVote.choice == _isFor, "Can not choose both sides");
-        } else {
-            userVote.choice = _isFor;
-        }
-        userVote.amount += _amount;
-
-        // Record the vote for this report
-        if (_isFor == 1) {
-            proposal.numFor += _amount;
-        } else {
-            proposal.numAgainst += _amount;
-        }
-
-        emit ProposalVoted(_id, msg.sender, _isFor, _amount);
+        require(msg.sender == proposalCenter, "Not proposal center");
+        _vote(_id, _isFor, _amount, _user);
     }
 
     /**
@@ -320,24 +263,131 @@ contract OnboardProposal is
      *
      * @param _id Proposal id
      */
-    function claim(uint256 _id) external {
-        Proposal storage proposal = proposals[_id];
-
-        require(proposal.status == SETTLED_STATUS, "Not settled status");
-
-        UserVote storage userVote = votes[msg.sender][_id];
-        // Unlock the veDEG used for voting
-        // No reward / punishment
-        veDeg.unlockVeDEG(msg.sender, userVote.amount);
-
-        userVote.claimed = true;
-
-        emit Claimed(_id, msg.sender, userVote.amount);
+    function claim(uint256 _id, address _user) external {
+        require(msg.sender == proposalCenter, "Not proposal center");
+        _claim(_id, _user);
     }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Start a new proposal
+     *
+     * @param _name             New project name
+     * @param _token            Native token address
+     * @param _maxCapacity      Max capacity ratio for the project pool
+     * @param _basePremiumRatio Base annual ratio of the premium
+     */
+    function _propose(
+        string calldata _name,
+        address _token,
+        uint256 _maxCapacity,
+        uint256 _basePremiumRatio, // 10000 == 100% premium annual cost
+        address _user
+    ) internal {
+        require(
+            !priorityPoolFactory.tokenRegistered(_token),
+            "Protocol already protected"
+        );
+        require(
+            _maxCapacity > 0 && _maxCapacity <= MAX_CAPACITY_RATIO,
+            "Wrong capacity range"
+        );
+        require(_basePremiumRatio < 10000, "Wrong premium ratio");
+        require(!proposed[_token], "Protocol already proposed");
+
+        // Burn degis tokens to start a proposal
+        deg.burnDegis(_user, REPORT_THRESHOLD);
+
+        proposed[_token] = true;
+
+        uint256 currentCounter = ++proposalCounter;
+        // Record the proposal info
+        Proposal storage proposal = proposals[currentCounter];
+        proposal.protocolToken = _token;
+        proposal.proposer = _user;
+        proposal.proposeTimestamp = block.timestamp;
+        proposal.status = PENDING_STATUS;
+        proposal.maxCapacity = _maxCapacity;
+        proposal.basePremiumRatio = _basePremiumRatio;
+
+        emit NewProposal(
+            _name,
+            _token,
+            _user,
+            _maxCapacity,
+            _basePremiumRatio
+        );
+    }
+
+    /**
+     * @notice Vote for a proposal
+     *
+     * @param _id     Proposal id
+     * @param _isFor  Voting choice
+     * @param _amount Amount of veDEG to vote
+     */
+    function _vote(
+        uint256 _id,
+        uint256 _isFor,
+        uint256 _amount,
+        address _user
+    ) internal {
+        Proposal storage proposal = proposals[_id];
+
+        // Should be manually switched on the voting process
+        require(proposal.status == VOTING_STATUS, "Not voting status");
+        require(_isFor == 1 || _isFor == 2, "Wrong choice");
+        require(
+            !_passedVotingPeriod(proposal.voteTimestamp),
+            "Passed voting period"
+        );
+
+        _enoughVeDEG(_user, _amount);
+
+        // Lock vedeg until this report is settled
+        veDeg.lockVeDEG(_user, _amount);
+
+        // Record the user's choice
+        UserVote storage userVote = votes[_user][_id];
+        if (userVote.amount > 0) {
+            require(userVote.choice == _isFor, "Can not choose both sides");
+        } else {
+            userVote.choice = _isFor;
+        }
+        userVote.amount += _amount;
+
+        // Record the vote for this report
+        if (_isFor == 1) {
+            proposal.numFor += _amount;
+        } else {
+            proposal.numAgainst += _amount;
+        }
+
+        emit ProposalVoted(_id, _user, _isFor, _amount);
+    }
+
+    /**
+     * @notice Claim back veDEG after voting result settled
+     *
+     * @param _id Proposal id
+     */
+    function _claim(uint256 _id, address _user) internal {
+        Proposal storage proposal = proposals[_id];
+
+        require(proposal.status == SETTLED_STATUS, "Not settled status");
+
+        UserVote storage userVote = votes[_user][_id];
+        // Unlock the veDEG used for voting
+        // No reward / punishment
+        veDeg.unlockVeDEG(_user, userVote.amount);
+
+        userVote.claimed = true;
+
+        emit Claimed(_id, _user, userVote.amount);
+    }
 
     /**
      * @notice Get the final voting result

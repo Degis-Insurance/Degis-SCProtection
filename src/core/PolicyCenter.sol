@@ -379,10 +379,10 @@ contract PolicyCenter is
     }
 
     /**
-     * @notice Stake Protection Pool LP to priority pools
+     * @notice Stake Protection Pool LP (PRO-LP) to priority pools
      *
      * @param _poolId Pool id
-     * @param _amount Amount of LP tokens to stake
+     * @param _amount Amount of PRO-LP tokens to stake
      */
     function stakeLiquidity(uint256 _poolId, uint256 _amount)
         public
@@ -392,15 +392,17 @@ contract PolicyCenter is
 
         address pool = priorityPools[_poolId];
         address token = tokenByPoolId[_poolId];
+
         // Update status and mint Prority Pool LP tokens
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
+        IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+
         IWeightedFarmingPool(weightedFarmingPool).stakedLiquidity(
             _poolId,
             _amount,
             token,
             msg.sender
         );
-        IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
     }
 
     /**

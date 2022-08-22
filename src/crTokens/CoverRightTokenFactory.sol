@@ -73,9 +73,9 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     /**
      * @notice Deploy function with create2
-     * @param code Byte code of the contract (creation code)
-     * @param salt Salt for the deployment
-     * @return addr The deployed contract address
+     * @param code      Byte code of the contract (creation code)
+     * @param salt      Salt for the deployment
+     * @return addr     The deployed contract address
      */
     function _deploy(bytes memory code, bytes32 salt)
         internal

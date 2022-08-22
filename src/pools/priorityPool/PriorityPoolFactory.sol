@@ -26,12 +26,6 @@ import "../../util/OwnableWithoutContext.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "./PriorityPoolFactoryDependencies.sol";
-
-import "../../util/OwnableWithoutContext.sol";
-
-import "../../interfaces/ExternalTokenDependencies.sol";
-
 import "./PriorityPool.sol";
 
 /**
@@ -51,9 +45,9 @@ import "./PriorityPool.sol";
  *
  */
 contract PriorityPoolFactory is
-    PriorityPoolFactoryDependencies,
     ExternalTokenDependencies,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    PriorityPoolFactoryDependencies
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -72,7 +66,9 @@ contract PriorityPoolFactory is
     mapping(address => uint256) public poolAddressToId;
 
     uint256 public poolCounter;
-    uint256 public sumOfMaxCapacities;
+
+    // Total max capacity
+    uint256 public totalMaxCapacity;
 
     // Whether a pool is already dynamic
     mapping(address => bool) public dynamic;
@@ -102,6 +98,8 @@ contract PriorityPoolFactory is
         uint256 dynamicPoolCounter
     );
 
+    event MaxCapacityUpdated(uint256 totalMaxCapacity);
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -110,17 +108,15 @@ contract PriorityPoolFactory is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool,
-        address _payoutPool
+        address _protectionPool
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
         _setProtectionPool(_protectionPool);
+
         poolRegistered[_protectionPool] = true;
         tokenRegistered[_shield] = true;
-
-        payoutPool = _payoutPool;
 
         // Protection pool as pool 0
         pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
@@ -149,24 +145,6 @@ contract PriorityPoolFactory is
         }
 
         return list;
-    }
-
-    /**
-     * @notice Get total max capacity
-     *
-     * @return capacity Total capacity
-     */
-    function totalMaxCapacity() external view returns (uint256 capacity) {
-        uint256 poolAmount = poolCounter + 1;
-
-        // Not count the Protection Pool
-        for (uint256 i = 1; i < poolAmount; ) {
-            capacity += pools[i].maxCapacity;
-
-            unchecked {
-                ++i;
-            }
-        }
     }
 
     /**
@@ -235,40 +213,37 @@ contract PriorityPoolFactory is
     ) public returns (address) {
         require(
             msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor contract can create a new insurance pool"
+            "Only owner or executor"
         );
         require(!tokenRegistered[_protocolToken], "Already registered");
 
-        // retrieve reinsurance pool liquidity
-        uint256 protectionPoolLiquidity = IProtectionPool(protectionPool)
-            .totalSupply();
-
-        // check if reinsurance pool can cover all max capacities
-        // TODO: REQUIREMENT REMOVED FOR TESTING PURPOSES
-        // require(
-        //     protectionPoolLiquidity >= _maxCapacity + sumOfMaxCapacities,
-        //     "Insufficient liquidity"
-        // );
-
-        // add new pool max capacity to sum of max capacities
-        sumOfMaxCapacities += _maxCapacity;
+        // Add new pool max capacity to sum of max capacities
+        totalMaxCapacity += _maxCapacity;
 
         bytes32 salt = keccak256(abi.encodePacked(_name));
 
         uint256 currentPoolId = ++poolCounter;
 
         bytes memory bytecode = _getPriorityPoolBytecode(
-            weightedFarmingPool,
+            currentPoolId,
+            _name,
             _protocolToken,
             _maxCapacity,
-            _name,
             _basePremiumRatio,
             owner(),
-            currentPoolId
+            weightedFarmingPool
         );
 
         // Finish deployment and get the address
         address newPoolAddress = _deploy(bytecode, salt);
+
+        pools[currentPoolId] = PoolInfo(
+            _name,
+            newPoolAddress,
+            _protocolToken,
+            _maxCapacity,
+            _basePremiumRatio
+        );
 
         tokenRegistered[_protocolToken] = true;
         poolRegistered[newPoolAddress] = true;
@@ -281,21 +256,14 @@ contract PriorityPoolFactory is
             currentPoolId
         );
 
-        // Register token in premium reward pool
+        // Register reward token in premium reward pool
         IPremiumRewardPool(premiumRewardPool).register(
             newPoolAddress,
             _protocolToken
         );
 
+        // Add reward token in farming pool
         IWeightedFarmingPool(weightedFarmingPool).addPool(_protocolToken);
-
-        pools[currentPoolId] = PoolInfo(
-            _name,
-            newPoolAddress,
-            _protocolToken,
-            _maxCapacity,
-            _basePremiumRatio
-        );
 
         emit PoolCreated(
             currentPoolId,
@@ -330,6 +298,31 @@ contract PriorityPoolFactory is
         emit DynamicPoolUpdate(_poolId, msg.sender, dynamicPoolCounter);
     }
 
+    function updateMaxCapaity(bool _isUp, uint256 _diff) external {
+        require(poolRegistered[msg.sender], "Only priority pool");
+
+        if (_isUp) {
+            totalMaxCapacity += _diff;
+        } else totalMaxCapacity -= _diff;
+
+        emit MaxCapacityUpdated(totalMaxCapacity);
+    }
+
+    function deregisterAddress(address _poolAddress) external {
+        require(
+            msg.sender == owner() || msg.sender == executor,
+            "Only owner or executor contract can deregister an address"
+        );
+        require(poolRegistered[_poolAddress], "Address is not registered");
+
+        uint256 poolId = poolAddressToId[_poolAddress];
+
+        address protocolToken = pools[poolId].protocolToken;
+
+        tokenRegistered[protocolToken] = false;
+        poolRegistered[_poolAddress] = false;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -337,39 +330,39 @@ contract PriorityPoolFactory is
     /**
      * @notice Get bytecode for insurance pool creation according to parameters
      *
-     * @param _protocolToken    Address of the protocol token to insure
-     * @param _maxCapacity      Max coverage capacity
-     * @param _name             Name of the pool
-     * @param _baseRatio        Policy price
-     * @param _owner            Owner of new pool
-     * @param _poolId           Current pool id
+     * @param _poolId              Current pool id
+     * @param _name                Name of the pool
+     * @param _protocolToken       Address of the protocol token to insure
+     * @param _maxCapacity         Max coverage capacity
+     * @param _baseRatio           Policy price
+     * @param _owner               Owner of new pool
+     * @param _weightedFarmingPool Weighted farming pool address
      *
-     * @return bytecode Creation bytecode
+     * @return bytecode Creation bytecode with parameters
      */
     function _getPriorityPoolBytecode(
-        address _weightedFarmingPool,
+        uint256 _poolId,
+        string memory _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _name,
         uint256 _baseRatio,
         address _owner,
-        uint256 _poolId
+        address _weightedFarmingPool
     ) internal view virtual returns (bytes memory) {
         bytes memory bytecode = type(PriorityPool).creationCode;
 
-        // Encodepacked the parameters
-        // The minter is set to be the policyCore address
+        // Encode the parameters
         return
             abi.encodePacked(
                 bytecode,
                 abi.encode(
-                    _weightedFarmingPool,
+                    _poolId,
+                    _name,
                     _protocolToken,
                     _maxCapacity,
-                    _name,
                     _baseRatio,
                     _owner,
-                    _poolId
+                    _weightedFarmingPool
                 )
             );
     }
@@ -392,14 +385,5 @@ contract PriorityPoolFactory is
                 revert(0, 0)
             }
         }
-    }
-
-    function deregisterAddress(address _tokenAddress) external {
-        require(
-            msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor contract can deregister an address"
-        );
-        require(tokenRegistered[_tokenAddress], "Address is not registered");
-        tokenRegistered[_tokenAddress] = false;
     }
 }

@@ -93,6 +93,8 @@ contract ProtectionPool is
 
     event LiquidityRemovedWhenClaimed(address pool, uint256 amount);
 
+    event RewardUpdated(uint256 totalReward);
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -206,7 +208,7 @@ contract ProtectionPool is
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getLatestPrice() external returns(uint256) {
+    function getLatestPrice() external returns (uint256) {
         _updatePrice();
         return price;
     }
@@ -222,7 +224,6 @@ contract ProtectionPool is
         external
         onlyPolicyCenter
     {
-        // TODO: fix update reward
         _updateReward();
         _updatePrice();
 
@@ -335,12 +336,17 @@ contract ProtectionPool is
             totalSupply();
     }
 
+    /**
+     * @notice Update reward status
+     */
     function _updateReward() internal {
         uint256 currentTime = block.timestamp;
 
+        // Last reward year & month & day
         (uint256 lastY, uint256 lastM, uint256 lastD) = lastRewardTimestamp
             .timestampToDate();
 
+        // Current year & month & day
         (uint256 currentY, uint256 currentM, uint256 currentD) = currentTime
             .timestampToDate();
 
@@ -396,6 +402,8 @@ contract ProtectionPool is
                 }
             }
         }
+
+        emit RewardUpdated(totalReward);
     }
 
     /**

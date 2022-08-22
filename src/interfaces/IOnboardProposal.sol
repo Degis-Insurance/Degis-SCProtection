@@ -34,9 +34,7 @@ interface IOnboardProposal {
         uint256 amount
     );
 
-    function claim(uint256 _proposalId) external;
-
-    function claim(uint256 _proposalId, address _msgsender) external;
+    function claim(uint256 _proposalId, address _user) external;
 
     function closeProposal(uint256 _proposalId) external;
 
@@ -84,15 +82,8 @@ interface IOnboardProposal {
         string memory _name,
         address _token,
         uint256 _maxCapacity,
-        uint256 _priceRatio
-    ) external;
-
-    function propose(
-        string memory _name,
-        address _token,
-        uint256 _maxCapacity,
         uint256 _priceRatio,
-        address _msgsender
+        address _user
     ) external;
 
     function protectionPool() external view returns (address);
@@ -127,15 +118,9 @@ interface IOnboardProposal {
     function veDeg() external view returns (address);
 
     function vote(
-        uint256 _proposalId,
-        uint256 _isFor,
-        uint256 _amount
-    ) external;
-
-    function vote(
         uint256 _reportId,
         uint256 _isFor,
         uint256 _amount,
-        address _msgsender
+        address _user
     ) external;
 }
