@@ -15,6 +15,6 @@ interface IPayoutPool {
         address _user,
         address _crToken,
         uint256 _poolId,
-        address _poolAddress
-    ) external returns (uint256);
+        uint256 _generation
+    ) external returns (uint256, uint256);
 }

@@ -68,7 +68,7 @@ contract PayoutPool {
         address _crToken,
         uint256 _poolId,
         uint256 _generation
-    ) external returns (uint256 newGenerationCRAmount) {
+    ) external returns (uint256 claimed, uint256 newGenerationCRAmount) {
         require(msg.sender == policyCenter, "Only policy center");
 
         Payout storage payout = payouts[_poolId][_generation];
@@ -90,10 +90,9 @@ contract PayoutPool {
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 
-        uint256 claimed = (claimable * coverIndex) / SCALE;
+        claimed = (claimable * coverIndex) / SCALE;
 
-        // Burn crTokens
-        ICoverRightToken(_crToken).burn(_poolId, _user, claimable);
+        
 
         IERC20(shield).transfer(_user, claimed);
 

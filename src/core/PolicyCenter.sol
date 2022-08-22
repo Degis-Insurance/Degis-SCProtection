@@ -404,28 +404,84 @@ contract PolicyCenter is
      * @notice Claim payout
      *         Need to use a specific crToken address as parameter
      *
-     * @param _poolId  Pool id
-     * @param _crToken Cover right token address
+     * @param _poolId     Pool id
+     * @param _crToken    Cover right token address
+     * @param _generation Generation of the priority pool
      */
-    function claimPayout(uint256 _poolId, address _crToken)
-        public
-        poolExists(_poolId)
-    {
+    function claimPayout(
+        uint256 _poolId,
+        address _crToken,
+        uint256 _generation
+    ) public poolExists(_poolId) {
         require(_poolId > 0, "Zero pool id");
 
-        (, address poolAddress, , , ) = IPriorityPoolFactory(
-            priorityPoolFactory
-        ).pools(_poolId);
+        (
+            string memory poolName,
+            address poolAddress,
+            ,
+            ,
+
+        ) = IPriorityPoolFactory(priorityPoolFactory).pools(_poolId);
 
         // Claim payout from payout pool
-        uint256 amount = IPayoutPool(payoutPool).claim(
-            msg.sender,
-            _crToken,
+        (uint256 claimed, uint256 newGenerationCRAmount) = IPayoutPool(
+            payoutPool
+        ).claim(msg.sender, _crToken, _poolId, _generation);
+
+        emit PayoutClaimed(claimed, msg.sender);
+
+        uint256 expiry = ICoverRightToken(_crToken).expiry();
+
+        // Check if the new generation crToken has been deployed
+        // If so, get the address
+        // If not, deploy the new generation cr token
+        address newCRToken = _checkNewCRToken(
             _poolId,
-            poolAddress
+            poolName,
+            expiry,
+            _generation++
+        );
+        ICoverRightToken(newCRToken).mint(
+            _poolId,
+            msg.sender,
+            newGenerationCRAmount
+        );
+    }
+
+    function _checkNewCRToken(
+        uint256 _poolId,
+        string memory _poolName,
+        uint256 _expiry,
+        uint256 _newGeneration
+    ) internal returns (address newCRToken) {
+        (uint256 year, uint256 month, ) = DateTimeLibrary.timestampToDate(
+            _expiry
         );
 
-        emit PayoutClaimed(amount, msg.sender);
+        newCRToken = _getCRTokenAddress(_poolId, _expiry, _newGeneration);
+
+        if (newCRToken == address(0)) {
+            // CR-JOE-2022-1-G1
+            string memory tokenName = string.concat(
+                "CR-",
+                _poolName,
+                "-",
+                year._toString(),
+                "-",
+                month._toString(),
+                "-G",
+                _newGeneration._toString()
+            );
+
+            newCRToken = ICoverRightTokenFactory(coverRightTokenFactory)
+                .deployCRToken(
+                    _poolName,
+                    _poolId,
+                    tokenName,
+                    _expiry,
+                    _newGeneration
+                );
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //
