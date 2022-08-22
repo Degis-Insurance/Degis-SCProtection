@@ -327,6 +327,12 @@ contract PolicyCenter is
         IERC20(lpToken).transfer(weightedFarmingPool, _amount);
     }
 
+    /**
+     * @notice Stake liquidity to priority pool without depositing into farming
+     *
+     * @param _poolId Pool id
+     * @param _amount Amount of PRO-LP amount
+     */
     function stakeLiquidityWithoutFarming(uint256 _poolId, uint256 _amount)
         public
         poolExists(_poolId)
@@ -375,6 +381,13 @@ contract PolicyCenter is
         );
     }
 
+    /**
+     * @notice Unstake liquidity without removing PRI-LP from farming
+     *
+     * @param _poolId     Pool id
+     * @param _priorityLP PRI-LP token address
+     * @param _amount     PRI-LP token amount to remove
+     */
     function unstakeLiquidityWithoutFarming(
         uint256 _poolId,
         address _priorityLP,
