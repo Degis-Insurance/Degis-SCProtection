@@ -66,8 +66,6 @@ interface IPriorityPoolFactory {
 
     function poolRegistered(address) external view returns (bool);
 
-    function proposalCenter() external view returns (address);
-
     function protectionPool() external view returns (address);
 
     function renounceOwnership() external;
@@ -81,8 +79,6 @@ interface IPriorityPoolFactory {
     function setPremiumRewardPool(address _premiumRewardPool) external;
 
     function setPolicyCenter(address _policyCenter) external;
-
-    function setProposalCenter(address _proposalCenter) external;
 
     function setWeightedFarmingPool(address _weightedFarmingPool) external;
 

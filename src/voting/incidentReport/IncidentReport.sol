@@ -185,10 +185,6 @@ contract IncidentReport is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
-    function setProposalCenter(address _proposalCenter) external onlyOwner {
-        proposalCenter = _proposalCenter;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //

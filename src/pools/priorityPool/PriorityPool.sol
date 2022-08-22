@@ -456,6 +456,8 @@ contract PriorityPool is
     function liquidatePool(uint256 _amount) external onlyExecutor {
         _retrievePayout(_amount);
 
+        _updateCurrentLPWeight();
+
         // Generation ++
         // Deploy the new generation lp token
         // Those who stake liquidity into this priority pool will be given the new lp token
@@ -672,6 +674,17 @@ contract PriorityPool is
             _amount,
             payoutRatio,
             address(this)
+        );
+    }
+
+    function _updateCurrentLPWeight() internal {
+        address lp = currentLPAddress();
+
+        // Update the farming pool with the new price index
+        IWeightedFarmingPool(weightedFarmingPool).updateWeight(
+            poolId,
+            lp,
+            priceIndex[lp]
         );
     }
 }
