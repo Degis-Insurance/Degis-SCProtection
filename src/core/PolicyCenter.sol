@@ -479,6 +479,7 @@ contract PolicyCenter is
 
     /**
      * @notice Claim payout
+     *         Need to use a specific crToken address as parameter
      *
      * @param _poolId  Pool id
      * @param _crToken Cover right token address
