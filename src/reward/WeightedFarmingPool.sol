@@ -153,12 +153,25 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Deposit PRI-LP tokens
-     *
-     * @param _id     Farming pool id
-     * @param _token  PRI-LP token address
-     * @param _amount PRI-LP token amount
-     * @param _user   Real user address
+     * @notice Deposit from Policy Center
+     *         No need for approval
+     */
+    function depositFromPolicyCenter(
+        uint256 _id,
+        address _token,
+        uint256 _amount,
+        address _user
+    ) external {
+        require(
+            msg.sender == policyCenter,
+            "Only policyCenter can call stakedLiquidity"
+        );
+
+        _deposit(_id, _token, _amount, _user);
+    }
+
+    /**
+     * @notice Directly deposit (need approval)
      */
     function deposit(
         uint256 _id,
@@ -166,12 +179,49 @@ contract WeightedFarmingPool {
         uint256 _amount,
         address _user
     ) external {
-        require(_amount > 0, "Zero amount");
-        require(_id <= counter, "Pool not exists");
+        _deposit(_id, _token, _amount, _user);
+
+        IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+    }
+
+    function withdrawFromPolicyCenter(
+        uint256 _id,
+        address _token,
+        uint256 _amount,
+        address _user
+    ) external {
         require(
             msg.sender == policyCenter,
             "Only policyCenter can call stakedLiquidity"
         );
+
+        _withdraw(_id, _token, _amount, _user);
+    }
+
+    function withdraw(
+        uint256 _id,
+        address _token,
+        uint256 _amount
+    ) external {
+        _withdraw(_id, _token, _amount, msg.sender);
+    }
+
+    /**
+     * @notice Deposit PRI-LP tokens
+     *
+     * @param _id     Farming pool id
+     * @param _token  PRI-LP token address
+     * @param _amount PRI-LP token amount
+     * @param _user   Real user address
+     */
+    function _deposit(
+        uint256 _id,
+        address _token,
+        uint256 _amount,
+        address _user
+    ) internal {
+        require(_amount > 0, "Zero amount");
+        require(_id <= counter, "Pool not exists");
 
         updatePool(_id);
 
@@ -200,18 +250,14 @@ contract WeightedFarmingPool {
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
 
-    function withdraw(
+    function _withdraw(
         uint256 _id,
         address _token,
         uint256 _amount,
         address _user
-    ) external {
+    ) internal {
         require(_amount > 0, "Zero amount");
         require(_id <= counter, "Pool not exists");
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can call stakedLiquidity"
-        );
 
         updatePool(_id);
 
@@ -231,6 +277,8 @@ contract WeightedFarmingPool {
 
             emit Harvest(_id, _user, _user, actualReward);
         }
+
+        IERC20(_token).transfer(_user, _amount);
 
         uint256 index = _getIndex(_id, _token);
 
