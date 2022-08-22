@@ -157,6 +157,8 @@ contract PriorityPool is
         // Generation 1, price starts from 1 (SCALE)
 
         priceIndex[_deployNewGenerationLP()] = SCALE;
+
+        coverIndex = 10000;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -238,6 +240,8 @@ contract PriorityPool is
                 ++i;
             }
         }
+
+        covered = (covered * coverIndex) / 10000;
     }
 
     /**
@@ -505,7 +509,7 @@ contract PriorityPool is
         IWeightedFarmingPool(weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
-            coverIndex
+            SCALE
         );
         isLPToken[newLPAddress] = true;
 

@@ -31,4 +31,10 @@ interface IWeightedFarmingPool {
         uint256 _amount,
         address _user
     ) external;
+
+    function updateWeight(
+        uint256 _id,
+        address _token,
+        uint256 _newWeight
+    ) external;
 }

@@ -117,6 +117,18 @@ contract WeightedFarmingPool {
         emit NewTokenAdded(_id, _token, _weight);
     }
 
+    function updateWeight(
+        uint256 _id,
+        address _token,
+        uint256 _newWeight
+    ) external {
+        updatePool(_id);
+        
+        uint256 index = _getIndex(_id, _token);
+
+        pools[_id].weight[index] = _newWeight;
+    }
+
     function setWeight(uint256 _id, uint256[] calldata weights) external {
         PoolInfo storage pool = pools[_id];
 
