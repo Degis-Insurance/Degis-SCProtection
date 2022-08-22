@@ -26,7 +26,7 @@ abstract contract PolicyCenterDependencies {
     // TODO: USDC address
     address constant USDC = address(0x10);
 
-    uint256 constant SLIPPAGE = 1;
+    uint256 constant SLIPPAGE = 10;
 
     address public executor;
     address public protectionPool;

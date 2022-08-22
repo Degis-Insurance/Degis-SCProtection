@@ -5,6 +5,7 @@ pragma solidity ^0.8.13;
 import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
 import "../interfaces/IVeDEG.sol";
+import "../interfaces/IPriorityPool.sol";
 
 /**
  * @notice Payout Pool
@@ -23,7 +24,6 @@ contract PayoutPool {
 
     address public shield;
 
-    uint256 public payoutCounter;
     address public crFactory;
 
     address public policyCenter;
@@ -33,42 +33,71 @@ contract PayoutPool {
         uint256 remaining;
         uint256 endTiemstamp;
         uint256 ratio;
+        address priorityPool;
     }
-    // Payout id => Payout info
-    mapping(uint256 => Payout) public payouts;
+    // Pool id => Generation => Payout
+    mapping(uint256 => mapping(uint256 => Payout)) public payouts;
 
-    function newPayout(uint256 _amount, uint256 _ratio) external {
-        uint256 currentPayoutId = ++payoutCounter;
-        Payout storage payout = payouts[currentPayoutId];
+    event NewPayout(
+        uint256 _poolId,
+        uint256 _generation,
+        uint256 _amount,
+        uint256 _ratio
+    );
+
+    function newPayout(
+        uint256 _poolId,
+        uint256 _generation,
+        uint256 _amount,
+        uint256 _ratio,
+        address _poolAddress
+    ) external {
+        Payout storage payout = payouts[_poolId][_generation];
 
         payout.amount = _amount;
         payout.endTiemstamp = block.timestamp + CLAIM_PERIOD;
         payout.ratio = _ratio;
+        payout.priorityPool = _poolAddress;
+
+        emit NewPayout(_poolId, _generation, _amount, _ratio);
     }
 
     // Claim the payout with crTokens
     function claim(
         address _user,
         address _crToken,
-        uint256 _poolId
-    ) external returns (uint256 claimed) {
+        uint256 _poolId,
+        uint256 _generation
+    ) external returns (uint256 newGenerationCRAmount) {
         require(msg.sender == policyCenter, "Only policy center");
+
+        Payout storage payout = payouts[_poolId][_generation];
 
         uint256 expiry = ICoverRightToken(_crToken).expiry();
 
-        bytes32 salt = keccak256(abi.encodePacked(_poolId, expiry));
+        bytes32 salt = keccak256(
+            abi.encodePacked(_poolId, expiry, _generation)
+        );
         require(
-            ICoverRightTokenFactory(crFactory).deployed(salt),
+            ICoverRightTokenFactory(crFactory).saltToAddress(salt) == _crToken,
             "Wrong cr token"
         );
 
-        uint256 ava = ICoverRightToken(_crToken).getClaimableOf(msg.sender);
+        uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
+            _user
+        );
+        uint256 claimable = (claimableBalance * payout.ratio) / 10000;
 
-        // TODO: add remaining payout check
-        // TODO: how to store the payout id
-        uint256 id;
-        claimed = (ava * payouts[id].ratio) / SCALE;
+        uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
+
+        uint256 claimed = (claimable * coverIndex) / SCALE;
+
+        // Burn crTokens
+        ICoverRightToken(_crToken).burn(_poolId, _user, claimable);
 
         IERC20(shield).transfer(_user, claimed);
+
+        // Amount of new generation cr token to be minted
+        newGenerationCRAmount = claimableBalance - claimable;
     }
 }

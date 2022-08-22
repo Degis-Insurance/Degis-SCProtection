@@ -9,7 +9,7 @@ contract Treasury is ExternalTokenDependencies {
 
     address public executor;
 
-    uint256 public constant REPORTER_REWARD = 10;
+    uint256 public constant REPORTER_REWARD = 1000;
 
     mapping(uint256 => uint256) public poolIncome;
 
@@ -37,7 +37,7 @@ contract Treasury is ExternalTokenDependencies {
     function rewardReporter(uint256 _poolId, address _reporter) external {
         require(msg.sender == executor, "Only executor");
 
-        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 100;
+        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
 
         poolIncome[_poolId] -= amount;
         IERC20(shield).transfer(_reporter, amount);

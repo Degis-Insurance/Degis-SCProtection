@@ -136,10 +136,6 @@ contract OnboardProposal is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
-    function setProposalCenter(address _proposalCenter) external onlyOwner {
-        _setProposalCenter(_proposalCenter);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -157,11 +153,9 @@ contract OnboardProposal is
         string calldata _name,
         address _token,
         uint256 _maxCapacity,
-        uint256 _basePremiumRatio, // 10000 == 100% premium annual cost
-        address _user
+        uint256 _basePremiumRatio // 10000 == 100% premium annual cost
     ) external {
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _propose(_name, _token, _maxCapacity, _basePremiumRatio, _user);
+        _propose(_name, _token, _maxCapacity, _basePremiumRatio, msg.sender);
     }
 
     /**
@@ -209,11 +203,9 @@ contract OnboardProposal is
     function vote(
         uint256 _id,
         uint256 _isFor,
-        uint256 _amount,
-        address _user
+        uint256 _amount
     ) external {
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _vote(_id, _isFor, _amount, _user);
+        _vote(_id, _isFor, _amount, msg.sender);
     }
 
     /**
@@ -260,9 +252,8 @@ contract OnboardProposal is
      *
      * @param _id Proposal id
      */
-    function claim(uint256 _id, address _user) external {
-        require(msg.sender == proposalCenter, "Not proposal center");
-        _claim(_id, _user);
+    function claim(uint256 _id) external {
+        _claim(_id, msg.sender);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -310,13 +301,7 @@ contract OnboardProposal is
         proposal.maxCapacity = _maxCapacity;
         proposal.basePremiumRatio = _basePremiumRatio;
 
-        emit NewProposal(
-            _name,
-            _token,
-            _user,
-            _maxCapacity,
-            _basePremiumRatio
-        );
+        emit NewProposal(_name, _token, _user, _maxCapacity, _basePremiumRatio);
     }
 
     /**
@@ -427,7 +412,7 @@ contract OnboardProposal is
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
-        return _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 100;
+        return _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 10000;
     }
 
     /**

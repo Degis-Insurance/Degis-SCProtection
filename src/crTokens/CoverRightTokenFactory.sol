@@ -14,12 +14,15 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     mapping(bytes32 => address) public saltToAddress;
 
+    mapping(bytes32 => uint256) public generation;
+
     address public policyCenter;
 
     event NewCRTokenDeployed(
         uint256 poolId,
         string tokenName,
         uint256 expiry,
+        uint256 generation,
         address tokenAddress
     );
 
@@ -35,11 +38,14 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         string calldata _poolName,
         uint256 _poolId,
         string calldata _tokenName,
-        uint256 _expiry
+        uint256 _expiry,
+        uint256 _generation
     ) external returns (address newCRToken) {
         require(_expiry > 0, "Zero expiry date");
 
-        bytes32 salt = keccak256(abi.encodePacked(_poolId, _expiry));
+        bytes32 salt = keccak256(
+            abi.encodePacked(_poolId, _expiry, _generation)
+        );
 
         require(!deployed[salt], "already deployed");
         deployed[salt] = true;
@@ -48,26 +54,34 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
             _poolName,
             _poolId,
             _tokenName,
-            _expiry
+            _expiry,
+            _generation
         );
 
         newCRToken = _deploy(bytecode, salt);
         saltToAddress[salt] = newCRToken;
 
-        emit NewCRTokenDeployed(_poolId, _tokenName, _expiry, newCRToken);
+        emit NewCRTokenDeployed(
+            _poolId,
+            _tokenName,
+            _expiry,
+            _generation,
+            newCRToken
+        );
     }
 
     function _getCRTokenBytecode(
         string memory _poolName,
         uint256 _poolId,
         string memory _tokenName,
-        uint256 _expiry
+        uint256 _expiry,
+        uint256 _generation
     ) internal pure returns (bytes memory code) {
         bytes memory bytecode = type(CoverRightToken).creationCode;
 
         code = abi.encodePacked(
             bytecode,
-            abi.encode(_tokenName, _poolId, _poolName, _expiry)
+            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation)
         );
     }
 

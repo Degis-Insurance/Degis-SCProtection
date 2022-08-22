@@ -38,7 +38,7 @@ import "forge-std/console.sol";
  * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
  *
  * @notice Priority pool is used for protecting a specific project
- *         Each priority pool has a maxCapacity (0 ~ 100%) that it can cover
+ *         Each priority pool has a maxCapacity (0 ~ 10,000 <=> 0 ~ 100%) that it can cover
  *
  *         When liquidity providers join a priority pool,
  *         they need to transfer their RP_LP token to this insurance pool.
@@ -245,7 +245,7 @@ contract PriorityPool is
      *         Min requirement * capacity ratio = active covered
      */
     function minAssetRequirement() public view returns (uint256) {
-        return (activeCovered() * 100) / maxCapacity;
+        return (activeCovered() * 10000) / maxCapacity;
     }
 
     /**
@@ -501,6 +501,7 @@ contract PriorityPool is
         newLPAddress = address(priorityPoolToken);
         lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
+        // TODO: wrong
         IWeightedFarmingPool(weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
@@ -661,6 +662,12 @@ contract PriorityPool is
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
         uint256 payoutRatio = (_amount * SCALE) / activeCovered();
 
-        IPayoutPool(payoutPool).newPayout(_amount, payoutRatio);
+        IPayoutPool(payoutPool).newPayout(
+            poolId,
+            generation,
+            _amount,
+            payoutRatio,
+            address(this)
+        );
     }
 }
