@@ -31,6 +31,8 @@ interface IIncidentReport {
 
     function claimReward(uint256 _reportId) external;
 
+    function claimReward(uint256 _reportId, address _user) external;
+    
     function closeReport(uint256 _reportId) external;
 
     function deg() external view returns (address);
@@ -57,7 +59,7 @@ interface IIncidentReport {
 
     function owner() external view returns (address);
 
-    function payDebt(uint256 _reportId) external;
+    function payDebt(uint256 _reportId, address _user) external;
 
     function policyCenter() external view returns (address);
 
@@ -67,7 +69,7 @@ interface IIncidentReport {
 
     function renounceOwnership() external;
 
-    function report(uint256 _poolId, uint256 _payout) external;
+    function report(uint256 _poolId, uint256 _payout, address _user) external;
 
     function reportCounter() external view returns (uint256);
 
@@ -135,7 +137,8 @@ interface IIncidentReport {
     function vote(
         uint256 _reportId,
         uint256 _isFor,
-        uint256 _amount
+        uint256 _amount,
+        address _user
     ) external;
 
 

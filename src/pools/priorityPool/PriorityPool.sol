@@ -27,8 +27,6 @@ import "./PriorityPoolDependencies.sol";
 import "./PriorityPoolEventError.sol";
 import "./PriorityPoolToken.sol";
 
-import "../../interfaces/IPremiumRewardPool.sol";
-
 import "../../libraries/DateTime.sol";
 import "../../libraries/StringUtils.sol";
 
@@ -52,6 +50,13 @@ import "forge-std/console.sol";
  *         For liquidation process, the pool will first redeem Shield from protectionPool with the staked RP_LP tokens.
  *         If that is enough, no more redeeming.
  *         If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
+ *
+ *         Most of the functions need to be called through Policy Center:
+ *             1) When buying new covers: updateWhenBuy
+ *             2) When staking liquidity: stakedLiquidity
+ *             3) When unstaking liquidity: unstakedLiquidity
+ *             4)
+ *
  */
 contract PriorityPool is
     PriorityPoolEventError,
@@ -121,22 +126,22 @@ contract PriorityPool is
     // PRI-LP token amount * Price Index = PRO-LP token amount
     mapping(address => uint256) public priceIndex;
 
-    // Sum of total lp supply (including different generations)
-    uint256 public totalLPSupply;
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     constructor(
-        address _weightedFarmingPool,
+        uint256 _poolId,
+        string memory _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        string memory _name,
         uint256 _baseRatio,
         address _admin,
-        uint256 _poolId
+        address _weightedFarmingPool
     ) OwnableWithoutContext(_admin) {
+        poolId = _poolId;
+        poolName = _name;
+
         // token address insured by pool
         weightedFarmingPool = _weightedFarmingPool;
         insuredToken = _protocolToken;
@@ -145,14 +150,12 @@ contract PriorityPool is
 
         basePremiumRatio = _baseRatio;
 
-        poolId = _poolId;
-        poolName = _name;
-
         // TODO: change length
         maxLength = 3;
         minLength = 1;
+        
+        // Generation 1, price starts from 1 (SCALE)
 
-        // Generation 1, price starts from 1
         priceIndex[_deployNewGenerationLP()] = SCALE;
     }
 
@@ -177,6 +180,9 @@ contract PriorityPool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Get the current generation PRI-LP token address
+     */
     function currentLPAddress() public view returns (address) {
         return lpTokenAddress[generation];
     }
@@ -184,7 +190,7 @@ contract PriorityPool is
     /**
      * @notice Cost to buy a cover for a given period of time and amount of tokens
      *
-     * @param _amount        Amount being covered
+     * @param _amount        Amount being covered (Shield)
      * @param _coverDuration Cover length in month
      */
     function coverPrice(uint256 _amount, uint256 _coverDuration)
@@ -194,6 +200,7 @@ contract PriorityPool is
     {
         require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
 
+        // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
         (, , uint256 endTimestamp) = DateTimeLibrary._getExpiry(
@@ -201,7 +208,9 @@ contract PriorityPool is
             _coverDuration
         );
 
+        // Length in second
         length = endTimestamp - block.timestamp;
+        // Price depends on the real timestamp length
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
 
@@ -216,6 +225,7 @@ contract PriorityPool is
             .timestamp
             .timestampToDate();
 
+        // Only count the latest 3 months
         for (uint256 i; i < 3; ) {
             covered += coverInMonth[currentYear][currentMonth];
 
@@ -232,6 +242,7 @@ contract PriorityPool is
 
     /**
      * @notice Current minimum asset requirement for Protection Pool
+     *         Min requirement * capacity ratio = active covered
      */
     function minAssetRequirement() public view returns (uint256) {
         return (activeCovered() * 100) / maxCapacity;
@@ -239,10 +250,10 @@ contract PriorityPool is
 
     /**
      * @notice Get the dynamic premium ratio (annually)
-     *         Depends on the covers sold and liquidity amount
-     *         For the first 48 hours, use the base premium ratio
+     *         Depends on the covers sold and liquidity amount in all dynamic priority pools
+     *         For the first 7 days, use the base premium ratio
      *
-     * @param _coverAmount New cover amount being bought
+     * @param _coverAmount New cover amount (shield) being bought
      *
      * @return ratio The dynamic ratio
      */
@@ -251,6 +262,7 @@ contract PriorityPool is
         view
         returns (uint256 ratio)
     {
+        // Time passed since this pool started
         uint256 fromStart = block.timestamp - startTime;
 
         // First 7 days use base ratio
@@ -293,8 +305,23 @@ contract PriorityPool is
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setMaxCapacity(uint256 _maxCapacity) external onlyOwner {
+    function setMaxCapacity(bool _isUp, uint256 _maxCapacity)
+        external
+        onlyOwner
+    {
         maxCapacity = _maxCapacity;
+
+        uint256 diff;
+        if (_isUp) {
+            diff = _maxCapacity - maxCapacity;
+        } else {
+            diff = maxCapacity - _maxCapacity;
+        }
+
+        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
+            _isUp,
+            diff
+        );
     }
 
     function setExecutor(address _executor) external onlyOwner {
@@ -303,13 +330,6 @@ contract PriorityPool is
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
-    }
-
-    function setPremiumRewardPool(address _premiumRewardPool)
-        external
-        onlyOwner
-    {
-        _setPremiumRewardPool(_premiumRewardPool);
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
@@ -347,21 +367,22 @@ contract PriorityPool is
         whenNotPaused
         onlyPolicyCenter
     {
-        // Check whether this priority should be dynamic
+        // Check whether this priority pool should be dynamic
         // If so, update it
         _updateDynamic();
 
         // Mint current generation lp tokens to the provider
+        // PRI-LP amount always 1:1 to PRO-LP
         _mintLP(_provider, _amount);
         emit LiquidityProvision(_amount, _provider);
     }
 
     /**
-     * @notice Remove liquidity from insurance pool
+     * @notice Remove liquidity from priority pool
      *         Only callable through policyCenter
      *
-     * @param _lpToken  Address of lp token
-     * @param _amount   Amount of liquidity (current generation lp) to remove
+     * @param _lpToken  Address of PRI-LP token
+     * @param _amount   Amount of liquidity (PRI-LP) to remove
      * @param _provider Provider address
      */
     function unstakedLiquidity(
@@ -371,9 +392,11 @@ contract PriorityPool is
     ) external whenNotPaused onlyPolicyCenter {
         require(isLPToken[_lpToken], "Wrong lp token");
 
+        // Check whether this priority pool should be dynamic
+        // If so, update it
         _updateDynamic();
 
-        // Burn current genration lp tokens to the provider
+        // Burn PRI-LP tokens and transfer PRO-LP tokens back
         _burnLP(_lpToken, _provider, _amount);
         emit LiquidityRemoved(_amount, _provider);
     }
@@ -400,6 +423,153 @@ contract PriorityPool is
 
         // Update the weighted farming pool speed for this priority pool
         _updateWeightedFarmingSpeed(_length, _premium / _timestampLength);
+    }
+
+    /**
+     * @notice Pause this pool
+     *
+     * @param _paused True to pause, false to unpause
+     */
+    function pausePriorityPool(bool _paused) external {
+        require(
+            (msg.sender == owner()) || (msg.sender == incidentReport),
+            "Only owner or Incident Report can call this function"
+        );
+
+        _pause(_paused);
+    }
+
+    /**
+     * @notice Liquidate pool
+     *         Only callable by executor
+     *         Only after the report has passed the voting
+     *
+     * @param _amount Payout amount to be moved out
+     */
+    function liquidatePool(uint256 _amount) external onlyExecutor {
+        _retrievePayout(_amount);
+
+        // Generation ++
+        // Deploy the new generation lp token
+        // Those who stake liquidity into this priority pool will be given the new lp token
+        _deployNewGenerationLP();
+
+        emit Liquidation(_amount, generation);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Check & update dynamic status of this pool
+     *         Record this pool as "already dynamic" in factory
+     *
+     *         Every time there is a new interaction, will do this check
+     */
+    function _updateDynamic() internal {
+        // Put the cheaper check in the first place
+        if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
+            IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
+            passedBasePeriod = true;
+        }
+    }
+
+    /**
+     * @notice Deploy a new generation lp token
+     *         Generation starts from 1
+     *
+     * @return newLPAddress The deployed lp token address
+     */
+    function _deployNewGenerationLP() internal returns (address newLPAddress) {
+        uint256 currentGeneration = ++generation;
+
+        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
+        string memory _name = string.concat(
+            "PRI-LP-",
+            poolId._toString(),
+            "-",
+            poolName,
+            "-G",
+            currentGeneration._toString()
+        );
+
+        PriorityPoolToken priorityPoolToken = new PriorityPoolToken(_name);
+        newLPAddress = address(priorityPoolToken);
+        lpTokenAddress[currentGeneration] = address(priorityPoolToken);
+
+        IWeightedFarmingPool(weightedFarmingPool).addToken(
+            poolId,
+            newLPAddress,
+            coverIndex
+        );
+        isLPToken[newLPAddress] = true;
+
+        emit NewGenerationLPTokenDeployed(
+            poolName,
+            poolId,
+            currentGeneration,
+            _name,
+            newLPAddress
+        );
+    }
+
+    /**
+     * @notice Mint current generation lp tokens
+     *
+     * @param _user   User address
+     * @param _amount PRI-LP token amount
+     */
+    function _mintLP(address _user, uint256 _amount) internal {
+        // Get current generation lp token address and mint tokens
+        address lp = currentLPAddress();
+        IPriorityPoolToken(lp).mint(_user, _amount);
+    }
+
+    /**
+     * @notice Burn lp tokens
+     *         Need specific generation lp token address as parameter
+     *
+     * @param _lpToken PRI-LP token adderss
+     * @param _user    User address
+     * @param _amount  PRI-LP token amount to burn
+     */
+    function _burnLP(
+        address _lpToken,
+        address _user,
+        uint256 _amount
+    ) internal {
+        // Transfer PRO-LP token to user
+        uint256 proLPAmount = (priceIndex[_lpToken] * _amount) / SCALE;
+        IERC20(protectionPool).transfer(_user, proLPAmount);
+
+        // Burn PRI-LP token
+        IPriorityPoolToken(_lpToken).burn(_user, _amount);
+    }
+
+    /**
+     * @notice Update cover record info when new covers come in
+     *         Record the total cover amount in each month
+     *
+     * @param _amount Cover amount
+     * @param _length Cover length in month
+     */
+    function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
+
+        for (uint256 i; i < _length; ) {
+            coverInMonth[currentYear][currentMonth] += _amount;
+
+            unchecked {
+                if (++currentMonth > 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
+                ++i;
+            }
+        }
     }
 
     /**
@@ -437,38 +607,6 @@ contract PriorityPool is
             _years,
             _months
         );
-    }
-
-    /**
-     * @notice Pause this pool
-     *
-     * @param _paused True to pause, false to unpause
-     */
-    function pausePriorityPool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or Incident Report can call this function"
-        );
-
-        _pause(_paused);
-    }
-
-    /**
-     * @notice Liquidate pool
-     *         Only callable by executor
-     *         Only after the report has passed the voting
-     *
-     * @param _amount Payout amount to be moved out
-     */
-    function liquidatePool(uint256 _amount) external onlyExecutor {
-        _retrievePayout(_amount);
-
-        // Generation ++
-        // Deploy the new generation lp token
-        // Those who stake liquidity into this priority pool will be given the new lp token
-        _deployNewGenerationLP();
-
-        emit Liquidation(_amount);
     }
 
     /**
@@ -521,124 +659,5 @@ contract PriorityPool is
         uint256 payoutRatio = (_amount * SCALE) / activeCovered();
 
         IPayoutPool(payoutPool).newPayout(_amount, payoutRatio);
-    }
-
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Deploy a new generation lp token
-     *         Generation starts from 1
-     *
-     * @return newLPAddress The deployed lp token address
-     */
-    function _deployNewGenerationLP() internal returns (address newLPAddress) {
-        uint256 currentGeneration = ++generation;
-
-        // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
-        string memory _name = string.concat(
-            "PRI-LP-",
-            poolId._toString(),
-            "-",
-            poolName,
-            "-G",
-            currentGeneration._toString()
-        );
-
-        PriorityPoolToken priorityPoolToken = new PriorityPoolToken(_name);
-        newLPAddress = address(priorityPoolToken);
-        lpTokenAddress[currentGeneration] = address(priorityPoolToken);
-
-        IWeightedFarmingPool(weightedFarmingPool).addToken(
-            poolId,
-            newLPAddress,
-            coverIndex
-        );
-        isLPToken[newLPAddress] = true;
-
-        emit NewGenerationLPTokenDeployed(
-            poolName,
-            poolId,
-            currentGeneration,
-            _name,
-            newLPAddress
-        );
-    }
-
-    /**
-     * @notice Mint current generation lp tokens
-     *
-     * @param _user   User address
-     * @param _amount LP token amount
-     */
-    function _mintLP(address _user, uint256 _amount) internal {
-        // Get current generation lp token address and mint tokens
-        address lp = currentLPAddress();
-        console.log(lp);
-        IPriorityPoolToken(lp).mint(_user, _amount);
-
-        totalLPSupply += _amount;
-    }
-
-    /**
-     * @notice Burn lp tokens
-     *         Need specific generation lp token address as parameter
-     *
-     * @param _lpToken PRI-LP token adderss
-     * @param _user    User address
-     * @param _amount  PRI-LP token amount to burn
-     */
-    function _burnLP(
-        address _lpToken,
-        address _user,
-        uint256 _amount
-    ) internal {
-        // Transfer PRO-LP token to user
-        uint256 proLPAmount = (priceIndex[_lpToken] * _amount) / SCALE;
-        IERC20(protectionPool).transfer(_user, proLPAmount);
-
-        // Burn PRI-LP token
-        IPriorityPoolToken(_lpToken).burn(_user, _amount);
-        totalLPSupply -= _amount;
-    }
-
-    /**
-     * @notice Update cover record info when new covers come in
-     *         Record the total cover amount in each month
-     *
-     * @param _amount Cover amount
-     * @param _length Cover length in month
-     */
-    function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, ) = block
-            .timestamp
-            .timestampToDate();
-        console.log(currentYear, currentMonth);
-        for (uint256 i; i < _length; ) {
-            coverInMonth[currentYear][currentMonth] += _amount;
-
-            unchecked {
-                if (++currentMonth > 12) {
-                    ++currentYear;
-                    currentMonth = 1;
-                }
-                ++i;
-            }
-        }
-    }
-
-    /**
-     * @notice Check & update dynamic status of this pool
-     *         Record this pool as "already dynamic" in factory
-     *
-     *         Every time there is a new interaction, will do this check
-     */
-    function _updateDynamic() internal {
-        // Put the cheaper check in the first place
-        if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
-            IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
-            passedBasePeriod = true;
-        }
     }
 }

@@ -27,6 +27,7 @@ interface IPriorityPoolToken {
  *         and will depend on how much part are paid during that report
  */
 contract PriorityPoolToken is ERC20 {
+    // Only minter and burner is Priority Pool
     address public priorityPool;
 
     constructor(string memory _name) ERC20(_name, "PRI-LP") {
