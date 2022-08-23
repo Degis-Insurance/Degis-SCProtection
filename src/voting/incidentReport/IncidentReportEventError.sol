@@ -56,4 +56,5 @@ interface IncidentReportEventError {
     error IncidentReport__AlreadyClaimed();
     error IncidentReport__PoolNotExist();
     error IncidentReport__AlreadyReported();
+    error IncidentReport__ZeroAmount();
 }

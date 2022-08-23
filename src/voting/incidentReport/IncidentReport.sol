@@ -431,7 +431,7 @@ contract IncidentReport is
         // Should be manually switched on the voting process
         if (reports[_id].status != VOTING_STATUS)
             revert IncidentReport__WrongStatus();
-
+        if (_amount == 0) revert IncidentReport__ZeroAmount();
         if (_isFor != 1 && _isFor != 2) revert IncidentReport__WrongChoice();
 
         _enoughVeDEG(_user, _amount);
@@ -583,7 +583,7 @@ contract IncidentReport is
         view
         returns (bool)
     {
-        return block.timestamp > _reportTimestamp + PENDING_PERIOD;
+        return block.timestamp >= _reportTimestamp + PENDING_PERIOD;
     }
 
     /**
@@ -603,7 +603,7 @@ contract IncidentReport is
             VOTING_PERIOD +
             _round *
             EXTEND_PERIOD;
-        return block.timestamp > endTime;
+        return block.timestamp >= endTime;
     }
 
     /**
@@ -725,8 +725,8 @@ contract IncidentReport is
     {
         (, pool, , , ) = priorityPoolFactory.pools(_poolId);
 
-        if(pool == address(0)) revert IncidentReport__PoolNotExist();
-        if(reported[pool]) revert IncidentReport__AlreadyReported();
+        if (pool == address(0)) revert IncidentReport__PoolNotExist();
+        if (reported[pool]) revert IncidentReport__AlreadyReported();
     }
 
     /**
@@ -736,9 +736,10 @@ contract IncidentReport is
      * @param _poolId Priority pool id
      */
     function _pausePools(uint256 _poolId) internal {
-        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
-
-        IPriorityPoolFactory(priorityPoolFactory).pausePriorityPool(_poolId, true);
+        IPriorityPoolFactory(priorityPoolFactory).pausePriorityPool(
+            _poolId,
+            true
+        );
         IProtectionPool(protectionPool).pauseProtectionPool(true);
     }
 
@@ -750,9 +751,10 @@ contract IncidentReport is
      * @param _poolId Priority pool id
      */
     function _unpausePools(uint256 _poolId) internal {
-        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
-
-        IPriorityPool(pool).pausePriorityPool(false);
+        IPriorityPoolFactory(priorityPoolFactory).pausePriorityPool(
+            _poolId,
+            false
+        );
         IProtectionPool(protectionPool).pauseProtectionPool(false);
     }
 

@@ -77,7 +77,7 @@ abstract contract PausableWithoutContext {
         require(paused(), "Pausable: not paused");
     }
 
-    function _pause(bool _p) internal virtual whenNotPaused {
+    function _pause(bool _p) internal virtual {
         _paused = _p;
 
         if (_p) emit Paused(msg.sender);
