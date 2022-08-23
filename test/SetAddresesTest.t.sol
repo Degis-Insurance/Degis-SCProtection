@@ -68,8 +68,7 @@ contract setAddressesTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -188,12 +187,12 @@ contract setAddressesTest is Test {
 
     // test setting pool max capacity
     function testSetMaxCapacity() public {
-        PriorityPool(pool1).setMaxCapacity(1000);
-        assertEq(PriorityPool(pool1).maxCapacity() == 1000, true);
+        PriorityPool(pool1).setMaxCapacity(false, 90);
+        assertEq(PriorityPool(pool1).maxCapacity() == 90, true);
     }
 
     function testGetMaxCapacity() public {
-        assertEq(PriorityPool(pool1).maxCapacity() == 1000 ether, true);
+        assertEq(PriorityPool(pool1).maxCapacity() == 100, true);
     }
 
     function testSetExecutorPriorityPool() public {

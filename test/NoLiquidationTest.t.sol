@@ -70,8 +70,7 @@ contract NoLiquidationTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -125,9 +124,8 @@ contract NoLiquidationTest is Test {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-    
         executor.setOnboardProposal(address(onboardProposal));
- 
+
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
         weightedFarmingPool = new WeightedFarmingPool(

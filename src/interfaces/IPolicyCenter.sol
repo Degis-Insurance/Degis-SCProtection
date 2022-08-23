@@ -26,11 +26,6 @@ interface IPolicyCenter {
         uint256 _maxPayment
     ) external returns (address);
 
-    function calculatePayout(uint256 _poolId, address _insured)
-        external
-        view
-        returns (uint256);
-
     function claimPayout(uint256 _poolId) external;
 
     function coverages(uint256, address)
@@ -100,6 +95,8 @@ interface IPolicyCenter {
     function setWeightedFarmingPool(address _weightedFarmingPool) external;
 
     function setPriorityPoolFactory(address _priorityPoolFactory) external;
+
+    function setPriceGetter(address _priceGetter) external;
 
     function setOnboardProposal(address _onboardProposal) external;
 
