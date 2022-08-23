@@ -34,6 +34,11 @@ contract PremiumRewardPool {
         protectionPool = _protectionPool;
     }
 
+    /**
+    * @notice Distributes shield to Protection Pool
+    *
+    * @param _amount          Amount of shield to distribute
+    */
     function distributeShield(uint256 _amount) external {
         require(msg.sender == protectionPool, "Only protection pool");
         require(_amount > 0, "Zero amount to transfer");
@@ -43,6 +48,12 @@ contract PremiumRewardPool {
         emit ShieldDistributed(_amount);
     }
 
+    /**
+    * @notice Distributes given token to one of the Priority Pools
+    *
+    * @param _token         Token address to distribute
+    * @param _amount        Amount of shield to distribute
+    */
     function distributeToken(address _token, uint256 _amount) external {
         require(_token == rewardToken[msg.sender], "Wrong priority pool");
         require(_amount > 0, "Zero amount to transfer");
@@ -52,6 +63,11 @@ contract PremiumRewardPool {
         emit TokenDistributed(_token, _amount);
     }
 
+    /**
+    * @notice Registers a Priority Pool when it is deployed
+    * @param _pool          Priority Pool address
+    * @param _token         Reward token address
+    */
     function register(address _pool, address _token) external {
         require(msg.sender == factory, "Only factory");
 

@@ -90,8 +90,7 @@ contract PostPriorityPoolDeploymentTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -156,7 +155,6 @@ contract PostPriorityPoolDeploymentTest is Test {
 
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-     
         executor.setOnboardProposal(address(onboardProposal));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
@@ -358,14 +356,12 @@ contract PostPriorityPoolDeploymentTest is Test {
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 1000 ether, 3, price);
 
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
-            POOL_ID,
-            alice
+        // verify that user has received CR tokens
+        address crToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(
+            PriorityPoolToken(crToken).balanceOf(address(this)) == 1000 ether,
+            true
         );
-
-        assertEq(amount, 1000 ether);
-        assertEq(buyDate - block.timestamp < 604810, true);
-        assertEq(length == 90, true);
     }
 
     function testBuyCoverWithSuppliedLiquidity() public {
@@ -400,13 +396,12 @@ contract PostPriorityPoolDeploymentTest is Test {
         // user buys coverage with liquidity after liquidity has been provided
         vm.prank(alice);
         policyCenter.buyCover(POOL_ID, 100 ether, 3, price);
-        (uint256 amount, uint256 buyDate, uint256 length) = policyCenter.covers(
-            POOL_ID,
-            alice
+        // verify that user has received CR tokens
+        address crToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(
+            PriorityPoolToken(crToken).balanceOf(address(this)) == 1000 ether,
+            true
         );
-        assertEq(amount == 100 ether, true);
-        assertEq(buyDate - block.timestamp < 604810, true);
-        assertEq(length == 90, true);
     }
 
     function testProvideLiquidityProtectionPool() public {
@@ -524,7 +519,7 @@ contract PostPriorityPoolDeploymentTest is Test {
             alice
         );
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = weightedFarmingPool.estimateHarvest(POOL_ID, alice);
+        uint256 reward = weightedFarmingPool.pendingReward(POOL_ID, alice);
 
         assertEq(reward == 0, true);
         // no user should be able to claim rewards
@@ -552,7 +547,7 @@ contract PostPriorityPoolDeploymentTest is Test {
             alice
         );
         // claiming on the same block as provisioning should not give any rewards
-        uint256 reward = weightedFarmingPool.estimateHarvest(POOL_ID, alice);
+        uint256 reward = weightedFarmingPool.pendingReward(POOL_ID, alice);
 
         console.log("reward", reward);
         // no user should be able to claim rewards

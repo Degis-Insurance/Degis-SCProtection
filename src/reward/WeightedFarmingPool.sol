@@ -79,6 +79,12 @@ contract WeightedFarmingPool {
         policyCenter = _policyCenter;
     }
 
+
+    /**
+     * @notice Return the user's pending reward
+     * @param _id           Pool id
+     * @param _user         User's address to claim the reward
+     */
     function pendingReward(uint256 _id, address _user)
         external
         view
@@ -93,6 +99,10 @@ contract WeightedFarmingPool {
             user.rewardDebt;
     }
 
+    /**
+    * @notice Registers PRI-LP token in Weighted Farming Pool
+    * @param _rewardToken       Reward token address to be given to users
+    */
     function addPool(address _rewardToken) external {
         uint256 currentId = ++counter;
 
@@ -102,6 +112,12 @@ contract WeightedFarmingPool {
         emit PoolAdded(currentId, _rewardToken);
     }
 
+    /**
+    * @notice Registers Cover Right Token to a given pool
+    * @param _id                Pool Id
+    * @param _token         	Cover Right Token address
+    * @param _weight         	Weight of the token in the pool
+    */
     function addToken(
         uint256 _id,
         address _token,
@@ -117,6 +133,12 @@ contract WeightedFarmingPool {
         emit NewTokenAdded(_id, _token, _weight);
     }
 
+    /**
+    * @notice Updates the weight of a token in a given pool
+    * @param _id            Pool Id
+    * @param _token         Token address
+    * @param _newWeight     New weight of the token in the pool
+    */
     function updateWeight(
         uint256 _id,
         address _token,
@@ -125,19 +147,25 @@ contract WeightedFarmingPool {
         updatePool(_id);
         
         uint256 index = _getIndex(_id, _token);
+        
 
         pools[_id].weight[index] = _newWeight;
     }
 
-    function setWeight(uint256 _id, uint256[] calldata weights) external {
+    /**
+    * @notice Sets the weight for a given array of tokens in a given pool
+    * @param _id            Pool Id
+    * @param _weights       Array of weights of the tokens in the pool
+    */
+    function setWeight(uint256 _id, uint256[] calldata _weights) external {
         PoolInfo storage pool = pools[_id];
 
-        uint256 weightLength = weights.length;
+        uint256 weightLength = _weights.length;
 
         require(weightLength == pool.weight.length, "Wrong weight length");
 
         for (uint256 i; i < weightLength; ) {
-            pool.weight[i] = weights[i];
+            pool.weight[i] = _weights[i];
 
             unchecked {
                 ++i;
@@ -255,6 +283,11 @@ contract WeightedFarmingPool {
         }
 
         uint256 index = _getIndex(_id, _token);
+
+        // check if current index exists for user
+        if (user.amount.length == 0) {
+            user.amount.push(index);
+        }
 
         user.amount[index] += _amount;
         user.share += _amount * pool.weight[index];
@@ -448,6 +481,12 @@ contract WeightedFarmingPool {
         }
     }
 
+    /**
+    * @notice Safely transfers reward to a user address
+    * @param _token         Reward token address
+    * @param _to         	Address to send reward to
+    * @param _amount      	Amount to send
+    */
     function _safeRewardTransfer(
         address _token,
         address _to,
@@ -466,6 +505,11 @@ contract WeightedFarmingPool {
         IERC20(_token).safeTransfer(_to, actualAmount);
     }
 
+    /**
+    * @notice Returns the index of Cover Right token given a pool id and crtoken address
+    * @param _id            Pool id
+    * @param _token         Address of Cover Right token
+    */
     function _getIndex(uint256 _id, address _token)
         internal
         view
@@ -474,7 +518,7 @@ contract WeightedFarmingPool {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
 
-        for (uint256 i; i < length; ) {
+        for (uint256 i = 0; i <= length; ) {
             if (allTokens[i] == _token) return i;
 
             unchecked {

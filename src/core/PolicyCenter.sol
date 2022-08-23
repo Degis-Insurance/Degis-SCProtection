@@ -71,8 +71,6 @@ contract PolicyCenter is
     // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
-    address public priceGetter;
-
     // Year => Month => Total Cover Amount
     mapping(uint256 => mapping(uint256 => uint256)) coverInMonth;
 
@@ -156,6 +154,10 @@ contract PolicyCenter is
         _setExecutor(_executor);
     }
 
+    function setPriceGetter(address _priceGetter) external onlyOwner {
+        _setPriceGetter(_priceGetter);
+    }
+
     function setProtectionPool(address _protectionPool) external onlyOwner {
         _setProtectionPool(_protectionPool);
     }
@@ -165,6 +167,10 @@ contract PolicyCenter is
         onlyOwner
     {
         _setWeightedFarmingPool(_weightedFarmingPool);
+    }
+
+    function setCoverRightTokenFactory(address _coverRightTokenFactory) external onlyOwner {
+        _setCoverRightTokenFactory(_coverRightTokenFactory);
     }
 
     function setPriorityPoolFactory(address _priorityPoolFactory)

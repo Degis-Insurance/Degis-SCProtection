@@ -30,6 +30,7 @@ abstract contract PolicyCenterDependencies {
 
     address public executor;
     address public protectionPool;
+    address public priceGetter;
     address public priorityPoolFactory;
     address public coverRightTokenFactory;
     address public weightedFarmingPool;
@@ -44,6 +45,10 @@ abstract contract PolicyCenterDependencies {
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
+    }
+
+    function _setPriceGetter(address _priceGetter) internal virtual {
+        priceGetter = _priceGetter;
     }
 
     function _setProtectionPool(address _protectionPool) internal virtual {

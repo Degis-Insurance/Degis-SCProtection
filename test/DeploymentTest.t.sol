@@ -136,6 +136,7 @@ contract SecondaryContractDeploymentTest is Test {
         // and the protectionPool already deployed.
         deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
         ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
+        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
         protectionPool = new ProtectionPool(
             address(deg),
             address(0),
@@ -167,8 +168,7 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0),
             address(deg),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
 
         assertEq(priorityPoolFactory.poolCounter() == 0, true);
@@ -179,8 +179,7 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0),
             address(deg),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -221,8 +220,7 @@ contract SecondaryContractDeploymentTest is Test {
             address(0),
             address(0),
             address(deg),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
 
         premiumRewardPool = new PremiumRewardPool(
