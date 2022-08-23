@@ -2,12 +2,14 @@
 
 pragma solidity ^0.8.13;
 
-import "../interfaces/ExternalTokenDependencies.sol";
+import "../interfaces/IShield.sol";
 
-contract Treasury is ExternalTokenDependencies {
+contract Treasury {
     address public owner;
 
     address public executor;
+
+    address public shield;
 
     uint256 public constant REPORTER_REWARD = 1000;
 
@@ -15,13 +17,9 @@ contract Treasury is ExternalTokenDependencies {
 
     event ReporterRewarded(address reporter, uint256 amount);
 
-    constructor(
-        address _deg,
-        address _veDeg,
-        address _shield,
-        address _executor
-    ) ExternalTokenDependencies(_deg, _veDeg, _shield) {
+    constructor(address _shield, address _executor) {
         executor = _executor;
+        shield = _shield;
 
         owner = msg.sender;
     }
@@ -63,6 +61,6 @@ contract Treasury is ExternalTokenDependencies {
     function claim(uint256 _amount) external {
         require(msg.sender == owner, "Only owner");
 
-        shield.transfer(owner, _amount);
+        IShield(shield).transfer(owner, _amount);
     }
 }

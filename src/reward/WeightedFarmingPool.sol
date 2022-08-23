@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../interfaces/IPremiumRewardPool.sol";
 
+
 import "../libraries/DateTime.sol";
 
 /**
@@ -21,14 +22,14 @@ import "../libraries/DateTime.sol";
  *
  *         Different generations of PRI-LP-1-JOE-G1
  */
-contract WeightedFarmingPool {
+contract WeightedFarmingPool  {
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
+    uint256 public constant SCALE = 1e12;
+
     // 4 decimals precision for weight
     uint256 public constant BASE_WEIGHT = 10000;
-
-    uint256 public constant SCALE = 1e12;
 
     address public premiumRewardPool;
     address public policyCenter;
@@ -71,14 +72,15 @@ contract WeightedFarmingPool {
         uint256 reward
     );
 
-    constructor(address _premiumRewardPool) {
+    constructor(
+        address _premiumRewardPool
+    )  {
         premiumRewardPool = _premiumRewardPool;
     }
 
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
     }
-
 
     /**
      * @notice Return the user's pending reward
@@ -100,9 +102,9 @@ contract WeightedFarmingPool {
     }
 
     /**
-    * @notice Registers PRI-LP token in Weighted Farming Pool
-    * @param _rewardToken       Reward token address to be given to users
-    */
+     * @notice Registers PRI-LP token in Weighted Farming Pool
+     * @param _rewardToken       Reward token address to be given to users
+     */
     function addPool(address _rewardToken) external {
         uint256 currentId = ++counter;
 
@@ -113,11 +115,11 @@ contract WeightedFarmingPool {
     }
 
     /**
-    * @notice Registers Cover Right Token to a given pool
-    * @param _id                Pool Id
-    * @param _token         	Cover Right Token address
-    * @param _weight         	Weight of the token in the pool
-    */
+     * @notice Registers Cover Right Token to a given pool
+     * @param _id                Pool Id
+     * @param _token         	Cover Right Token address
+     * @param _weight         	Weight of the token in the pool
+     */
     function addToken(
         uint256 _id,
         address _token,
@@ -134,29 +136,28 @@ contract WeightedFarmingPool {
     }
 
     /**
-    * @notice Updates the weight of a token in a given pool
-    * @param _id            Pool Id
-    * @param _token         Token address
-    * @param _newWeight     New weight of the token in the pool
-    */
+     * @notice Updates the weight of a token in a given pool
+     * @param _id            Pool Id
+     * @param _token         Token address
+     * @param _newWeight     New weight of the token in the pool
+     */
     function updateWeight(
         uint256 _id,
         address _token,
         uint256 _newWeight
     ) external {
         updatePool(_id);
-        
+
         uint256 index = _getIndex(_id, _token);
-        
 
         pools[_id].weight[index] = _newWeight;
     }
 
     /**
-    * @notice Sets the weight for a given array of tokens in a given pool
-    * @param _id            Pool Id
-    * @param _weights       Array of weights of the tokens in the pool
-    */
+     * @notice Sets the weight for a given array of tokens in a given pool
+     * @param _id            Pool Id
+     * @param _weights       Array of weights of the tokens in the pool
+     */
     function setWeight(uint256 _id, uint256[] calldata _weights) external {
         PoolInfo storage pool = pools[_id];
 
@@ -482,11 +483,11 @@ contract WeightedFarmingPool {
     }
 
     /**
-    * @notice Safely transfers reward to a user address
-    * @param _token         Reward token address
-    * @param _to         	Address to send reward to
-    * @param _amount      	Amount to send
-    */
+     * @notice Safely transfers reward to a user address
+     * @param _token         Reward token address
+     * @param _to         	Address to send reward to
+     * @param _amount      	Amount to send
+     */
     function _safeRewardTransfer(
         address _token,
         address _to,
@@ -506,10 +507,10 @@ contract WeightedFarmingPool {
     }
 
     /**
-    * @notice Returns the index of Cover Right token given a pool id and crtoken address
-    * @param _id            Pool id
-    * @param _token         Address of Cover Right token
-    */
+     * @notice Returns the index of Cover Right token given a pool id and crtoken address
+     * @param _id            Pool id
+     * @param _token         Address of Cover Right token
+     */
     function _getIndex(uint256 _id, address _token)
         internal
         view

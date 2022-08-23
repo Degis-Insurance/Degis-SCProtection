@@ -137,13 +137,13 @@ contract PriorityPool is
         uint256 _maxCapacity,
         uint256 _baseRatio,
         address _admin,
-        address _weightedFarmingPool
+        address _weightedFarmingPool,
+        address _protectionPool,
+        address _policyCenter
     ) OwnableWithoutContext(_admin) {
         poolId = _poolId;
         poolName = _name;
 
-        // token address insured by pool
-        weightedFarmingPool = _weightedFarmingPool;
         insuredToken = _protocolToken;
         maxCapacity = _maxCapacity;
         startTime = block.timestamp;
@@ -156,17 +156,26 @@ contract PriorityPool is
 
         // Generation 1, price starts from 1 (SCALE)
 
-        priceIndex[_deployNewGenerationLP()] = SCALE;
+        priceIndex[_deployNewGenerationLP(_weightedFarmingPool)] = SCALE;
 
         coverIndex = 10000;
+
+        priorityPoolFactory = msg.sender;
+        weightedFarmingPool = _weightedFarmingPool;
+        protectionPool = _protectionPool;
+        policyCenter = _policyCenter;
     }
+
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
-        require(msg.sender == executor, "Only executor can call this function");
+        require(
+            msg.sender == IPriorityPoolFactory(priorityPoolFactory).executor(),
+            "Only executor can call this function"
+        );
         _;
     }
 
@@ -330,25 +339,6 @@ contract PriorityPool is
         );
     }
 
-    function setExecutor(address _executor) external onlyOwner {
-        _setExecutor(_executor);
-    }
-
-    function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
-    }
-
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
-    }
-
-    function setPriorityPoolFactory(address _priorityPoolFactory)
-        external
-        onlyOwner
-    {
-        _setPriorityPoolFactory(_priorityPoolFactory);
-    }
-
     function setCoverIndex(uint256 _newIndex) external {
         require(msg.sender == protectionPool, "Only protection pool");
 
@@ -441,7 +431,7 @@ contract PriorityPool is
      */
     function pausePriorityPool(bool _paused) external {
         require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
+            (msg.sender == owner()) || (msg.sender == priorityPoolFactory),
             "Only owner or Incident Report can call this function"
         );
 
@@ -463,7 +453,7 @@ contract PriorityPool is
         // Generation ++
         // Deploy the new generation lp token
         // Those who stake liquidity into this priority pool will be given the new lp token
-        _deployNewGenerationLP();
+        _deployNewGenerationLP(weightedFarmingPool);
 
         emit Liquidation(_amount, generation);
     }
@@ -492,7 +482,7 @@ contract PriorityPool is
      *
      * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP() internal returns (address newLPAddress) {
+    function _deployNewGenerationLP(address _weightedFarmingPool) internal returns (address newLPAddress) {
         uint256 currentGeneration = ++generation;
 
         // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
@@ -505,11 +495,10 @@ contract PriorityPool is
             currentGeneration._toString()
         );
 
-        PriorityPoolToken priorityPoolToken = new PriorityPoolToken(_name);
-        newLPAddress = address(priorityPoolToken);
-        lpTokenAddress[currentGeneration] = address(priorityPoolToken);
+        newLPAddress = address(new PriorityPoolToken(_name));
+        lpTokenAddress[currentGeneration] = newLPAddress;
 
-        IWeightedFarmingPool(weightedFarmingPool).addToken(
+        IWeightedFarmingPool(_weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
             priceIndex[newLPAddress]
@@ -632,7 +621,9 @@ contract PriorityPool is
             address(this)
         );
 
-        uint256 proLPPrice = IProtectionPool(protectionPool).getLatestPrice();
+        IProtectionPool proPool = IProtectionPool(protectionPool);
+
+        uint256 proLPPrice = proPool.getLatestPrice();
 
         // Need how many PRO-LP tokens to cover the _amount
         uint256 neededLPAmount = (_amount * SCALE) / proLPPrice;
@@ -643,24 +634,20 @@ contract PriorityPool is
         // If current PRO-LP inside priority pool is enough
         // Remove part of the liquidity from Protection Pool
         if (neededLPAmount < currentLPAmount) {
-            IProtectionPool(protectionPool).removedLiquidity(
-                neededLPAmount,
-                payoutPool
-            );
+            proPool.removedLiquidity(neededLPAmount, payoutPool);
 
             priceIndex[currentLPAddress()] =
                 ((currentLPAmount - neededLPAmount) * SCALE) /
                 currentLPAmount;
         } else {
-            uint256 shieldGot = IProtectionPool(protectionPool)
-                .removedLiquidity(currentLPAmount, address(this));
+            uint256 shieldGot = proPool.removedLiquidity(
+                currentLPAmount,
+                address(this)
+            );
 
             uint256 remainingPayout = _amount - shieldGot;
 
-            IProtectionPool(protectionPool).removedLiquidityWhenClaimed(
-                remainingPayout,
-                payoutPool
-            );
+            proPool.removedLiquidityWhenClaimed(remainingPayout, payoutPool);
 
             priceIndex[currentLPAddress()] = 0;
         }

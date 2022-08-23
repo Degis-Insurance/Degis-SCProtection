@@ -133,8 +133,6 @@ contract PriceGetter is OwnableWithoutContext {
      */
     function getLatestPrice(address _tokenAddress) public returns (uint256) {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
-        // TODO: remove this line after testing
-        return 1;
         (
             uint80 roundID,
             int256 price,

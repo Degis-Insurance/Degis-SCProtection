@@ -47,7 +47,13 @@ interface IncidentReportEventError {
 
     error IncidentReport__WrongStatus();
     error IncidentReport__WrongPeriod();
+    error IncidentReport__WrongChoice();
     error IncidentReport__ChooseBothSides();
-    error IncidentReport__NotReachedQuorum();
     error IncidentReport__NotEnoughVeDEG();
+    error IncidentReport__AlreadySettled();
+    error IncidentReport__NotSettled();
+    error IncidentReport__NotWrongChoice();
+    error IncidentReport__AlreadyClaimed();
+    error IncidentReport__PoolNotExist();
+    error IncidentReport__AlreadyReported();
 }

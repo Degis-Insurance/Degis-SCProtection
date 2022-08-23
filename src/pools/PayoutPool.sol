@@ -45,6 +45,18 @@ contract PayoutPool {
         uint256 _ratio
     );
 
+    constructor(
+        address _shield,
+        address _policyCenter,
+        address _crFactory
+    ) {
+        shield = _shield;
+
+        policyCenter = _policyCenter;
+
+        crFactory = _crFactory;
+    }
+
     /**
      * @notice Registers new Payout in Payout Pool
      * @param _poolId            Pool Id

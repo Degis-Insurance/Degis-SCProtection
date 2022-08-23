@@ -150,10 +150,6 @@ contract PolicyCenter is
         exchange = _exchange;
     }
 
-    function setExecutor(address _executor) external onlyOwner {
-        _setExecutor(_executor);
-    }
-
     function setPriceGetter(address _priceGetter) external onlyOwner {
         _setPriceGetter(_priceGetter);
     }
@@ -169,7 +165,10 @@ contract PolicyCenter is
         _setWeightedFarmingPool(_weightedFarmingPool);
     }
 
-    function setCoverRightTokenFactory(address _coverRightTokenFactory) external onlyOwner {
+    function setCoverRightTokenFactory(address _coverRightTokenFactory)
+        external
+        onlyOwner
+    {
         _setCoverRightTokenFactory(_coverRightTokenFactory);
     }
 
@@ -178,6 +177,14 @@ contract PolicyCenter is
         onlyOwner
     {
         _setPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    function setPayoutPool(address _payoutPool) external onlyOwner {
+        _setPayoutPool(_payoutPool);
+    }
+
+    function setTreasury(address _treasury) external onlyOwner {
+        _setTreausry(_treasury);
     }
 
     /**

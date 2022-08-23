@@ -173,6 +173,13 @@ contract ProtectionPool is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
+    function setPremiumRewardPool(address _premiumRewardPool)
+        external
+        onlyOwner
+    {
+        _setPremiumRewardPool(_premiumRewardPool);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -209,8 +216,8 @@ contract ProtectionPool is
     }
 
     /**
-    * @notice Updates and retrieves latest price to provide liquidity to Protection Pool
-    */
+     * @notice Updates and retrieves latest price to provide liquidity to Protection Pool
+     */
     function getLatestPrice() external returns (uint256) {
         _updatePrice();
         return price;
@@ -270,10 +277,10 @@ contract ProtectionPool is
     }
 
     /**
-    * @notice Removes liquidity when a claim is made
-    * @param _amount        Amount of liquidity to remove
-    * @param _to            Address to transfer the liquidity to
-    */
+     * @notice Removes liquidity when a claim is made
+     * @param _amount        Amount of liquidity to remove
+     * @param _to            Address to transfer the liquidity to
+     */
     function removedLiquidityWhenClaimed(uint256 _amount, address _to)
         external
     {
