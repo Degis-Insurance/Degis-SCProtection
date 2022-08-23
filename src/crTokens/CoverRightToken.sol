@@ -57,13 +57,15 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _poolId,
         string memory _name,
         uint256 _expiry,
-        uint256 _generation
+        uint256 _generation,
+        address _policyCenter
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
         POOL_ID = _poolId;
         generation = _generation;
+        policyCenter = _policyCenter;
     }
 
     modifier onlyPolicyCenter() {
@@ -134,6 +136,10 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      * @notice Get the excluded amount of a user
      *         Excluded means "without those are bought within a short time before voteTimestamp"
      *
+     * @param _user         User address
+     *
+     * @return exclusion    Amount not able to claim because cover period has ended
+     *
      */
     function getExcludedCoverageOf(address _user)
         public
@@ -183,6 +189,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      *         - Can burn expired crTokens (send to zero address)
      *         - Can be minted or used for claim
      *         Other transfers are banned
+     *
+     * @param from    From address
+     * @param to      To address
      */
     function _beforeTokenTransfer(
         address from,

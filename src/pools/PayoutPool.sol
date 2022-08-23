@@ -45,6 +45,14 @@ contract PayoutPool {
         uint256 _ratio
     );
 
+    /**
+     * @notice Registers new Payout in Payout Pool
+     * @param _poolId            Pool Id
+     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+     * @param _amount         	Amount of tokens to be registered
+     * @param _ratio         	Current ratio payout has been registered at
+     * @param _poolAddress       Address of priority pool
+     */
     function newPayout(
         uint256 _poolId,
         uint256 _generation,
@@ -62,7 +70,13 @@ contract PayoutPool {
         emit NewPayout(_poolId, _generation, _amount, _ratio);
     }
 
-    // Claim the payout with crTokens
+    /**
+     * @notice Claim payout for a user
+     * @param _user             User address
+     * @param _crToken         	Cover right token address
+     * @param _poolId           Pool Id
+     * @param _generation       Generation of priority pool (1 if no liquidations occurred)
+     */
     function claim(
         address _user,
         address _crToken,
@@ -92,7 +106,13 @@ contract PayoutPool {
 
         claimed = (claimable * coverIndex) / SCALE;
 
-        
+        ICoverRightToken(_crToken).burn(
+            _poolId,
+            _user,
+            // burns the users' crToken balance, not the payout amount,
+            // since rest of the payout will be minted as a new generation token
+            claimableBalance
+        );
 
         IERC20(shield).transfer(_user, claimed);
 

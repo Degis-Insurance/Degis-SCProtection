@@ -154,6 +154,29 @@ contract ProtectionPool is
         }
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        _setPolicyCenter(_policyCenter);
+    }
+
+    function setPriorityPoolFactory(address _priorityPoolFactory)
+        external
+        onlyOwner
+    {
+        _setPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @notice Update index cut when claim happened
      */
@@ -185,29 +208,9 @@ contract ProtectionPool is
         }
     }
 
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
-
-    function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
-    }
-
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
-    }
-
-    function setPriorityPoolFactory(address _priorityPoolFactory)
-        external
-        onlyOwner
-    {
-        _setPriorityPoolFactory(_priorityPoolFactory);
-    }
-
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Main Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-
+    /**
+    * @notice Updates and retrieves latest price to provide liquidity to Protection Pool
+    */
     function getLatestPrice() external returns (uint256) {
         _updatePrice();
         return price;
@@ -266,6 +269,11 @@ contract ProtectionPool is
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
     }
 
+    /**
+    * @notice Removes liquidity when a claim is made
+    * @param _amount        Amount of liquidity to remove
+    * @param _to            Address to transfer the liquidity to
+    */
     function removedLiquidityWhenClaimed(uint256 _amount, address _to)
         external
     {

@@ -107,8 +107,7 @@ contract OnboardProposalVotingTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -153,7 +152,6 @@ contract OnboardProposalVotingTest is Test {
         // onboardProposal.setExecutor(address(executor));
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
-       
         executor.setOnboardProposal(address(onboardProposal));
         executor.setIncidentReport(address(incidentReport));
         executor.setPriorityPoolFactory(address(priorityPoolFactory));

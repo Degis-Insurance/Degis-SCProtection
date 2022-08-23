@@ -81,8 +81,7 @@ contract PoolProposedTest is Test {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
@@ -236,7 +235,11 @@ contract PoolProposedTest is Test {
             3
         );
         policyCenter.buyCover(2, 100 ether, 3, price);
-        (uint256 amount, , ) = policyCenter.covers(2, address(this));
-        assertEq(amount == 100 ether, true);
+        // verify that user has received CR tokens
+        address crToken = PriorityPool(pool1).currentLPAddress();
+        assertEq(
+            PriorityPoolToken(crToken).balanceOf(address(this)) == 100 ether,
+            true
+        );
     }
 }

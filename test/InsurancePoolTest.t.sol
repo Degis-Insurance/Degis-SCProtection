@@ -26,7 +26,7 @@ contract PriorityPoolTest is BaseTest {
     address bob = mkaddr("bob");
 
     ProtectionPool public protectionPool;
-    PriorityPoolFactory public factory;
+    PriorityPoolFactory public priorityPoolFactory;
     PremiumRewardPool public premiumRewardPool;
     WeightedFarmingPool public weightedFarmingPool;
     PriorityPool public pool;
@@ -58,20 +58,19 @@ contract PriorityPoolTest is BaseTest {
             address(shield)
         );
 
-        factory = new PriorityPoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
 
         premiumRewardPool = new PremiumRewardPool(
             address(shield),
-            address(factory),
+            address(priorityPoolFactory),
             address(protectionPool)
         );
-        factory.setPremiumRewardPool(address(premiumRewardPool));
+        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
 
         policyCenter = new PolicyCenter(
             address(deg),
@@ -80,13 +79,13 @@ contract PriorityPoolTest is BaseTest {
             address(protectionPool)
         );
 
-        factory.setPolicyCenter(address(policyCenter));
+        priorityPoolFactory.setPolicyCenter(address(policyCenter));
         weightedFarmingPool = new WeightedFarmingPool(
             address(premiumRewardPool)
         );
         weightedFarmingPool.setPolicyCenter(address(policyCenter));
-        factory.setWeightedFarmingPool(address(weightedFarmingPool));
-        policyCenter.setPriorityPoolFactory(address(factory));
+        priorityPoolFactory.setWeightedFarmingPool(address(weightedFarmingPool));
+        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
         policyCenter.setExchange(address(exchange));
         protectionPool.setPolicyCenter(address(policyCenter));
 
@@ -97,17 +96,17 @@ contract PriorityPoolTest is BaseTest {
     }
 
     function testFactorySetUp() public {
-        PriorityPoolFactory.PoolInfo memory firstPool = factory.getPoolInfo(0);
+        PriorityPoolFactory.PoolInfo memory firstPool = priorityPoolFactory.getPoolInfo(0);
 
         assertEq(firstPool.protocolName, "ProtectionPool");
         assertEq(firstPool.protocolToken, address(shield));
 
-        assertTrue(factory.tokenRegistered(address(shield)));
-        assertTrue(factory.poolRegistered(address(protectionPool)));
+        assertTrue(priorityPoolFactory.tokenRegistered(address(shield)));
+        assertTrue(priorityPoolFactory.poolRegistered(address(protectionPool)));
     }
 
     function testDeployPool() public {
-        address newPoolAddress = factory.deployPool(
+        address newPoolAddress = priorityPoolFactory.deployPool(
             "gmx pool",
             address(gmx),
             1000 ether,
