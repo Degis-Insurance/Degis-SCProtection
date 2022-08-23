@@ -11,7 +11,6 @@ import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PremiumRewardPool.sol";
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/PremiumRewardPool.sol";
 
 import "src/core/PolicyCenter.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -83,8 +82,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
 
         premiumRewardPool = new PremiumRewardPool(
@@ -185,7 +183,7 @@ contract ExecutorTest is Test, IncidentReportParameters {
 
         // get current lp address to approve expence
         protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidity(POOL_ID, 10000);
+        policyCenter.stakeLiquidity(1, 10000);
 
         // approve deg usage to report and propose pools
         deg.approve(address(incidentReport), 100000 ether);

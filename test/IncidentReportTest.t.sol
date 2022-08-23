@@ -118,8 +118,7 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
             address(deg),
             address(vedeg),
             address(shield),
-            address(protectionPool),
-            address(payoutPool)
+            address(protectionPool)
         );
         premiumRewardPool = new PremiumRewardPool(
             address(shield),

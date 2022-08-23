@@ -147,6 +147,8 @@ contract PriorityPoolFactory is
         return list;
     }
 
+    
+
     /**
      * @notice Get the pool information by pool id
      *
@@ -193,7 +195,7 @@ contract PriorityPoolFactory is
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
-
+    
     /**
      * @notice Create a new priority pool
      *         Called by executor when an onboard proposal has passed

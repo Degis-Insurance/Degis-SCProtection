@@ -73,5 +73,5 @@ interface IProtectionPool {
 
     function removedLiquidityWhenClaimed(uint256 _amount, address _to) external;
 
-    function getLatestPrice() external returns(uint256);
+    function getLatestPrice() external returns (uint256);
 }

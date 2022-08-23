@@ -6,6 +6,8 @@ import "./CoverRightToken.sol";
 import "../interfaces/IPolicyCenter.sol";
 import "../util/OwnableWithoutContext.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @notice Factory for deploying crTokens
  */
@@ -34,6 +36,15 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         policyCenter = _policyCenter;
     }
 
+    /**
+    * @notice Deploy Cover Right Token for a given pool
+    *
+    * @param _poolName          Name of Priority Pool
+    * @param _poolId         	Pool Id
+    * @param _tokenName         Name of insured token (e.g. DEG)
+    * @param _expiry         	Expiry date of cover right token
+    * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+    */
     function deployCRToken(
         string calldata _poolName,
         uint256 _poolId,
@@ -55,7 +66,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
             _poolId,
             _tokenName,
             _expiry,
-            _generation
+            _generation,
+            policyCenter
         );
 
         newCRToken = _deploy(bytecode, salt);
@@ -70,23 +82,34 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         );
     }
 
+    /**
+    * @notice Given several parameters, returns the bytecode for deploying a crToken
+    *
+    * @param _poolName          Name of Priority Pool
+    * @param _poolId         	Pool Id
+    * @param _tokenName         Name of insured token (e.g. DEG)
+    * @param _expiry         	Expiry date of cover right token
+    * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+    */
     function _getCRTokenBytecode(
         string memory _poolName,
         uint256 _poolId,
         string memory _tokenName,
         uint256 _expiry,
-        uint256 _generation
+        uint256 _generation,
+        address _policyCenter
     ) internal pure returns (bytes memory code) {
         bytes memory bytecode = type(CoverRightToken).creationCode;
 
         code = abi.encodePacked(
             bytecode,
-            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation)
+            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation, _policyCenter)
         );
     }
 
     /**
      * @notice Deploy function with create2
+     *
      * @param code      Byte code of the contract (creation code)
      * @param salt      Salt for the deployment
      * @return addr     The deployed contract address

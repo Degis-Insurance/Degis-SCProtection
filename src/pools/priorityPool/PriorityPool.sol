@@ -184,6 +184,8 @@ contract PriorityPool is
 
     /**
      * @notice Get the current generation PRI-LP token address
+     *
+     * @return address of Priority Pool LP token
      */
     function currentLPAddress() public view returns (address) {
         return lpTokenAddress[generation];
@@ -505,12 +507,12 @@ contract PriorityPool is
         newLPAddress = address(priorityPoolToken);
         lpTokenAddress[currentGeneration] = address(priorityPoolToken);
 
-        // TODO: wrong
         IWeightedFarmingPool(weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
-            SCALE
+            priceIndex[newLPAddress]
         );
+
         isLPToken[newLPAddress] = true;
 
         emit NewGenerationLPTokenDeployed(

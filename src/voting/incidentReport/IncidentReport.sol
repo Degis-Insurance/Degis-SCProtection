@@ -358,6 +358,10 @@ contract IncidentReport is
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
 
+    function unpausePools(uint256 _poolId) external onlyOwner {
+        _unpausePools(_poolId);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
