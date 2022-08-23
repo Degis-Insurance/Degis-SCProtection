@@ -73,8 +73,8 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
 
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
+        ptp = new ERC20Mock("Platypus", "PTP", address(this), 100000000000 ether);
+        yeti = new ERC20Mock("Yeti", "YETI", address(this), 100000000000 ether);
 
         // deploy contracts
         protectionPool = new ProtectionPool(
@@ -194,7 +194,7 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         vedeg.transfer(carol, 3000 ether);
 
         // Alice will buy coverage
-        ptp.transfer(alice, 1000 ether);
+        ptp.transfer(alice, 100000000 ether);
 
         // owner provides liquidity to pool 1
         shield.transfer(address(this), 1000);
@@ -211,14 +211,12 @@ contract ClaimPayoutTest is Test, IncidentReportParameters {
         );
 
         // Alice approves ptp usage to buy coverage
-        ptp.approve(address(policyCenter), 100000 ether);
+        vm.prank(alice);
+        ptp.approve(address(policyCenter), type(uint256).max);
         ptp.mint(address(policyCenter), 100000 ether);
 
-        vm.prank(alice);
-        ptp.approve(address(policyCenter), 100000 ether);
-
         // Alice buys coverage for 100 ether and receives token address
-
+        vm.prank(alice);
         policyCenter.buyCover(1, 100 ether, 3, price);
         bytes32 salt = keccak256(
             abi.encodePacked(POOL_ID, block.timestamp + coverLength)
