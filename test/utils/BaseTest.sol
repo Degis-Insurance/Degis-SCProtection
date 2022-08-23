@@ -4,20 +4,6 @@ pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 
-interface ISetAddress {
-    function setExecutor(address _executor) external;
-
-    function setPolicyCenter(address _policyCenter) external;
-
-    function setIncidentReport(address _incidentReport) external;
-
-    function setOnboardProposal(address _onboardProposal) external;
-
-    function setProtectionPool(address _protectionPool) external;
-
-    function setPriorityPoolFactory(address _priorityPoolFactory) external;
-}
-
 /**
  * @notice Some helper functions for running test in Solidity
  */
