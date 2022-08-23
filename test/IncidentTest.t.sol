@@ -188,27 +188,42 @@ contract IncidentTest is
         /// @notice Preparations
         vm.startPrank(ALICE);
 
-        /// @notice Should not be able to vote for without veDEG
+        // ---------------------------------------------------------- //
+        // * hould not be able to vote for without veDEG * //
+        // ---------------------------------------------------------- //
+
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(IncidentReport__NotEnoughVeDEG.selector);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
-        /// @notice Should not be able to vote against without veDEG
+        // ---------------------------------------------------------- //
+        // * Should not be able to vote against without veDEG * //
+        // ---------------------------------------------------------- //
+
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(IncidentReport__NotEnoughVeDEG.selector);
         incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
-        /// @notice Should not be able to vote with a wrong choice
+        // ---------------------------------------------------------- //
+        // * Should not be able to vote with a wrong choice * //
+        // ---------------------------------------------------------- //
+
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(IncidentReport__WrongChoice.selector);
         incidentReport.vote(1, 3, VOTE_AMOUNT);
 
-        /// @notice Should not be able to vote with zero amount
+        // ---------------------------------------------------------- //
+        // * Should not be able to vote with zero amount * //
+        // ---------------------------------------------------------- //
+
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(IncidentReport__ZeroAmount.selector);
         incidentReport.vote(1, VOTE_FOR, 0);
 
-        /// @notice Should be able to vote with veDEG
+        // ---------------------------------------------------------- //
+        // * Should be able to vote with veDEG * //
+        // ---------------------------------------------------------- //
+
         veDEG.mint(ALICE, VOTE_AMOUNT);
         vm.warp(VOTE_TIME + 1);
         vm.expectEmit(false, false, false, true);
@@ -231,7 +246,10 @@ contract IncidentTest is
         assertEq(temp.result, 0);
         assertFalse(temp.hasChanged);
 
-        /// @notice Should not be able to vote with both sides choices
+        // ---------------------------------------------------------- //
+        // * Should not be able to vote with both sides choices * //
+        // ---------------------------------------------------------- //
+
         veDEG.mint(ALICE, VOTE_AMOUNT);
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(IncidentReport__ChooseBothSides.selector);
@@ -240,7 +258,10 @@ contract IncidentTest is
         /// @notice Stop sending txs from Alice
         vm.stopPrank();
 
-        /// @notice Should be able to vote from another user
+        // ---------------------------------------------------------- //
+        // * Should be able to vote from another user * //
+        // ---------------------------------------------------------- //
+
         veDEG.mint(BOB, VOTE_AMOUNT);
         vm.prank(BOB);
         vm.warp(VOTE_TIME + 1);
@@ -254,7 +275,10 @@ contract IncidentTest is
         _report();
         _startVoting();
 
-        /// @notice Should not be able to vote with a wrong choice
+        // ---------------------------------------------------------- //
+        // * Should not be able to vote with a wrong choice * //
+        // ---------------------------------------------------------- //
+
         vm.prank(ALICE);
         vm.warp(VOTE_TIME + 1);
         vm.assume(_choice != 1 && _choice != 2);
@@ -403,7 +427,10 @@ contract IncidentTest is
         IncidentReport.Report memory report = incidentReport.getReport(1);
         uint256 currentRound = report.round;
 
-        /// @notice Should be able to extend the round
+        // ---------------------------------------------------------- //
+        // * Should be able to extend the round * //
+        // ---------------------------------------------------------- //
+
         vm.warp(SETTLE_TIME);
         vm.expectEmit(false, false, false, true);
         emit ReportExtended(1, currentRound + 1);
