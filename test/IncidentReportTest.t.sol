@@ -5,7 +5,8 @@ pragma solidity ^0.8.13;
 import "./utils/BaseTest.sol";
 import "forge-std/console.sol";
 import "forge-std/Vm.sol";
-import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+
+import "src/mock/MockERC20.sol";
 import "src/pools/priorityPool/PriorityPoolFactory.sol";
 import "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/PayoutPool.sol";
@@ -29,39 +30,14 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IExecutor.sol";
 
 import "src/voting/incidentReport/IncidentReportParameters.sol";
+import "src/voting/incidentReport/IncidentReportEventError.sol";
 
-abstract contract Events {
-    event ReportCreated(
-        uint256 reportId,
-        uint256 indexed poolId,
-        uint256 reportTimestamp,
-        address indexed reporter
-    );
-
-    event VotingStart(uint256 reportId, uint256 startTimestamp);
-
-    event ReportClosed(uint256 reportId, uint256 closeTimestamp);
-
-    event ReportVoted(
-        uint256 reportId,
-        address indexed user,
-        uint256 voteFor,
-        uint256 amount
-    );
-
-    event ReportSettled(uint256 reportId, uint256 result);
-
-    event ReportExtended(uint256 reportId, uint256 round);
-
-    event DebtPaid(
-        address payer,
-        address user,
-        uint256 debt,
-        uint256 unlockAmount
-    );
-}
-
-contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
+contract IncidentReportTest is
+    BaseTest,
+    IncidentReportParameters,
+    IncidentReportEventError
+{
+    // Contracts in test
     PriorityPoolFactory public priorityPoolFactory;
     ProtectionPool public protectionPool;
     PolicyCenter public policyCenter;
@@ -79,10 +55,11 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     ERC20 public yeti;
     Exchange public exchange;
 
-    // defines users
-    address public alice = address(0x1337);
-    address public bob = address(0x133702);
-    address public carol = address(0x133703);
+    // Users in test
+    address public ALICE = mkaddr("Alice");
+    address public BOB = mkaddr("Bob");
+    address public CHARLIE = mkaddr("Charlie");
+
     // pool1 address
     address public pool1;
 
@@ -94,20 +71,19 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
     uint256 constant REPORT_START_TIME = 1000;
 
     function setUp() public {
-        // deploys tokens
-        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
+        // Deploy tokens
+        shield = new MockSHIELD(0, "Shield", 6, "SHIELD");
+        deg = new MockDEG(0, "Degis", 18, "DEG");
+        vedeg = new MockVeDEG(0, "veDegis", 18, "veDeg");
+        ptp = new MockERC20("Platypus", "PTP", 18);
+        yeti = new MockERC20("Yeti", "YETI", 18);
 
-        deg = new MockDEG(10000 ether, "Degis", 18, "DEG");
+        deg.mintDegis(address(this), 100 ether);
+        vedeg.mint(address(this), 100 ether);
 
-        deg.transfer(address(this), 100 ether);
-        vedeg = new MockVeDEG(1000 ether, "veDegis", 18, "veDeg");
-        vedeg.transfer(address(this), 100 ether);
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 10000 ether);
-        yeti = new ERC20Mock("Yeti", "YETI", address(this), 10000 ether);
-
-        vedeg.mint(alice, 100000 ether);
-        vedeg.mint(bob, 100000 ether);
-        vedeg.mint(carol, 10000 ether);
+        vedeg.mint(ALICE, 100000 ether);
+        vedeg.mint(BOB, 100000 ether);
+        vedeg.mint(CHARLIE, 10000 ether);
 
         protectionPool = new ProtectionPool(
             address(deg),
@@ -158,9 +134,6 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         );
         policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
 
-        console.log("incidentReportOwner", incidentReport.owner());
-        console.log(address(this));
-
         // approve incident report interaction
         deg.approve(address(incidentReport), 10000 ether);
         vedeg.approve(address(incidentReport), 10000 ether);
@@ -185,9 +158,8 @@ contract IncidentReportTest is BaseTest, IncidentReportParameters, Events {
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPolicyCenter(address(policyCenter));
 
-
         executor.setOnboardProposal(address(onboardProposal));
-     
+
         executor.setPriorityPoolFactory(address(priorityPoolFactory));
         executor.setIncidentReport(address(incidentReport));
 
