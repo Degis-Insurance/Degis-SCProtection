@@ -1,312 +1,312 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// // SPDX-License-Identifier: UNLICENSED
+// pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-import "forge-std/Vm.sol";
-import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
-import "src/pools/priorityPool/PriorityPoolFactory.sol";
-import "src/pools/protectionPool/ProtectionPool.sol";
-import "src/pools/PayoutPool.sol";
-import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/PremiumRewardPool.sol";
-import "src/core/PolicyCenter.sol";
-import "src/voting/onboardProposal/OnboardProposal.sol";
-import "src/voting/incidentReport/IncidentReport.sol";
-import "src/crTokens/CoverRightTokenFactory.sol";
-import "src/util/PriceGetter.sol";
-import "src/mock/MockSHIELD.sol";
-import "src/mock/MockDEG.sol";
-import "src/mock/MockVeDEG.sol";
-import "src/core/Executor.sol";
-import "src/mock/MockExchange.sol";
-import "src/voting/incidentReport/IncidentReportParameters.sol";
+// import "forge-std/Test.sol";
+// import "forge-std/console.sol";
+// import "forge-std/Vm.sol";
+// import "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+// import "src/pools/priorityPool/PriorityPoolFactory.sol";
+// import "src/pools/protectionPool/ProtectionPool.sol";
+// import "src/pools/PayoutPool.sol";
+// import "src/reward/WeightedFarmingPool.sol";
+// import "src/pools/PremiumRewardPool.sol";
+// import "src/core/PolicyCenter.sol";
+// import "src/voting/onboardProposal/OnboardProposal.sol";
+// import "src/voting/incidentReport/IncidentReport.sol";
+// import "src/crTokens/CoverRightTokenFactory.sol";
+// import "src/util/PriceGetter.sol";
+// import "src/mock/MockSHIELD.sol";
+// import "src/mock/MockDEG.sol";
+// import "src/mock/MockVeDEG.sol";
+// import "src/core/Executor.sol";
+// import "src/mock/MockExchange.sol";
+// import "src/voting/incidentReport/IncidentReportParameters.sol";
 
-import "src/interfaces/IPriorityPool.sol";
-import "src/interfaces/IPolicyCenter.sol";
-import "src/interfaces/IProtectionPool.sol";
-import "src/interfaces/IPriorityPool.sol";
-import "src/interfaces/IOnboardProposal.sol";
-import "src/interfaces/ICoverRightTokenFactory.sol";
-import "src/interfaces/IExecutor.sol";
+// import "src/interfaces/IPriorityPool.sol";
+// import "src/interfaces/IPolicyCenter.sol";
+// import "src/interfaces/IProtectionPool.sol";
+// import "src/interfaces/IPriorityPool.sol";
+// import "src/interfaces/IOnboardProposal.sol";
+// import "src/interfaces/ICoverRightTokenFactory.sol";
+// import "src/interfaces/IExecutor.sol";
 
-contract ClaimPayoutTest is Test, IncidentReportParameters {
-    PriorityPoolFactory public priorityPoolFactory;
-    ProtectionPool public protectionPool;
-    PolicyCenter public policyCenter;
-    WeightedFarmingPool public weightedFarmingPool;
-    CoverRightTokenFactory public coverRightTokenFactory;
-    PayoutPool public payoutPool;
-    PremiumRewardPool public premiumRewardPool;
-    OnboardProposal public onboardProposal;
-    IncidentReport public incidentReport;
-    PriceGetter public priceGetter;
-    MockSHIELD public shield;
-    MockDEG public deg;
-    MockVeDEG public vedeg;
-    Exchange public exchange;
-    Executor public executor;
+// contract ClaimPayoutTest is Test, IncidentReportParameters {
+//     PriorityPoolFactory public priorityPoolFactory;
+//     ProtectionPool public protectionPool;
+//     PolicyCenter public policyCenter;
+//     WeightedFarmingPool public weightedFarmingPool;
+//     CoverRightTokenFactory public coverRightTokenFactory;
+//     PayoutPool public payoutPool;
+//     PremiumRewardPool public premiumRewardPool;
+//     OnboardProposal public onboardProposal;
+//     IncidentReport public incidentReport;
+//     PriceGetter public priceGetter;
+//     MockSHIELD public shield;
+//     MockDEG public deg;
+//     MockVeDEG public vedeg;
+//     MockExchange public exchange;
+//     Executor public executor;
 
-    ERC20Mock public ptp;
-    ERC20Mock public yeti;
+//     ERC20Mock public ptp;
+//     ERC20Mock public yeti;
 
-    uint256 constant VOTE_FOR = 1;
-    uint256 constant VOTE_AGAINST = 2;
+//     uint256 constant VOTE_FOR = 1;
+//     uint256 constant VOTE_AGAINST = 2;
 
-    uint256 constant POOL_ID = 1;
-    uint256 constant PROPOSAL_ID = 1;
+//     uint256 constant POOL_ID = 1;
+//     uint256 constant PROPOSAL_ID = 1;
 
-    uint256 constant REPORT_START_TIME = 1000;
+//     uint256 constant REPORT_START_TIME = 1000;
 
-    // defines users
-    address public alice = address(0x1337);
-    address public bob = address(0x133702);
-    address public carol = address(0x133703);
-    // pool1 address
-    address public pool1;
-    address public crToken1;
-    address public pool2;
-    address public crToken2;
+//     // defines users
+//     address public alice = address(0x1337);
+//     address public bob = address(0x133702);
+//     address public carol = address(0x133703);
+//     // pool1 address
+//     address public pool1;
+//     address public crToken1;
+//     address public pool2;
+//     address public crToken2;
 
-    function setUp() public {
-        shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
-        deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
-        vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
+//     function setUp() public {
+//         shield = new MockSHIELD(10000000 ether, "Shield", 18, "SHIELD");
+//         deg = new MockDEG(10000000 ether, "Degis", 18, "DEG");
+//         vedeg = new MockVeDEG(10000 ether, "veDegis", 18, "veDeg");
 
-        ptp = new ERC20Mock("Platypus", "PTP", address(this), 100000000000 ether);
-        yeti = new ERC20Mock("Yeti", "YETI", address(this), 100000000000 ether);
+//         ptp = new ERC20Mock("Platypus", "PTP", address(this), 100000000000 ether);
+//         yeti = new ERC20Mock("Yeti", "YETI", address(this), 100000000000 ether);
 
-        // deploy contracts
-        protectionPool = new ProtectionPool(
-            address(deg),
-            address(vedeg),
-            address(shield)
-        );
+//         // deploy contracts
+//         protectionPool = new ProtectionPool(
+//             address(deg),
+//             address(vedeg),
+//             address(shield)
+//         );
 
-        payoutPool = new PayoutPool();
+//         payoutPool = new PayoutPool();
 
-        priorityPoolFactory = new PriorityPoolFactory(
-            address(deg),
-            address(vedeg),
-            address(shield),
-            address(protectionPool)
-        );
+//         priorityPoolFactory = new PriorityPoolFactory(
+//             address(deg),
+//             address(vedeg),
+//             address(shield),
+//             address(protectionPool)
+//         );
 
-        premiumRewardPool = new PremiumRewardPool(
-            address(shield),
-            address(priorityPoolFactory),
-            address(protectionPool)
-        );
-        priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
+//         premiumRewardPool = new PremiumRewardPool(
+//             address(shield),
+//             address(priorityPoolFactory),
+//             address(protectionPool)
+//         );
+//         priorityPoolFactory.setPremiumRewardPool(address(premiumRewardPool));
 
-        weightedFarmingPool = new WeightedFarmingPool(
-            address(premiumRewardPool)
-        );
+//         weightedFarmingPool = new WeightedFarmingPool(
+//             address(premiumRewardPool)
+//         );
 
-        incidentReport = new IncidentReport(
-            address(deg),
-            address(vedeg),
-            address(shield)
-        );
+//         incidentReport = new IncidentReport(
+//             address(deg),
+//             address(vedeg),
+//             address(shield)
+//         );
 
-        policyCenter = new PolicyCenter(
-            address(deg),
-            address(vedeg),
-            address(shield),
-            address(protectionPool)
-        );
+//         policyCenter = new PolicyCenter(
+//             address(deg),
+//             address(vedeg),
+//             address(shield),
+//             address(protectionPool)
+//         );
 
-        coverRightTokenFactory = new CoverRightTokenFactory(
-            address(policyCenter)
-        );
+//         coverRightTokenFactory = new CoverRightTokenFactory(
+//             address(policyCenter)
+//         );
 
-        executor = new Executor();
-        onboardProposal = new OnboardProposal(
-            address(deg),
-            address(vedeg),
-            address(shield)
-        );
+//         executor = new Executor();
+//         onboardProposal = new OnboardProposal(
+//             address(deg),
+//             address(vedeg),
+//             address(shield)
+//         );
 
-        priceGetter = new PriceGetter();
+//         priceGetter = new PriceGetter();
 
-        // deploy exchange and supply tokens can be swapped during buy coverage split
-        exchange = new Exchange();
-        deg.transfer(address(exchange), 1000 ether);
-        shield.transfer(address(exchange), 1000 ether);
-        ptp.transfer(address(exchange), 1000 ether);
+//         // deploy exchange and supply tokens can be swapped during buy coverage split
+//         exchange = new MockExchange();
+//         deg.transfer(address(exchange), 1000 ether);
+//         shield.transfer(address(exchange), 1000 ether);
+//         ptp.transfer(address(exchange), 1000 ether);
 
-        weightedFarmingPool.setPolicyCenter(address(policyCenter));
+//         weightedFarmingPool.setPolicyCenter(address(policyCenter));
 
-        priorityPoolFactory.setWeightedFarmingPool(
-            address(weightedFarmingPool)
-        );
-        priorityPoolFactory.setPolicyCenter(address(policyCenter));
-        priorityPoolFactory.setProtectionPool(address(protectionPool));
-        priorityPoolFactory.setPolicyCenter(address(policyCenter));
-        priorityPoolFactory.setExecutor(address(executor));
+//         priorityPoolFactory.setWeightedFarmingPool(
+//             address(weightedFarmingPool)
+//         );
+//         priorityPoolFactory.setPolicyCenter(address(policyCenter));
+//         priorityPoolFactory.setProtectionPool(address(protectionPool));
+//         priorityPoolFactory.setPolicyCenter(address(policyCenter));
+//         priorityPoolFactory.setExecutor(address(executor));
 
-        protectionPool.setPolicyCenter(address(policyCenter));
-        protectionPool.setIncidentReport(address(incidentReport));
-        protectionPool.setPolicyCenter(address(policyCenter));
+//         protectionPool.setPolicyCenter(address(policyCenter));
+//         protectionPool.setIncidentReport(address(incidentReport));
+//         protectionPool.setPolicyCenter(address(policyCenter));
 
-        policyCenter.setExecutor(address(executor));
+//         policyCenter.setExecutor(address(executor));
 
-        policyCenter.setProtectionPool(address(protectionPool));
-        policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
-        policyCenter.setExchange(address(exchange));
-        policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
-        policyCenter.setCoverRightTokenFactory(address(coverRightTokenFactory));
-        policyCenter.setPriceGetter(address(priceGetter));
+//         policyCenter.setProtectionPool(address(protectionPool));
+//         policyCenter.setPriorityPoolFactory(address(priorityPoolFactory));
+//         policyCenter.setExchange(address(exchange));
+//         policyCenter.setWeightedFarmingPool(address(weightedFarmingPool));
+//         policyCenter.setCoverRightTokenFactory(address(coverRightTokenFactory));
+//         policyCenter.setPriceGetter(address(priceGetter));
 
-        // onboardProposal.setExecutor(address(executor));
+//         // onboardProposal.setExecutor(address(executor));
 
-        onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
+//         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+//         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        executor.setOnboardProposal(address(onboardProposal));
-        executor.setIncidentReport(address(incidentReport));
+//         executor.setOnboardProposal(address(onboardProposal));
+//         executor.setIncidentReport(address(incidentReport));
 
-        executor.setPriorityPoolFactory(address(priorityPoolFactory));
+//         executor.setPriorityPoolFactory(address(priorityPoolFactory));
 
-        shield.transfer(address(this), 10000 ether);
-        shield.approve(address(policyCenter), 10000 ether);
-        // pools require initial liquidity input to Protection pool
-        policyCenter.provideLiquidity(10000 ether);
+//         shield.transfer(address(this), 10000 ether);
+//         shield.approve(address(policyCenter), 10000 ether);
+//         // pools require initial liquidity input to Protection pool
+//         policyCenter.provideLiquidity(10000 ether);
 
-        pool1 = priorityPoolFactory.deployPool(
-            "Platypus",
-            address(ptp),
-            1000 ether,
-            260
-        );
+//         pool1 = priorityPoolFactory.deployPool(
+//             "Platypus",
+//             address(ptp),
+//             1000 ether,
+//             260
+//         );
 
-        PriorityPool(pool1).setExecutor(address(executor));
-        PriorityPool(pool1).setIncidentReport(address(incidentReport));
-        PriorityPool(pool1).setPolicyCenter(address(policyCenter));
+//         PriorityPool(pool1).setExecutor(address(executor));
+//         PriorityPool(pool1).setIncidentReport(address(incidentReport));
+//         PriorityPool(pool1).setPolicyCenter(address(policyCenter));
 
-        deg.transfer(address(this), 1000 ether);
-        deg.transfer(address(onboardProposal), 1000 ether);
-        deg.approve(address(onboardProposal), 10000 ether);
+//         deg.transfer(address(this), 1000 ether);
+//         deg.transfer(address(onboardProposal), 1000 ether);
+//         deg.approve(address(onboardProposal), 10000 ether);
 
-        vedeg.transfer(alice, 3000 ether);
-        vedeg.transfer(bob, 2000 ether);
-        vedeg.transfer(carol, 3000 ether);
+//         vedeg.transfer(alice, 3000 ether);
+//         vedeg.transfer(bob, 2000 ether);
+//         vedeg.transfer(carol, 3000 ether);
 
-        // Alice will buy coverage
-        ptp.transfer(alice, 100000000 ether);
+//         // Alice will buy coverage
+//         ptp.transfer(alice, 100000000 ether);
 
-        // owner provides liquidity to pool 1
-        shield.transfer(address(this), 1000);
-        shield.approve(address(policyCenter), 10000 ether);
+//         // owner provides liquidity to pool 1
+//         shield.transfer(address(this), 1000);
+//         shield.approve(address(policyCenter), 10000 ether);
 
-        // provide liquidity to protection pool
-        policyCenter.provideLiquidity(10000);
-        protectionPool.approve(address(policyCenter), 10000 ether);
-        policyCenter.stakeLiquidity(1, 10000);
+//         // provide liquidity to protection pool
+//         policyCenter.provideLiquidity(10000);
+//         protectionPool.approve(address(policyCenter), 10000 ether);
+//         policyCenter.stakeLiquidity(1, 10000);
 
-        (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
-            100 ether,
-            3
-        );
+//         (uint256 price, uint256 coverLength) = PriorityPool(pool1).coverPrice(
+//             100 ether,
+//             3
+//         );
 
-        // Alice approves ptp usage to buy coverage
-        vm.prank(alice);
-        ptp.approve(address(policyCenter), type(uint256).max);
-        ptp.mint(address(policyCenter), 100000 ether);
+//         // Alice approves ptp usage to buy coverage
+//         vm.prank(alice);
+//         ptp.approve(address(policyCenter), type(uint256).max);
+//         ptp.mint(address(policyCenter), 100000 ether);
 
-        // Alice buys coverage for 100 ether and receives token address
-        vm.prank(alice);
-        policyCenter.buyCover(1, 100 ether, 3, price);
-        bytes32 salt = keccak256(
-            abi.encodePacked(POOL_ID, block.timestamp + coverLength)
-        );
-        crToken1 = coverRightTokenFactory.saltToAddress(salt);
-        vm.warp(REPORT_START_TIME);
-        incidentReport.report(1, 100 ether);
+//         // Alice buys coverage for 100 ether and receives token address
+//         vm.prank(alice);
+//         policyCenter.buyCover(1, 100 ether, 3, price);
+//         bytes32 salt = keccak256(
+//             abi.encodePacked(POOL_ID, block.timestamp + coverLength)
+//         );
+//         crToken1 = coverRightTokenFactory.saltToAddress(salt);
+//         vm.warp(REPORT_START_TIME);
+//         incidentReport.report(1, 100 ether);
 
-        vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
-        incidentReport.startVoting(POOL_ID);
+//         vm.warp(REPORT_START_TIME + PENDING_PERIOD + 1);
+//         incidentReport.startVoting(POOL_ID);
 
-        vm.prank(alice);
-        incidentReport.vote(1, VOTE_FOR, 2500 ether);
-        vm.prank(bob);
-        incidentReport.vote(1, VOTE_FOR, 2000 ether);
-        vm.prank(carol);
-        incidentReport.vote(1, VOTE_FOR, 1500 ether);
+//         vm.prank(alice);
+//         incidentReport.vote(1, VOTE_FOR, 2500 ether);
+//         vm.prank(bob);
+//         incidentReport.vote(1, VOTE_FOR, 2000 ether);
+//         vm.prank(carol);
+//         incidentReport.vote(1, VOTE_FOR, 1500 ether);
 
-        vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
+//         vm.warp(REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1);
 
-        incidentReport.settle(POOL_ID);
+//         incidentReport.settle(POOL_ID);
 
-        // execute pool
-        executor.executeReport(1);
-    }
+//         // execute pool
+//         executor.executeReport(1);
+//     }
 
-    function testClaimPayout() public {
-        // claim payout during claiming period
-        uint256 pastBalance = shield.balanceOf(address(this));
-        vm.warp(15 days);
-        uint256 claimableAmount = ICoverRightToken(crToken1).getClaimableOf(
-            address(this)
-        );
+//     function testClaimPayout() public {
+//         // claim payout during claiming period
+//         uint256 pastBalance = shield.balanceOf(address(this));
+//         vm.warp(15 days);
+//         uint256 claimableAmount = ICoverRightToken(crToken1).getClaimableOf(
+//             address(this)
+//         );
 
-        policyCenter.claimPayout(1, crToken1, 1);
+//         policyCenter.claimPayout(1, crToken1, 1);
 
-        uint256 currentBalance = shield.balanceOf(address(this));
+//         uint256 currentBalance = shield.balanceOf(address(this));
 
-        assertEq(claimableAmount, currentBalance - pastBalance);
-    }
+//         assertEq(claimableAmount, currentBalance - pastBalance);
+//     }
 
-    function testClaimPayoutUnexsistentPool() public {
-        vm.expectRevert("Pool not found");
-        policyCenter.claimPayout(2, crToken1, 1);
-    }
+//     function testClaimPayoutUnexsistentPool() public {
+//         vm.expectRevert("Pool not found");
+//         policyCenter.claimPayout(2, crToken1, 1);
+//     }
 
-    // function testUnpauseLiquidatedPool() public {
-    //     vm.warp(1383402);
-    //     PriorityPool(pool1).pausePriorityPool(false);
+//     // function testUnpauseLiquidatedPool() public {
+//     //     vm.warp(1383402);
+//     //     PriorityPool(pool1).pausePriorityPool(false);
 
-    //     // pool remains liquidated but unpaused
-    //     assertTrue(IPriorityPool(pool1).liquidated());
-    //     assertTrue(!IPriorityPool(pool1).paused());
+//     //     // pool remains liquidated but unpaused
+//     //     assertTrue(IPriorityPool(pool1).liquidated());
+//     //     assertTrue(!IPriorityPool(pool1).paused());
 
-    //     uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
-    //     console.log(endDate);
+//     //     uint256 endDate = IPriorityPool(pool1).endLiquidationDate();
+//     //     console.log(endDate);
 
-    //     vm.warp(
-    //         REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
-    //     );
+//     //     vm.warp(
+//     //         REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+//     //     );
 
-    //     assertEq(IPriorityPool(pool1).liquidated() == false, true);
-    // }
+//     //     assertEq(IPriorityPool(pool1).liquidated() == false, true);
+//     // }
 
-    function testRemoveLiquidityAfterClaimPayoutPeriod() public {
-        // claim payout during claiming period
-        uint256 pastBalance = shield.balanceOf(address(this));
-        vm.warp(15 days);
-        uint256 claimableAmount = ICoverRightToken(crToken1).getClaimableOf(
-            address(this)
-        );
+//     function testRemoveLiquidityAfterClaimPayoutPeriod() public {
+//         // claim payout during claiming period
+//         uint256 pastBalance = shield.balanceOf(address(this));
+//         vm.warp(15 days);
+//         uint256 claimableAmount = ICoverRightToken(crToken1).getClaimableOf(
+//             address(this)
+//         );
 
-        policyCenter.claimPayout(1, crToken1, 1);
+//         policyCenter.claimPayout(1, crToken1, 1);
 
-        uint256 lpBalance = IERC20(pool1).balanceOf(address(this));
-        uint256 shieldBalance = shield.balanceOf(address(this));
+//         uint256 lpBalance = IERC20(pool1).balanceOf(address(this));
+//         uint256 shieldBalance = shield.balanceOf(address(this));
 
-        vm.warp(
-            REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
-        );
-        incidentReport.unpausePools(POOL_ID);
+//         vm.warp(
+//             REPORT_START_TIME + PENDING_PERIOD + VOTING_PERIOD + 1 + 91 days
+//         );
+//         incidentReport.unpausePools(POOL_ID);
 
-        policyCenter.unstakeLiquidity(1, pool1, lpBalance);
+//         policyCenter.unstakeLiquidity(1, pool1, lpBalance);
 
-        // Liquidity provider is able to remove left over liquidity proportional to
-        // how much liquidity they provided and how much is left in the pool
-        assertEq(
-            shieldBalance + (lpBalance - claimableAmount) ==
-                shield.balanceOf(address(this)),
-            true
-        );
-    }
-}
+//         // Liquidity provider is able to remove left over liquidity proportional to
+//         // how much liquidity they provided and how much is left in the pool
+//         assertEq(
+//             shieldBalance + (lpBalance - claimableAmount) ==
+//                 shield.balanceOf(address(this)),
+//             true
+//         );
+//     }
+// }

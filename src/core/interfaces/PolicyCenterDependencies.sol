@@ -9,11 +9,8 @@ import "../../interfaces/ICoverRightToken.sol";
 import "../../interfaces/ICoverRightTokenFactory.sol";
 import "../../interfaces/IPayoutPool.sol";
 import "../../interfaces/IWeightedFarmingPool.sol";
-
 import "../../interfaces/ITreasury.sol";
 import "../../interfaces/IExchange.sol";
-
-import "../../interfaces/IShield.sol";
 
 abstract contract PolicyCenterDependencies {
     uint256 constant MAX_COVER_LENGTH = 3;
@@ -28,7 +25,6 @@ abstract contract PolicyCenterDependencies {
 
     uint256 constant SLIPPAGE = 10;
 
-    address public executor;
     address public protectionPool;
     address public priceGetter;
     address public priorityPoolFactory;
@@ -36,30 +32,14 @@ abstract contract PolicyCenterDependencies {
     address public weightedFarmingPool;
     address public exchange;
     address public payoutPool;
-
     address public treasury;
-
-    function _setExchange(address _exchange) internal virtual {
-        exchange = _exchange;
-    }
-
-    function _setExecutor(address _executor) internal virtual {
-        executor = _executor;
-    }
-
-    function _setPriceGetter(address _priceGetter) internal virtual {
-        priceGetter = _priceGetter;
-    }
 
     function _setProtectionPool(address _protectionPool) internal virtual {
         protectionPool = _protectionPool;
     }
 
-    function _setWeightedFarmingPool(address _weightedFarmingPool)
-        internal
-        virtual
-    {
-        weightedFarmingPool = _weightedFarmingPool;
+    function _setPriceGetter(address _priceGetter) internal virtual {
+        priceGetter = _priceGetter;
     }
 
     function _setPriorityPoolFactory(address _priorityPoolFactory)
@@ -76,7 +56,22 @@ abstract contract PolicyCenterDependencies {
         coverRightTokenFactory = _coverRightTokenFactory;
     }
 
+    function _setWeightedFarmingPool(address _weightedFarmingPool)
+        internal
+        virtual
+    {
+        weightedFarmingPool = _weightedFarmingPool;
+    }
+
+    function _setExchange(address _exchange) internal virtual {
+        exchange = _exchange;
+    }
+
     function _setPayoutPool(address _payoutPool) internal virtual {
         payoutPool = _payoutPool;
+    }
+
+    function _setTreausry(address _treasury) internal virtual {
+        treasury = _treasury;
     }
 }

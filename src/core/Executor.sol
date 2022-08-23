@@ -32,7 +32,7 @@ pragma solidity ^0.8.13;
  *
  * @notice This is the executor for degis Protocol Protection
  *         The executor is responsible for the execution of the reports and pool proposals
- *         Both administrators or users can execute proposals and reports 
+ *         Both administrators or users can execute proposals and reports
  *
  */
 contract Executor is
@@ -71,6 +71,10 @@ contract Executor is
 
     function setOnboardProposal(address _onboardProposal) external onlyOwner {
         _setOnboardProposal(_onboardProposal);
+    }
+
+    function setTreasury(address _treasury) external onlyOwner {
+        _setTreasury(_treasury);
     }
 
     // ---------------------------------------------------------------------------------------- //

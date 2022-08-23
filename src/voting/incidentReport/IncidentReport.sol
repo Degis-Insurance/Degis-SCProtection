@@ -185,6 +185,10 @@ contract IncidentReport is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        _setProtectionPool(_protectionPool);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -214,13 +218,12 @@ contract IncidentReport is
      */
     function startVoting(uint256 _id) external {
         Report storage currentReport = reports[_id];
-        require(currentReport.status == PENDING_STATUS, "Not pending status");
+        if (currentReport.status != PENDING_STATUS)
+            revert IncidentReport__WrongStatus();
 
         // Can only start the voting after pending period
-        require(
-            _passedPendingPeriod(currentReport.reportTimestamp),
-            "Not passed pending period"
-        );
+        if (!_passedPendingPeriod(currentReport.reportTimestamp))
+            revert IncidentReport__WrongPeriod();
 
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
@@ -242,13 +245,12 @@ contract IncidentReport is
      */
     function closeReport(uint256 _id) external onlyOwner {
         Report storage currentReport = reports[_id];
-        require(currentReport.status == PENDING_STATUS, "Not pending status");
+        if (currentReport.status != PENDING_STATUS)
+            revert IncidentReport__WrongStatus();
 
         // Must close the report before pending period ends
-        require(
-            !_passedPendingPeriod(currentReport.reportTimestamp),
-            "Already passed pending period"
-        );
+        if (_passedPendingPeriod(currentReport.reportTimestamp))
+            revert IncidentReport__WrongPeriod();
 
         currentReport.status = CLOSE_STATUS;
 
@@ -284,18 +286,18 @@ contract IncidentReport is
     function settle(uint256 _id) external {
         Report storage currentReport = reports[_id];
 
-        require(currentReport.status == VOTING_STATUS, "Not voting status");
+        if (currentReport.status != VOTING_STATUS)
+            revert IncidentReport__WrongStatus();
 
         // Check has passed the voting period
-        require(
-            _passedVotingPeriod(
+        if (
+            !_passedVotingPeriod(
                 currentReport.round,
                 currentReport.voteTimestamp
-            ),
-            "Not reached settlement"
-        );
+            )
+        ) revert IncidentReport__WrongPeriod();
 
-        require(currentReport.result == 0, "Already settled");
+        if (currentReport.result > 0) revert IncidentReport__AlreadySettled();
 
         uint256 res = _checkRoundExtended(_id, currentReport.round);
 
@@ -344,8 +346,9 @@ contract IncidentReport is
         UserVote memory userVote = votes[_user][_id];
         uint256 finalResult = reports[_id].result;
 
-        require(finalResult > 0, "Not settled");
-        require(userVote.choice != finalResult, "Not wrong choice");
+        if (finalResult == 0) revert IncidentReport__NotSettled();
+        if (userVote.choice == finalResult)
+            revert IncidentReport__NotWrongChoice();
 
         uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
 
@@ -375,6 +378,7 @@ contract IncidentReport is
      *
      * @param _poolId Pool id to report incident
      * @param _payout Payout amount of this report
+     * @param _user   Reporter
      */
     function _report(
         uint256 _poolId,
@@ -425,9 +429,10 @@ contract IncidentReport is
         address _user
     ) internal {
         // Should be manually switched on the voting process
-        require(reports[_id].status == VOTING_STATUS, "Not voting status");
+        if (reports[_id].status != VOTING_STATUS)
+            revert IncidentReport__WrongStatus();
 
-        require(_isFor == 1 || _isFor == 2, "Wrong choice");
+        if (_isFor != 1 && _isFor != 2) revert IncidentReport__WrongChoice();
 
         _enoughVeDEG(_user, _amount);
 
@@ -437,7 +442,8 @@ contract IncidentReport is
         // Record the user's choice
         UserVote storage userVote = votes[_user][_id];
         if (userVote.amount > 0) {
-            require(userVote.choice == _isFor, "Can not choose both sides");
+            if (userVote.choice != _isFor)
+                revert IncidentReport__ChooseBothSides();
         } else {
             userVote.choice = _isFor;
         }
@@ -481,8 +487,8 @@ contract IncidentReport is
         UserVote memory userVote = votes[_user][_id];
         uint256 finalResult = reports[_id].result;
 
-        require(finalResult > 0, "Not settled");
-        require(!userVote.claimed, "Already claimed");
+        if (finalResult == 0) revert IncidentReport__NotSettled();
+        if (userVote.claimed) revert IncidentReport__AlreadyClaimed();
 
         // Correct choice
         if (userVote.choice == finalResult) {
@@ -562,7 +568,7 @@ contract IncidentReport is
      */
     function _enoughVeDEG(address _user, uint256 _amount) internal view {
         uint256 unlockedBalance = veDeg.balanceOf(_user) - veDeg.locked(_user);
-        require(unlockedBalance >= _amount, "Not enough veDEG");
+        if (unlockedBalance < _amount) revert IncidentReport__NotEnoughVeDEG();
     }
 
     /**
@@ -719,8 +725,8 @@ contract IncidentReport is
     {
         (, pool, , , ) = priorityPoolFactory.pools(_poolId);
 
-        require(pool != address(0), "Pool doesn't exist");
-        require(!reported[pool], "Pool already reported");
+        if(pool == address(0)) revert IncidentReport__PoolNotExist();
+        if(reported[pool]) revert IncidentReport__AlreadyReported();
     }
 
     /**
@@ -732,7 +738,7 @@ contract IncidentReport is
     function _pausePools(uint256 _poolId) internal {
         (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
 
-        IPriorityPool(pool).pausePriorityPool(true);
+        IPriorityPoolFactory(priorityPoolFactory).pausePriorityPool(_poolId, true);
         IProtectionPool(protectionPool).pauseProtectionPool(true);
     }
 

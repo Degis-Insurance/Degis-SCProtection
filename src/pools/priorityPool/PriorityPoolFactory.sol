@@ -147,8 +147,6 @@ contract PriorityPoolFactory is
         return list;
     }
 
-    
-
     /**
      * @notice Get the pool information by pool id
      *
@@ -192,10 +190,14 @@ contract PriorityPoolFactory is
         _setExecutor(_executor);
     }
 
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        _setIncidentReport(_incidentReport);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
-    
+
     /**
      * @notice Create a new priority pool
      *         Called by executor when an onboard proposal has passed
@@ -222,22 +224,15 @@ contract PriorityPoolFactory is
         // Add new pool max capacity to sum of max capacities
         totalMaxCapacity += _maxCapacity;
 
-        bytes32 salt = keccak256(abi.encodePacked(_name));
-
         uint256 currentPoolId = ++poolCounter;
 
-        bytes memory bytecode = _getPriorityPoolBytecode(
+        address newPoolAddress = _deployPool(
             currentPoolId,
             _name,
             _protocolToken,
             _maxCapacity,
-            _basePremiumRatio,
-            owner(),
-            weightedFarmingPool
+            _basePremiumRatio
         );
-
-        // Finish deployment and get the address
-        address newPoolAddress = _deploy(bytecode, salt);
 
         pools[currentPoolId] = PoolInfo(
             _name,
@@ -325,48 +320,42 @@ contract PriorityPoolFactory is
         poolRegistered[_poolAddress] = false;
     }
 
+    function pausePriorityPool(uint256 _poolId, bool _paused) external {
+        require(msg.sender == incidentReport, "Only incident report");
+
+        PriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @notice Get bytecode for insurance pool creation according to parameters
-     *
-     * @param _poolId              Current pool id
-     * @param _name                Name of the pool
-     * @param _protocolToken       Address of the protocol token to insure
-     * @param _maxCapacity         Max coverage capacity
-     * @param _baseRatio           Policy price
-     * @param _owner               Owner of new pool
-     * @param _weightedFarmingPool Weighted farming pool address
-     *
-     * @return bytecode Creation bytecode with parameters
-     */
-    function _getPriorityPoolBytecode(
+    function _deployPool(
         uint256 _poolId,
         string memory _name,
         address _protocolToken,
         uint256 _maxCapacity,
-        uint256 _baseRatio,
-        address _owner,
-        address _weightedFarmingPool
-    ) internal view virtual returns (bytes memory) {
+        uint256 _baseRatio
+    ) internal returns (address addr) {
         bytes memory bytecode = type(PriorityPool).creationCode;
+        bytes32 salt = keccak256(abi.encodePacked(_poolId, _name));
 
-        // Encode the parameters
-        return
-            abi.encodePacked(
-                bytecode,
-                abi.encode(
-                    _poolId,
-                    _name,
-                    _protocolToken,
-                    _maxCapacity,
-                    _baseRatio,
-                    _owner,
-                    _weightedFarmingPool
-                )
-            );
+        bytes memory bytecodeWithParameters = abi.encodePacked(
+            bytecode,
+            abi.encode(
+                _poolId,
+                _name,
+                _protocolToken,
+                _maxCapacity,
+                _baseRatio,
+                owner(),
+                weightedFarmingPool,
+                protectionPool,
+                policyCenter
+            )
+        );
+
+        addr = _deploy(bytecodeWithParameters, salt);
     }
 
     /**
