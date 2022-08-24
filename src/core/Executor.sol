@@ -23,6 +23,8 @@ import "./interfaces/ExecutorDependencies.sol";
 
 import "../voting/interfaces/VotingParameters.sol";
 
+import "./interfaces/ExecutorEventError.sol";
+
 pragma solidity ^0.8.13;
 
 /**
@@ -38,6 +40,7 @@ pragma solidity ^0.8.13;
 contract Executor is
     ExecutorDependencies,
     VotingParameters,
+    ExecutorEventError,
     OwnableWithoutContext
 {
     // ---------------------------------------------------------------------------------------- //
@@ -98,8 +101,10 @@ contract Executor is
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
 
-        require(report.status == SETTLED_STATUS, "Not settled");
-        require(report.result == 1, "Not passed");
+        if (report.status != SETTLED_STATUS)
+            revert Executor__ReportNotSettled();
+        if (report.result != 1)
+            revert Executor__ReportNotPassed();
 
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
@@ -132,8 +137,10 @@ contract Executor is
             onboardProposal
         ).getProposal(_proposalId);
 
-        require(proposal.status == SETTLED_STATUS, "Not settled");
-        require(proposal.result == 1, "Not passed");
+        if (proposal.status != SETTLED_STATUS)
+            revert Executor__ProposalNotSettled();
+        if (proposal.result != 1)
+            revert Executor__ProposalNotPassed();
 
         // Execute the proposal
         newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(

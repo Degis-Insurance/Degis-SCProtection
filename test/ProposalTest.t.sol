@@ -26,8 +26,6 @@ contract ProposalTest is
     uint256 internal constant PREMIUMRATIO_2 = 250;
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
-    uint256 internal constant PAYOUT = 1000e6;
-
     uint256 internal constant VOTE_FOR = 1;
     uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
@@ -51,7 +49,6 @@ contract ProposalTest is
     }
 
     function testPropose() public {
-
         // # --------------------------------------------------------------------//
         // # Should not start a proposal without enough DEG balance # //
         // # --------------------------------------------------------------------//
@@ -272,17 +269,16 @@ contract ProposalTest is
         // # --------------------------------------------------------------------//
         // # Should be able to start a voting after proposal is made # //
         // # --------------------------------------------------------------------//
-        
+
         vm.warp(VOTE_TIME);
         onboardProposal.startVoting(1);
 
         console.log(unicode"✅ Start a voting after proposal is made");
 
-
         // # --------------------------------------------------------------------//
         // # Should be able to check the record # //
         // # --------------------------------------------------------------------//
-        
+
         OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
             1
         );
@@ -294,7 +290,7 @@ contract ProposalTest is
         // # --------------------------------------------------------------------//
         // # Should not be able to close a proposal with wrong status # //
         // # --------------------------------------------------------------------//
-        
+
         vm.warp(VOTE_TIME);
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.closeProposal(1);
@@ -304,7 +300,7 @@ contract ProposalTest is
         // # --------------------------------------------------------------------//
         // # Should not be able to start a voting with VOTING_STATUS # //
         // # --------------------------------------------------------------------//
-        
+
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.startVoting(1);
 
@@ -313,13 +309,12 @@ contract ProposalTest is
         // # --------------------------------------------------------------------//
         // # Should not be able to close a proposal after starting the vote # //
         // # --------------------------------------------------------------------//
-        
+
         vm.warp(VOTE_TIME);
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.closeProposal(1);
 
         console.log(unicode"✅ Close a proposal after starting the vote");
-
     }
 
     function _startVoting() internal {
@@ -328,12 +323,11 @@ contract ProposalTest is
     }
 
     function testVote() public {
-        // Start a proposal and start voting       
+        // Start a proposal and start voting
         _proposeVTX();
         _startVoting();
 
-
-        // Start prank 
+        // Start prank
         vm.startPrank(ALICE);
 
         // ---------------------------------------------------------- //
@@ -345,7 +339,6 @@ contract ProposalTest is
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
         console.log(unicode"✅ Not vote for without veDEG");
-
 
         // ---------------------------------------------------------- //
         // * Should not be able to vote against without veDEG * //
@@ -392,7 +385,7 @@ contract ProposalTest is
         // # --------------------------------------------------------------------//
         // # Should be able to check the vote record # //
         // # --------------------------------------------------------------------//
-        
+
         OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
             1
         );
@@ -417,7 +410,7 @@ contract ProposalTest is
 
         console.log(unicode"✅ Not vote with both sides choices");
 
-        // Stop sending txs from Alice        
+        // Stop sending txs from Alice
         vm.stopPrank();
 
         // ---------------------------------------------------------- //
@@ -432,7 +425,6 @@ contract ProposalTest is
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
         console.log(unicode"✅ Vote from another user");
-
     }
 
     function testVoteFuzz(uint256 _choice) public {
@@ -451,7 +443,6 @@ contract ProposalTest is
         onboardProposal.vote(1, _choice, VOTE_AMOUNT);
 
         console.log(unicode"✅ Not vvote with a wrong choice");
-
     }
 
     function testSettle() public {
@@ -495,7 +486,7 @@ contract ProposalTest is
 
         console.log(unicode"✅ Settle with TIED");
 
-        // Should be able to check the record 
+        // Should be able to check the record
         OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
             1
         );
@@ -576,6 +567,5 @@ contract ProposalTest is
         proposal = onboardProposal.getProposal(1);
         assertEq(proposal.status, SETTLED_STATUS);
         assertEq(proposal.result, FAILED_RESULT);
-
     }
 }

@@ -40,9 +40,12 @@ contract ExecutorTest is
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant PROPOSE_TIME = 0;
+    uint256 internal constant REPORT_TIME = 0;
     uint256 internal constant VOTE_TIME = PENDING_PERIOD;
-    uint256 internal constant PROPOSAL_SETTLE_TIME = VOTE_TIME + PROPOSAL_VOTING_PERIOD;
-    uint256 internal constant INCIDENT_SETTLE_TIME = VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
+    uint256 internal constant PROPOSAL_SETTLE_TIME =
+        VOTE_TIME + PROPOSAL_VOTING_PERIOD;
+    uint256 internal constant INCIDENT_SETTLE_TIME =
+        VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;
@@ -69,14 +72,158 @@ contract ExecutorTest is
 
         // Proopose a new protocol pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
-        vm.warp(VOTE_TIME);
+        vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         onboardProposal.propose(
             "Platypus",
-            address(ptpPool),
+            address(ptp),
             CAPACITY_2,
             PREMIUMRATIO_2
         );
+
+        // Proopose a new protocol pool
+        deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
+        vm.warp(PROPOSE_TIME);
+        vm.prank(CHARLIE);
+        onboardProposal.propose(
+            "GMX",
+            address(gmx),
+            CAPACITY_3,
+            PREMIUMRATIO_3
+        );
+
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        vm.warp(REPORT_TIME);
+        vm.prank(CHARLIE);
+        incidentReport.report(1, PAYOUT);
+
+        // Preparations
+        veDEG.mint(ALICE, VOTE_AMOUNT * 2);
+        veDEG.mint(BOB, VOTE_AMOUNT * 2);
+
+        // Start voting processes
+        vm.warp(VOTE_TIME);
+        incidentReport.startVoting(1);
+        onboardProposal.startVoting(1);
+
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
+        vm.warp(PROPOSAL_SETTLE_TIME);
+        onboardProposal.settle(1);
     }
-    
+
+    function _voteReport() private {
+        vm.warp(VOTE_TIME + 1);
+        incidentReport.startVoting(1);
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+    } 
+
+    function _voteProposal() private {
+        vm.warp(VOTE_TIME + 1);
+        onboardProposal.startVoting(1);
+        vm.prank(ALICE);
+        onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
+    }
+
+    function testExecute() public {
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Proposal prior to start voting # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(PROPOSAL_SETTLE_TIME);
+        vm.expectRevert(Executor__ProposalNotSettled());
+        executor.executeProposal(1);
+
+        console.log(unicode"✅ Not execute a proposal prior to start voting");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Incident prior to start voting # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(INCIDENT_SETTLE_TIME);
+        vm.expectRevert(Executor__ReportNotSettled());
+        executor.executeReport(1);
+
+        console.log(unicode"✅ Not execute a report prior to start voting");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Proposal during voting # //
+        // # --------------------------------------------------------------------//
+
+        _voteProposal();
+        vm.expectRevert(Executor__ProposalNotSettled());
+        executor.executeProposal(1);
+
+        console.log(unicode"✅ Not execute a proposal during voting");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Incident during voting # //
+        // # --------------------------------------------------------------------//
+
+        _voteReport();
+        vm.expectRevert(Executor__ReportNotSettled());
+        executor.executeReport(1);
+
+        console.log(unicode"✅ Not execute a report during voting");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Proposal not settled # //
+        // # --------------------------------------------------------------------//
+
+        _voteProposal();
+        vm.expectRevert(Executor__ProposalNotSettled());
+        vm.warp(PROPOSAL_SETTLE_TIME);
+        executor.executeProposal(1);
+
+        console.log(unicode"✅ Not execute a proposal not settled");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Incident not settled # //
+        // # --------------------------------------------------------------------//
+
+        _voteReport();
+        vm.expectRevert(Executor__ReportNotSettled());
+        vm.warp(INCIDENT_SETTLE_TIME);
+        executor.executeReport(1);
+
+        console.log(unicode"✅ Not execute a report not settled");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should able to execute Proposal after settle # //
+        // # --------------------------------------------------------------------//
+
+        _voteProposal();
+        vm.warp(PROPOSAL_SETTLE_TIME);
+        ptpAddress = executor.executeProposal(1);
+        ptp = MockERC20(ptpAddress);
+        ptpPool = IPriorityPool(ptp);
+        assertEq(ptpPool.getCapacity(), CAPACITY_2);
+        assertEq(ptpPool.getPremiumRatio(), PREMIUMRATIO_2);
+
+        console.log(unicode"✅ Execute a settled proposal");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should able to execute Report after settle # //
+        // # --------------------------------------------------------------------//
+
+        _voteReport();
+        vm.warp(INCIDENT_SETTLE_TIME);
+        executor.executeReport(1);
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        report.status == STATUS_SETTLED;
+        assertTrue(joePool.liquidated());
+
+        console.log(unicode"✅ Execute a settled report");
+
+    }
+
 }
