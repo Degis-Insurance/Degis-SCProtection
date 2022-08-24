@@ -278,7 +278,7 @@ contract PriorityPoolFactory is
      * @notice Update a priority pool status to dynamic
      *         Only sent from priority pool
      *         "Dynamic" means:
-     *              The priority pool will be counted in the dynamic premium formula
+     *                  The priority pool will be counted in the dynamic premium formula
      *
      * @param _poolId Pool id
      */

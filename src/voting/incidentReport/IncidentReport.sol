@@ -264,7 +264,6 @@ contract IncidentReport is
      *         Once voted, those veDEG will be locked
      *         Rewarded if votes with majority
      *         Punished if votes against majority
-     *         Only callable through the proposal center
      *
      * @param _id     Id of the report to be voted on
      * @param _isFor  The user's choice (1: vote for, 2: vote against)

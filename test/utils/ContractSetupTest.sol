@@ -190,6 +190,6 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
 
-        //
+        // 
     }
 }
