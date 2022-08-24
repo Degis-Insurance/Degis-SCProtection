@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+ // SPDX-License-Identifier: GPL-3.0-or-later
 
 /*
  //======================================================================\\
@@ -190,6 +190,8 @@ contract OnboardProposal is
 
         proposal.status = CLOSE_STATUS;
 
+        proposed[proposal.protocolToken] = false;        
+
         emit ProposalClosed(_id, block.timestamp);
     }
 
@@ -299,6 +301,7 @@ contract OnboardProposal is
         uint256 currentCounter = ++proposalCounter;
         // Record the proposal info
         Proposal storage proposal = proposals[currentCounter];
+        proposal.name = _name;
         proposal.protocolToken = _token;
         proposal.proposer = _user;
         proposal.proposeTimestamp = block.timestamp;

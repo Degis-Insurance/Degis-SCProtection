@@ -41,15 +41,21 @@ contract ProposalTest is
     MockERC20 internal stg;
 
     function setUp() public {
+        // Set up contracts
         setUpContracts();
 
+        // Deploy three protocol tokens
         vtx = new MockERC20("Vector", "VTX", 18);
         cra = new MockERC20("Crabada", "CRA", 18);
         stg = new MockERC20("StarGate", "STG", 18);
     }
 
     function testPropose() public {
-        /// @notice Should not start a proposal without enough DEG balance
+
+        // # --------------------------------------------------------------------//
+        // # Should not start a proposal without enough DEG balance # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         vm.expectRevert("ERC20: burn amount exceeds balance");
@@ -60,54 +66,50 @@ contract ProposalTest is
             PREMIUMRATIO_1
         );
 
+        console.log(
+            unicode"✅ Not start a proposal without enough DEG balance"
+        );
+
+        // mint required degis to start a proposal
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
 
-        /// @notice Should not start a proposal if no max capacity is suggested
+        // # --------------------------------------------------------------------//
+        // # Should not start a proposal if 0 capacity is suggested # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         vm.expectRevert(OnboardProposal__WrongCapacity.selector);
-        onboardProposal.propose(
-            "Vector",
-            address(vtx),
-            0,
-            PREMIUMRATIO_1
-        );
+        onboardProposal.propose("Vector", address(vtx), 0, PREMIUMRATIO_1);
 
-        /// @notice Should not start a proposal if not enough liquidity in Protection Pool
-        // TODO: implement liquidity check
-        // vm.warp(PROPOSE_TIME);
-        // vm.prank(CHARLIE);
-        // vm.expectRevert(OnboardProposal__WrongCapacity.selector);
-        // onboardProposal.propose(
-        //     "Vector",
-        //     address(vtx),
-        //     CAPACITY_1 * 10,
-        //     PREMIUMRATIO_1
-        // );
+        console.log(unicode"✅ Not start a proposal with 0 capacity proposed");
 
-        /// @notice Should not start a proposal if no premium ratio is suggested
+        // # --------------------------------------------------------------------//
+        // # Should not start a proposal if no premium ratio is suggested # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         vm.expectRevert(OnboardProposal__WrongPremium.selector);
-        onboardProposal.propose(
-            "Vector",
-            address(vtx),
-            CAPACITY_1,
-            0
-        );
+        onboardProposal.propose("Vector", address(vtx), CAPACITY_1, 0);
 
-        /// @notice Should not start a proposal if premium ratio suggested is over limit
+        // # --------------------------------------------------------------------//
+        // # Should not start a proposal if premium ratio suggested is over limit # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         vm.expectRevert(OnboardProposal__WrongPremium.selector);
-        onboardProposal.propose(
-            "Vector",
-            address(vtx),
-            CAPACITY_1,
-            10001
+        onboardProposal.propose("Vector", address(vtx), CAPACITY_1, 10001);
+
+        console.log(
+            unicode"✅ Not start a proposal if premium ratio suggested is over limit"
         );
 
-        /// @notice Should be able to start a proposal with enough DEG
+        // # --------------------------------------------------------------------//
+        // # Should be able to start a proposal with enough DEG # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
@@ -125,7 +127,12 @@ contract ProposalTest is
             PREMIUMRATIO_1
         );
 
-        /// @notice Check the new proposal record
+        console.log(unicode"✅ Start a proposal with enough DEG");
+
+        // # --------------------------------------------------------------------//
+        // # Check the new proposal record # //
+        // # --------------------------------------------------------------------//
+
         OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
             1
         );
@@ -137,13 +144,20 @@ contract ProposalTest is
         assertEq(proposal.status, PENDING_STATUS);
         assertEq(proposal.result, 0);
 
-        /// @notice Check the DEG balance after starting the proposal
+        // # --------------------------------------------------------------------//
+        // # Check the DEG balance after starting the proposal
         assertEq(deg.balanceOf(CHARLIE), 0);
 
-        /// @notice Check the proposal counter after starting the proposal
+        // # --------------------------------------------------------------------//
+        // # Check the proposal counter after starting the proposal
         assertEq(onboardProposal.proposalCounter(), 1);
 
-        /// @notice Should not be able to start a proposal already proposed
+        console.log(unicode"✅ Check new proposal record");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to start a proposal already proposed # //
+        // # --------------------------------------------------------------------//
+
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
@@ -154,6 +168,8 @@ contract ProposalTest is
             CAPACITY_1,
             PREMIUMRATIO_1
         );
+
+        console.log(unicode"✅ Not start a proposal already proposed");
     }
 
     function _proposeVTX() internal {
@@ -169,7 +185,13 @@ contract ProposalTest is
     }
 
     function testMultipleProposals() public {
+        // Start a proposal
         _proposeVTX();
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to start multiple proposal # //
+        // # --------------------------------------------------------------------//
+
         assertEq(onboardProposal.proposalCounter(), 1);
 
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
@@ -178,8 +200,8 @@ contract ProposalTest is
         onboardProposal.propose(
             "Crabada",
             address(cra),
-            CAPACITY_1,
-            PREMIUMRATIO_1
+            CAPACITY_2,
+            PREMIUMRATIO_2
         );
         assertEq(onboardProposal.proposalCounter(), 2);
 
@@ -189,57 +211,115 @@ contract ProposalTest is
         onboardProposal.propose(
             "Stargate",
             address(stg),
-            CAPACITY_1,
-            PREMIUMRATIO_1
+            CAPACITY_3,
+            PREMIUMRATIO_3
         );
         assertEq(onboardProposal.proposalCounter(), 3);
+
+        console.log(unicode"✅ Start multiple proposals");
     }
 
     function testcloseProposal() public {
         _proposeVTX();
+        assertEq(onboardProposal.proposalCounter(), 1);
 
-        /// @notice Should not be able to close a proposal by non-owner
+        // # --------------------------------------------------------------------//
+        // # Should not be able to close a proposal by non-owner # //
+        // # --------------------------------------------------------------------//
+
         vm.prank(ALICE);
         vm.expectRevert("Ownable: caller is not the owner");
         onboardProposal.closeProposal(1);
 
-        /// @notice Should be able to close a proposal by the owner
+        console.log(unicode"✅ Not close proposal by non-owner");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to close a proposal by the owner # //
+        // # --------------------------------------------------------------------//
+
         vm.warp(VOTE_TIME - 1);
         vm.expectEmit(false, false, false, true);
         emit ProposalClosed(1, VOTE_TIME - 1);
         onboardProposal.closeProposal(1);
 
-        /// @notice Check the closed proposal record
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
+        console.log(unicode"✅ Close proposal by owner");
+
+        // # --------------------------------------------------------------------//
+        // # Check the closed proposal record # //
+        // # --------------------------------------------------------------------//
+
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
+        );
         assertEq(proposal.status, CLOSE_STATUS);
+
+        console.log(unicode"✅ Check closed proposal record");
+
+        // # --------------------------------------------------------------------//
+        // # Start a new proposal on the same protocol # //
+        // # --------------------------------------------------------------------//
+        _proposeVTX();
+
+        assertEq(onboardProposal.proposalCounter(), 2);
+
+        console.log(unicode"✅ Start proposal on the same protocol");
     }
 
     function testStartVoting() public {
-        /// @notice Start a proposal
+        // Start a proposal
         _proposeVTX();
 
-        /// @notice Should be able to start a voting after proposal is made
+        // # --------------------------------------------------------------------//
+        // # Should be able to start a voting after proposal is made # //
+        // # --------------------------------------------------------------------//
+        
         vm.warp(VOTE_TIME);
         onboardProposal.startVoting(1);
 
-        /// @notice Should be able to check the record
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
+        console.log(unicode"✅ Start a voting after proposal is made");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to check the record # //
+        // # --------------------------------------------------------------------//
+        
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
+        );
         assertEq(proposal.status, VOTING_STATUS);
         assertEq(proposal.voteTimestamp, VOTE_TIME);
 
-        /// @notice Should not be able to close a proposal with wrong status
+        console.log(unicode"✅ Check the record");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to close a proposal with wrong status # //
+        // # --------------------------------------------------------------------//
+        
         vm.warp(VOTE_TIME);
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.closeProposal(1);
 
-        /// @notice Should not be able to start a voting with VOTING_STATUS
+        console.log(unicode"✅ Close a proposal with wrong status");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to start a voting with VOTING_STATUS # //
+        // # --------------------------------------------------------------------//
+        
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.startVoting(1);
 
-        /// @notice Should not be able to close a proposal after starting the vote
+        console.log(unicode"✅ Start a voting with VOTING_STATUS");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to close a proposal after starting the vote # //
+        // # --------------------------------------------------------------------//
+        
         vm.warp(VOTE_TIME);
         vm.expectRevert(OnboardProposal__WrongStatus.selector);
         onboardProposal.closeProposal(1);
+
+        console.log(unicode"✅ Close a proposal after starting the vote");
+
     }
 
     function _startVoting() internal {
@@ -248,11 +328,12 @@ contract ProposalTest is
     }
 
     function testVote() public {
-        /// @notice Start a proposal and start voting
+        // Start a proposal and start voting       
         _proposeVTX();
         _startVoting();
 
-        /// @notice Preparations
+
+        // Start prank 
         vm.startPrank(ALICE);
 
         // ---------------------------------------------------------- //
@@ -263,6 +344,9 @@ contract ProposalTest is
         vm.expectRevert(OnboardProposal__NotEnoughVeDEG.selector);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
+        console.log(unicode"✅ Not vote for without veDEG");
+
+
         // ---------------------------------------------------------- //
         // * Should not be able to vote against without veDEG * //
         // ---------------------------------------------------------- //
@@ -270,6 +354,8 @@ contract ProposalTest is
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(OnboardProposal__NotEnoughVeDEG.selector);
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+
+        console.log(unicode"✅ Not able to vote against without veDEG");
 
         // ---------------------------------------------------------- //
         // * Should not be able to vote with a wrong choice * //
@@ -279,6 +365,8 @@ contract ProposalTest is
         vm.expectRevert(OnboardProposal__WrongChoice.selector);
         onboardProposal.vote(1, 3, VOTE_AMOUNT);
 
+        console.log(unicode"✅ Not able to vote with a wrong choice");
+
         // ---------------------------------------------------------- //
         // * Should not be able to vote with zero amount * //
         // ---------------------------------------------------------- //
@@ -286,6 +374,8 @@ contract ProposalTest is
         vm.warp(VOTE_TIME + 1);
         vm.expectRevert(OnboardProposal__ZeroAmount.selector);
         onboardProposal.vote(1, VOTE_FOR, 0);
+
+        console.log(unicode"✅ Not able to vote with zero amount");
 
         // ---------------------------------------------------------- //
         // * Should be able to vote with veDEG * //
@@ -297,17 +387,24 @@ contract ProposalTest is
         emit ProposalVoted(1, ALICE, VOTE_FOR, VOTE_AMOUNT);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
-        /// @notice Should be able to check the record
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
+        console.log(unicode"✅ Vote with veDEG balance");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to check the vote record # //
+        // # --------------------------------------------------------------------//
+        
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
+        );
         assertEq(proposal.numFor, VOTE_AMOUNT);
         assertEq(proposal.numAgainst, 0);
 
-        OnboardProposal.UserVote memory userVote = onboardProposal.getUserProposalVote(
-            ALICE,
-            1
-        );
+        OnboardProposal.UserVote memory userVote = onboardProposal
+            .getUserProposalVote(ALICE, 1);
         assertEq(userVote.choice, VOTE_FOR);
         assertEq(userVote.amount, VOTE_AMOUNT);
+
+        console.log(unicode"✅ Check vote the record");
 
         // ---------------------------------------------------------- //
         // * Should not be able to vote with both sides choices * //
@@ -318,7 +415,9 @@ contract ProposalTest is
         vm.expectRevert(OnboardProposal__ChooseBothSides.selector);
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
-        /// @notice Stop sending txs from Alice
+        console.log(unicode"✅ Not vote with both sides choices");
+
+        // Stop sending txs from Alice        
         vm.stopPrank();
 
         // ---------------------------------------------------------- //
@@ -331,10 +430,13 @@ contract ProposalTest is
         vm.expectEmit(false, false, false, true);
         emit ProposalVoted(1, BOB, VOTE_AGAINST, VOTE_AMOUNT);
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+
+        console.log(unicode"✅ Vote from another user");
+
     }
 
     function testVoteFuzz(uint256 _choice) public {
-        /// @notice Start a proposal and start voting
+        // Start a proposal and start voting
         _proposeVTX();
         _startVoting();
 
@@ -347,14 +449,17 @@ contract ProposalTest is
         vm.assume(_choice != 1 && _choice != 2);
         vm.expectRevert(OnboardProposal__WrongChoice.selector);
         onboardProposal.vote(1, _choice, VOTE_AMOUNT);
+
+        console.log(unicode"✅ Not vvote with a wrong choice");
+
     }
 
     function testSettle() public {
-        /// @notice Start a proposal and start voting
+        // Start a proposal and start voting
         _proposeVTX();
         _startVoting();
 
-        /// @notice Preparations
+        // Preparations
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);
         veDEG.mint(BOB, VOTE_AMOUNT * 2);
 
@@ -366,93 +471,111 @@ contract ProposalTest is
         vm.warp(VOTE_TIME + 1);
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
-        /// @notice Take the evm snapshot for test
+        // Take the evm snapshot for test and takes a new snapshot
         uint256 snapshot_1 = vm.snapshot();
 
         // ---------------------------------------------------------- //
         // * Should not be able to settle before voting period ends * //
         // ---------------------------------------------------------- //
 
-        vm.warp(SETTLE_TIME - 1);
+        vm.warp(SETTLE_TIME - 2);
         vm.expectRevert(OnboardProposal__WrongPeriod.selector);
         onboardProposal.settle(1);
+
+        console.log(unicode"✅ Not settle before voting period ends");
 
         // ---------------------------------------------------------- //
         // * Should be able to settle with TIED * //
         // ---------------------------------------------------------- //
 
-        vm.warp(SETTLE_TIME);
+        vm.warp(SETTLE_TIME + 1);
         vm.expectEmit(false, false, false, true);
         emit ProposalSettled(1, TIED_RESULT);
         onboardProposal.settle(1);
 
-        /// @notice Should be able to check the record
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
+        console.log(unicode"✅ Settle with TIED");
+
+        // Should be able to check the record 
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
+        );
         assertEq(proposal.status, SETTLED_STATUS);
         assertEq(proposal.result, TIED_RESULT);
+
+        console.log(unicode"✅ Check the settled proposal record");
 
         // ---------------------------------------------------------- //
         // * Should be able to settle with REJECT * //
         // ---------------------------------------------------------- //
 
-        /// @notice Revert to the previous snapshot and have a new snapshot
+        // Revert to the previous snapshot and take a new snapshot
         vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
 
-        /// @notice Bob vote against, making the result to REJECT
+        // Bob vote against, making the result to REJECT
         vm.prank(BOB);
-        vm.warp(VOTE_TIME + 1);
+        vm.warp(VOTE_TIME);
         onboardProposal.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
-        /// @notice Settle the voting
-        vm.warp(SETTLE_TIME);
+        // Settle the voting
+        vm.warp(SETTLE_TIME + 1);
         vm.expectEmit(false, false, false, true);
         emit ProposalSettled(1, REJECT_RESULT);
         onboardProposal.settle(1);
 
-        /// @notice Should be able to check the record
+        // Should be able to check the record
         proposal = onboardProposal.getProposal(1);
         assertEq(proposal.status, SETTLED_STATUS);
         assertEq(proposal.result, REJECT_RESULT);
+
+        console.log(unicode"✅ Settle with REJECT");
 
         // ---------------------------------------------------------- //
         // * Should be able to settle with PASS * //
         // ---------------------------------------------------------- //
 
-        /// @notice Revert to the previous snapshot and have a new snapshot
-        vm.revertTo(snapshot_1);
+        // Revert to the previous snapshot
+        vm.revertTo(snapshot_2);
+        uint256 snapshot_3 = vm.snapshot();
 
-        /// @notice Alice vote for, making the result PASS
+        // Alice vote for, making the result PASS
         vm.prank(ALICE);
-        vm.warp(VOTE_TIME + 1);
+        vm.warp(VOTE_TIME);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
-        /// @notice Settle the voting
-        vm.warp(SETTLE_TIME);
+        // Settle the voting
+        vm.warp(SETTLE_TIME + 1);
         vm.expectEmit(false, false, false, true);
         emit ProposalSettled(1, PASS_RESULT);
         onboardProposal.settle(1);
 
-        /// @notice Should be able to check the record
+        // Should be able to check the record
         proposal = onboardProposal.getProposal(1);
         assertEq(proposal.status, SETTLED_STATUS);
         assertEq(proposal.result, PASS_RESULT);
+
+        console.log(unicode"✅ Settle with PASS");
 
         // ---------------------------------------------------------- //
         // * Should be able to settle with FAILED * //
         // ---------------------------------------------------------- //
 
-        vm.revertTo(snapshot_1);
+        vm.revertTo(snapshot_3);
 
+        // mint veDEG so that current vote amount is lower than required amount
         veDEG.mint(address(this), 10000 ether);
 
-        vm.warp(SETTLE_TIME);
+        vm.warp(SETTLE_TIME + 10);
         vm.expectEmit(false, false, false, true);
         emit ProposalFailed(1);
         onboardProposal.settle(1);
 
-        /// @notice Should be able to check the record
+        console.log(unicode"✅ Settle with FAILED");
+
+        // Should be able to check the record
         proposal = onboardProposal.getProposal(1);
         assertEq(proposal.status, SETTLED_STATUS);
         assertEq(proposal.result, FAILED_RESULT);
+
     }
 }
