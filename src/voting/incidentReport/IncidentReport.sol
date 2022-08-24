@@ -318,6 +318,8 @@ contract IncidentReport is
                 emit ReportFailed(_id);
             }
         } else {
+            tempResults[_id].hasChanged = false;
+
             emit ReportExtended(_id, currentReport.round);
         }
     }
@@ -619,14 +621,22 @@ contract IncidentReport is
     {
         bool hasChanged = tempResults[_id].hasChanged;
 
-        if (!hasChanged) {
+        if (hasChanged && _round < 2) {
+            _extendRound(_id);
+        } else {
             result = _getVotingResult(
                 reports[_id].numFor,
                 reports[_id].numAgainst
             );
-        } else if (hasChanged && _round < 2) {
-            _extendRound(_id);
-        } else revert("Extend round error");
+        }
+
+        // if (!hasChanged) {
+        //     result = _getVotingResult(
+        //         reports[_id].numFor,
+        //         reports[_id].numAgainst
+        //     );
+        // } else if (hasChanged && _round < 2) {} else
+        //     revert("Extend round error");
     }
 
     /**
