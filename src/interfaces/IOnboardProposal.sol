@@ -4,18 +4,26 @@ pragma solidity ^0.8.13;
 
 interface IOnboardProposal {
     struct Proposal {
-        string name;
-        address protocolToken;
-        address proposer;
-        uint256 proposeTimestamp;
+        string name; // Pool name ("JOE", "GMX")
+        address protocolToken; // Protocol native token address
+        address proposer; // Proposer address
+        uint256 proposeTimestamp; // Timestamp when proposing
+        uint256 voteTimestamp; // Timestamp when start voting
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
-        uint256 maxCapacity;
-        uint256 basePremiumRatio;
-        uint256 poolId;
-        uint256 status;
-        uint256 result;
+        uint256 maxCapacity; // Max capacity ratio
+        uint256 basePremiumRatio; // Base annual premium ratio
+        uint256 poolId; // Priority pool id
+        uint256 status; // Current status (PENDING, VOTING, SETTLED, CLOSED)
+        uint256 result; // Final result (PASSED, REJECTED, TIED)
     }
+
+    struct UserVote {
+        uint256 choice; // 1: vote for, 2: vote against
+        uint256 amount; // veDEG amount for voting
+        bool claimed; // Voting reward already claimed
+    }
+
     event NewProposal(
         string name,
         address token,
@@ -113,7 +121,7 @@ interface IOnboardProposal {
     function getUserProposalVote(address user, uint256 proposalId)
         external
         view
-        returns (uint256 choice);
+        returns (UserVote memory);
 
     function veDeg() external view returns (address);
 

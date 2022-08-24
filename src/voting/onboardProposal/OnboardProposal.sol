@@ -102,9 +102,9 @@ contract OnboardProposal is
     function getUserProposalVote(address _user, uint256 _proposalId)
         external
         view
-        returns (uint256)
+        returns (UserVote memory)
     {
-        return votes[_user][_proposalId].choice;
+        return votes[_user][_proposalId];
     }
 
     function getAllProposals()
@@ -142,7 +142,6 @@ contract OnboardProposal is
 
     /**
      * @notice Start a new proposal
-     *         Only callable through the proposal center
      *
      * @param _name             New project name
      * @param _token            Native token address
@@ -167,7 +166,8 @@ contract OnboardProposal is
     function startVoting(uint256 _id) external onlyOwner {
         Proposal storage proposal = proposals[_id];
 
-        require(proposal.status == PENDING_STATUS, "Not pending status");
+        if(proposal.status != PENDING_STATUS)
+            revert OnboardProposal__WrongStatus();
 
         proposal.status = VOTING_STATUS;
         proposal.voteTimestamp = block.timestamp;
@@ -185,16 +185,19 @@ contract OnboardProposal is
         Proposal storage proposal = proposals[_id];
 
         // require current proposal to be settled
-        require(proposal.status == PENDING_STATUS, "Not pending status");
+        if (proposal.status != PENDING_STATUS)
+            revert OnboardProposal__WrongStatus();
 
         proposal.status = CLOSE_STATUS;
 
-        emit ProposalClosed(_id);
+        emit ProposalClosed(_id, block.timestamp);
     }
 
     /**
      * @notice Vote for a proposal
-     *         Only callable through the proposal center
+     *
+     *         Voting power is decided by the (unlocked) balance of veDEG
+     *         Once voted, those veDEG will be locked
      *
      * @param _id     Proposal id
      * @param _isFor  Voting choice
@@ -216,12 +219,13 @@ contract OnboardProposal is
     function settle(uint256 _id) external {
         Proposal storage proposal = proposals[_id];
 
-        require(proposal.status == VOTING_STATUS, "Not voting status");
-        require(
-            _passedVotingPeriod(proposal.voteTimestamp),
-            "Not reached settlement"
-        );
-        require(proposal.result == 0, "Already settled");
+        if (proposal.status != VOTING_STATUS)
+            revert OnboardProposal__WrongStatus();
+
+        if (!_passedVotingPeriod(proposal.voteTimestamp))
+            revert OnboardProposal__WrongPeriod();
+
+        if (proposal.result > 0) revert OnboardProposal__AlreadySettled();
 
         // If reached quorum, settle the result
         if (_checkQuorum(proposal.numFor + proposal.numAgainst)) {
@@ -275,19 +279,20 @@ contract OnboardProposal is
         uint256 _basePremiumRatio, // 10000 == 100% premium annual cost
         address _user
     ) internal {
-        require(
-            !priorityPoolFactory.tokenRegistered(_token),
-            "Protocol already protected"
-        );
-        require(
-            _maxCapacity > 0 && _maxCapacity <= MAX_CAPACITY_RATIO,
-            "Wrong capacity range"
-        );
-        require(_basePremiumRatio < 10000, "Wrong premium ratio");
-        require(!proposed[_token], "Protocol already proposed");
+        if (priorityPoolFactory.tokenRegistered(_token))
+            revert OnboardProposal__AlreadyProtected();
+
+        if (_maxCapacity == 0 || _maxCapacity > MAX_CAPACITY_RATIO)
+                revert OnboardProposal__WrongCapacity();
+
+        if (_basePremiumRatio >= 10000 || _basePremiumRatio == 0)
+            revert OnboardProposal__WrongPremium();
+
+        if (proposed[_token])
+            revert OnboardProposal__AlreadyProposed();
 
         // Burn degis tokens to start a proposal
-        deg.burnDegis(_user, REPORT_THRESHOLD);
+        deg.burnDegis(_user, PROPOSE_THRESHOLD);
 
         proposed[_token] = true;
 
@@ -320,12 +325,14 @@ contract OnboardProposal is
         Proposal storage proposal = proposals[_id];
 
         // Should be manually switched on the voting process
-        require(proposal.status == VOTING_STATUS, "Not voting status");
-        require(_isFor == 1 || _isFor == 2, "Wrong choice");
-        require(
-            !_passedVotingPeriod(proposal.voteTimestamp),
-            "Passed voting period"
-        );
+        if (proposal.status != VOTING_STATUS)
+            revert OnboardProposal__WrongStatus();
+        if (_isFor != 1 && _isFor != 2)
+            revert OnboardProposal__WrongChoice();
+        if (_passedVotingPeriod(proposal.voteTimestamp))
+            revert OnboardProposal__WrongPeriod();
+        if (_amount == 0)
+            revert OnboardProposal__ZeroAmount();
 
         _enoughVeDEG(_user, _amount);
 
@@ -335,7 +342,8 @@ contract OnboardProposal is
         // Record the user's choice
         UserVote storage userVote = votes[_user][_id];
         if (userVote.amount > 0) {
-            require(userVote.choice == _isFor, "Can not choose both sides");
+           if (userVote.choice != _isFor)
+                revert OnboardProposal__ChooseBothSides();
         } else {
             userVote.choice = _isFor;
         }
@@ -359,7 +367,8 @@ contract OnboardProposal is
     function _claim(uint256 _id, address _user) internal {
         Proposal storage proposal = proposals[_id];
 
-        require(proposal.status == SETTLED_STATUS, "Not settled status");
+        if (proposal.status != SETTLED_STATUS)
+            revert OnboardProposal__WrongStatus();
 
         UserVote storage userVote = votes[_user][_id];
         // Unlock the veDEG used for voting
@@ -424,6 +433,7 @@ contract OnboardProposal is
      */
     function _enoughVeDEG(address _user, uint256 _amount) internal view {
         uint256 unlockedBalance = veDeg.balanceOf(_user) - veDeg.locked(_user);
-        require(unlockedBalance >= _amount, "Not enough veDEG");
+        if (unlockedBalance < _amount)
+            revert OnboardProposal__NotEnoughVeDEG();
     }
 }
