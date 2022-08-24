@@ -129,9 +129,9 @@ contract PriceGetter is OwnableWithoutContext {
      *
      * @param _tokenAddress Address of the token
      *
-     * @return price The latest price
+     * @return finalPrice The latest price
      */
-    function getLatestPrice(address _tokenAddress) public returns (uint256) {
+    function getLatestPrice(address _tokenAddress) public returns (uint256 finalPrice) {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
         (
             uint80 roundID,
@@ -152,6 +152,6 @@ contract PriceGetter is OwnableWithoutContext {
             answeredInRound
         );
         // Transfer the result decimals
-        uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));        
+        finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));        
     }
 }
