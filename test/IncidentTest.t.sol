@@ -34,7 +34,7 @@ contract IncidentTest is
 
     uint256 internal constant REPORT_TIME = 0;
     uint256 internal constant VOTE_TIME = PENDING_PERIOD;
-    uint256 internal constant SETTLE_TIME = PENDING_PERIOD + VOTING_PERIOD;
+    uint256 internal constant SETTLE_TIME = PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;

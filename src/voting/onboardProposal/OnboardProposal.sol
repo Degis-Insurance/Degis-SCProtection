@@ -172,7 +172,7 @@ contract OnboardProposal is
         proposal.status = VOTING_STATUS;
         proposal.voteTimestamp = block.timestamp;
 
-        emit VotingStart(_id, block.timestamp);
+        emit ProposalVotingStart(_id, block.timestamp);
     }
 
     /**
@@ -413,7 +413,7 @@ contract OnboardProposal is
         view
         returns (bool)
     {
-        uint256 endTime = _voteTimestamp + VOTING_PERIOD;
+        uint256 endTime = _voteTimestamp + PROPOSAL_VOTING_PERIOD;
         return block.timestamp > endTime;
     }
 
@@ -424,7 +424,7 @@ contract OnboardProposal is
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
-        return _totalVotes >= (veDeg.totalSupply() * QUORUM_RATIO) / 10000;
+        return _totalVotes >= (veDeg.totalSupply() * PROPOSAL_QUORUM_RATIO) / 100;
     }
 
     /**

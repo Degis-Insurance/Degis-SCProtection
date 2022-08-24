@@ -34,7 +34,7 @@ contract ProposalTest is
 
     uint256 internal constant PROPOSE_TIME = 0;
     uint256 internal constant VOTE_TIME = 1;
-    uint256 internal constant SETTLE_TIME = VOTE_TIME + VOTING_PERIOD;
+    uint256 internal constant SETTLE_TIME = VOTE_TIME + PROPOSAL_VOTING_PERIOD;
 
     MockERC20 internal vtx;
     MockERC20 internal cra;

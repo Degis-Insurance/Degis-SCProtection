@@ -40,8 +40,9 @@ contract ExecutorTest is
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant PROPOSE_TIME = 0;
-    uint256 internal constant VOTE_TIME = 1;
-    uint256 internal constant SETTLE_TIME = VOTE_TIME + VOTING_PERIOD;
+    uint256 internal constant VOTE_TIME = PENDING_PERIOD;
+    uint256 internal constant PROPOSAL_SETTLE_TIME = VOTE_TIME + PROPOSAL_VOTING_PERIOD;
+    uint256 internal constant INCIDENT_SETTLE_TIME = VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;

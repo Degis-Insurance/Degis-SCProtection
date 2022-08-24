@@ -231,7 +231,7 @@ contract IncidentReport is
         // Pause insurance pool and reinsurance pool
         _pausePools(currentReport.poolId);
 
-        emit VotingStart(_id, block.timestamp);
+        emit ReportVotingStart(_id, block.timestamp);
     }
 
     /**
@@ -558,7 +558,7 @@ contract IncidentReport is
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
-            _totalVotes >= (IERC20(veDeg).totalSupply() * QUORUM_RATIO) / 100;
+            _totalVotes >= (IERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
     }
 
     /**
@@ -601,7 +601,7 @@ contract IncidentReport is
         returns (bool)
     {
         uint256 endTime = _voteTimestamp +
-            VOTING_PERIOD +
+            INCIDENT_VOTING_PERIOD +
             _round *
             EXTEND_PERIOD;
         return block.timestamp >= endTime;
@@ -689,10 +689,10 @@ contract IncidentReport is
         view
         returns (bool)
     {
-        uint256 endTime = _voteTimestamp + VOTING_PERIOD + _extendTime(_round);
+        uint256 endTime = _voteTimestamp + INCIDENT_VOTING_PERIOD + _extendTime(_round);
 
         uint256 lastDayStart = _voteTimestamp +
-            VOTING_PERIOD +
+            INCIDENT_VOTING_PERIOD +
             _extendTime(_round) -
             SAMPLE_PERIOD;
 

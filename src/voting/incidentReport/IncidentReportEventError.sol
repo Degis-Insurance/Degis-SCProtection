@@ -15,7 +15,7 @@ interface IncidentReportEventError {
         uint256 payout
     );
 
-    event VotingStart(uint256 reportId, uint256 startTimestamp);
+    event ReportVotingStart(uint256 reportId, uint256 startTimestamp);
 
     event ReportClosed(uint256 reportId, uint256 closeTimestamp);
 
