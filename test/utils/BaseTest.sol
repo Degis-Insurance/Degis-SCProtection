@@ -19,3 +19,14 @@ contract BaseTest is Test {
         return addr;
     }
 }
+
+// ! Comments template for writing test in Solidity
+// ! ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓
+
+// # --------------------------------------------------------------------//
+// # {Writing your test description here}# //
+// # --------------------------------------------------------------------//
+
+// * {Writing the important comments here}
+
+// {Write the comments here}

@@ -45,7 +45,7 @@ contract ProposalTest is
 
         vtx = new MockERC20("Vector", "VTX", 18);
         cra = new MockERC20("Crabada", "CRA", 18);
-
+        stg = new MockERC20("StarGate", "STG", 18);
     }
 
     function testPropose() public {
