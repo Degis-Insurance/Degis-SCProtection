@@ -15,13 +15,13 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant PENDING_PERIOD = 20 minutes;
 
     // uint256 constant VOTING_PERIOD = 3 days;
-    uint256 constant VOTING_PERIOD = 2 hours;
+    uint256 constant INCIDENT_VOTING_PERIOD = 2 hours;
 
     uint256 constant EXTEND_PERIOD = 1 hours;
     uint256 constant SAMPLE_PERIOD = 1 hours;
 
     // Quorum parameter
-    uint256 constant QUORUM_RATIO = 30;
+    uint256 constant INCIDENT_QUORUM_RATIO = 30;
 
     // DEG threshold for starting a report
     uint256 constant REPORT_THRESHOLD = 10000 ether;

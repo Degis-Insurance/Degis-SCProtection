@@ -11,7 +11,7 @@ interface OnboardProposalEventError {
         uint256 priceRatio
     );
 
-    event VotingStart(uint256 proposalId, uint256 timestamp);
+    event ProposalVotingStart(uint256 proposalId, uint256 timestamp);
 
     event ProposalClosed(uint256 proposalId, uint256 timestamp);
 
