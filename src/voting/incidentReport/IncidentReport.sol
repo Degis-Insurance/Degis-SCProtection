@@ -503,7 +503,7 @@ contract IncidentReport is
             _unlockVeDEG(_user, userVote.amount);
         }
         // Wrong choice, no reward
-        else revert("No reward to claim");
+        else revert IncidentReport__NoReward();
 
         votes[_user][_id].claimed = true;
     }
