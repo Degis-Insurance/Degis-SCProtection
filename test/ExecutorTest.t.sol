@@ -14,7 +14,10 @@ import "src/voting/onboardProposal/OnboardProposalEventError.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/incidentReport/IncidentReportEventError.sol";
 
+import "src/core/interfaces/ExecutorEventError.sol";
+
 contract ExecutorTest is
+    ExecutorEventError,
     ContractSetupBaseTest,
     OnboardProposalParameters,
     IncidentReportParameters,
@@ -60,7 +63,7 @@ contract ExecutorTest is
         // Deploy one protocol token
         joe = new MockERC20("JoeToken", "JOE", 18);
 
-        // Deploy one protocol pool by owner
+        // Deploy one priority pool by owner
         joePool = IPriorityPool(
             priorityPoolFactory.deployPool(
                 "TraderJoe",
@@ -70,7 +73,7 @@ contract ExecutorTest is
             )
         );
 
-        // Proopose a new protocol pool
+        // Proopose a new priority pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
@@ -81,7 +84,7 @@ contract ExecutorTest is
             PREMIUMRATIO_2
         );
 
-        // Proopose a new protocol pool
+        // Proopose a new priority pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
@@ -120,7 +123,7 @@ contract ExecutorTest is
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
-    } 
+    }
 
     function _voteProposal() private {
         vm.warp(VOTE_TIME + 1);
@@ -132,13 +135,12 @@ contract ExecutorTest is
     }
 
     function testExecute() public {
-
         // # --------------------------------------------------------------------//
         // # Should not be able to execute Proposal prior to start voting # //
         // # --------------------------------------------------------------------//
 
         vm.warp(PROPOSAL_SETTLE_TIME);
-        vm.expectRevert(Executor__ProposalNotSettled());
+        vm.expectRevert(Executor__ProposalNotSettled.selector);
         executor.executeProposal(1);
 
         console.log(unicode"✅ Not execute a proposal prior to start voting");
@@ -148,7 +150,7 @@ contract ExecutorTest is
         // # --------------------------------------------------------------------//
 
         vm.warp(INCIDENT_SETTLE_TIME);
-        vm.expectRevert(Executor__ReportNotSettled());
+        vm.expectRevert(Executor__ReportNotSettled.selector);
         executor.executeReport(1);
 
         console.log(unicode"✅ Not execute a report prior to start voting");
@@ -158,7 +160,7 @@ contract ExecutorTest is
         // # --------------------------------------------------------------------//
 
         _voteProposal();
-        vm.expectRevert(Executor__ProposalNotSettled());
+        vm.expectRevert(Executor__ProposalNotSettled.selector);
         executor.executeProposal(1);
 
         console.log(unicode"✅ Not execute a proposal during voting");
@@ -168,7 +170,7 @@ contract ExecutorTest is
         // # --------------------------------------------------------------------//
 
         _voteReport();
-        vm.expectRevert(Executor__ReportNotSettled());
+        vm.expectRevert(Executor__ReportNotSettled.selector);
         executor.executeReport(1);
 
         console.log(unicode"✅ Not execute a report during voting");
@@ -178,7 +180,7 @@ contract ExecutorTest is
         // # --------------------------------------------------------------------//
 
         _voteProposal();
-        vm.expectRevert(Executor__ProposalNotSettled());
+        vm.expectRevert(Executor__ProposalNotSettled.selector);
         vm.warp(PROPOSAL_SETTLE_TIME);
         executor.executeProposal(1);
 
@@ -189,12 +191,11 @@ contract ExecutorTest is
         // # --------------------------------------------------------------------//
 
         _voteReport();
-        vm.expectRevert(Executor__ReportNotSettled());
+        vm.expectRevert(Executor__ReportNotSettled.selector);
         vm.warp(INCIDENT_SETTLE_TIME);
         executor.executeReport(1);
 
         console.log(unicode"✅ Not execute a report not settled");
-
 
         // # --------------------------------------------------------------------//
         // # Should able to execute Proposal after settle # //
@@ -202,14 +203,13 @@ contract ExecutorTest is
 
         _voteProposal();
         vm.warp(PROPOSAL_SETTLE_TIME);
-        ptpAddress = executor.executeProposal(1);
+        address ptpAddress = executor.executeProposal(1);
         ptp = MockERC20(ptpAddress);
-        ptpPool = IPriorityPool(ptp);
-        assertEq(ptpPool.getCapacity(), CAPACITY_2);
-        assertEq(ptpPool.getPremiumRatio(), PREMIUMRATIO_2);
+        ptpPool = IPriorityPool(ptpAddress);
+        assertEq(ptpPool.maxCapacity(), CAPACITY_2);
+        assertEq(ptpPool.basePremiumRatio(), PREMIUMRATIO_2);
 
         console.log(unicode"✅ Execute a settled proposal");
-
 
         // # --------------------------------------------------------------------//
         // # Should able to execute Report after settle # //
@@ -219,11 +219,8 @@ contract ExecutorTest is
         vm.warp(INCIDENT_SETTLE_TIME);
         executor.executeReport(1);
         IncidentReport.Report memory report = incidentReport.getReport(1);
-        report.status == STATUS_SETTLED;
-        assertTrue(joePool.liquidated());
+        assertEq(report.status, SETTLED_STATUS);
 
         console.log(unicode"✅ Execute a settled report");
-
     }
-
 }
