@@ -630,11 +630,15 @@ contract IncidentTest is
         assertEq(report.result, TIED_RESULT);
         assertEq(report.votingReward, 0);
 
+        console.log(unicode"✅ Settle the voting reward when TIED");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to give reporter reward # //
         // # --------------------------------------------------------------------//
 
         assertEq(deg.balanceOf(CHARLIE), 0);
+
+        console.log(unicode"✅ Not get reporter reward when TIED");
 
         // # --------------------------------------------------------------------//
         // # Should be able to get back veDEG # //
@@ -651,6 +655,8 @@ contract IncidentTest is
         vm.prank(BOB);
         incidentReport.claimReward(1);
         assertEq(veDEG.balanceOf(BOB), VOTE_AMOUNT * 2);
+
+        console.log(unicode"✅ Get back veDEG when TIED");
     }
 
     function testRewardForPassed() public {
@@ -678,6 +684,8 @@ contract IncidentTest is
         vm.expectRevert(IncidentReport__NotSettled.selector);
         incidentReport.claimReward(1);
 
+        console.log(unicode"✅ Not claim reward before settlement");
+
         // # --------------------------------------------------------------------//
         // # Should be able to settle the reward result # //
         // # --------------------------------------------------------------------//
@@ -696,11 +704,15 @@ contract IncidentTest is
             (totalRewardToVoters * SCALE) / (2 * VOTE_AMOUNT)
         );
 
+        console.log(unicode"✅ Settle the voting reward when PASS");
+
         // # --------------------------------------------------------------------//
         // # Should be able to give the reporter DEG reward # //
         // # --------------------------------------------------------------------//
 
         assertEq(deg.balanceOf(CHARLIE), REPORT_THRESHOLD + REPORTER_REWARD);
+
+        console.log(unicode"✅ Get reporter reward when PASS");
 
         // # --------------------------------------------------------------------//
         // # Should be able to claim the DEG reward # //
@@ -719,6 +731,8 @@ contract IncidentTest is
 
         assertEq(deg.balanceOf(ALICE), totalRewardToVoters);
 
+        console.log(unicode"✅ Claim DEG reward for correct voters when PASS");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to claim the reward multiple times # //
         // # --------------------------------------------------------------------//
@@ -729,6 +743,8 @@ contract IncidentTest is
         vm.expectRevert(IncidentReport__AlreadyClaimed.selector);
         incidentReport.claimReward(1);
 
+        console.log(unicode"✅ Not claim DEG reward multiple times when PASS");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to claim the reward with wrong choice # //
         // # --------------------------------------------------------------------//
@@ -738,6 +754,10 @@ contract IncidentTest is
         vm.prank(BOB);
         vm.expectRevert(IncidentReport__NoReward.selector);
         incidentReport.claimReward(1);
+
+        console.log(
+            unicode"✅ Not claim DEG reward with wrong choice when PASS"
+        );
 
         // # --------------------------------------------------------------------//
         // # Should be able to pay debt for wrong choice # //
@@ -758,6 +778,8 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, BOB);
 
+        console.log(unicode"✅ Pay debt for wrong choice when PASS");
+
         // # --------------------------------------------------------------------//
         // # Should be able to pay debt for other people # //
         // # --------------------------------------------------------------------//
@@ -775,6 +797,8 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, BOB);
 
+        console.log(unicode"✅ Pay debt for another user when PASS");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to pay debt for correct choice # //
         // # --------------------------------------------------------------------//
@@ -790,6 +814,8 @@ contract IncidentTest is
         vm.prank(BOB);
         vm.expectRevert(IncidentReport__NotWrongChoice.selector);
         incidentReport.payDebt(1, ALICE);
+
+        console.log(unicode"✅ Not pay debt for correct choice when PASS");
     }
 
     function testRewardForReject() public {
@@ -826,11 +852,15 @@ contract IncidentTest is
             (totalRewardToVoters * SCALE) / (2 * VOTE_AMOUNT)
         );
 
+        console.log(unicode"✅ Settle the voting reward when REJECT");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to give the reporter DEG reward # //
         // # --------------------------------------------------------------------//
 
         assertEq(deg.balanceOf(CHARLIE), 0);
+
+        console.log(unicode"✅ Give reporter reward when REJECT");
 
         // # --------------------------------------------------------------------//
         // # Should be able to claim the DEG reward # //
@@ -849,6 +879,10 @@ contract IncidentTest is
 
         assertEq(deg.balanceOf(BOB), totalRewardToVoters);
 
+        console.log(
+            unicode"✅ Claim DEG reward for correct choice when REJECT"
+        );
+
         // # --------------------------------------------------------------------//
         // # Should not be able to claim the reward multiple times # //
         // # --------------------------------------------------------------------//
@@ -859,6 +893,10 @@ contract IncidentTest is
         vm.expectRevert(IncidentReport__AlreadyClaimed.selector);
         incidentReport.claimReward(1);
 
+        console.log(
+            unicode"✅ Not claim DEG reward multiple times when REJECT"
+        );
+
         // # --------------------------------------------------------------------//
         // # Should not be able to claim the reward with wrong choice # //
         // # --------------------------------------------------------------------//
@@ -868,6 +906,10 @@ contract IncidentTest is
         vm.prank(ALICE);
         vm.expectRevert(IncidentReport__NoReward.selector);
         incidentReport.claimReward(1);
+
+        console.log(
+            unicode"✅ Not claim DEG reward for wrong choice when REJECT"
+        );
 
         // # --------------------------------------------------------------------//
         // # Should be able to pay debt for wrong choice # //
@@ -888,6 +930,8 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, ALICE);
 
+        console.log(unicode"✅ Pay debt for wrong choice when REJECT");
+
         // # --------------------------------------------------------------------//
         // # Should be able to pay debt for other people # //
         // # --------------------------------------------------------------------//
@@ -905,6 +949,8 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, ALICE);
 
+        console.log(unicode"✅ Pay debt for another user when REJECT");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to pay debt for correct choice # //
         // # --------------------------------------------------------------------//
@@ -920,5 +966,7 @@ contract IncidentTest is
         vm.prank(ALICE);
         vm.expectRevert(IncidentReport__NotWrongChoice.selector);
         incidentReport.payDebt(1, BOB);
+
+        console.log(unicode"✅ Not pay debt for correct choice when REJECT");
     }
 }
