@@ -18,10 +18,14 @@ contract IncidentTest is
     address internal BOB = mkaddr("Bob");
     address internal CHARLIE = mkaddr("Charlie");
 
+    uint256 internal constant SCALE = 1e12;
+
+    // Max capacities for pools (100 = 100%)
     uint256 internal constant CAPACITY_1 = 40;
     uint256 internal constant CAPACITY_2 = 30;
     uint256 internal constant CAPACITY_3 = 40;
 
+    // Base premium ratio for pools (10000 = 100%)
     uint256 internal constant PREMIUMRATIO_1 = 200;
     uint256 internal constant PREMIUMRATIO_2 = 250;
     uint256 internal constant PREMIUMRATIO_3 = 400;
@@ -340,9 +344,12 @@ contract IncidentTest is
         assertEq(report.numAgainst, VOTE_AMOUNT);
 
         // Check the user's vote record
-        userVote = incidentReport.getUserVote(BOB, 1);
-        assertEq(userVote.choice, VOTE_AGAINST);
-        assertEq(userVote.amount, VOTE_AMOUNT);
+        IncidentReport.UserVote memory bobVote = incidentReport.getUserVote(
+            BOB,
+            1
+        );
+        assertEq(bobVote.choice, VOTE_AGAINST);
+        assertEq(bobVote.amount, VOTE_AMOUNT);
 
         // Check the temporary result record
         temp = incidentReport.getTempResult(1);
@@ -378,11 +385,11 @@ contract IncidentTest is
         veDEG.mint(BOB, VOTE_AMOUNT * 2);
 
         vm.prank(ALICE);
-        vm.warp(PENDING_PERIOD + 1);
+        vm.warp(VOTE_TIME + 1);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
 
         vm.prank(BOB);
-        vm.warp(PENDING_PERIOD + 1);
+        vm.warp(VOTE_TIME + 1);
         incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
 
         // Take the evm snapshot for test
@@ -587,5 +594,331 @@ contract IncidentTest is
         incidentReport.settle(1);
 
         console.log(unicode"✅ Extend the round multiple times");
+    }
+
+    function _preVote() internal {
+        // Preparations for voting
+        // Default status would be TIED
+        veDEG.mint(ALICE, VOTE_AMOUNT * 2);
+        veDEG.mint(BOB, VOTE_AMOUNT * 2);
+
+        vm.prank(ALICE);
+        vm.warp(VOTE_TIME + 1);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+
+        vm.prank(BOB);
+        vm.warp(VOTE_TIME + 1);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+    }
+
+    function testRewardForTied() public {
+        // Start a report and start voting
+        _report();
+        _startVoting();
+        _preVote();
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to settle the reward result # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(SETTLE_TIME);
+        vm.expectEmit(false, false, false, true);
+        emit VotingRewardSettled(1, 0);
+        incidentReport.settle(1);
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        assertEq(report.result, TIED_RESULT);
+        assertEq(report.votingReward, 0);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to give reporter reward # //
+        // # --------------------------------------------------------------------//
+
+        assertEq(deg.balanceOf(CHARLIE), 0);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to get back veDEG # //
+        // # --------------------------------------------------------------------//
+
+        // Alice gets back veDEG
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        incidentReport.claimReward(1);
+        assertEq(veDEG.balanceOf(ALICE), VOTE_AMOUNT * 2);
+
+        // Bob gets back veDEG
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        incidentReport.claimReward(1);
+        assertEq(veDEG.balanceOf(BOB), VOTE_AMOUNT * 2);
+    }
+
+    function testRewardForPassed() public {
+        // Start a report and start voting
+        _report();
+        _startVoting();
+        _preVote();
+
+        // Alice vote for, making the result passed
+        vm.prank(ALICE);
+        vm.warp(VOTE_TIME + 1);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim reward before settlement # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(VOTE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__NotSettled.selector);
+        incidentReport.claimReward(1);
+
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__NotSettled.selector);
+        incidentReport.claimReward(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to settle the reward result # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(SETTLE_TIME);
+        vm.expectEmit(false, false, false, true);
+        emit VotingRewardSettled(1, (VOTE_AMOUNT * REWARD_RATIO) / 100);
+        incidentReport.settle(1);
+
+        uint256 totalRewardToVoters = (VOTE_AMOUNT * REWARD_RATIO) / 100;
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        assertEq(report.result, PASS_RESULT);
+        assertEq(
+            report.votingReward,
+            (totalRewardToVoters * SCALE) / (2 * VOTE_AMOUNT)
+        );
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to give the reporter DEG reward # //
+        // # --------------------------------------------------------------------//
+
+        assertEq(deg.balanceOf(CHARLIE), REPORT_THRESHOLD + REPORTER_REWARD);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to claim the DEG reward # //
+        // # --------------------------------------------------------------------//
+
+        // ALICE is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        incidentReport.claimReward(1);
+
+        IncidentReport.UserVote memory aliceVote = incidentReport.getUserVote(
+            ALICE,
+            1
+        );
+        assertTrue(aliceVote.claimed);
+
+        assertEq(deg.balanceOf(ALICE), totalRewardToVoters);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim the reward multiple times # //
+        // # --------------------------------------------------------------------//
+
+        // ALICE is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__AlreadyClaimed.selector);
+        incidentReport.claimReward(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim the reward with wrong choice # //
+        // # --------------------------------------------------------------------//
+
+        // BOB is not the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        vm.expectRevert(IncidentReport__NoReward.selector);
+        incidentReport.claimReward(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to pay debt for wrong choice # //
+        // # --------------------------------------------------------------------//
+
+        uint256 snapshot_1 = vm.snapshot();
+
+        // BOB is not the correct voter
+        deg.mintDegis(BOB, VOTE_AMOUNT);
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        vm.expectEmit(false, false, false, true);
+        emit DebtPaid(
+            BOB,
+            BOB,
+            (VOTE_AMOUNT * DEBT_RATIO) / 10000,
+            VOTE_AMOUNT
+        );
+        incidentReport.payDebt(1, BOB);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to pay debt for other people # //
+        // # --------------------------------------------------------------------//
+
+        vm.revertTo(snapshot_1);
+
+        deg.mintDegis(ALICE, VOTE_AMOUNT);
+        vm.prank(ALICE);
+        vm.expectEmit(false, false, false, true);
+        emit DebtPaid(
+            ALICE,
+            BOB,
+            (VOTE_AMOUNT * DEBT_RATIO) / 10000,
+            VOTE_AMOUNT
+        );
+        incidentReport.payDebt(1, BOB);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to pay debt for correct choice # //
+        // # --------------------------------------------------------------------//
+
+        // ALICE is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__NotWrongChoice.selector);
+        incidentReport.payDebt(1, ALICE);
+
+        // ALICE is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        vm.expectRevert(IncidentReport__NotWrongChoice.selector);
+        incidentReport.payDebt(1, ALICE);
+    }
+
+    function testRewardForReject() public {
+        // Start a report and start voting
+        _report();
+        _startVoting();
+        _preVote();
+
+        // BOB vote against, making the result reject
+        vm.prank(BOB);
+        vm.warp(VOTE_TIME + 1);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to settle the reward result # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(SETTLE_TIME);
+        vm.expectEmit(false, false, false, true);
+        emit VotingRewardSettled(
+            1,
+            REPORT_THRESHOLD + (VOTE_AMOUNT * REWARD_RATIO) / 100
+        );
+        incidentReport.settle(1);
+
+        uint256 totalRewardToVoters = REPORT_THRESHOLD +
+            (VOTE_AMOUNT * REWARD_RATIO) /
+            100;
+
+        IncidentReport.Report memory report = incidentReport.getReport(1);
+        assertEq(report.result, REJECT_RESULT);
+        assertEq(
+            report.votingReward,
+            (totalRewardToVoters * SCALE) / (2 * VOTE_AMOUNT)
+        );
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to give the reporter DEG reward # //
+        // # --------------------------------------------------------------------//
+
+        assertEq(deg.balanceOf(CHARLIE), 0);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to claim the DEG reward # //
+        // # --------------------------------------------------------------------//
+
+        // ALICE is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        incidentReport.claimReward(1);
+
+        IncidentReport.UserVote memory bobVote = incidentReport.getUserVote(
+            BOB,
+            1
+        );
+        assertTrue(bobVote.claimed);
+
+        assertEq(deg.balanceOf(BOB), totalRewardToVoters);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim the reward multiple times # //
+        // # --------------------------------------------------------------------//
+
+        // BOB is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        vm.expectRevert(IncidentReport__AlreadyClaimed.selector);
+        incidentReport.claimReward(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim the reward with wrong choice # //
+        // # --------------------------------------------------------------------//
+
+        // ALICE is not the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__NoReward.selector);
+        incidentReport.claimReward(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to pay debt for wrong choice # //
+        // # --------------------------------------------------------------------//
+
+        uint256 snapshot_1 = vm.snapshot();
+
+        // ALICE is not the correct voter
+        deg.mintDegis(ALICE, VOTE_AMOUNT);
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectEmit(false, false, false, true);
+        emit DebtPaid(
+            ALICE,
+            ALICE,
+            (VOTE_AMOUNT * DEBT_RATIO) / 10000,
+            VOTE_AMOUNT
+        );
+        incidentReport.payDebt(1, ALICE);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to pay debt for other people # //
+        // # --------------------------------------------------------------------//
+
+        vm.revertTo(snapshot_1);
+
+        deg.mintDegis(BOB, VOTE_AMOUNT);
+        vm.prank(BOB);
+        vm.expectEmit(false, false, false, true);
+        emit DebtPaid(
+            BOB,
+            ALICE,
+            (VOTE_AMOUNT * DEBT_RATIO) / 10000,
+            VOTE_AMOUNT
+        );
+        incidentReport.payDebt(1, ALICE);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to pay debt for correct choice # //
+        // # --------------------------------------------------------------------//
+
+        // BOB is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(BOB);
+        vm.expectRevert(IncidentReport__NotWrongChoice.selector);
+        incidentReport.payDebt(1, BOB);
+
+        // BOB is the correct voter
+        vm.warp(SETTLE_TIME + 1);
+        vm.prank(ALICE);
+        vm.expectRevert(IncidentReport__NotWrongChoice.selector);
+        incidentReport.payDebt(1, BOB);
     }
 }
