@@ -43,6 +43,8 @@ interface IPriorityPoolFactory {
 
     function incidentReport() external view returns (address);
 
+    function pauseProtectionPool(bool _paused) external;
+
     function priorityPoolFactory() external view returns (address);
 
     function maxCapacity() external view returns (uint256);

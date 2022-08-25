@@ -162,6 +162,10 @@ contract ProtectionPool is
         _setIncidentReport(_incidentReport);
     }
 
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
+    }
+
     function setPolicyCenter(address _policyCenter) external onlyOwner {
         _setPolicyCenter(_policyCenter);
     }
@@ -254,9 +258,15 @@ contract ProtectionPool is
     function removedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
-        onlyPolicyCenter
         returns (uint256 shieldToTransfer)
     {
+        require(
+            msg.sender == policyCenter ||
+                IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+                    msg.sender
+                ),
+            "Only Policy Center or Priority Pool can call this function"
+        );
         require(_amount <= totalSupply(), "Exceed totalSupply");
 
         _updateReward();
@@ -328,8 +338,10 @@ contract ProtectionPool is
      */
     function pauseProtectionPool(bool _paused) external {
         require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or Incident Report can call this function"
+            (msg.sender == owner()) ||
+                (msg.sender == incidentReport) ||
+                (msg.sender == priorityPoolFactory),
+            "Only owner, Incident Report or Executor can call this function"
         );
         _pause(_paused);
     }

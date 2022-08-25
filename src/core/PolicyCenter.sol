@@ -426,6 +426,7 @@ contract PolicyCenter is
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
     }
 
+
     /**
      * @notice Claim payout
      *         Need to use a specific crToken address as parameter

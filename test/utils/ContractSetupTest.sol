@@ -166,6 +166,7 @@ contract ContractSetupBaseTest is BaseTest {
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPremiumRewardPool(address(premiumPool));
+        protectionPool.setExecutor(address(executor));
 
         // Set policy center
         policyCenter.setProtectionPool(address(protectionPool));
@@ -189,6 +190,7 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
+        priorityPoolFactory.setPayoutPool(address(payoutPool));
 
         // 
     }
