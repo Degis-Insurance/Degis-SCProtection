@@ -405,6 +405,8 @@ contract IncidentReport is
         // Need to add this smart contract to burner list
         deg.burnDegis(_user, REPORT_THRESHOLD);
 
+        // TODO: Check this part
+        // @note This is a inline bookmark
         poolReports[_poolId].push(currentId);
 
         emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);
@@ -558,7 +560,8 @@ contract IncidentReport is
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
-            _totalVotes >= (IERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
+            _totalVotes >=
+            (IERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
     }
 
     /**
@@ -689,7 +692,9 @@ contract IncidentReport is
         view
         returns (bool)
     {
-        uint256 endTime = _voteTimestamp + INCIDENT_VOTING_PERIOD + _extendTime(_round);
+        uint256 endTime = _voteTimestamp +
+            INCIDENT_VOTING_PERIOD +
+            _extendTime(_round);
 
         uint256 lastDayStart = _voteTimestamp +
             INCIDENT_VOTING_PERIOD +
