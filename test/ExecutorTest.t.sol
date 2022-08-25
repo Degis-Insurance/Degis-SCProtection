@@ -13,7 +13,6 @@ import "src/voting/onboardProposal/OnboardProposalParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalEventError.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/incidentReport/IncidentReportEventError.sol";
-
 import "src/core/interfaces/ExecutorEventError.sol";
 
 contract ExecutorTest is
@@ -60,6 +59,7 @@ contract ExecutorTest is
 
     function setUp() public {
         setUpContracts();
+        
         // Deploy one protocol token
         joe = new MockERC20("JoeToken", "JOE", 18);
 
