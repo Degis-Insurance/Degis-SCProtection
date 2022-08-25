@@ -43,17 +43,6 @@ contract Executor is
     ExecutorEventError,
     OwnableWithoutContext
 {
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
-
-    event NewPoolExecuted(
-        address poolAddress,
-        uint256 proposalId,
-        address protocol
-    );
 
     constructor() OwnableWithoutContext(msg.sender) {}
 
@@ -112,6 +101,8 @@ contract Executor is
         IPriorityPoolFactory factory = IPriorityPoolFactory(
             priorityPoolFactory
         );
+
+        factory.pauseProtectionPool(false);
 
         // execute the pool
         (, address poolAddress, , , ) = factory.pools(report.poolId);

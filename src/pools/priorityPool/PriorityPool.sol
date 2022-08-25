@@ -166,7 +166,6 @@ contract PriorityPool is
         policyCenter = _policyCenter;
     }
 
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -432,7 +431,7 @@ contract PriorityPool is
     function pausePriorityPool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == priorityPoolFactory),
-            "Only owner or Incident Report can call this function"
+            "Only owner or Priority Pool Factory can call this function"
         );
 
         _pause(_paused);
@@ -446,6 +445,9 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
+        // Unpause pool
+        _pause(false);
+
         _retrievePayout(_amount);
 
         _updateCurrentLPWeight();
@@ -482,7 +484,10 @@ contract PriorityPool is
      *
      * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP(address _weightedFarmingPool) internal returns (address newLPAddress) {
+    function _deployNewGenerationLP(address _weightedFarmingPool)
+        internal
+        returns (address newLPAddress)
+    {
         uint256 currentGeneration = ++generation;
 
         // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
@@ -655,7 +660,10 @@ contract PriorityPool is
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
-        uint256 payoutRatio = (_amount * SCALE) / activeCovered();
+        uint256 payoutRatio;
+        activeCovered() > 0
+            ? payoutRatio = (_amount * SCALE) / activeCovered()
+            : payoutRatio = 0;
 
         IPayoutPool(payoutPool).newPayout(
             poolId,

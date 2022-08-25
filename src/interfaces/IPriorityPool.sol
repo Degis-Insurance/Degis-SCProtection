@@ -15,6 +15,8 @@ interface IPriorityPool {
 
     function activeCovered() external view returns (uint256);
 
+    function currentLPAddress() external view returns (address);
+
     function liquidatePool(uint256 amount) external;
 
     function generation() external view returns (uint256);

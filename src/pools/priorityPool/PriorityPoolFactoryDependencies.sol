@@ -7,15 +7,20 @@ import "../../interfaces/IPremiumRewardPool.sol";
 import "../../interfaces/IWeightedFarmingPool.sol";
 
 abstract contract PriorityPoolFactoryDependencies {
-    address public protectionPool;
-    address public policyCenter;
     address public executor;
+    address public payoutPool;
+    address public policyCenter;
+    address public protectionPool;
+    address public incidentReport;
     address public premiumRewardPool;
     address public weightedFarmingPool;
-    address public incidentReport;
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
+    }
+
+    function _setPayoutPool(address _payoutPool) internal virtual {
+        payoutPool = _payoutPool;
     }
 
     function _setProtectionPool(address _protectionPool) internal virtual {
