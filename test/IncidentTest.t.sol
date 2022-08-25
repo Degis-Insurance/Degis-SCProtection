@@ -89,7 +89,7 @@ contract IncidentTest is
 
     function testReport() public {
         // # --------------------------------------------------------------------//
-        // # Should not start a report without enough DEG balance # //
+        // # Should not be able to start a report without enough DEG balance # //
         // # --------------------------------------------------------------------//
 
         vm.warp(REPORT_TIME);
@@ -98,6 +98,17 @@ contract IncidentTest is
         incidentReport.report(1, PAYOUT);
 
         console.log(unicode"✅ Not start a report without enough DEG balance");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to start a report with non-exist pool # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(REPORT_TIME);
+        vm.prank(CHARLIE);
+        vm.expectRevert(IncidentReport__PoolNotExist.selector);
+        incidentReport.report(4, PAYOUT);
+
+        console.log(unicode"✅ Not start a report with non-exist pool");
 
         // # --------------------------------------------------------------------//
         // # Should be able to start a report with enough DEG # //
@@ -117,6 +128,7 @@ contract IncidentTest is
         assertEq(report.reportTimestamp, 0);
         assertEq(report.status, PENDING_STATUS);
         assertEq(report.payout, PAYOUT);
+        assertEq(report.result, INIT_RESULT);
 
         // Check the DEG balance after starting the report
         assertEq(deg.balanceOf(CHARLIE), 0);
@@ -128,6 +140,17 @@ contract IncidentTest is
         assertEq(incidentReport.poolReports(1, 0), 1);
 
         console.log(unicode"✅ Start a report with enough DEG");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to start a report already reported # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(REPORT_TIME);
+        vm.prank(CHARLIE);
+        vm.expectRevert(IncidentReport__AlreadyReported.selector);
+        incidentReport.report(1, PAYOUT);
+
+        console.log(unicode"✅ Not start a report with already reported pool");
     }
 
     function _report() internal {
@@ -311,6 +334,9 @@ contract IncidentTest is
         assertEq(temp.result, 0);
         assertFalse(temp.hasChanged);
 
+        // veDEG locked after voting
+        assertEq(veDEG.locked(ALICE), VOTE_AMOUNT);
+
         console.log(unicode"✅ Vote with veDEG");
 
         // # --------------------------------------------------------------------//
@@ -375,12 +401,9 @@ contract IncidentTest is
         incidentReport.vote(1, _choice, VOTE_AMOUNT);
     }
 
-    function testSettle() public {
-        // Start a report and start voting
-        _report();
-        _startVoting();
-
-        // Preparations
+    function _preVote() internal {
+        // Preparations for voting
+        // Default status would be TIED
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);
         veDEG.mint(BOB, VOTE_AMOUNT * 2);
 
@@ -391,6 +414,13 @@ contract IncidentTest is
         vm.prank(BOB);
         vm.warp(VOTE_TIME + 1);
         incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+    }
+
+    function testSettle() public {
+        // Start a report and start voting and pre-vote
+        _report();
+        _startVoting();
+        _preVote();
 
         // Take the evm snapshot for test
         uint256 snapshot_1 = vm.snapshot();
@@ -513,6 +543,7 @@ contract IncidentTest is
         _report();
         _startVoting();
 
+
         // Preparations
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);
         veDEG.mint(BOB, VOTE_AMOUNT * 2);
@@ -596,23 +627,8 @@ contract IncidentTest is
         console.log(unicode"✅ Extend the round multiple times");
     }
 
-    function _preVote() internal {
-        // Preparations for voting
-        // Default status would be TIED
-        veDEG.mint(ALICE, VOTE_AMOUNT * 2);
-        veDEG.mint(BOB, VOTE_AMOUNT * 2);
-
-        vm.prank(ALICE);
-        vm.warp(VOTE_TIME + 1);
-        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
-
-        vm.prank(BOB);
-        vm.warp(VOTE_TIME + 1);
-        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
-    }
-
     function testRewardForTied() public {
-        // Start a report and start voting
+        // Start a report and start voting and pre-vote
         _report();
         _startVoting();
         _preVote();
@@ -656,11 +672,15 @@ contract IncidentTest is
         incidentReport.claimReward(1);
         assertEq(veDEG.balanceOf(BOB), VOTE_AMOUNT * 2);
 
+        // veDEG unlocked after claiming
+        assertEq(veDEG.locked(ALICE), 0);
+        assertEq(veDEG.locked(BOB), 0);
+
         console.log(unicode"✅ Get back veDEG when TIED");
     }
 
     function testRewardForPassed() public {
-        // Start a report and start voting
+        // Start a report and start voting and pre-vote
         _report();
         _startVoting();
         _preVote();
@@ -729,7 +749,11 @@ contract IncidentTest is
         );
         assertTrue(aliceVote.claimed);
 
+        // Alice get the total rewards for voters
         assertEq(deg.balanceOf(ALICE), totalRewardToVoters);
+
+        // veDEG unlocked after claiming
+        assertEq(veDEG.locked(ALICE), 0);
 
         console.log(unicode"✅ Claim DEG reward for correct voters when PASS");
 
@@ -778,6 +802,9 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, BOB);
 
+        // veDEG unlocked after paying debt
+        assertEq(veDEG.locked(BOB), 0);
+
         console.log(unicode"✅ Pay debt for wrong choice when PASS");
 
         // # --------------------------------------------------------------------//
@@ -796,6 +823,9 @@ contract IncidentTest is
             VOTE_AMOUNT
         );
         incidentReport.payDebt(1, BOB);
+
+        // veDEG unlocked after paying debt
+        assertEq(veDEG.locked(BOB), 0);
 
         console.log(unicode"✅ Pay debt for another user when PASS");
 
@@ -819,7 +849,7 @@ contract IncidentTest is
     }
 
     function testRewardForReject() public {
-        // Start a report and start voting
+        // Start a report and start voting and pre-vote
         _report();
         _startVoting();
         _preVote();
@@ -879,6 +909,9 @@ contract IncidentTest is
 
         assertEq(deg.balanceOf(BOB), totalRewardToVoters);
 
+        // veDEG unlocked after claiming
+        assertEq(veDEG.locked(BOB), 0);
+
         console.log(
             unicode"✅ Claim DEG reward for correct choice when REJECT"
         );
@@ -930,6 +963,9 @@ contract IncidentTest is
         );
         incidentReport.payDebt(1, ALICE);
 
+        // veDEG unlocked after paying debt
+        assertEq(veDEG.locked(ALICE), 0);
+
         console.log(unicode"✅ Pay debt for wrong choice when REJECT");
 
         // # --------------------------------------------------------------------//
@@ -948,6 +984,9 @@ contract IncidentTest is
             VOTE_AMOUNT
         );
         incidentReport.payDebt(1, ALICE);
+
+        // veDEG unlocked after paying debt
+        assertEq(veDEG.locked(ALICE), 0);
 
         console.log(unicode"✅ Pay debt for another user when REJECT");
 
