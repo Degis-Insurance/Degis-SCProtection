@@ -24,4 +24,17 @@ interface PolicyCenterEventError {
     );
 
     event PremiumSwapped(address fromToken, uint256 amount, uint256 received);
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    error PolicyCenter__AlreadyClaimedPayout();
+    error PolicyCenter__WrongPriorityPoolID();
+    error PolicyCenter__InsufficientCapacity();
+    error PolicyCenter__ZeroPremium();
+    error PolicyCenter__NoLiquidity();
+    error PolicyCenter__NoExchange();
+    error PolicyCenter__ZeroAmount();
+    error PolicyCenter__NoPayout();
 }
