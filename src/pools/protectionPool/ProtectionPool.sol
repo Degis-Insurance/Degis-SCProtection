@@ -362,8 +362,7 @@ contract ProtectionPool is
             .timestampToDate();
 
         // Current year & month & day
-        (uint256 currentY, uint256 currentM, uint256 currentD) = currentTime
-            .timestampToDate();
+        (uint256 currentY, uint256 currentM, ) = currentTime.timestampToDate();
 
         uint256 monthPassed = currentM - lastM;
 

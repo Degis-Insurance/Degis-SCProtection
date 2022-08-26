@@ -44,14 +44,47 @@ contract ProtectionPoolTest is ContractSetupBaseTest {
         shield.approve(address(policyCenter), type(uint256).max);
     }
 
+    function testPauseProtectionPool() public {
+        // # --------------------------------------------------------------------//
+        // # Should be able to pause by owner # //
+        // # --------------------------------------------------------------------//
+
+        protectionPool.pauseProtectionPool(true);
+        assertTrue(protectionPool.paused());
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to pause by non-owner # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(ALICE);
+        vm.expectRevert("Only owner or Incident Report can call this function");
+        protectionPool.pauseProtectionPool(true);
+    }
+
     function testProvideLiquidity() public {
-        shield.mint(ALICE, LIQUIDITY_UNIT);
+        shield.mint(ALICE, LIQUIDITY_UNIT * 2);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to provide liquidity # //
+        // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
         policyCenter.provideLiquidity(LIQUIDITY_UNIT);
 
         assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY_UNIT);
         assertEq(protectionPool.balanceOf(ALICE), LIQUIDITY_UNIT);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to check the price # //
+        // # --------------------------------------------------------------------//
+
+        assertEq(protectionPool.getLatestPrice(), SCALE);
+
+        // Transfer shield directly to the pool
+        vm.prank(ALICE);
+        shield.transfer(address(protectionPool), LIQUIDITY_UNIT);
+
+        assertEq(protectionPool.getLatestPrice(), 2 * SCALE);
     }
 
     function testRemoveLiquidity() public {
@@ -60,10 +93,39 @@ contract ProtectionPoolTest is ContractSetupBaseTest {
         vm.prank(ALICE);
         policyCenter.provideLiquidity(LIQUIDITY_UNIT);
 
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity # //
+        // # --------------------------------------------------------------------//
+
         vm.prank(ALICE);
         policyCenter.removeLiquidity(LIQUIDITY_UNIT);
 
         assertEq(shield.balanceOf(address(protectionPool)), 0);
         assertEq(protectionPool.balanceOf(ALICE), 0);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to check the price # //
+        // # --------------------------------------------------------------------//
+
+        assertEq(protectionPool.getLatestPrice(), SCALE);
+    }
+
+    // TODO: can not simulate now, leave it
+    function testSimulateReward() public {
+        // Simulate the reward distribution process
+        // Shield comes in as mock reward
+        
+        shield.mint(ALICE, LIQUIDTY_UNIT * 10);
+        shield.mint(BOB, LIQUIDITY_UNIT * 10);
+        shield.mint(CHARLIE, LIQUIDITY_UNIT * 10);
+
+
+        // Provide liquidity
+        vm.prank(ALICE);
+        policyCenter.provideLiquidity(LIQUIDITY_UNIT);
+
+        // Reward comes in
+        vm.prank(CHARLIE);
+        shield.transfer(address(protectionPool), LIQUIDITY_UNIT);
     }
 }
