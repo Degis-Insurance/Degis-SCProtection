@@ -171,18 +171,13 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
-        require(
-            msg.sender == IPriorityPoolFactory(priorityPoolFactory).executor(),
-            "Only executor can call this function"
-        );
+        if (msg.sender != IPriorityPoolFactory(priorityPoolFactory).executor())
+            revert PriorityPool__OnlyExecutor();
         _;
     }
 
     modifier onlyPolicyCenter() {
-        require(
-            msg.sender == policyCenter,
-            "Only policy center can call this function"
-        );
+        if (msg.sender != policyCenter) revert PriorityPool__OnlyPolicyCenter();
         _;
     }
 
@@ -370,7 +365,7 @@ contract PriorityPool is
         // Mint current generation lp tokens to the provider
         // PRI-LP amount always 1:1 to PRO-LP
         _mintLP(_provider, _amount);
-        emit LiquidityProvision(_amount, _provider);
+        emit StakedLiquidity(_amount, _provider);
 
         return currentLPAddress();
     }
@@ -396,7 +391,7 @@ contract PriorityPool is
 
         // Burn PRI-LP tokens and transfer PRO-LP tokens back
         _burnLP(_lpToken, _provider, _amount);
-        emit LiquidityRemoved(_amount, _provider);
+        emit UnstakedLiquidity(_amount, _provider);
     }
 
     /**

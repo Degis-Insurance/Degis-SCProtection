@@ -161,6 +161,9 @@ contract ContractSetupBaseTest is BaseTest {
         // Set onboard proposal
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        // Set weighted farming pool
+        farmingPool.setPolicyCenter(address(policyCenter));
+
         // Set protection pool
         protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
         protectionPool.setPolicyCenter(address(policyCenter));
