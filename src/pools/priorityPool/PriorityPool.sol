@@ -166,24 +166,18 @@ contract PriorityPool is
         policyCenter = _policyCenter;
     }
 
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
-        require(
-            msg.sender == IPriorityPoolFactory(priorityPoolFactory).executor(),
-            "Only executor can call this function"
-        );
+        if (msg.sender != IPriorityPoolFactory(priorityPoolFactory).executor())
+            revert PriorityPool__OnlyExecutor();
         _;
     }
 
     modifier onlyPolicyCenter() {
-        require(
-            msg.sender == policyCenter,
-            "Only policy center can call this function"
-        );
+        if (msg.sender != policyCenter) revert PriorityPool__OnlyPolicyCenter();
         _;
     }
 
@@ -371,7 +365,7 @@ contract PriorityPool is
         // Mint current generation lp tokens to the provider
         // PRI-LP amount always 1:1 to PRO-LP
         _mintLP(_provider, _amount);
-        emit LiquidityProvision(_amount, _provider);
+        emit StakedLiquidity(_amount, _provider);
 
         return currentLPAddress();
     }
@@ -397,7 +391,7 @@ contract PriorityPool is
 
         // Burn PRI-LP tokens and transfer PRO-LP tokens back
         _burnLP(_lpToken, _provider, _amount);
-        emit LiquidityRemoved(_amount, _provider);
+        emit UnstakedLiquidity(_amount, _provider);
     }
 
     /**
@@ -432,7 +426,7 @@ contract PriorityPool is
     function pausePriorityPool(bool _paused) external {
         require(
             (msg.sender == owner()) || (msg.sender == priorityPoolFactory),
-            "Only owner or Incident Report can call this function"
+            "Only owner or Priority Pool Factory can call this function"
         );
 
         _pause(_paused);
@@ -446,6 +440,9 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
+        // Unpause pool
+        _pause(false);
+
         _retrievePayout(_amount);
 
         _updateCurrentLPWeight();
@@ -482,7 +479,10 @@ contract PriorityPool is
      *
      * @return newLPAddress The deployed lp token address
      */
-    function _deployNewGenerationLP(address _weightedFarmingPool) internal returns (address newLPAddress) {
+    function _deployNewGenerationLP(address _weightedFarmingPool)
+        internal
+        returns (address newLPAddress)
+    {
         uint256 currentGeneration = ++generation;
 
         // PRI-LP-2-JOE-G1: First generation of JOE priority pool with pool id 2
@@ -655,7 +655,10 @@ contract PriorityPool is
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
-        uint256 payoutRatio = (_amount * SCALE) / activeCovered();
+        uint256 payoutRatio;
+        activeCovered() > 0
+            ? payoutRatio = (_amount * SCALE) / activeCovered()
+            : payoutRatio = 0;
 
         IPayoutPool(payoutPool).newPayout(
             poolId,

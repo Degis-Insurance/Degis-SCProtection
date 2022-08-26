@@ -161,11 +161,15 @@ contract ContractSetupBaseTest is BaseTest {
         // Set onboard proposal
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
 
+        // Set weighted farming pool
+        farmingPool.setPolicyCenter(address(policyCenter));
+
         // Set protection pool
         protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPremiumRewardPool(address(premiumPool));
+        protectionPool.setExecutor(address(executor));
 
         // Set policy center
         policyCenter.setProtectionPool(address(protectionPool));
@@ -189,6 +193,7 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
+        priorityPoolFactory.setPayoutPool(address(payoutPool));
 
         // 
     }

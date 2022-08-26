@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./utils/ContractSetupBaseTest.sol";
-import "./ProposalTest.t.sol";
-import "./IncidentTest.t.sol";
+import "./utils/ContractSetupTest.sol";
 
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IPriorityPool.sol";
@@ -36,6 +34,7 @@ contract ExecutorTest is
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
     uint256 internal constant PAYOUT = 1000e6;
+    uint256 internal constant LIQUIDITY = 1000 ether;
 
     uint256 internal constant VOTE_FOR = 1;
     uint256 internal constant VOTE_AGAINST = 2;
@@ -43,11 +42,12 @@ contract ExecutorTest is
 
     uint256 internal constant PROPOSE_TIME = 0;
     uint256 internal constant REPORT_TIME = 0;
-    uint256 internal constant VOTE_TIME = PENDING_PERIOD;
+    uint256 internal constant PROPOSAL_VOTE_TIME = 0;
+    uint256 internal constant INCIDENT_VOTE_TIME = PENDING_PERIOD;
     uint256 internal constant PROPOSAL_SETTLE_TIME =
-        VOTE_TIME + PROPOSAL_VOTING_PERIOD;
+        PROPOSAL_VOTE_TIME + PROPOSAL_VOTING_PERIOD;
     uint256 internal constant INCIDENT_SETTLE_TIME =
-        VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
+        INCIDENT_VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;
@@ -57,11 +57,15 @@ contract ExecutorTest is
     MockERC20 internal ptp;
     MockERC20 internal gmx;
 
+    address internal joeLPAddress;
+
     function setUp() public {
         setUpContracts();
 
         // Deploy one protocol token
         joe = new MockERC20("JoeToken", "JOE", 18);
+        ptp = new MockERC20("PTPToken", "PTP", 18);
+        gmx = new MockERC20("GMXToken", "GMX", 18);
 
         // Deploy one priority pool by owner
         joePool = IPriorityPool(
@@ -72,6 +76,17 @@ contract ExecutorTest is
                 PREMIUMRATIO_1
             )
         );
+
+        joeLPAddress = joePool.currentLPAddress();
+
+        // Mint shield to provide liquidity
+        shield.mint(CHARLIE, 1000 ether);
+
+        vm.prank(CHARLIE);
+        shield.approve(address(policyCenter), LIQUIDITY);
+        // Provide Liquidity by one user
+        vm.prank(CHARLIE);
+        policyCenter.provideLiquidity(LIQUIDITY);
 
         // Proopose a new priority pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
@@ -103,21 +118,10 @@ contract ExecutorTest is
         // Preparations
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);
         veDEG.mint(BOB, VOTE_AMOUNT * 2);
-
-        // Start voting processes
-        vm.warp(VOTE_TIME);
-        incidentReport.startVoting(1);
-        onboardProposal.startVoting(1);
-
-        vm.warp(INCIDENT_SETTLE_TIME);
-        incidentReport.settle(1);
-
-        vm.warp(PROPOSAL_SETTLE_TIME);
-        onboardProposal.settle(1);
     }
 
     function _voteReport() private {
-        vm.warp(VOTE_TIME + 1);
+        vm.warp(INCIDENT_VOTE_TIME);
         incidentReport.startVoting(1);
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
@@ -126,7 +130,7 @@ contract ExecutorTest is
     }
 
     function _voteProposal() private {
-        vm.warp(VOTE_TIME + 1);
+        vm.warp(PROPOSAL_VOTE_TIME);
         onboardProposal.startVoting(1);
         vm.prank(ALICE);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
@@ -143,6 +147,10 @@ contract ExecutorTest is
         vm.expectRevert(Executor__ProposalNotSettled.selector);
         executor.executeProposal(1);
 
+        // pool counter should not be increased and no new pool should be created
+        assertEq(priorityPoolFactory.poolCounter(), 1);
+
+
         console.log(unicode"✅ Not execute a proposal prior to start voting");
 
         // # --------------------------------------------------------------------//
@@ -153,15 +161,25 @@ contract ExecutorTest is
         vm.expectRevert(Executor__ReportNotSettled.selector);
         executor.executeReport(1);
 
+        // joe pool should not be liquidated after execution attempt
+        assertEq(joePool.currentLPAddress(), joeLPAddress);
+
         console.log(unicode"✅ Not execute a report prior to start voting");
 
         // # --------------------------------------------------------------------//
         // # Should not be able to execute Proposal during voting # //
         // # --------------------------------------------------------------------//
 
+        // vote for pool proposal and incident report
         _voteProposal();
+        _voteReport();
+
+        uint256 snapshot_1 = vm.snapshot();
+
         vm.expectRevert(Executor__ProposalNotSettled.selector);
         executor.executeProposal(1);
+
+        assertEq(priorityPoolFactory.poolCounter(), 1);
 
         console.log(unicode"✅ Not execute a proposal during voting");
 
@@ -169,17 +187,22 @@ contract ExecutorTest is
         // # Should not be able to execute Incident during voting # //
         // # --------------------------------------------------------------------//
 
-        _voteReport();
         vm.expectRevert(Executor__ReportNotSettled.selector);
         executor.executeReport(1);
 
+        assertEq(joePool.currentLPAddress(), joeLPAddress);
+
         console.log(unicode"✅ Not execute a report during voting");
+
+
+        // revert to previous snapshot and take a new snapshot
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
 
         // # --------------------------------------------------------------------//
         // # Should not be able to execute Proposal not settled # //
         // # --------------------------------------------------------------------//
 
-        _voteProposal();
         vm.expectRevert(Executor__ProposalNotSettled.selector);
         vm.warp(PROPOSAL_SETTLE_TIME);
         executor.executeProposal(1);
@@ -190,19 +213,28 @@ contract ExecutorTest is
         // # Should not be able to execute Incident not settled # //
         // # --------------------------------------------------------------------//
 
-        _voteReport();
         vm.expectRevert(Executor__ReportNotSettled.selector);
         vm.warp(INCIDENT_SETTLE_TIME);
         executor.executeReport(1);
 
+        assertEq(joePool.currentLPAddress(), joeLPAddress);
+
         console.log(unicode"✅ Not execute a report not settled");
+
+         // revert to previous snapshot and take a new snapshot
+        vm.revertTo(snapshot_2);
 
         // # --------------------------------------------------------------------//
         // # Should able to execute Proposal after settle # //
-        // # --------------------------------------------------------------------//
+        // # --------------------------------------------------------------------//       
 
-        _voteProposal();
-        vm.warp(PROPOSAL_SETTLE_TIME);
+        vm.warp(PROPOSAL_SETTLE_TIME + 1);
+
+        // Get proposal record
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
+        console.log(proposal.status);
+        // Settle proposal
+        onboardProposal.settle(1);
         address ptpAddress = executor.executeProposal(1);
         ptp = MockERC20(ptpAddress);
         ptpPool = IPriorityPool(ptpAddress);
@@ -215,12 +247,27 @@ contract ExecutorTest is
         // # Should able to execute Report after settle # //
         // # --------------------------------------------------------------------//
 
-        _voteReport();
-        vm.warp(INCIDENT_SETTLE_TIME);
+        vm.warp(INCIDENT_SETTLE_TIME + 1);
+
+        // Settle incident report
+        incidentReport.settle(1);
+
         executor.executeReport(1);
         IncidentReport.Report memory report = incidentReport.getReport(1);
+
+        // Check the report record is intanct
+        assertEq(report.poolId, 1);
+        assertEq(report.reporter, CHARLIE);
+        assertEq(report.reportTimestamp, REPORT_TIME);
         assertEq(report.status, SETTLED_STATUS);
+        assertEq(report.payout, PAYOUT);
+        assertEq(report.result, PASS_RESULT);
+
+        // Pool should be liquidated
+        assertTrue(joePool.currentLPAddress() != joeLPAddress);
 
         console.log(unicode"✅ Execute a settled report");
+
+        
     }
 }
