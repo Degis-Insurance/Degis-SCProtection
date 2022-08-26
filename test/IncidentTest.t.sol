@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./utils/ContractSetupTest.sol";
+import "./utils/ContractSetupBaseTest.sol";
 
 import "src/interfaces/IPriorityPool.sol";
 

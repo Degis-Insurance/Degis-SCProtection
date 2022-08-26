@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./utils/ContractSetupTest.sol";
+import "./utils/ContractSetupBaseTest.sol";
 import "./ProposalTest.t.sol";
 import "./IncidentTest.t.sol";
 
@@ -59,7 +59,7 @@ contract ExecutorTest is
 
     function setUp() public {
         setUpContracts();
-        
+
         // Deploy one protocol token
         joe = new MockERC20("JoeToken", "JOE", 18);
 
