@@ -23,6 +23,7 @@ pragma solidity ^0.8.13;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./ProtectionPoolDependencies.sol";
+import "./ProtectionPoolEventError.sol";
 import "../../interfaces/ExternalTokenDependencies.sol";
 
 import "../../util/OwnableWithoutContext.sol";
@@ -53,7 +54,8 @@ contract ProtectionPool is
     OwnableWithoutContext,
     PausableWithoutContext,
     ExternalTokenDependencies,
-    ProtectionPoolDependencies
+    ProtectionPoolDependencies,
+    ProtectionPoolEventError
 {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
@@ -77,25 +79,6 @@ contract ProtectionPool is
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
     // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    event LiquidityProvision(
-        uint256 shieldAmount,
-        uint256 lpAmount,
-        address sender
-    );
-    event LiquidityRemoved(
-        uint256 lpAmount,
-        uint256 shieldAmount,
-        address sender
-    );
-
-    event LiquidityRemovedWhenClaimed(address pool, uint256 amount);
-
-    event RewardUpdated(uint256 totalReward);
-
-    // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
@@ -117,10 +100,9 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyPolicyCenter() {
-        require(
-            msg.sender == policyCenter,
-            "Only policy center can call this function"
-        );
+        if (
+            msg.sender != policyCenter
+        ) revert ProtectionPool__OnlyPolicyCenter();
         _;
     }
 
@@ -160,6 +142,10 @@ contract ProtectionPool is
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        _setExecutor(_executor);
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
@@ -240,8 +226,8 @@ contract ProtectionPool is
         // Mint PRO_LP tokens to the user
         uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
-
-        emit LiquidityProvision(_amount, amountToMint, _provider);
+        console.log(totalSupply());
+        emit LiquidityProvided(_amount, amountToMint, _provider);
     }
 
     /**
@@ -254,21 +240,27 @@ contract ProtectionPool is
     function removedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
-        onlyPolicyCenter
         returns (uint256 shieldToTransfer)
     {
-        require(_amount <= totalSupply(), "Exceed totalSupply");
+        if (
+            msg.sender != policyCenter &&
+            !IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+                msg.sender
+            )
+        ) revert ProtectionPool__OnlyPriorityPoolOrPolicyCenter();
+
+        if (_amount > totalSupply())
+            revert ProtectionPool__ExceededTotalSupply();
 
         _updateReward();
         _updatePrice();
 
         // Burn PRO_LP tokens to the user
         shieldToTransfer = (_amount * price) / SCALE;
-        require(
-            IERC20(shield).balanceOf(address(this)) >=
-                getTotalCovered() + shieldToTransfer,
-            "Not enough liquidity"
-        );
+        if (
+            IERC20(shield).balanceOf(address(this)) <
+            getTotalCovered() + shieldToTransfer
+        ) revert ProtectionPool__NotEnoughLiquidity();
 
         _burn(_provider, _amount);
         IERC20(shield).transfer(_provider, shieldToTransfer);
@@ -284,17 +276,14 @@ contract ProtectionPool is
     function removedLiquidityWhenClaimed(uint256 _amount, address _to)
         external
     {
-        require(
-            IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+        if (
+            !IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
                 msg.sender
-            ),
-            "Only from priority pool"
-        );
+            )
+        ) revert ProtectionPool__OnlyPriorityPool();
 
-        require(
-            _amount <= IERC20(shield).balanceOf(address(this)),
-            "Not enough balance"
-        );
+        if (_amount > IERC20(shield).balanceOf(address(this)))
+            revert ProtectionPool__NotEnoughBalance();
 
         IERC20(shield).transfer(_to, _amount);
 
@@ -327,10 +316,11 @@ contract ProtectionPool is
      * @param _paused True for pause, false for unpause
      */
     function pauseProtectionPool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == incidentReport),
-            "Only owner or Incident Report can call this function"
-        );
+        if (
+            (msg.sender != owner()) &&
+            (msg.sender != incidentReport) &&
+            (msg.sender != priorityPoolFactory)
+        ) revert ProtectionPool__NotAllowedToPause();
         _pause(_paused);
     }
 
@@ -349,6 +339,8 @@ contract ProtectionPool is
         price =
             ((IERC20(shield).balanceOf(address(this))) * SCALE) /
             totalSupply();
+
+        emit PriceUpdated(price);
     }
 
     /**

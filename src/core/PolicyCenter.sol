@@ -295,7 +295,8 @@ contract PolicyCenter is
      * @param _amount Amount of liquidity(shield) to provide
      */
     function provideLiquidity(uint256 _amount) external {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         // Mint PRO-LP tokens and transfer shield
         IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
@@ -317,7 +318,8 @@ contract PolicyCenter is
         public
         poolExists(_poolId)
     {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
 
@@ -350,7 +352,8 @@ contract PolicyCenter is
         public
         poolExists(_poolId)
     {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
 
@@ -376,7 +379,8 @@ contract PolicyCenter is
         address _priorityLP,
         uint256 _amount
     ) external poolExists(_poolId) {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         // First remove the PRI-LP token from weighted farming pool
         IWeightedFarmingPool(weightedFarmingPool).withdrawFromPolicyCenter(
@@ -406,7 +410,8 @@ contract PolicyCenter is
         address _priorityLP,
         uint256 _amount
     ) external poolExists(_poolId) {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
             _priorityLP,
@@ -421,10 +426,12 @@ contract PolicyCenter is
      * @param _amount Amount of liquidity to provide
      */
     function removeLiquidity(uint256 _amount) external {
-        require(_amount > 0, "Amount must be greater than 0");
+        if (_amount == 0)
+            revert PolicyCenter__ZeroAmount();
 
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
     }
+
 
     /**
      * @notice Claim payout
@@ -439,7 +446,8 @@ contract PolicyCenter is
         address _crToken,
         uint256 _generation
     ) public poolExists(_poolId) {
-        require(_poolId > 0, "Zero pool id");
+        if (_poolId == 0)
+            revert PolicyCenter__WrongPriorityPoolID();
 
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
@@ -666,7 +674,8 @@ contract PolicyCenter is
             uint256 toTreasury
         )
     {
-        require(_premiumInUSD > 0, "No funds to split");
+        if (_premiumInUSD == 0)
+            revert PolicyCenter__ZeroPremium();
 
         address nativeToken = tokenByPoolId[_poolId];
         // Premium in project native token (paid in internal function)
@@ -698,7 +707,8 @@ contract PolicyCenter is
      * @param _token Token address
      */
     function _approvePoolToken(address _token) internal {
-        require(exchange != address(0), "Exchange address not set");
+        if (exchange == address(0))
+            revert PolicyCenter__NoExchange();
         // approve exchange to swap policy center tokens for deg
         IERC20(_token).approve(exchange, type(uint256).max);
     }
@@ -734,9 +744,7 @@ contract PolicyCenter is
             address(protectionPool)
         ) * pool.maxCapacity()) / 10000;
 
-        require(
-            maxCapacityAmount >= _coverAmount + pool.activeCovered(),
-            "Insufficient capacity"
-        );
+        if (maxCapacityAmount < _coverAmount + pool.activeCovered())
+            revert PolicyCenter__InsufficientCapacity();
     }
 }

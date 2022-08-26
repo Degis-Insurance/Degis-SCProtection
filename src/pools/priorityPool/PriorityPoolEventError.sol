@@ -3,8 +3,13 @@
 pragma solidity ^0.8.13;
 
 interface PriorityPoolEventError {
-    event LiquidityProvision(uint256 amount, address sender);
-    event LiquidityRemoved(uint256 amount, address sender);
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    event StakedLiquidity(uint256 amount, address sender);
+    event UnstakedLiquidity(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 generation);
     event EmissionRateUpdated(
         uint256 newEmissionRate,
@@ -22,4 +27,11 @@ interface PriorityPoolEventError {
     );
 
     event CoverIndexChanged(uint256 oldIndex, uint256 newIndex);
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    error PriorityPool__OnlyExecutor();
+    error PriorityPool__OnlyPolicyCenter();
 }

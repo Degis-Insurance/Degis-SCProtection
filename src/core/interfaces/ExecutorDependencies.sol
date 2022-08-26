@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.13;
 
+import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IOnboardProposal.sol";
