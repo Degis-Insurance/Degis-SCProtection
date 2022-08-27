@@ -64,11 +64,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "\n"
   );
 
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
-
   // Store the address list after deployment
   storeAddressList(addressList);
 };
