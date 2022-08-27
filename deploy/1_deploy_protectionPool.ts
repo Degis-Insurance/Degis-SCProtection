@@ -29,20 +29,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     network.name
   );
 
-  // Proxy Admin contract artifact
-  const incidentReport = await deploy("IncidentReport", {
-    contract: "IncidentReport",
+  // Deploy contract
+  const protectionPool = await deploy("ProtectionPool", {
+    contract: "ReinsurancePool",
     from: deployer,
     args: [degAddress, veDegAddress, shieldAddress],
     log: true,
   });
-  addressList[network.name].IncidentReport = incidentReport.address;
+  addressList[network.name].ReinsurancePool = protectionPool.address;
 
-  console.log("\ndeployed to address: ", incidentReport.address);
+  console.log(
+    "Protection pool deployed to address: ",
+    protectionPool.address,
+    "\n"
+  );
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["IncidentReport"];
+func.tags = ["ProtectionPool"];
 export default func;

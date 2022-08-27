@@ -23,26 +23,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
+  const [, , shieldAddress] = getExternalTokenAddress(network.name);
 
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
+  const executorAddress = addressList[network.name].Executor;
 
-  // Proxy Admin contract artifact
-  const incidentReport = await deploy("IncidentReport", {
-    contract: "IncidentReport",
+  // Treasury contract artifact
+  const treasury = await deploy("Treasury", {
+    contract: "Treasury",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress],
+    args: [shieldAddress, executorAddress],
     log: true,
   });
-  addressList[network.name].IncidentReport = incidentReport.address;
+  addressList[network.name].Treasury = treasury.address;
 
-  console.log("\ndeployed to address: ", incidentReport.address);
+  console.log("Treasury deployed to address: ", treasury.address, "\n");
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["IncidentReport"];
+func.tags = ["Treasury"];
 export default func;
