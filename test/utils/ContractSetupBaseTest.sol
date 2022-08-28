@@ -168,7 +168,6 @@ contract ContractSetupBaseTest is BaseTest {
         protectionPool.setPolicyCenter(address(policyCenter));
         protectionPool.setIncidentReport(address(incidentReport));
         protectionPool.setPremiumRewardPool(address(premiumPool));
-        protectionPool.setExecutor(address(executor));
 
         // Set policy center
         policyCenter.setProtectionPool(address(protectionPool));
