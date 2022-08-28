@@ -43,7 +43,6 @@ contract Executor is
     ExecutorEventError,
     OwnableWithoutContext
 {
-
     constructor() OwnableWithoutContext(msg.sender) {}
 
     // ---------------------------------------------------------------------------------------- //
@@ -92,8 +91,7 @@ contract Executor is
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
-        if (report.result != 1)
-            revert Executor__ReportNotPassed();
+        if (report.result != 1) revert Executor__ReportNotPassed();
 
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
@@ -102,12 +100,11 @@ contract Executor is
             priorityPoolFactory
         );
 
-        factory.pauseProtectionPool(false);
-
-        // execute the pool
-        (, address poolAddress, , , ) = factory.pools(report.poolId);
+        // Unpause the priority pool and protection pool
+        factory.pausePriorityPool(report.poolId, false);
 
         // Liquidate the pool
+        (, address poolAddress, , , ) = factory.pools(report.poolId);
         IPriorityPool(poolAddress).liquidatePool(report.payout);
 
         emit ReportExecuted(poolAddress, report.poolId, _reportId);
@@ -130,8 +127,7 @@ contract Executor is
 
         if (proposal.status != SETTLED_STATUS)
             revert Executor__ProposalNotSettled();
-        if (proposal.result != 1)
-            revert Executor__ProposalNotPassed();
+        if (proposal.result != 1) revert Executor__ProposalNotPassed();
 
         // Execute the proposal
         newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(

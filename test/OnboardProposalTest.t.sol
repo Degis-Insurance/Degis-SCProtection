@@ -9,7 +9,7 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/voting/onboardProposal/OnboardProposalParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalEventError.sol";
 
-contract ProposalTest is
+contract OnboardProposalTest is
     ContractSetupBaseTest,
     OnboardProposalParameters,
     OnboardProposalEventError

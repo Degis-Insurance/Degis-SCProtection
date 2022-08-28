@@ -156,7 +156,6 @@ contract ContractSetupBaseTest is BaseTest {
     function _setAddresses() internal {
         // Set incident report
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
-        incidentReport.setProtectionPool(address(protectionPool));
 
         // Set onboard proposal
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -193,7 +192,6 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
-        priorityPoolFactory.setPayoutPool(address(payoutPool));
 
         // 
     }

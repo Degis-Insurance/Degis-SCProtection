@@ -7,8 +7,9 @@ import "./utils/ContractSetupBaseTest.sol";
 import "src/interfaces/IProtectionPool.sol";
 
 import "src/pools/protectionPool/ProtectionPool.sol";
+import "src/pools/protectionPool/ProtectionPoolEventError.sol";
 
-contract ProtectionPoolTest is ContractSetupBaseTest {
+contract ProtectionPoolTest is ContractSetupBaseTest, ProtectionPoolEventError {
     address internal ALICE = mkaddr("Alice");
     address internal BOB = mkaddr("Bob");
     address internal CHARLIE = mkaddr("Charlie");
@@ -57,7 +58,7 @@ contract ProtectionPoolTest is ContractSetupBaseTest {
         // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
-        vm.expectRevert("Only owner or Incident Report can call this function");
+        vm.expectRevert(ProtectionPool__NotAllowedToPause.selector);
         protectionPool.pauseProtectionPool(true);
     }
 
@@ -114,11 +115,10 @@ contract ProtectionPoolTest is ContractSetupBaseTest {
     function testSimulateReward() public {
         // Simulate the reward distribution process
         // Shield comes in as mock reward
-        
+
         shield.mint(ALICE, LIQUIDITY_UNIT * 10);
         shield.mint(BOB, LIQUIDITY_UNIT * 10);
         shield.mint(CHARLIE, LIQUIDITY_UNIT * 10);
-
 
         // Provide liquidity
         vm.prank(ALICE);

@@ -313,7 +313,7 @@ contract ProtectionPool is
         if (
             (msg.sender != owner()) &&
             (msg.sender != incidentReport) &&
-            (msg.sender != priorityPoolFactory)
+            (msg.sender != executor)
         ) revert ProtectionPool__NotAllowedToPause();
         _pause(_paused);
     }
