@@ -13,6 +13,7 @@ abstract contract PriorityPoolFactoryDependencies {
     address public incidentReport;
     address public premiumRewardPool;
     address public weightedFarmingPool;
+    address public payoutPool;
 
     function _setExecutor(address _executor) internal virtual {
         executor = _executor;
@@ -42,5 +43,9 @@ abstract contract PriorityPoolFactoryDependencies {
 
     function _setIncidentReport(address _incidentReport) internal virtual {
         incidentReport = _incidentReport;
+    }
+
+    function _setPayoutPool(address _payoutPool) internal virtual {
+        payoutPool = _payoutPool;
     }
 }

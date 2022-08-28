@@ -17,4 +17,5 @@ abstract contract PriorityPoolDependencies {
     address public priorityPoolFactory;
     address public protectionPool;
     address public weightedFarmingPool;
+    address public payoutPool;
 }
