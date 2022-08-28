@@ -18,6 +18,34 @@ contract BaseTest is Test {
         vm.label(addr, name);
         return addr;
     }
+
+    function giveAssets(
+        address _token,
+        address _user,
+        uint256 _amount
+    ) public {
+        bytes memory data = abi.encodeWithSignature(
+            "mint(address,uint256)",
+            _user,
+            _amount
+        );
+
+        (bool success, ) = _token.call(data);
+
+        require(success);
+    }
+
+    function _haveEther(address _user, uint256 _amount) internal {
+        vm.deal(_user, _amount);
+    }
+
+    function _txSender(address _msgSender) internal {
+        vm.prank(_msgSender);
+    }
+
+    function _time(uint256 _timeStamp) internal {
+        vm.warp(_timeStamp);
+    }
 }
 
 // ! Comments template for writing test in Solidity
