@@ -23,26 +23,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
+  const [, , shieldAddress] = getExternalTokenAddress(network.name);
 
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
+  const priorityPoolFactoryAddress =
+    addressList[network.name].PriorityPoolFactory;
+  const protectionPoolAddress = addressList[network.name].ProtectionPool;
 
-  // Proxy Admin contract artifact
-  const incidentReport = await deploy("IncidentReport", {
-    contract: "IncidentReport",
+  // PremiumRewardPool contract artifact
+  const premiumRewardPool = await deploy("PremiumRewardPool", {
+    contract: "PremiumRewardPool",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress],
+    args: [shieldAddress, priorityPoolFactoryAddress, protectionPoolAddress],
     log: true,
   });
-  addressList[network.name].IncidentReport = incidentReport.address;
+  addressList[network.name].PremiumRewardPool = premiumRewardPool.address;
 
-  console.log("\ndeployed to address: ", incidentReport.address);
+  console.log(
+    "Premium reward pool deployed to address: ",
+    premiumRewardPool.address,
+    "\n"
+  );
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["IncidentReport"];
+func.tags = ["PremiumRewardPool"];
 export default func;

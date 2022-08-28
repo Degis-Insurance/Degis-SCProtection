@@ -28,27 +28,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
     network.name
   );
-  const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
+  const protectionPoolAddress = addressList[network.name].ProtectionPool;
 
   // Proxy Admin contract artifact
-  const insurancePoolFactory = await deploy("InsurancePoolFactory", {
+  const priorityPoolFactory = await deploy("PriorityPoolFactory", {
     contract: "InsurancePoolFactory",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, reinsurancePoolAddress],
+    args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
     log: true,
   });
-  addressList[network.name].InsurancePoolFactory = insurancePoolFactory.address;
+  addressList[network.name].InsurancePoolFactory = priorityPoolFactory.address;
 
-  console.log("deployed to address: ", insurancePoolFactory.address, "\n");
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
+  console.log(
+    "Priority pool factory deployed to address: ",
+    priorityPoolFactory.address,
+    "\n"
+  );
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["InsurancePoolFactory"];
+func.tags = ["PriorityPoolFactory"];
 export default func;
