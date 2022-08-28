@@ -185,6 +185,8 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Provide liquidity by multiple users");
 
+
+
         // # --------------------------------------------------------------------//
         // # Should not be able to provide liquidity during incident report # //
         // # --------------------------------------------------------------------//
@@ -264,6 +266,8 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Not stake more then provided liquidity");
         
+        // Snapshot before staking
+        uint256 snapshot_1 = vm.snapshot();
 
         // # --------------------------------------------------------------------//
         // # Should be able to stake provided liquidity # //
@@ -273,6 +277,44 @@ contract PolicyCenterTest is
         vm.expectEmit(false, false, false, true);
         emit StakedLiquidity(LIQUIDITY, CHARLIE);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
+
+        console.log(unicode"✅ Stake provided liquidity");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to stake with same liquidity to multiple pools # //
+        // # --------------------------------------------------------------------//
+
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
+
+        console.log(unicode"✅ Stake provided liquidity");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to stake to multiple priority pools # //
+        // # --------------------------------------------------------------------//
+
+        vm.revertTo(snapshot_2);
+        uint256 snapshot_3 = vm.snapshot();
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY / 2, CHARLIE);
+        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY / 2);
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY / 2, CHARLIE);
+        policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY / 2);
 
         console.log(unicode"✅ Stake provided liquidity");
 
