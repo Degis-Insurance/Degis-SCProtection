@@ -10,15 +10,10 @@ import "../../interfaces/IPremiumRewardPool.sol";
 abstract contract ProtectionPoolDependencies {
     uint256 constant UINT256_MAX = type(uint256).max;
 
-    address public executor;
     address public priorityPoolFactory;
     address public policyCenter;
     address public incidentReport;
     address public premiumRewardPool;
-
-    function _setExecutor(address _executor) internal virtual {
-        executor = _executor;
-    }
 
     function _setPolicyCenter(address _policyCenter) internal virtual {
         policyCenter = _policyCenter;

@@ -95,9 +95,8 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyPolicyCenter() {
-        if (
-            msg.sender != policyCenter
-        ) revert ProtectionPool__OnlyPolicyCenter();
+        if (msg.sender != policyCenter)
+            revert ProtectionPool__OnlyPolicyCenter();
         _;
     }
 
@@ -137,10 +136,6 @@ contract ProtectionPool is
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
         _setIncidentReport(_incidentReport);
-    }
-
-    function setExecutor(address _executor) external onlyOwner {
-        _setExecutor(_executor);
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
@@ -313,7 +308,7 @@ contract ProtectionPool is
         if (
             (msg.sender != owner()) &&
             (msg.sender != incidentReport) &&
-            (msg.sender != executor)
+            (msg.sender != priorityPoolFactory)
         ) revert ProtectionPool__NotAllowedToPause();
         _pause(_paused);
     }
