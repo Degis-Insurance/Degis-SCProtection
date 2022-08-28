@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.15;
 
-import "./utils/ContractSetupTest.sol";
+import "./utils/ContractSetupBaseTest.sol";
 
 import "src/interfaces/IPolicyCenter.sol";
 
@@ -60,6 +60,8 @@ contract PolicyCenterTest is
 
     function setUp() public {
         setUpContracts();
+        
+        vm.warp(ZERO_TIME);
 
         // Deploy three protocol tokens
         joe = new MockERC20("JoeToken", "JOE", 18);
@@ -183,6 +185,13 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Provide liquidity by multiple users");
 
+        // # --------------------------------------------------------------------//
+        // # Should not be able to provide liquidity during incident report # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to provide liquidity during report after # //
+        // # --------------------------------------------------------------------//
     }
 
     function _provideLiquidity(address _user) private {
@@ -221,7 +230,7 @@ contract PolicyCenterTest is
         _provideLiquidity(CHARLIE);
 
         // staking requires a minimum amount of time passed since priority pool creation
-        vm.warp(ZERO_TIME + 1);
+        vm.warp(ZERO_TIME);
 
         // # --------------------------------------------------------------------//
         // # Should not be able to stake 0 liquidity # //
@@ -234,6 +243,16 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Not stake 0 liquidity");
 
         // # --------------------------------------------------------------------//
+        // # Should not be able to stake liquidity to inexistent Priority Pool # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__NonExistentPool.selector);
+        policyCenter.stakeLiquidity(4, LIQUIDITY);
+
+        console.log(unicode"✅ Not stake liquidity to inexistent Priority Pool");
+
+        // # --------------------------------------------------------------------//
         // # Should not be able to stake more then provided liquidity # //
         // # --------------------------------------------------------------------//
 
@@ -244,9 +263,10 @@ contract PolicyCenterTest is
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY * 2);
 
         console.log(unicode"✅ Not stake more then provided liquidity");
+        
 
         // # --------------------------------------------------------------------//
-        // # Should not be able to stake more then provided liquidity # //
+        // # Should be able to stake provided liquidity # //
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
@@ -254,20 +274,157 @@ contract PolicyCenterTest is
         emit StakedLiquidity(LIQUIDITY, CHARLIE);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
 
-        console.log(unicode"✅ Not stake more then provided liquidity");
+        console.log(unicode"✅ Stake provided liquidity");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to stake liquidity during incident report # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to stake after incident to old LPAddress # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to stake after incident to new LPAddress # //
+        // # --------------------------------------------------------------------//
         
+    }
+
+    function _stake(address _user) private {
+        _provideLiquidity(_user);
+        vm.warp(ZERO_TIME);
+        vm.prank(_user);
+        protectionPool.approve(address(policyCenter), LIQUIDITY);
+        vm.prank(_user);
+        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
     }
 
     function testUnstake() public {
 
+        joeLPAddress = policyCenter.currentLPAddress(JOE_ID);
+        
+        // # --------------------------------------------------------------------//
+        // # Should not be able to unstake liquidity without staking # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(unicode"✅ Not unstake liquidity without staking");
+
+
+        // Provide liquidity by multiple users
+        _stake(ALICE);
+        _stake(BOB);
+        _stake(CHARLIE);
+
+        // staking requires a minimum amount of time passed since priority pool creation
+        vm.warp(ZERO_TIME);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to unstake 0 # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__ZeroAmount.selector);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, 0);
+
+        console.log(unicode"✅ Not unstake 0");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to unstake more then staked amount # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        protectionPool.increaseAllowance(address(policyCenter), LIQUIDITY * 2);
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY * 2);
+
+        console.log(unicode"✅ Not unstake less then staked amount");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake less then staked amount # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY / 2, CHARLIE);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY / 2);
+
+        console.log(unicode"✅ Unstake less then staked amount");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake staked amount # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(unicode"✅ Unstake staked amount");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to unstake liquidity during incident report # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake after incident # //
+        // # --------------------------------------------------------------------//
     }
 
     function testBuyCover() public {
 
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy cover without native tokens # //
+        // # --------------------------------------------------------------------//
+
+        // buy with shield
+
+        // buy with other pool's native tokens
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy 0 cover # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy without enough tokens # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy bad length covers # //
+        // # --------------------------------------------------------------------//
+
+        
     }
 
     function testClaimPayout() public {
 
+        // # --------------------------------------------------------------------//
+        // # Should not be to claim payout prior to liquidation # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be to claim wrong cover right address # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be to claim wrong pool id # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be to claim wrong generation # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should be to claim payout # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to claim payout from previous generation # //
+        // # --------------------------------------------------------------------//
     }
 
     function testRemoveLiquidity() public {
@@ -369,6 +526,17 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Remove liquidity after a year");
 
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove liquidity during liquidation # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove liquidity after complete liquidation # //
+        // # --------------------------------------------------------------------//
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity after partial liquidation # //
+        // # --------------------------------------------------------------------//
     }
 
 }
