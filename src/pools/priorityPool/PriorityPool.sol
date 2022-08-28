@@ -437,8 +437,6 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        // Unpause pool
-        _pause(false);
 
         _retrievePayout(_amount);
 
