@@ -37,4 +37,5 @@ interface PolicyCenterEventError {
     error PolicyCenter__NoExchange();
     error PolicyCenter__ZeroAmount();
     error PolicyCenter__NoPayout();
+    error PolicyCenter__NonExistentPool();
 }

@@ -34,4 +34,6 @@ interface PriorityPoolEventError {
 
     error PriorityPool__OnlyExecutor();
     error PriorityPool__OnlyPolicyCenter();
+    error PriorityPool__NotOwnerOrFactory();
+    error PriorityPool__WrongLPToken();
 }

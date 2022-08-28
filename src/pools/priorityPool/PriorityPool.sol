@@ -30,8 +30,6 @@ import "./PriorityPoolToken.sol";
 import "../../libraries/DateTime.sol";
 import "../../libraries/StringUtils.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @title Insurance Pool (for single project)
  *
@@ -383,7 +381,7 @@ contract PriorityPool is
         uint256 _amount,
         address _provider
     ) external whenNotPaused onlyPolicyCenter {
-        require(isLPToken[_lpToken], "Wrong lp token");
+        if (!isLPToken[_lpToken]) revert PriorityPool__WrongLPToken();
 
         // Check whether this priority pool should be dynamic
         // If so, update it
@@ -424,10 +422,8 @@ contract PriorityPool is
      * @param _paused True to pause, false to unpause
      */
     function pausePriorityPool(bool _paused) external {
-        require(
-            (msg.sender == owner()) || (msg.sender == priorityPoolFactory),
-            "Only owner or Priority Pool Factory can call this function"
-        );
+        if ((msg.sender != owner()) && (msg.sender != priorityPoolFactory))
+            revert PriorityPool__NotOwnerOrFactory();
 
         _pause(_paused);
     }

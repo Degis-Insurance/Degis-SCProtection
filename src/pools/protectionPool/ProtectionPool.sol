@@ -34,8 +34,6 @@ import "src/pools/protectionPool/ProtectionPool.sol";
 
 import "../../libraries/DateTime.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @title Protection Pool
  *
@@ -226,7 +224,6 @@ contract ProtectionPool is
         // Mint PRO_LP tokens to the user
         uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
-        console.log(totalSupply());
         emit LiquidityProvided(_amount, amountToMint, _provider);
     }
 

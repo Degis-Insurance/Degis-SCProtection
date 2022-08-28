@@ -104,13 +104,22 @@ contract PolicyCenter is
 
     // veirifies if pool exists. used throughout insurance contracts
     modifier poolExists(uint256 _poolId) {
-        require(priorityPools[_poolId] != address(0), "Pool not found");
+        if (priorityPools[_poolId] == address(0))
+            revert PolicyCenter__NonExistentPool();
         _;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+    * @notice Returns the current LP address for a Pool ID
+    * @param _poolId          Priority Pool ID
+    */
+    function currentLPAddress(uint256 _poolId) external view returns (address lpAddress){
+        lpAddress = IPriorityPool(priorityPools[_poolId]).currentLPAddress();
+    }
 
     /**
      * @notice Returns premium split used by Policy Center

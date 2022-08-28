@@ -115,7 +115,7 @@ contract ProtectionPoolTest is ContractSetupBaseTest {
         // Simulate the reward distribution process
         // Shield comes in as mock reward
         
-        shield.mint(ALICE, LIQUIDTY_UNIT * 10);
+        shield.mint(ALICE, LIQUIDITY_UNIT * 10);
         shield.mint(BOB, LIQUIDITY_UNIT * 10);
         shield.mint(CHARLIE, LIQUIDITY_UNIT * 10);
 
