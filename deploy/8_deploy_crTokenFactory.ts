@@ -1,11 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import {
-  getExternalTokenAddress,
-  readAddressList,
-  storeAddressList,
-} from "../scripts/contractAddress";
+import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -23,26 +19,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
-
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
-
-  // Proxy Admin contract artifact
-  const incidentReport = await deploy("IncidentReport", {
-    contract: "IncidentReport",
+  // CoverRightTokenFactory contract artifact
+  const crTokenFactory = await deploy("CoverRightTokenFactory", {
+    contract: "CoverRightTokenFactory",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress],
+    args: [],
     log: true,
   });
-  addressList[network.name].IncidentReport = incidentReport.address;
+  addressList[network.name].CoverRightTokenFactory = crTokenFactory.address;
 
-  console.log("\ndeployed to address: ", incidentReport.address);
+  console.log(
+    "CoverRightTokenFactory deployed to address: ",
+    crTokenFactory.address,
+    "\n"
+  );
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["IncidentReport"];
+func.tags = ["CoverRightTokenFactory"];
 export default func;

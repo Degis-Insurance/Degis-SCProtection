@@ -39,12 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   addressList[network.name].OnboardProposal = onboardProposal.address;
 
   console.log("\ndeployed to address: ", onboardProposal.address);
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
-
+  
   // Store the address list after deployment
   storeAddressList(addressList);
 };

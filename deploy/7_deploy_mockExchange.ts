@@ -19,8 +19,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // Proxy Admin contract artifact
-  const exchange = await deploy("Exchange", {
+  // MockExchange contract artifact
+  const exchange = await deploy("MockExchange", {
     contract: "Exchange",
     from: deployer,
     args: [],
@@ -29,11 +29,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   addressList[network.name].MockExchange = exchange.address;
 
   console.log("mock exchange deployed to address: ", exchange.address, "\n");
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
 
   // Store the address list after deployment
   storeAddressList(addressList);

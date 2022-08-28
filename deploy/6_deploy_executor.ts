@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // Proxy Admin contract artifact
+  // Executor contract artifact
   const executor = await deploy("Executor", {
     contract: "Executor",
     from: deployer,
@@ -29,11 +29,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   addressList[network.name].Executor = executor.address;
 
   console.log("executor deployed to address: ", executor.address, "\n");
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
 
   // Store the address list after deployment
   storeAddressList(addressList);

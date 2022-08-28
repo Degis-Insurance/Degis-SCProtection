@@ -1,11 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import {
-  getExternalTokenAddress,
-  readAddressList,
-  storeAddressList,
-} from "../scripts/contractAddress";
+import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -23,31 +19,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
+  const premiumRewardPoolAddress = addressList[network.name].PremiumRewardPool;
 
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
-
-  // Deploy contract
-  const reinsurancePool = await deploy("ReinsurancePool", {
-    contract: "ReinsurancePool",
+  // WeightedFarmingPool contract artifact
+  const weightedFarmingPool = await deploy("WeightedFarmingPool", {
+    contract: "WeightedFarmingPool",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress],
+    args: [premiumRewardPoolAddress],
     log: true,
   });
-  addressList[network.name].ReinsurancePool = reinsurancePool.address;
+  addressList[network.name].WeightedFarmingPool = weightedFarmingPool.address;
 
-  console.log("deployed to address: ", reinsurancePool.address, "\n");
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
+  console.log(
+    "WeightedFarmingPool deployed to address: ",
+    weightedFarmingPool.address,
+    "\n"
+  );
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["ReinsurancePool"];
+func.tags = ["WeightedFarmingPool"];
 export default func;

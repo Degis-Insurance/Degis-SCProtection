@@ -29,23 +29,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     network.name
   );
 
-  const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
+  const protectionPoolAddress = addressList[network.name].ProtectionPool;
 
-  // Proxy Admin contract artifact
+  // PolicyCenter contract artifact
   const policyCenter = await deploy("PolicyCenter", {
     contract: "PolicyCenter",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, reinsurancePoolAddress],
+    args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
     log: true,
   });
   addressList[network.name].PolicyCenter = policyCenter.address;
 
   console.log("\npolicy center deployed to address: ", policyCenter.address);
-
-  //   await hre.run("verify:verify", {
-  //     address: insurancePoolFactory.address,
-  //     constructorArguments: [],
-  //   });
 
   // Store the address list after deployment
   storeAddressList(addressList);
