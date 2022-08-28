@@ -137,7 +137,8 @@ contract PriorityPool is
         address _admin,
         address _weightedFarmingPool,
         address _protectionPool,
-        address _policyCenter
+        address _policyCenter,
+        address _payoutPool
     ) OwnableWithoutContext(_admin) {
         poolId = _poolId;
         poolName = _name;
@@ -153,7 +154,6 @@ contract PriorityPool is
         minLength = 1;
 
         // Generation 1, price starts from 1 (SCALE)
-
         priceIndex[_deployNewGenerationLP(_weightedFarmingPool)] = SCALE;
 
         coverIndex = 10000;
@@ -162,6 +162,7 @@ contract PriorityPool is
         weightedFarmingPool = _weightedFarmingPool;
         protectionPool = _protectionPool;
         policyCenter = _policyCenter;
+        payoutPool = _payoutPool;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -623,9 +624,6 @@ contract PriorityPool is
 
         // Need how many PRO-LP tokens to cover the _amount
         uint256 neededLPAmount = (_amount * SCALE) / proLPPrice;
-
-        address payoutPool = IPriorityPoolFactory(priorityPoolFactory)
-            .payoutPool();
 
         // If current PRO-LP inside priority pool is enough
         // Remove part of the liquidity from Protection Pool

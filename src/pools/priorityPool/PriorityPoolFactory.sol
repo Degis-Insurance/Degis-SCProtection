@@ -194,6 +194,10 @@ contract PriorityPoolFactory is
         _setIncidentReport(_incidentReport);
     }
 
+    function setPayoutPool(address _payoutPool) external onlyOwner {
+        _setPayoutPool(_payoutPool);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -353,7 +357,8 @@ contract PriorityPoolFactory is
                 owner(),
                 weightedFarmingPool,
                 protectionPool,
-                policyCenter
+                policyCenter,
+                payoutPool
             )
         );
 
