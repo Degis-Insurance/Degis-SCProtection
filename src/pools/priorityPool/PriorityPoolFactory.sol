@@ -168,10 +168,6 @@ contract PriorityPoolFactory is
         _setPolicyCenter(_policyCenter);
     }
 
-    function setPayoutPool(address _payoutPool) external onlyOwner {
-        _setPayoutPool(_payoutPool);
-    }
-
     function setPremiumRewardPool(address _premiumRewardPool)
         external
         onlyOwner
@@ -324,18 +320,12 @@ contract PriorityPoolFactory is
         poolRegistered[_poolAddress] = false;
     }
 
-    function pauseProtectionPool(bool _paused) external {
-        require(
-            msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor contract can deregister an address"
-        );
-        IProtectionPool(protectionPool).pauseProtectionPool(_paused);
-    }
-
     function pausePriorityPool(uint256 _poolId, bool _paused) external {
         require(msg.sender == incidentReport, "Only incident report");
 
         PriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+
+        IProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }
 
     // ---------------------------------------------------------------------------------------- //

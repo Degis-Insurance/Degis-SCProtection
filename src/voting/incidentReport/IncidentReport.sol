@@ -185,10 +185,6 @@ contract IncidentReport is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
-    function setProtectionPool(address _protectionPool) external onlyOwner {
-        _setProtectionPool(_protectionPool);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -754,7 +750,7 @@ contract IncidentReport is
             _poolId,
             true
         );
-        IProtectionPool(protectionPool).pauseProtectionPool(true);
+ 
     }
 
     /**
@@ -769,7 +765,6 @@ contract IncidentReport is
             _poolId,
             false
         );
-        IProtectionPool(protectionPool).pauseProtectionPool(false);
     }
 
     /**

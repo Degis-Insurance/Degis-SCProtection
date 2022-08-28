@@ -31,12 +31,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Deploy contract
   const protectionPool = await deploy("ProtectionPool", {
-    contract: "ReinsurancePool",
+    contract: "ProtectionPool",
     from: deployer,
     args: [degAddress, veDegAddress, shieldAddress],
     log: true,
   });
-  addressList[network.name].ReinsurancePool = protectionPool.address;
+  addressList[network.name].ProtectionPool = protectionPool.address;
 
   console.log(
     "Protection pool deployed to address: ",

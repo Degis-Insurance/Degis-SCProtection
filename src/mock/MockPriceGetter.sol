@@ -34,6 +34,8 @@ contract MockPriceGetter is OwnableWithoutContext {
     // Find address according to name
     mapping(string => address) public nameToAddress;
 
+    event LatestPriceGet(address token);
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -49,6 +51,7 @@ contract MockPriceGetter is OwnableWithoutContext {
     }
 
     function getLatestPrice(address _tokenAddress) public returns (uint256) {
+        emit LatestPriceGet(_tokenAddress);
         return 1e18;
     }
 }

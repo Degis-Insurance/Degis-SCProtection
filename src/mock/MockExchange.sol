@@ -9,7 +9,7 @@ contract MockExchange {
 
     function swapExactTokensForTokens(
         uint256 amountIn,
-        uint256 amountOutMin,
+        uint256,
         address[] calldata path,
         address to,
         uint256 deadline
