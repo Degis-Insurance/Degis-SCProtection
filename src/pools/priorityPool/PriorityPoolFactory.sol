@@ -25,6 +25,7 @@ import "./PriorityPoolFactoryDependencies.sol";
 import "../../util/OwnableWithoutContext.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
+import "./PriorityPoolFactoryEventError.sol";
 
 import "./PriorityPool.sol";
 
@@ -47,6 +48,7 @@ import "./PriorityPool.sol";
 contract PriorityPoolFactory is
     ExternalTokenDependencies,
     OwnableWithoutContext,
+    PriorityPoolFactoryEventError,
     PriorityPoolFactoryDependencies
 {
     // ---------------------------------------------------------------------------------------- //
@@ -78,27 +80,6 @@ contract PriorityPoolFactory is
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
     mapping(address => bool) public tokenRegistered;
-
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    event PoolCreated(
-        uint256 poolId,
-        address poolAddress,
-        string protocolName,
-        address protocolToken,
-        uint256 maxCapacity,
-        uint256 basePremiumRatio
-    );
-
-    event DynamicPoolUpdate(
-        uint256 poolId,
-        address pool,
-        uint256 dynamicPoolCounter
-    );
-
-    event MaxCapacityUpdated(uint256 totalMaxCapacity);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -219,11 +200,11 @@ contract PriorityPoolFactory is
         uint256 _maxCapacity,
         uint256 _basePremiumRatio
     ) public returns (address) {
-        require(
-            msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor"
-        );
-        require(!tokenRegistered[_protocolToken], "Already registered");
+        if (
+            msg.sender != owner() && msg.sender != executor)
+            revert PriorityPoolFactory__OnlyOwnerOrExecutor();
+        if (tokenRegistered[_protocolToken])
+            revert PriorityPoolFactory__TokenAlreadyRegistered();
 
         // Add new pool max capacity to sum of max capacities
         totalMaxCapacity += _maxCapacity;
@@ -287,8 +268,10 @@ contract PriorityPoolFactory is
      * @param _poolId Pool id
      */
     function updateDynamicPool(uint256 _poolId) external {
-        require(poolRegistered[msg.sender], "Only priority pool");
-        require(!dynamic[msg.sender], "Already dynamic");
+        if (!poolRegistered[msg.sender])
+            revert PriorityPoolFactory__OnlyPriorityPool();
+        if (dynamic[msg.sender])
+            revert PriorityPoolFactory__AlreadyDynamicPool();
 
         dynamic[msg.sender] = true;
 
@@ -300,7 +283,8 @@ contract PriorityPoolFactory is
     }
 
     function updateMaxCapaity(bool _isUp, uint256 _diff) external {
-        require(poolRegistered[msg.sender], "Only priority pool");
+        if (!poolRegistered[msg.sender])
+            revert PriorityPoolFactory__OnlyPriorityPool();
 
         if (_isUp) {
             totalMaxCapacity += _diff;
@@ -310,11 +294,10 @@ contract PriorityPoolFactory is
     }
 
     function deregisterAddress(address _poolAddress) external {
-        require(
-            msg.sender == owner() || msg.sender == executor,
-            "Only owner or executor contract can deregister an address"
-        );
-        require(poolRegistered[_poolAddress], "Address is not registered");
+        if (msg.sender != owner() && msg.sender != executor)
+            revert PriorityPoolFactory__OnlyOwnerOrExecutor();
+        if (!poolRegistered[_poolAddress])
+            revert PriorityPoolFactory__PoolNotRegistered();
 
         uint256 poolId = poolAddressToId[_poolAddress];
 
@@ -325,7 +308,8 @@ contract PriorityPoolFactory is
     }
 
     function pausePriorityPool(uint256 _poolId, bool _paused) external {
-        require(msg.sender == incidentReport, "Only incident report");
+        if (msg.sender != incidentReport && msg.sender != executor)
+            revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
         PriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
 

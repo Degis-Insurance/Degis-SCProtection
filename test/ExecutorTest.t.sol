@@ -47,7 +47,7 @@ contract ExecutorTest is
     uint256 internal constant PROPOSAL_SETTLE_TIME =
         PROPOSAL_VOTE_TIME + PROPOSAL_VOTING_PERIOD;
     uint256 internal constant INCIDENT_SETTLE_TIME =
-        INCIDENT_VOTE_TIME + PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
+        PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;
