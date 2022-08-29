@@ -318,6 +318,7 @@ library DateTimeLibrary {
         // unless today is the 25th calendar day or later
         uint256 monthsToAdd = _coverDuration - 1;
 
+        // TODO: whether need this auto-extending feature
         if (day >= 25) {
             // Add one month
             monthsToAdd += 1;

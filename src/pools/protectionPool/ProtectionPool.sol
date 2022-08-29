@@ -30,8 +30,6 @@ import "../../util/OwnableWithoutContext.sol";
 import "../../util/PausableWithoutContext.sol";
 import "../../util/FlashLoanPool.sol";
 
-import "src/pools/protectionPool/ProtectionPool.sol";
-
 import "../../libraries/DateTime.sol";
 
 /**
@@ -47,13 +45,13 @@ import "../../libraries/DateTime.sol";
  *         Protection Pool will be able to provide the remaining part
  */
 contract ProtectionPool is
+    ProtectionPoolEventError,
     ERC20,
     FlashLoanPool,
     OwnableWithoutContext,
     PausableWithoutContext,
     ExternalTokenDependencies,
-    ProtectionPoolDependencies,
-    ProtectionPoolEventError
+    ProtectionPoolDependencies
 {
     using DateTimeLibrary for uint256;
 

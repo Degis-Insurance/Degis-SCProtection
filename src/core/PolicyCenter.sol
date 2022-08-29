@@ -20,25 +20,17 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/OwnableWithoutContext.sol";
-
-import "../mock/MockExchange.sol";
-
+import "../interfaces/ExternalTokenDependencies.sol";
+import "./interfaces/PolicyCenterEventError.sol";
 import "./interfaces/PolicyCenterDependencies.sol";
 
-import "../interfaces/ExternalTokenDependencies.sol";
+import "../util/OwnableWithoutContext.sol";
 
 import "../interfaces/IPriceGetter.sol";
 
 import "../libraries/DateTime.sol";
-
 import "../libraries/StringUtils.sol";
-
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import "./interfaces/PolicyCenterEventError.sol";
-
-import "forge-std/console.sol";
 
 /**
  * @title Policy Center
@@ -114,10 +106,14 @@ contract PolicyCenter is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-    * @notice Returns the current LP address for a Pool ID
-    * @param _poolId          Priority Pool ID
-    */
-    function currentLPAddress(uint256 _poolId) external view returns (address lpAddress){
+     * @notice Returns the current LP address for a Pool ID
+     * @param _poolId          Priority Pool ID
+     */
+    function currentLPAddress(uint256 _poolId)
+        external
+        view
+        returns (address lpAddress)
+    {
         lpAddress = IPriorityPool(priorityPools[_poolId]).currentLPAddress();
     }
 
@@ -304,12 +300,13 @@ contract PolicyCenter is
      * @param _amount Amount of liquidity(shield) to provide
      */
     function provideLiquidity(uint256 _amount) external {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         // Mint PRO-LP tokens and transfer shield
         IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
         IERC20(shield).transferFrom(msg.sender, protectionPool, _amount);
+
+        emit LiquidityProvided(msg.sender, _amount);
     }
 
     /**
@@ -327,8 +324,7 @@ contract PolicyCenter is
         public
         poolExists(_poolId)
     {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
 
@@ -349,6 +345,8 @@ contract PolicyCenter is
             msg.sender
         );
         IERC20(lpToken).transfer(weightedFarmingPool, _amount);
+
+        emit LiquidityStaked(msg.sender, _poolId, _amount);
     }
 
     /**
@@ -361,14 +359,15 @@ contract PolicyCenter is
         public
         poolExists(_poolId)
     {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
 
         // Mint PRI-LP tokens to the user directly
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+
+        emit LiquidityStakedWithoutFarming(msg.sender, _poolId, _amount);
     }
 
     /**
@@ -388,8 +387,7 @@ contract PolicyCenter is
         address _priorityLP,
         uint256 _amount
     ) external poolExists(_poolId) {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         // First remove the PRI-LP token from weighted farming pool
         IWeightedFarmingPool(weightedFarmingPool).withdrawFromPolicyCenter(
@@ -405,6 +403,8 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
+
+        emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
 
     /**
@@ -419,13 +419,19 @@ contract PolicyCenter is
         address _priorityLP,
         uint256 _amount
     ) external poolExists(_poolId) {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         IPriorityPool(priorityPools[_poolId]).unstakedLiquidity(
             _priorityLP,
             _amount,
             msg.sender
+        );
+
+        emit LiquidityUnstakedWithoutFarming(
+            msg.sender,
+            _poolId,
+            _priorityLP,
+            _amount
         );
     }
 
@@ -435,12 +441,12 @@ contract PolicyCenter is
      * @param _amount Amount of liquidity to provide
      */
     function removeLiquidity(uint256 _amount) external {
-        if (_amount == 0)
-            revert PolicyCenter__ZeroAmount();
+        if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         IProtectionPool(protectionPool).removedLiquidity(_amount, msg.sender);
-    }
 
+        emit LiquidityRemoved(msg.sender, _amount);
+    }
 
     /**
      * @notice Claim payout
@@ -455,8 +461,7 @@ contract PolicyCenter is
         address _crToken,
         uint256 _generation
     ) public poolExists(_poolId) {
-        if (_poolId == 0)
-            revert PolicyCenter__WrongPriorityPoolID();
+        if (_poolId == 0) revert PolicyCenter__WrongPriorityPoolID();
 
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
@@ -468,7 +473,7 @@ contract PolicyCenter is
             payoutPool
         ).claim(msg.sender, _crToken, _poolId, _generation);
 
-        emit PayoutClaimed(claimed, msg.sender);
+        emit PayoutClaimed(msg.sender, claimed);
 
         uint256 expiry = ICoverRightToken(_crToken).expiry();
 
@@ -683,8 +688,7 @@ contract PolicyCenter is
             uint256 toTreasury
         )
     {
-        if (_premiumInUSD == 0)
-            revert PolicyCenter__ZeroPremium();
+        if (_premiumInUSD == 0) revert PolicyCenter__ZeroPremium();
 
         address nativeToken = tokenByPoolId[_poolId];
         // Premium in project native token (paid in internal function)
@@ -716,8 +720,7 @@ contract PolicyCenter is
      * @param _token Token address
      */
     function _approvePoolToken(address _token) internal {
-        if (exchange == address(0))
-            revert PolicyCenter__NoExchange();
+        if (exchange == address(0)) revert PolicyCenter__NoExchange();
         // approve exchange to swap policy center tokens for deg
         IERC20(_token).approve(exchange, type(uint256).max);
     }

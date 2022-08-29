@@ -190,8 +190,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      *         - Can be minted or used for claim
      *         Other transfers are banned
      *
-     * @param from    From address
-     * @param to      To address
+     * @param from From address
+     * @param to   To address
      */
     function _beforeTokenTransfer(
         address from,

@@ -17,15 +17,13 @@
  \\======================================================================//
  \\======================================================================//
 */
-import "../util/OwnableWithoutContext.sol";
-
-import "./interfaces/ExecutorDependencies.sol";
-
-import "../voting/interfaces/VotingParameters.sol";
-
-import "./interfaces/ExecutorEventError.sol";
 
 pragma solidity ^0.8.13;
+
+import "../util/OwnableWithoutContext.sol";
+import "./interfaces/ExecutorDependencies.sol";
+import "../voting/interfaces/VotingParameters.sol";
+import "./interfaces/ExecutorEventError.sol";
 
 /**
  * @title Executor
@@ -38,11 +36,14 @@ pragma solidity ^0.8.13;
  *
  */
 contract Executor is
-    ExecutorDependencies,
     VotingParameters,
     ExecutorEventError,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    ExecutorDependencies
 {
+    mapping(uint256 => bool) public reportExecuted;
+    mapping(uint256 => bool) public proposalExecuted;
+
     constructor() OwnableWithoutContext(msg.sender) {}
 
     // ---------------------------------------------------------------------------------------- //
@@ -85,6 +86,10 @@ contract Executor is
      * @param _reportId Id of the report to be executed
      */
     function executeReport(uint256 _reportId) public {
+        // Check and mark the report as "executed"
+        if (reportExecuted[_reportId]) revert Executor__AlreadyExecuted();
+        reportExecuted[_reportId] = true;
+
         // Get the report
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
@@ -121,6 +126,10 @@ contract Executor is
         external
         returns (address newPriorityPool)
     {
+        // Check and mark the proposal as "executed"
+        if (proposalExecuted[_proposalId]) revert Executor__AlreadyExecuted();
+        proposalExecuted[_proposalId] = true;
+
         IOnboardProposal.Proposal memory proposal = IOnboardProposal(
             onboardProposal
         ).getProposal(_proposalId);

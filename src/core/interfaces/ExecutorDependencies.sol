@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IProtectionPool.sol";
 import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IOnboardProposal.sol";
@@ -13,7 +12,6 @@ abstract contract ExecutorDependencies {
     address public priorityPoolFactory;
     address public incidentReport;
     address public onboardProposal;
-
     address public treasury;
 
     function _setPriorityPoolFactory(address _priorityPoolFactory)
