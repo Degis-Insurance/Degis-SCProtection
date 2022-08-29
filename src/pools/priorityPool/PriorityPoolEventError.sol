@@ -11,13 +11,7 @@ interface PriorityPoolEventError {
     event StakedLiquidity(uint256 amount, address sender);
     event UnstakedLiquidity(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 generation);
-    event EmissionRateUpdated(
-        uint256 newEmissionRate,
-        uint256 newEmissionEndTime
-    );
-    event AccRewardsPerShareUpdated(uint256 amount);
-    event LiquidationEnded(uint256 timestamp);
-
+ 
     event NewGenerationLPTokenDeployed(
         string poolName,
         uint256 poolId,

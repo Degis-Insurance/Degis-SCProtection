@@ -21,7 +21,6 @@
 pragma solidity ^0.8.13;
 
 import "../../util/PausableWithoutContext.sol";
-import "../../util/OwnableWithoutContext.sol";
 
 import "./PriorityPoolDependencies.sol";
 import "./PriorityPoolEventError.sol";
@@ -58,24 +57,26 @@ import "../../libraries/StringUtils.sol";
  */
 contract PriorityPool is
     PriorityPoolEventError,
-    OwnableWithoutContext,
     PausableWithoutContext,
     PriorityPoolDependencies
 {
     using StringUtils for uint256;
     using DateTimeLibrary for uint256;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     // Mininum cover amount 10U
-    uint256 public constant MIN_COVER_AMOUNT = 10e6;
+    uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
     // Max time length in months of granted protection
-    uint256 public immutable maxLength;
+    uint256 internal immutable maxLength;
 
     // Min time length in days
-    uint256 public immutable minLength;
+    uint256 internal immutable minLength;
+
+    address internal immutable owner;
 
     // Base premium ratio (max 10000) (260 means 2.6% annually)
     uint256 public immutable basePremiumRatio;
@@ -102,12 +103,15 @@ contract PriorityPool is
     // Timestamp of pool creation
     uint256 public startTime;
 
+    // Index for cover amount
+    uint256 public coverIndex;
+
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
 
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
     // Has already passed the base premium ratio period
-    bool public passedBasePeriod;
+    bool internal passedBasePeriod;
 
     // Generation => crToken address
     mapping(uint256 => address) public crTokenAddress;
@@ -115,10 +119,8 @@ contract PriorityPool is
     // Generation => lp token address
     mapping(uint256 => address) public lpTokenAddress;
 
-    mapping(address => bool) public isLPToken;
-
-    // Index for cover amount
-    uint256 public coverIndex;
+    // Address => Whether is LP address
+    mapping(address => bool) internal isLPToken;
 
     // Generation => Price of lp tokens
     // PRI-LP token amount * Price Index = PRO-LP token amount
@@ -134,12 +136,14 @@ contract PriorityPool is
         address _protocolToken,
         uint256 _maxCapacity,
         uint256 _baseRatio,
-        address _admin,
+        address _owner,
         address _weightedFarmingPool,
         address _protectionPool,
         address _policyCenter,
         address _payoutPool
-    ) OwnableWithoutContext(_admin) {
+    ) {
+        owner = _owner;
+
         poolId = _poolId;
         poolName = _name;
 
@@ -283,8 +287,8 @@ contract PriorityPool is
 
             address lp = currentLPAddress();
             // LP Token ratio = LP token in this pool / Total lp token
-            uint256 tokenRatio = (IERC20(lp).totalSupply() * SCALE) /
-                IERC20(protectionPool).totalSupply();
+            uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
+                SimpleERC20(protectionPool).totalSupply();
 
             // Total dynamic pools
             uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
@@ -313,10 +317,9 @@ contract PriorityPool is
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setMaxCapacity(bool _isUp, uint256 _maxCapacity)
-        external
-        onlyOwner
-    {
+    function setMaxCapacity(bool _isUp, uint256 _maxCapacity) external {
+        require(msg.sender == owner);
+
         maxCapacity = _maxCapacity;
 
         uint256 diff;
@@ -423,7 +426,7 @@ contract PriorityPool is
      * @param _paused True to pause, false to unpause
      */
     function pausePriorityPool(bool _paused) external {
-        if ((msg.sender != owner()) && (msg.sender != priorityPoolFactory))
+        if ((msg.sender != owner) && (msg.sender != priorityPoolFactory))
             revert PriorityPool__NotOwnerOrFactory();
 
         _pause(_paused);
@@ -518,7 +521,7 @@ contract PriorityPool is
     function _mintLP(address _user, uint256 _amount) internal {
         // Get current generation lp token address and mint tokens
         address lp = currentLPAddress();
-        IPriorityPoolToken(lp).mint(_user, _amount);
+        PriorityPoolToken(lp).mint(_user, _amount);
     }
 
     /**
@@ -536,10 +539,10 @@ contract PriorityPool is
     ) internal {
         // Transfer PRO-LP token to user
         uint256 proLPAmount = (priceIndex[_lpToken] * _amount) / SCALE;
-        IERC20(protectionPool).transfer(_user, proLPAmount);
+        SimpleERC20(protectionPool).transfer(_user, proLPAmount);
 
         // Burn PRI-LP token
-        IPriorityPoolToken(_lpToken).burn(_user, _amount);
+        PriorityPoolToken(_lpToken).burn(_user, _amount);
     }
 
     /**
@@ -611,7 +614,7 @@ contract PriorityPool is
      */
     function _retrievePayout(uint256 _amount) internal {
         // Current PRO-LP amount
-        uint256 currentLPAmount = IERC20(protectionPool).balanceOf(
+        uint256 currentLPAmount = SimpleERC20(protectionPool).balanceOf(
             address(this)
         );
 

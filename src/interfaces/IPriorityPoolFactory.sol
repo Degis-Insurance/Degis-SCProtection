@@ -26,8 +26,6 @@ interface IPriorityPoolFactory {
 
     function deg() external view returns (address);
 
-    function deregisterAddress(address _tokenAddress) external;
-
     function deployPool(
         string memory _name,
         address _protocolToken,
@@ -67,20 +65,6 @@ interface IPriorityPoolFactory {
     function poolRegistered(address) external view returns (bool);
 
     function protectionPool() external view returns (address);
-
-    function renounceOwnership() external;
-
-    function setExecutor(address _executor) external;
-
-    function setIncidentReport(address _incidentReport) external;
-
-    function setPriorityPoolFactory(address _priorityPoolFactory) external;
-
-    function setPremiumRewardPool(address _premiumRewardPool) external;
-
-    function setPolicyCenter(address _policyCenter) external;
-
-    function setWeightedFarmingPool(address _weightedFarmingPool) external;
 
     function setProtectionPool(address _protectionPool) external;
 

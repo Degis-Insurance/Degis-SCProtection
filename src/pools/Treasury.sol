@@ -38,7 +38,7 @@ contract Treasury {
         uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
 
         poolIncome[_poolId] -= amount;
-        IERC20(shield).transfer(_reporter, amount);
+        SimpleIERC20(shield).transfer(_reporter, amount);
 
         emit ReporterRewarded(_reporter, amount);
     }
@@ -61,6 +61,6 @@ contract Treasury {
     function claim(uint256 _amount) external {
         require(msg.sender == owner, "Only owner");
 
-        IShield(shield).transfer(owner, _amount);
+        SimpleIERC20(shield).transfer(owner, _amount);
     }
 }

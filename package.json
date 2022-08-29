@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "hardhat test",
-    "compile": "npx hardhat compile"
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat deploy"
   },
   "author": "Devan Non <devanon@chainstride.capital>",
   "license": "Apache-2.0",

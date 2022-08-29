@@ -2,13 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-interface IPriorityPoolToken {
-    function mint(address _account, uint256 _amount) external;
-
-    function burn(address _account, uint256 _amount) external;
-}
+import "../SimpleERC20.sol";
 
 /**
  * @notice LP token for priority pools
@@ -26,21 +20,24 @@ interface IPriorityPoolToken {
  *         The weight will be set when the report happened
  *         and will depend on how much part are paid during that report
  */
-contract PriorityPoolToken is ERC20 {
+contract PriorityPoolToken is SimpleERC20 {
     // Only minter and burner is Priority Pool
-    address public priorityPool;
+    address private priorityPool;
 
-    constructor(string memory _name) ERC20(_name, "PRI-LP") {
+    modifier onlyPriorityPool() {
+        require(msg.sender == priorityPool, "Only priority pool");
+        _;
+    }
+
+    constructor(string memory _name) SimpleERC20(_name, "PRI-LP") {
         priorityPool = msg.sender;
     }
 
-    function mint(address _user, uint256 _amount) external {
-        require(msg.sender == priorityPool, "Only priority pool");
+    function mint(address _user, uint256 _amount) external onlyPriorityPool {
         _mint(_user, _amount);
     }
 
-    function burn(address _user, uint256 _amount) external {
-        require(msg.sender == priorityPool, "Only priority pool");
+    function burn(address _user, uint256 _amount) external onlyPriorityPool {
         _burn(_user, _amount);
     }
 }

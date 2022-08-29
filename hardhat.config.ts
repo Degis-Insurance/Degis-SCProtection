@@ -27,11 +27,12 @@ task("example", "Example task").setAction(example);
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.13",
+    version: "0.8.15",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 100,
       },
     },
   },
@@ -67,7 +68,7 @@ const config: HardhatUserConfig = {
   paths: {
     sources: "./src", // Use ./src rather than ./contracts as Hardhat expects
     cache: "./cache_hardhat", // Use a different cache for Hardhat than Foundry
-    tests: "./test/hhtest"
+    tests: "./test/hhtest",
   },
   // This fully resolves paths for imports in the ./lib directory for Hardhat
   preprocess: {

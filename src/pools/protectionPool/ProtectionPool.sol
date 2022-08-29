@@ -147,12 +147,6 @@ contract ProtectionPool is
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
 
-    function setPremiumRewardPool(address _premiumRewardPool)
-        external
-        onlyOwner
-    {
-        _setPremiumRewardPool(_premiumRewardPool);
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -245,12 +239,12 @@ contract ProtectionPool is
         // Burn PRO_LP tokens to the user
         shieldToTransfer = (_amount * price) / SCALE;
         if (
-            IERC20(shield).balanceOf(address(this)) <
+            SimpleIERC20(shield).balanceOf(address(this)) <
             getTotalCovered() + shieldToTransfer
         ) revert ProtectionPool__NotEnoughLiquidity();
 
         _burn(_provider, _amount);
-        IERC20(shield).transfer(_provider, shieldToTransfer);
+        SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
     }
@@ -269,10 +263,10 @@ contract ProtectionPool is
             )
         ) revert ProtectionPool__OnlyPriorityPool();
 
-        if (_amount > IERC20(shield).balanceOf(address(this)))
+        if (_amount > SimpleIERC20(shield).balanceOf(address(this)))
             revert ProtectionPool__NotEnoughBalance();
 
-        IERC20(shield).transfer(_to, _amount);
+        SimpleIERC20(shield).transfer(_to, _amount);
 
         _updatePrice();
 
@@ -324,7 +318,7 @@ contract ProtectionPool is
             return;
         }
         price =
-            ((IERC20(shield).balanceOf(address(this))) * SCALE) /
+            ((SimpleIERC20(shield).balanceOf(address(this))) * SCALE) /
             totalSupply();
 
         emit PriceUpdated(price);

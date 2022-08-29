@@ -23,11 +23,12 @@ pragma solidity ^0.8.13;
 import "./PriorityPoolFactoryDependencies.sol";
 
 import "../../util/OwnableWithoutContext.sol";
-
 import "../../interfaces/ExternalTokenDependencies.sol";
 import "./PriorityPoolFactoryEventError.sol";
 
 import "./PriorityPool.sol";
+
+import "../../interfaces/IPriorityPool.sol";
 
 /**
  * @title Insurance Pool Factory
@@ -75,7 +76,7 @@ contract PriorityPoolFactory is
     // Whether a pool is already dynamic
     mapping(address => bool) public dynamic;
 
-    uint256 public dynamicPoolCounter;
+    uint256 internal dynamicPoolCounter;
 
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
@@ -94,13 +95,19 @@ contract PriorityPoolFactory is
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
     {
-        _setProtectionPool(_protectionPool);
+        protectionPool = _protectionPool;
 
         poolRegistered[_protectionPool] = true;
         tokenRegistered[_shield] = true;
 
         // Protection pool as pool 0
         pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
+    }
+
+    modifier onlyPriorityPool() {
+        if (!poolRegistered[msg.sender])
+            revert PriorityPoolFactory__OnlyPriorityPool();
+        _;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -146,37 +153,37 @@ contract PriorityPoolFactory is
     // ---------------------------------------------------------------------------------------- //
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
+        policyCenter = _policyCenter;
     }
 
     function setPremiumRewardPool(address _premiumRewardPool)
         external
         onlyOwner
     {
-        _setPremiumRewardPool(_premiumRewardPool);
+        premiumRewardPool = _premiumRewardPool;
     }
 
     function setWeightedFarmingPool(address _weightedFarmingPool)
         external
         onlyOwner
     {
-        _setWeightedFarmingPool(_weightedFarmingPool);
+        weightedFarmingPool = _weightedFarmingPool;
     }
 
     function setProtectionPool(address _protectionPool) external onlyOwner {
-        _setProtectionPool(_protectionPool);
+        protectionPool = _protectionPool;
     }
 
     function setExecutor(address _executor) external onlyOwner {
-        _setExecutor(_executor);
+        executor = _executor;
     }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
+        incidentReport = _incidentReport;
     }
 
     function setPayoutPool(address _payoutPool) external onlyOwner {
-        _setPayoutPool(_payoutPool);
+        payoutPool = _payoutPool;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -200,8 +207,7 @@ contract PriorityPoolFactory is
         uint256 _maxCapacity,
         uint256 _basePremiumRatio
     ) public returns (address) {
-        if (
-            msg.sender != owner() && msg.sender != executor)
+        if (msg.sender != owner() && msg.sender != executor)
             revert PriorityPoolFactory__OnlyOwnerOrExecutor();
         if (tokenRegistered[_protocolToken])
             revert PriorityPoolFactory__TokenAlreadyRegistered();
@@ -267,9 +273,7 @@ contract PriorityPoolFactory is
      *
      * @param _poolId Pool id
      */
-    function updateDynamicPool(uint256 _poolId) external {
-        if (!poolRegistered[msg.sender])
-            revert PriorityPoolFactory__OnlyPriorityPool();
+    function updateDynamicPool(uint256 _poolId) external onlyPriorityPool {
         if (dynamic[msg.sender])
             revert PriorityPoolFactory__AlreadyDynamicPool();
 
@@ -282,10 +286,10 @@ contract PriorityPoolFactory is
         emit DynamicPoolUpdate(_poolId, msg.sender, dynamicPoolCounter);
     }
 
-    function updateMaxCapaity(bool _isUp, uint256 _diff) external {
-        if (!poolRegistered[msg.sender])
-            revert PriorityPoolFactory__OnlyPriorityPool();
-
+    function updateMaxCapaity(bool _isUp, uint256 _diff)
+        external
+        onlyPriorityPool
+    {
         if (_isUp) {
             totalMaxCapacity += _diff;
         } else totalMaxCapacity -= _diff;
@@ -293,25 +297,11 @@ contract PriorityPoolFactory is
         emit MaxCapacityUpdated(totalMaxCapacity);
     }
 
-    function deregisterAddress(address _poolAddress) external {
-        if (msg.sender != owner() && msg.sender != executor)
-            revert PriorityPoolFactory__OnlyOwnerOrExecutor();
-        if (!poolRegistered[_poolAddress])
-            revert PriorityPoolFactory__PoolNotRegistered();
-
-        uint256 poolId = poolAddressToId[_poolAddress];
-
-        address protocolToken = pools[poolId].protocolToken;
-
-        tokenRegistered[protocolToken] = false;
-        poolRegistered[_poolAddress] = false;
-    }
-
     function pausePriorityPool(uint256 _poolId, bool _paused) external {
         if (msg.sender != incidentReport && msg.sender != executor)
             revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
-        PriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
 
         IProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }
