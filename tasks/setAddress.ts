@@ -7,16 +7,16 @@ import {
   Executor__factory,
   IncidentReport,
   IncidentReport__factory,
-  InsurancePoolFactory,
-  InsurancePoolFactory__factory,
+  PriorityPoolFactory,
+  PriorityPoolFactory__factory,
   MockDEG,
   MockDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
   PolicyCenter,
   PolicyCenter__factory,
-  ReinsurancePool,
-  ReinsurancePool__factory,
+  ProtectionPool,
+  ProtectionPool__factory,
 } from "../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -39,7 +39,7 @@ task("setReinsurancePool", "Set contract address in reinsurancePool").setAction(
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
 
-    const reinsurancePool: ReinsurancePool = new ReinsurancePool__factory(
+    const reinsurancePool: ProtectionPool = new ProtectionPool__factory(
       dev_account
     ).attach(addressList[network.name].ReinsurancePool);
 
@@ -49,10 +49,10 @@ task("setReinsurancePool", "Set contract address in reinsurancePool").setAction(
     }
 
     if (
-      (await reinsurancePool.insurancePoolFactory()) !=
+      (await reinsurancePool.priorityPoolFactory()) !=
       insurancePoolFactoryAddress
     ) {
-      const tx_2 = await reinsurancePool.setInsurancePoolFactory(
+      const tx_2 = await reinsurancePool.setPriorityPoolFactory(
         insurancePoolFactoryAddress
       );
       console.log("Tx details: ", await tx_2.wait());
@@ -87,31 +87,29 @@ task(
   const executorAddress = addressList[network.name].Executor;
   const policyCenterAddress = addressList[network.name].PolicyCenter;
 
-  const insurancePoolFactory: InsurancePoolFactory =
-    new InsurancePoolFactory__factory(dev_account).attach(
-      addressList[network.name].InsurancePoolFactory
+  const priorityPoolFactory: PriorityPoolFactory =
+    new PriorityPoolFactory__factory(dev_account).attach(
+      addressList[network.name].PriorityPoolFactory
     );
 
-  if ((await insurancePoolFactory.policyCenter()) != policyCenterAddress) {
-    const tx_1 = await insurancePoolFactory.setPolicyCenter(
-      policyCenterAddress
-    );
-    console.log("Tx details: ", await tx_1.wait());
-  }
+  // if ((await priorityPoolFactory.policyCenter()) != policyCenterAddress) {
+  //   const tx_1 = await priorityPoolFactory.setPolicyCenter(
+  //     policyCenterAddress
+  //   );
+  //   console.log("Tx details: ", await tx_1.wait());
+  // }
 
-  if (
-    (await insurancePoolFactory.reinsurancePool()) != reinsurancePoolAddress
-  ) {
-    const tx_2 = await insurancePoolFactory.setReinsurancePool(
-      reinsurancePoolAddress
-    );
-    console.log("Tx details: ", await tx_2.wait());
-  }
+  // if ((await priorityPoolFactory.protectionPool()) != reinsurancePoolAddress) {
+  //   const tx_2 = await priorityPoolFactory.setProtectionPool(
+  //     reinsurancePoolAddress
+  //   );
+  //   console.log("Tx details: ", await tx_2.wait());
+  // }
 
-  if ((await insurancePoolFactory.executor()) != executorAddress) {
-    const tx_3 = await insurancePoolFactory.setExecutor(executorAddress);
-    console.log("Tx details: ", await tx_3.wait());
-  }
+  // if ((await insurancePoolFactory.executor()) != executorAddress) {
+  //   const tx_3 = await insurancePoolFactory.setExecutor(executorAddress);
+  //   console.log("Tx details: ", await tx_3.wait());
+  // }
 
   console.log(
     "\nFinish setting contract addresses in insurance pool factory\n"
@@ -139,23 +137,11 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
-    if ((await incidentReport.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await incidentReport.setPolicyCenter(policyCenterAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
-
-    if ((await incidentReport.reinsurancePool()) != reinsurancePoolAddress) {
-      const tx_2 = await incidentReport.setReinsurancePool(
-        reinsurancePoolAddress
-      );
-      console.log("Tx details: ", await tx_2.wait());
-    }
-
     if (
-      (await incidentReport.insurancePoolFactory()) !=
+      (await incidentReport.priorityPoolFactory()) !=
       insurancePoolFactoryAddress
     ) {
-      const tx_3 = await incidentReport.setInsurancePoolFactory(
+      const tx_3 = await incidentReport.setPriorityPoolFactory(
         insurancePoolFactoryAddress
       );
       console.log("Tx details: ", await tx_3.wait());
@@ -185,16 +171,11 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
       dev_account
     ).attach(addressList[network.name].OnboardProposal);
 
-    if ((await onboardProposal.executor()) != executorAddress) {
-      const tx_1 = await onboardProposal.setExecutor(executorAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
-
     if (
-      (await onboardProposal.insurancePoolFactory()) !=
+      (await onboardProposal.priorityPoolFactory()) !=
       insurancePoolFactoryAddress
     ) {
-      const tx_2 = await onboardProposal.setInsurancePoolFactory(
+      const tx_2 = await onboardProposal.setPriorityPoolFactory(
         insurancePoolFactoryAddress
       );
       console.log("Tx details: ", await tx_2.wait());
@@ -217,33 +198,26 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const addressList = readAddressList();
 
     const executorAddress = addressList[network.name].Executor;
-    const insurancePoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
-    const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
+    const priorityPoolFactoryAddress =
+      addressList[network.name].PriorityPoolFactory;
+    const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
 
     const policyCenter: PolicyCenter = new PolicyCenter__factory(
       dev_account
     ).attach(addressList[network.name].PolicyCenter);
 
-    if ((await policyCenter.executor()) != executorAddress) {
-      const tx_1 = await policyCenter.setExecutor(executorAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
-
     if (
-      (await policyCenter.insurancePoolFactory()) != insurancePoolFactoryAddress
+      (await policyCenter.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx_2 = await policyCenter.setInsurancePoolFactory(
-        insurancePoolFactoryAddress
+      const tx_2 = await policyCenter.setPriorityPoolFactory(
+        priorityPoolFactoryAddress
       );
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    if ((await policyCenter.reinsurancePool()) != reinsurancePoolAddress) {
-      const tx_3 = await policyCenter.setReinsurancePool(
-        reinsurancePoolAddress
-      );
+    if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
+      const tx_3 = await policyCenter.setProtectionPool(protectionPoolAddress);
       console.log("Tx details: ", await tx_3.wait());
     }
 
@@ -269,9 +243,9 @@ task("setExecutor", "Set contract address in executor").setAction(
     const addressList = readAddressList();
 
     const policyCenterAddress = addressList[network.name].PolicyCenter;
-    const insurancePoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
-    const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
+    const priorityPoolFactoryAddress =
+      addressList[network.name].priorityPoolFactory;
+    const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const onboardProposalAddress = addressList[network.name].OnboardProposal;
 
@@ -279,23 +253,11 @@ task("setExecutor", "Set contract address in executor").setAction(
       addressList[network.name].Executor
     );
 
-    if ((await executor.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await executor.setPolicyCenter(policyCenterAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
-
-    if (
-      (await executor.insurancePoolFactory()) != insurancePoolFactoryAddress
-    ) {
-      const tx_2 = await executor.setInsurancePoolFactory(
-        insurancePoolFactoryAddress
+    if ((await executor.priorityPoolFactory()) != priorityPoolFactoryAddress) {
+      const tx_2 = await executor.setPriorityPoolFactory(
+        priorityPoolFactoryAddress
       );
       console.log("Tx details: ", await tx_2.wait());
-    }
-
-    if ((await executor.reinsurancePool()) != reinsurancePoolAddress) {
-      const tx_3 = await executor.setReinsurancePool(reinsurancePoolAddress);
-      console.log("Tx details: ", await tx_3.wait());
     }
 
     if ((await executor.incidentReport()) != incidentReportAddress) {

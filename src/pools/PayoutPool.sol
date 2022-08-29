@@ -4,8 +4,10 @@ pragma solidity ^0.8.13;
 
 import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
-import "../interfaces/IVeDEG.sol";
 import "../interfaces/IPriorityPool.sol";
+
+import "./SimpleIERC20.sol";
+
 
 /**
  * @notice Payout Pool
@@ -126,7 +128,7 @@ contract PayoutPool {
             claimableBalance
         );
 
-        IERC20(shield).transfer(_user, claimed);
+        SimpleIERC20(shield).transfer(_user, claimed);
 
         // Amount of new generation cr token to be minted
         newGenerationCRAmount = claimableBalance - claimable;

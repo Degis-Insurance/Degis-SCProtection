@@ -557,7 +557,7 @@ contract IncidentReport is
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
             _totalVotes >=
-            (IERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
+            (SimpleIERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
     }
 
     /**
