@@ -191,6 +191,7 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
+        priorityPoolFactory.setPayoutPool(address(payoutPool));
 
         // 
     }
