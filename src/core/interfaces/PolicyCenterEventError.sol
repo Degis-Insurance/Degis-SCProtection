@@ -7,7 +7,6 @@ interface PolicyCenterEventError {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event PayoutClaimed(uint256 _amount, address _address);
     event CoverBought(
         address indexed buyer,
         uint256 indexed poolId,
@@ -15,7 +14,38 @@ interface PolicyCenterEventError {
         uint256 coverAmount,
         uint256 premiumInShield
     );
-    event MoveLiquidity(uint256 _poolId, uint256 _amount);
+
+    event LiquidityProvided(address indexed user, uint256 amount);
+
+    event LiquidityStaked(
+        address indexed user,
+        uint256 indexed poolId,
+        uint256 amount
+    );
+
+    event LiquidityStakedWithoutFarming(
+        address indexed user,
+        uint256 indexed poolId,
+        uint256 amount
+    );
+
+    event LiquidityUnstaked(
+        address indexed user,
+        uint256 indexed poolId,
+        address priorityLP,
+        uint256 amount
+    );
+
+    event LiquidityUnstakedWithoutFarming(
+        address indexed user,
+        uint256 indexed poolId,
+        address priorityLP,
+        uint256 amount
+    );
+
+    event LiquidityRemoved(address indexed user, uint256 amount);
+
+    event PayoutClaimed(address indexed user, uint256 amount);
 
     event PremiumSplitted(
         uint256 toPriority,

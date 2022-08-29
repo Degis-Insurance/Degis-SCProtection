@@ -21,6 +21,8 @@ contract ExecutorTest is
     OnboardProposalEventError,
     IncidentReportEventError
 {
+    uint256 internal constant SCALE = 1e12;
+
     address internal ALICE = mkaddr("Alice");
     address internal BOB = mkaddr("Bob");
     address internal CHARLIE = mkaddr("Charlie");
@@ -42,15 +44,17 @@ contract ExecutorTest is
 
     uint256 internal constant PROPOSE_TIME = 0;
     uint256 internal constant REPORT_TIME = 0;
+
     uint256 internal constant PROPOSAL_VOTE_TIME = 0;
     uint256 internal constant INCIDENT_VOTE_TIME = PENDING_PERIOD;
+
     uint256 internal constant PROPOSAL_SETTLE_TIME =
         PROPOSAL_VOTE_TIME + PROPOSAL_VOTING_PERIOD;
     uint256 internal constant INCIDENT_SETTLE_TIME =
-        PENDING_PERIOD + INCIDENT_VOTING_PERIOD;
+        INCIDENT_VOTE_TIME + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
-    IPriorityPool internal ptpPool;
+    PriorityPool internal ptpPool;
     IPriorityPool internal gmxPool;
 
     MockERC20 internal joe;
@@ -84,11 +88,12 @@ contract ExecutorTest is
 
         vm.prank(CHARLIE);
         shield.approve(address(policyCenter), LIQUIDITY);
+
         // Provide Liquidity by one user
         vm.prank(CHARLIE);
         policyCenter.provideLiquidity(LIQUIDITY);
 
-        // Proopose a new priority pool
+        // Propose a new priority pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
         vm.prank(CHARLIE);
@@ -150,7 +155,6 @@ contract ExecutorTest is
         // pool counter should not be increased and no new pool should be created
         assertEq(priorityPoolFactory.poolCounter(), 1);
 
-
         console.log(unicode"✅ Not execute a proposal prior to start voting");
 
         // # --------------------------------------------------------------------//
@@ -162,6 +166,7 @@ contract ExecutorTest is
         executor.executeReport(1);
 
         // joe pool should not be liquidated after execution attempt
+        // liquidation means deploying new generations of lp tokens
         assertEq(joePool.currentLPAddress(), joeLPAddress);
 
         console.log(unicode"✅ Not execute a report prior to start voting");
@@ -194,14 +199,13 @@ contract ExecutorTest is
 
         console.log(unicode"✅ Not execute a report during voting");
 
+        // # --------------------------------------------------------------------//
+        // # Should not be able to execute Proposal not settled # //
+        // # --------------------------------------------------------------------//
 
         // revert to previous snapshot and take a new snapshot
         vm.revertTo(snapshot_1);
         uint256 snapshot_2 = vm.snapshot();
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to execute Proposal not settled # //
-        // # --------------------------------------------------------------------//
 
         vm.expectRevert(Executor__ProposalNotSettled.selector);
         vm.warp(PROPOSAL_SETTLE_TIME);
@@ -221,25 +225,42 @@ contract ExecutorTest is
 
         console.log(unicode"✅ Not execute a report not settled");
 
-         // revert to previous snapshot and take a new snapshot
-        vm.revertTo(snapshot_2);
-
         // # --------------------------------------------------------------------//
         // # Should able to execute Proposal after settle # //
-        // # --------------------------------------------------------------------//       
+        // # --------------------------------------------------------------------//
+
+        // revert to previous snapshot and take a new snapshot
+        vm.revertTo(snapshot_2);
 
         vm.warp(PROPOSAL_SETTLE_TIME + 1);
 
-        // Get proposal record
-        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(1);
-        console.log(proposal.status);
         // Settle proposal
         onboardProposal.settle(1);
-        address ptpAddress = executor.executeProposal(1);
-        ptp = MockERC20(ptpAddress);
-        ptpPool = IPriorityPool(ptpAddress);
+
+        // Get proposal record
+        OnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            1
+        );
+        assertEq(proposal.status, SETTLED_STATUS);
+        assertEq(proposal.result, PASS_RESULT);
+
+        // New ptp pool
+        ptpPool = PriorityPool(executor.executeProposal(1));
+
+        assertTrue(executor.proposalExecuted(1));
+
         assertEq(ptpPool.maxCapacity(), CAPACITY_2);
         assertEq(ptpPool.basePremiumRatio(), PREMIUMRATIO_2);
+        assertEq(ptpPool.priorityPoolFactory(), address(priorityPoolFactory));
+        assertEq(ptpPool.weightedFarmingPool(), address(farmingPool));
+        assertEq(ptpPool.protectionPool(), address(protectionPool));
+        assertEq(ptpPool.policyCenter(), address(policyCenter));
+        assertEq(ptpPool.payoutPool(), address(payoutPool));
+
+        assertEq(ptpPool.coverIndex(), 10000);
+        assertEq(ptpPool.priceIndex(ptpPool.currentLPAddress()), SCALE);
+
+        assertEq(ptpPool.generation(), 1);
 
         console.log(unicode"✅ Execute a settled proposal");
 
@@ -253,6 +274,9 @@ contract ExecutorTest is
         incidentReport.settle(1);
 
         executor.executeReport(1);
+
+        assertTrue(executor.reportExecuted(1));
+
         IncidentReport.Report memory report = incidentReport.getReport(1);
 
         // Check the report record is intanct
@@ -267,7 +291,5 @@ contract ExecutorTest is
         assertTrue(joePool.currentLPAddress() != joeLPAddress);
 
         console.log(unicode"✅ Execute a settled report");
-
-        
     }
 }

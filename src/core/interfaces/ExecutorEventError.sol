@@ -3,15 +3,18 @@
 pragma solidity ^0.8.13;
 
 interface ExecutorEventError {
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     event ReportExecuted(address pool, uint256 poolId, uint256 reportId);
 
-    event NewPoolExecuted(address poolAddress, uint256 proposalId, address protocol);
-    
+    event NewPoolExecuted(
+        address poolAddress,
+        uint256 proposalId,
+        address protocol
+    );
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -20,4 +23,5 @@ interface ExecutorEventError {
     error Executor__ReportNotPassed();
     error Executor__ProposalNotSettled();
     error Executor__ProposalNotPassed();
+    error Executor__AlreadyExecuted();
 }
