@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity ^0.8.13;
 
@@ -15,29 +14,22 @@ abstract contract OwnableWithoutContext {
      * @dev Initializes the contract setting a customized initial owner.
      */
     constructor(address _initOwner) {
-        _transferOwnership(_initOwner);
+        _owner = _initOwner;
     }
 
     /**
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        _checkOwner();
+        require(_owner == msg.sender, "Only owner");
         _;
     }
 
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view virtual returns (address) {
+    function owner() public view returns (address) {
         return _owner;
-    }
-
-    /**
-     * @dev Throws if the sender is not the owner.
-     */
-    function _checkOwner() internal view virtual {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
     }
 
     /**
@@ -47,7 +39,7 @@ abstract contract OwnableWithoutContext {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyOwner {
+    function renounceOwnership() external onlyOwner {
         _transferOwnership(address(0));
     }
 
@@ -55,7 +47,7 @@ abstract contract OwnableWithoutContext {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) external onlyOwner {
         require(
             newOwner != address(0),
             "Ownable: new owner is the zero address"
@@ -67,9 +59,8 @@ abstract contract OwnableWithoutContext {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Internal function without access restriction.
      */
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
+    function _transferOwnership(address newOwner) internal {
+        emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
     }
 }

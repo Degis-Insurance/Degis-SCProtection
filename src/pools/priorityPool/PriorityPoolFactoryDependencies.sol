@@ -2,50 +2,14 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IPolicyCenter.sol";
-import "../../interfaces/IPremiumRewardPool.sol";
-import "../../interfaces/IWeightedFarmingPool.sol";
-
 abstract contract PriorityPoolFactoryDependencies {
-    address public executor;
-    address public policyCenter;
-    address public protectionPool;
-    address public incidentReport;
-    address public premiumRewardPool;
-    address public weightedFarmingPool;
-    address public payoutPool;
+    address internal executor;
+    address internal policyCenter;
+    address internal protectionPool;
+    address internal incidentReport;
+    address internal premiumRewardPool;
+    address internal weightedFarmingPool;
+    address internal payoutPool;
 
-    function _setExecutor(address _executor) internal virtual {
-        executor = _executor;
-    }
-
-    function _setProtectionPool(address _protectionPool) internal virtual {
-        protectionPool = _protectionPool;
-    }
-
-    function _setPremiumRewardPool(address _premiumRewardPool)
-        internal
-        virtual
-    {
-        premiumRewardPool = _premiumRewardPool;
-    }
-
-    function _setWeightedFarmingPool(address _weightedFarmingPool)
-        internal
-        virtual
-    {
-        weightedFarmingPool = _weightedFarmingPool;
-    }
-
-    function _setPolicyCenter(address _policyCenter) internal virtual {
-        policyCenter = _policyCenter;
-    }
-
-    function _setIncidentReport(address _incidentReport) internal virtual {
-        incidentReport = _incidentReport;
-    }
-
-    function _setPayoutPool(address _payoutPool) internal virtual {
-        payoutPool = _payoutPool;
-    }
+   
 }

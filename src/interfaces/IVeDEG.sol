@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../pools/SimpleIERC20.sol";
 
 /**
  * @dev Interface of the VeDEG
  */
-interface IVeDEG is IERC20 {
+interface IVeDEG is SimpleIERC20 {
     // Get the locked amount of a user's veDeg
     function locked(address _user) external view returns (uint256);
 

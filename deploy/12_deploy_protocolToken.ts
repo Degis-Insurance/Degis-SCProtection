@@ -1,11 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import {
-  getExternalTokenAddress,
-  readAddressList,
-  storeAddressList,
-} from "../scripts/contractAddress";
+import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -23,31 +19,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
+  const name = "TestToken3";
+  const symbol = "TT";
+  const decimal = 18;
 
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
-    network.name
-  );
-  const protectionPoolAddress = addressList[network.name].ProtectionPool;
-
-  // Proxy Admin contract artifact
-  const priorityPoolFactory = await deploy("PriorityPoolFactory", {
-    contract: "PriorityPoolFactory",
+  // PriceGetter contract artifact
+  const mockERC20 = await deploy("MockERC20", {
+    contract: "MockERC20",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
+    args: [name, symbol, decimal],
     log: true,
   });
-  addressList[network.name].PriorityPoolFactory = priorityPoolFactory.address;
+  addressList[network.name].MockERC20 = mockERC20.address;
 
-  console.log(
-    "Priority pool factory deployed to address: ",
-    priorityPoolFactory.address,
-    "\n"
-  );
+  console.log("A mock erc20 deployed to address: ", mockERC20.address, "\n");
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["PriorityPoolFactory"];
+func.tags = ["MockERC20"];
 export default func;
