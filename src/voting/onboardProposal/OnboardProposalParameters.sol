@@ -6,10 +6,11 @@ import "../interfaces/VotingParameters.sol";
 
 abstract contract OnboardProposalParameters is VotingParameters {
 
-    uint256 constant PROPOSAL_VOTING_PERIOD = 3 days;
+    // TODO: Parameters for test
+    uint256 constant PROPOSAL_VOTING_PERIOD = 4 hours;
 
     // minimum 50% votes
-    uint256 constant PROPOSAL_QUORUM_RATIO = 50;
+    uint256 constant PROPOSAL_QUORUM_RATIO = 10;
 
     // DEG threshold for starting a report
     uint256 constant PROPOSE_THRESHOLD = 10000 ether;

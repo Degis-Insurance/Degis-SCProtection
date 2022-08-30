@@ -22,7 +22,21 @@ import {
 } from "../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
-task("setAllAddress", "Set all addresses");
+task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
+  await hre.run("setProtectionPool");
+
+  await hre.run("setPriorityPoolFactory");
+
+  await hre.run("setIncidentReport");
+
+  await hre.run("setOnboardProposal");
+
+  await hre.run("setPolicyCenter");
+
+  await hre.run("setExecutor");
+
+  await hre.run("setFarmingPool");
+});
 
 task("setProtectionPool", "Set contract address in protectionPool").setAction(
   async (_, hre) => {
