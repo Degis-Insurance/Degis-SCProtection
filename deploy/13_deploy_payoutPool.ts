@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  getExternalTokenAddress,
+  readAddressList,
+  storeAddressList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -19,26 +23,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
+  const [, , shieldAddress] = getExternalTokenAddress(network.name);
   const policyCenterAddress = addressList[network.name].PolicyCenter;
+  const crTokenFactoryAddress =
+    addressList[network.name].CoverRightTokenFactory;
+  const priorityPoolFactoryAddress =
+    addressList[network.name].PriorityPoolFactory;
 
-  // CoverRightTokenFactory contract artifact
-  const crTokenFactory = await deploy("CoverRightTokenFactory", {
-    contract: "CoverRightTokenFactory",
+  // Payout pool contract artifact
+  const payoutPool = await deploy("PayoutPool", {
+    contract: "PayoutPool",
     from: deployer,
-    args: [policyCenterAddress],
+    args: [
+      shieldAddress,
+      policyCenterAddress,
+      crTokenFactoryAddress,
+      priorityPoolFactoryAddress,
+    ],
     log: true,
   });
-  addressList[network.name].CoverRightTokenFactory = crTokenFactory.address;
+  addressList[network.name].PayoutPool = payoutPool.address;
 
-  console.log(
-    "CoverRightTokenFactory deployed to address: ",
-    crTokenFactory.address,
-    "\n"
-  );
+  console.log("Payout pool deployed to address: ", payoutPool.address, "\n");
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["CoverRightTokenFactory"];
+func.tags = ["PayoutPool"];
 export default func;
