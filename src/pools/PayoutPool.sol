@@ -4,8 +4,9 @@ pragma solidity ^0.8.13;
 
 import "../interfaces/ICoverRightTokenFactory.sol";
 import "../interfaces/ICoverRightToken.sol";
-import "../interfaces/IVeDEG.sol";
 import "../interfaces/IPriorityPool.sol";
+import "../interfaces/IPriorityPoolFactory.sol";
+
 
 /**
  * @notice Payout Pool
@@ -28,6 +29,8 @@ contract PayoutPool {
 
     address public policyCenter;
 
+    address public priorityPoolFactory;
+
     struct Payout {
         uint256 amount;
         uint256 remaining;
@@ -48,13 +51,24 @@ contract PayoutPool {
     constructor(
         address _shield,
         address _policyCenter,
-        address _crFactory
+        address _crFactory,
+        address _priorityPoolFactory
     ) {
         shield = _shield;
 
         policyCenter = _policyCenter;
 
         crFactory = _crFactory;
+
+        priorityPoolFactory = _priorityPoolFactory;
+    }
+
+    modifier onlyPriorityPool(uint256 _poolId) {
+        (, address poolAddress, , , ) = IPriorityPoolFactory(
+            priorityPoolFactory
+        ).pools(_poolId);
+        require(poolAddress == msg.sender, "Wrong priority pool");
+        _;
     }
 
     /**
@@ -71,7 +85,7 @@ contract PayoutPool {
         uint256 _amount,
         uint256 _ratio,
         address _poolAddress
-    ) external {
+    ) external onlyPriorityPool {
         Payout storage payout = payouts[_poolId][_generation];
 
         payout.amount = _amount;
