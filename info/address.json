@@ -20,7 +20,8 @@
 		"CoverRightTokenFactory": "0xb33348b9316E1D472430aB5C2ea8f865323512B0",
 		"PremiumRewardPool": "0x903372bCa5c7c264e419BeB9a4Bcd3B4B1770d9d",
 		"WeightedFarmingPool": "0xC7D01ac8fC2a23cE4A43b6c74e860931a0CFfAdF",
-		"PriceGetter": "0xf9ba92e86D5E42f6170C66e2bC5387bbb330c3A6"
+		"PriceGetter": "0xf9ba92e86D5E42f6170C66e2bC5387bbb330c3A6",
+		"PayoutPool": "0xd54a61764053BEf096567bCd1Fd1c750BDFad8D2"
 	},
 	"avax": {},
 	"avaxTest": {},

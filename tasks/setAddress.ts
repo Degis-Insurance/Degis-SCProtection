@@ -17,6 +17,8 @@ import {
   PolicyCenter__factory,
   ProtectionPool,
   ProtectionPool__factory,
+  WeightedFarmingPool,
+  WeightedFarmingPool__factory,
 } from "../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -39,7 +41,6 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
       addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
-  
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
@@ -71,7 +72,7 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
 );
 
 task(
-  "setInsurancePoolFactory",
+  "setPriorityPoolFactory",
   "Set contract address in insurancePoolFactory"
 ).setAction(async (_, hre) => {
   console.log("\nSetting contract addresses in insurancePoolFactory\n");
@@ -84,37 +85,44 @@ task(
 
   const addressList = readAddressList();
 
-  const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
   const executorAddress = addressList[network.name].Executor;
   const policyCenterAddress = addressList[network.name].PolicyCenter;
+  const premiumRewardPoolAddress = addressList[network.name].PremiumRewardPool;
+  const weightedFarmingPoolAddress =
+    addressList[network.name].WeightedFarmingPool;
+  const incidentReportAddress = addressList[network.name].IncidentReport;
+  const payoutPoolAddress = addressList[network.name].PayoutPool;
 
   const priorityPoolFactory: PriorityPoolFactory =
     new PriorityPoolFactory__factory(dev_account).attach(
       addressList[network.name].PriorityPoolFactory
     );
 
-  // if ((await priorityPoolFactory.policyCenter()) != policyCenterAddress) {
-  //   const tx_1 = await priorityPoolFactory.setPolicyCenter(
-  //     policyCenterAddress
-  //   );
-  //   console.log("Tx details: ", await tx_1.wait());
-  // }
+  const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
+  console.log("Tx details: ", await tx_1.wait());
 
-  // if ((await priorityPoolFactory.protectionPool()) != reinsurancePoolAddress) {
-  //   const tx_2 = await priorityPoolFactory.setProtectionPool(
-  //     reinsurancePoolAddress
-  //   );
-  //   console.log("Tx details: ", await tx_2.wait());
-  // }
+  const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
+  console.log("Tx details: ", await tx_2.wait());
 
-  // if ((await insurancePoolFactory.executor()) != executorAddress) {
-  //   const tx_3 = await insurancePoolFactory.setExecutor(executorAddress);
-  //   console.log("Tx details: ", await tx_3.wait());
-  // }
-
-  console.log(
-    "\nFinish setting contract addresses in insurance pool factory\n"
+  const tx_3 = await priorityPoolFactory.setPremiumRewardPool(
+    premiumRewardPoolAddress
   );
+  console.log("Tx details: ", await tx_3.wait());
+
+  const tx_4 = await priorityPoolFactory.setWeightedFarmingPool(
+    weightedFarmingPoolAddress
+  );
+  console.log("Tx details: ", await tx_4.wait());
+
+  const tx_5 = await priorityPoolFactory.setIncidentReport(
+    incidentReportAddress
+  );
+  console.log("Tx details: ", await tx_5.wait());
+
+  const tx_6 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
+  console.log("Tx details: ", await tx_6.wait());
+
+  console.log("\nFinish setting contract addresses in priority pool factory\n");
 });
 
 task("setIncidentReport", "Set contract address in incident report").setAction(
@@ -129,23 +137,20 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
 
     const addressList = readAddressList();
 
-    const reinsurancePoolAddress = addressList[network.name].ReinsurancePool;
-    const insurancePoolFactoryAddress =
+    const priorityPoolFactoryAddress =
       addressList[network.name].InsurancePoolFactory;
-    const policyCenterAddress = addressList[network.name].PolicyCenter;
 
     const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
     if (
-      (await incidentReport.priorityPoolFactory()) !=
-      insurancePoolFactoryAddress
+      (await incidentReport.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx_3 = await incidentReport.setPriorityPoolFactory(
-        insurancePoolFactoryAddress
+      const tx = await incidentReport.setPriorityPoolFactory(
+        priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx_3.wait());
+      console.log("Tx details: ", await tx.wait());
     }
 
     console.log("\nFinish setting contract addresses in incident report\n");
@@ -164,8 +169,7 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
 
     const addressList = readAddressList();
 
-    const executorAddress = addressList[network.name].Executor;
-    const insurancePoolFactoryAddress =
+    const priorityPoolFactoryAddress =
       addressList[network.name].InsurancePoolFactory;
 
     const onboardProposal: OnboardProposal = new OnboardProposal__factory(
@@ -174,12 +178,12 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
 
     if (
       (await onboardProposal.priorityPoolFactory()) !=
-      insurancePoolFactoryAddress
+      priorityPoolFactoryAddress
     ) {
-      const tx_2 = await onboardProposal.setPriorityPoolFactory(
-        insurancePoolFactoryAddress
+      const tx = await onboardProposal.setPriorityPoolFactory(
+        priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx_2.wait());
+      console.log("Tx details: ", await tx.wait());
     }
 
     console.log("\nFinish setting contract addresses in onboard proposal\n");
@@ -198,11 +202,17 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
 
     const addressList = readAddressList();
 
-    const executorAddress = addressList[network.name].Executor;
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
+    const priceGetterAddress = addressList[network.name].PriceGetter;
+    const crTokenFactoryAddress =
+      addressList[network.name].CoverRightTokenFactory;
+    const weightedFarmingPoolAddress =
+      addressList[network.name].WeightedFarmingPool;
+    const payoutPoolAddress = addressList[network.name].PayoutPool;
+    const treasuryAddress = addressList[network.name].Treasury;
 
     const policyCenter: PolicyCenter = new PolicyCenter__factory(
       dev_account
@@ -211,20 +221,53 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     if (
       (await policyCenter.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx_2 = await policyCenter.setPriorityPoolFactory(
+      const tx_1 = await policyCenter.setPriorityPoolFactory(
         priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx_2.wait());
+      console.log("Tx details: ", await tx_1.wait());
     }
 
     if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
-      const tx_3 = await policyCenter.setProtectionPool(protectionPoolAddress);
-      console.log("Tx details: ", await tx_3.wait());
+      const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
+      console.log("Tx details: ", await tx_2.wait());
     }
 
     if ((await policyCenter.exchange()) != exchangeAddress) {
-      const tx_4 = await policyCenter.setExchange(exchangeAddress);
+      const tx_3 = await policyCenter.setExchange(exchangeAddress);
+      console.log("Tx details: ", await tx_3.wait());
+    }
+
+    if ((await policyCenter.priceGetter()) != priceGetterAddress) {
+      const tx_4 = await policyCenter.setPriceGetter(priceGetterAddress);
       console.log("Tx details: ", await tx_4.wait());
+    }
+
+    if (
+      (await policyCenter.coverRightTokenFactory()) != crTokenFactoryAddress
+    ) {
+      const tx_5 = await policyCenter.setCoverRightTokenFactory(
+        crTokenFactoryAddress
+      );
+      console.log("Tx details: ", await tx_5.wait());
+    }
+
+    if (
+      (await policyCenter.weightedFarmingPool()) != weightedFarmingPoolAddress
+    ) {
+      const tx_6 = await policyCenter.setWeightedFarmingPool(
+        weightedFarmingPoolAddress
+      );
+      console.log("Tx details: ", await tx_6.wait());
+    }
+
+    if ((await policyCenter.payoutPool()) != payoutPoolAddress) {
+      const tx_7 = await policyCenter.setPayoutPool(payoutPoolAddress);
+      console.log("Tx details: ", await tx_7.wait());
+    }
+
+    if ((await policyCenter.treasury()) != treasuryAddress) {
+      const tx_8 = await policyCenter.setTreasury(treasuryAddress);
+      console.log("Tx details: ", await tx_8.wait());
     }
 
     console.log("\nFinish setting contract addresses in policy center\n");
@@ -243,10 +286,9 @@ task("setExecutor", "Set contract address in executor").setAction(
 
     const addressList = readAddressList();
 
-    const policyCenterAddress = addressList[network.name].PolicyCenter;
+    const treasuryAddress = addressList[network.name].Treasury;
     const priorityPoolFactoryAddress =
-      addressList[network.name].priorityPoolFactory;
-    const protectionPoolAddress = addressList[network.name].ProtectionPool;
+      addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const onboardProposalAddress = addressList[network.name].OnboardProposal;
 
@@ -255,23 +297,58 @@ task("setExecutor", "Set contract address in executor").setAction(
     );
 
     if ((await executor.priorityPoolFactory()) != priorityPoolFactoryAddress) {
-      const tx_2 = await executor.setPriorityPoolFactory(
+      const tx_1 = await executor.setPriorityPoolFactory(
         priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx_2.wait());
+      console.log("Tx details: ", await tx_1.wait());
     }
 
     if ((await executor.incidentReport()) != incidentReportAddress) {
-      const tx_4 = await executor.setIncidentReport(incidentReportAddress);
-      console.log("Tx details: ", await tx_4.wait());
+      const tx_2 = await executor.setIncidentReport(incidentReportAddress);
+      console.log("Tx details: ", await tx_2.wait());
     }
 
     if ((await executor.onboardProposal()) != onboardProposalAddress) {
-      const tx_5 = await executor.setOnboardProposal(onboardProposalAddress);
-      console.log("Tx details: ", await tx_5.wait());
+      const tx_3 = await executor.setOnboardProposal(onboardProposalAddress);
+      console.log("Tx details: ", await tx_3.wait());
+    }
+
+    if ((await executor.treasury()) != treasuryAddress) {
+      const tx_4 = await executor.setOnboardProposal(treasuryAddress);
+      console.log("Tx details: ", await tx_4.wait());
     }
 
     console.log("\nFinish setting contract addresses in executor\n");
+  }
+);
+
+task("setFarmingPool", "Set address in weighted farming pool").setAction(
+  async (_, hre) => {
+    console.log("\nSetting contract addresses in executor\n");
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const policyCenterAddress = addressList[network.name].PolicyCenter;
+
+    const weightedFarmingPool: WeightedFarmingPool =
+      new WeightedFarmingPool__factory(dev_account).attach(
+        addressList[network.name].WeightedFarmingPool
+      );
+
+    if ((await weightedFarmingPool.policyCenter()) != policyCenterAddress) {
+      const tx_1 = await weightedFarmingPool.setPolicyCenter(
+        policyCenterAddress
+      );
+      console.log("Tx details: ", await tx_1.wait());
+    }
+
+    console.log("\nFinish setting contract addresses in farming pool\n");
   }
 );
 

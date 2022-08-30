@@ -1,0 +1,436 @@
+{
+  "address": "0xd54a61764053BEf096567bCd1Fd1c750BDFad8D2",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_shield",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_policyCenter",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_crFactory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_priorityPoolFactory",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_generation",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "_ratio",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewPayout",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "CLAIM_PERIOD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SCALE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_crToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_generation",
+          "type": "uint256"
+        }
+      ],
+      "name": "claim",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "claimed",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newGenerationCRAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "crFactory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_generation",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_ratio",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_poolAddress",
+          "type": "address"
+        }
+      ],
+      "name": "newPayout",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "payouts",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "remaining",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "endTiemstamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "ratio",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "priorityPool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "policyCenter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "priorityPoolFactory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "shield",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xcd30876671d3bf2f77696c5f0cd79bd340c19d4d6a9d4ddff020c10f65389fc3",
+  "receipt": {
+    "to": null,
+    "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
+    "contractAddress": "0xd54a61764053BEf096567bCd1Fd1c750BDFad8D2",
+    "transactionIndex": 1,
+    "gasUsed": "622440",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x15a97ad08dcd91a4295d9433cbbed5ce4968cad6456a5621d85d493df0cd354a",
+    "transactionHash": "0xcd30876671d3bf2f77696c5f0cd79bd340c19d4d6a9d4ddff020c10f65389fc3",
+    "logs": [],
+    "blockNumber": 12987402,
+    "cumulativeGasUsed": "1353436",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x2afE704De753dDD32DC39f41C5F9D5df4bFc71F0",
+    "0xC3284aB7960b40b77efc599d1263733055fea77A",
+    "0xb33348b9316E1D472430aB5C2ea8f865323512B0",
+    "0xaA947294C4297F5f7dC40C14E16531950E40b5b7"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "a342c5be865d222319819920f12966b5",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_shield\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_policyCenter\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_crFactory\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_priorityPoolFactory\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_generation\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_ratio\",\"type\":\"uint256\"}],\"name\":\"NewPayout\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"CLAIM_PERIOD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SCALE\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_crToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_generation\",\"type\":\"uint256\"}],\"name\":\"claim\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"claimed\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"newGenerationCRAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"crFactory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_generation\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_ratio\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_poolAddress\",\"type\":\"address\"}],\"name\":\"newPayout\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"payouts\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"remaining\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"endTiemstamp\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ratio\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"priorityPool\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"policyCenter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"priorityPoolFactory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shield\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"claim(address,address,uint256,uint256)\":{\"params\":{\"_crToken\":\"Cover right token address\",\"_generation\":\"Generation of priority pool (1 if no liquidations occurred)\",\"_poolId\":\"Pool Id\",\"_user\":\"User address\"}},\"newPayout(uint256,uint256,uint256,uint256,address)\":{\"params\":{\"_amount\":\"Amount of tokens to be registered\",\"_generation\":\"Generation of priority pool (1 if no liquidations occurred)\",\"_poolAddress\":\"Address of priority pool\",\"_poolId\":\"Pool Id\",\"_ratio\":\"Current ratio payout has been registered at\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"claim(address,address,uint256,uint256)\":{\"notice\":\"Claim payout for a user\"},\"newPayout(uint256,uint256,uint256,uint256,address)\":{\"notice\":\"Registers new Payout in Payout Pool\"}},\"notice\":\"Payout Pool         Every time there is a report passed, some assets will be moved to this pool         It is stored as a Payout struct         - amount       Total amount of this payout         - remaining    Remaining amount         - endTimestamp After this timestamp, no more claims         - ratio        Max ratio of a user's crToken\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/pools/PayoutPool.sol\":\"PayoutPool\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363631383330303937353139\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"src/interfaces/ICoverRightToken.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.13;\\n\\ninterface ICoverRightToken {\\n    function expiry() external view returns (uint256);\\n\\n    function getClaimableOf(address _user) external view returns (uint256);\\n\\n    function mint(\\n        uint256 _poolId,\\n        address _user,\\n        uint256 _amount\\n    ) external;\\n\\n    function burn(\\n        uint256 _poolId,\\n        address _user,\\n        uint256 _amount\\n    ) external;\\n\\n    function generation() external view returns (uint256);\\n}\\n\",\"keccak256\":\"0xbd06b45a4cefc10086b3ad76a27e23ff30c32e687856dc47d783698813848c25\",\"license\":\"MIT\"},\"src/interfaces/ICoverRightTokenFactory.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface ICoverRightTokenFactory {\\n    function deployCRToken(\\n        string calldata _poolName,\\n        uint256 _poolId,\\n        string calldata _tokenName,\\n        uint256 _expiry,\\n        uint256 _generation\\n    ) external returns (address newCRTokenAddress);\\n\\n    function deployed(bytes32 _salt) external view returns (bool);\\n\\n    function saltToAddress(bytes32 _salt) external view returns (address);\\n}\\n\",\"keccak256\":\"0xf17c79edd1d32f1b61e8bdcdc74262f7935a899d03b9cfd677e4ff438f0814db\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IPriorityPool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IPriorityPool {\\n    //\\n\\n    function insuredToken() external view returns (address);\\n\\n    function pausePriorityPool(bool _paused) external;\\n\\n    function setCoverIndex(uint256 _newIndex) external;\\n\\n    function minAssetRequirement() external view returns (uint256);\\n\\n    function activeCovered() external view returns (uint256);\\n\\n    function currentLPAddress() external view returns (address);\\n\\n    function liquidatePool(uint256 amount) external;\\n\\n    function generation() external view returns (uint256);\\n\\n    function poolInfo()\\n        external\\n        view\\n        returns (\\n            bool,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256\\n        );\\n\\n    function updateWhenBuy(\\n        uint256 _amount,\\n        uint256 _premium,\\n        uint256 _length,\\n        uint256 _timestampLength\\n    ) external;\\n\\n    function stakedLiquidity(uint256 _amount, address _provider)\\n        external\\n        returns (address);\\n\\n    function unstakedLiquidity(\\n        address _lpToken,\\n        uint256 _amount,\\n        address _provider\\n    ) external returns (address);\\n\\n    function coverPrice(uint256 _amount, uint256 _length)\\n        external\\n        view\\n        returns (uint256, uint256);\\n\\n    function maxCapacity() external view returns (uint256);\\n\\n    function coverIndex() external view returns (uint256);\\n\\n    function paused() external view returns (bool);\\n\\n    function basePremiumRatio() external view returns (uint256);\\n\\n}\\n\",\"keccak256\":\"0x75384fa2ca1a32c72b651991ce9571048caab38ec8bf356405da47898c143265\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IPriorityPoolFactory.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IPriorityPoolFactory {\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n    event PoolCreated(\\n        address poolAddress,\\n        uint256 poolId,\\n        string protocolName,\\n        address protocolToken,\\n        uint256 maxCapacity,\\n        uint256 policyPricePerShield\\n    );\\n\\n    struct PoolInfo {\\n        string a;\\n        address b;\\n        address c;\\n        uint256 d;\\n        uint256 e;\\n    }\\n\\n    function deg() external view returns (address);\\n\\n    function deployPool(\\n        string memory _name,\\n        address _protocolToken,\\n        uint256 _maxCapacity,\\n        uint256 _policyPricePerToken\\n    ) external returns (address);\\n\\n    function executor() external view returns (address);\\n\\n    function getPoolAddressList() external view returns (address[] memory);\\n\\n    function getPoolInfo(uint256 _id) external view returns (PoolInfo memory);\\n\\n    function incidentReport() external view returns (address);\\n\\n    function priorityPoolFactory() external view returns (address);\\n\\n    function maxCapacity() external view returns (uint256);\\n\\n    function owner() external view returns (address);\\n\\n    function policyCenter() external view returns (address);\\n\\n    function poolCounter() external view returns (uint256);\\n\\n    function poolInfoById(uint256)\\n        external\\n        view\\n        returns (\\n            string memory protocolName,\\n            address poolAddress,\\n            address protocolToken,\\n            uint256 maxCapacity,\\n            uint256 policyPricePerShield\\n        );\\n\\n    function poolRegistered(address) external view returns (bool);\\n\\n    function protectionPool() external view returns (address);\\n\\n    function setProtectionPool(address _protectionPool) external;\\n\\n    function updateMaxCapacity(bool _isUp, uint256 _maxCapacity) external;\\n\\n    function shield() external view returns (address);\\n\\n    function tokenRegistered(address) external view returns (bool);\\n\\n    function totalMaxCapacity() external view returns (uint256);\\n\\n    function transferOwnership(address newOwner) external;\\n\\n    function veDeg() external view returns (address);\\n\\n    function updateDynamicPool(uint256 _poolId) external;\\n\\n    function dynamicPoolCounter() external view returns (uint256);\\n\\n    function dynamic(address _pool) external view returns (bool);\\n\\n    function pools(uint256 _poolId)\\n        external\\n        view\\n        returns (\\n            string memory name,\\n            address poolAddress,\\n            address protocolToken,\\n            uint256 maxCapacity,\\n            uint256 basePremiumRatio\\n        );\\n\\n    function payoutPool() external view returns (address);\\n\\n    function pausePriorityPool(uint256 _poolId, bool _paused) external;\\n}\\n\",\"keccak256\":\"0x8c988f1fbeea64eede1c093a62bb6523f0f3e35a5d1807fc1909060cad38928f\",\"license\":\"GPL-3.0-or-later\"},\"src/pools/PayoutPool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"../interfaces/ICoverRightTokenFactory.sol\\\";\\nimport \\\"../interfaces/ICoverRightToken.sol\\\";\\nimport \\\"../interfaces/IPriorityPool.sol\\\";\\nimport \\\"../interfaces/IPriorityPoolFactory.sol\\\";\\n\\nimport \\\"./SimpleIERC20.sol\\\";\\n\\n/**\\n * @notice Payout Pool\\n *\\n *         Every time there is a report passed, some assets will be moved to this pool\\n *         It is stored as a Payout struct\\n *         - amount       Total amount of this payout\\n *         - remaining    Remaining amount\\n *         - endTimestamp After this timestamp, no more claims\\n *         - ratio        Max ratio of a user's crToken\\n */\\ncontract PayoutPool {\\n    uint256 public constant SCALE = 1e12;\\n\\n    uint256 public constant CLAIM_PERIOD = 30 days;\\n\\n    address public shield;\\n\\n    address public crFactory;\\n\\n    address public policyCenter;\\n\\n    address public priorityPoolFactory;\\n\\n    struct Payout {\\n        uint256 amount;\\n        uint256 remaining;\\n        uint256 endTiemstamp;\\n        uint256 ratio;\\n        address priorityPool;\\n    }\\n    // Pool id => Generation => Payout\\n    mapping(uint256 => mapping(uint256 => Payout)) public payouts;\\n\\n    event NewPayout(\\n        uint256 _poolId,\\n        uint256 _generation,\\n        uint256 _amount,\\n        uint256 _ratio\\n    );\\n\\n    constructor(\\n        address _shield,\\n        address _policyCenter,\\n        address _crFactory,\\n        address _priorityPoolFactory\\n    ) {\\n        shield = _shield;\\n\\n        policyCenter = _policyCenter;\\n\\n        crFactory = _crFactory;\\n\\n        priorityPoolFactory = _priorityPoolFactory;\\n    }\\n\\n    modifier onlyPriorityPool(uint256 _poolId) {\\n        (, address poolAddress, , , ) = IPriorityPoolFactory(\\n            priorityPoolFactory\\n        ).pools(_poolId);\\n        require(poolAddress == msg.sender, \\\"Wrong priority pool\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @notice Registers new Payout in Payout Pool\\n     * @param _poolId            Pool Id\\n     * @param _generation        Generation of priority pool (1 if no liquidations occurred)\\n     * @param _amount         \\tAmount of tokens to be registered\\n     * @param _ratio         \\tCurrent ratio payout has been registered at\\n     * @param _poolAddress       Address of priority pool\\n     */\\n    function newPayout(\\n        uint256 _poolId,\\n        uint256 _generation,\\n        uint256 _amount,\\n        uint256 _ratio,\\n        address _poolAddress\\n    ) external onlyPriorityPool(_poolId) {\\n        Payout storage payout = payouts[_poolId][_generation];\\n\\n        payout.amount = _amount;\\n        payout.endTiemstamp = block.timestamp + CLAIM_PERIOD;\\n        payout.ratio = _ratio;\\n        payout.priorityPool = _poolAddress;\\n\\n        emit NewPayout(_poolId, _generation, _amount, _ratio);\\n    }\\n\\n    /**\\n     * @notice Claim payout for a user\\n     * @param _user             User address\\n     * @param _crToken         \\tCover right token address\\n     * @param _poolId           Pool Id\\n     * @param _generation       Generation of priority pool (1 if no liquidations occurred)\\n     */\\n    function claim(\\n        address _user,\\n        address _crToken,\\n        uint256 _poolId,\\n        uint256 _generation\\n    ) external returns (uint256 claimed, uint256 newGenerationCRAmount) {\\n        require(msg.sender == policyCenter, \\\"Only policy center\\\");\\n\\n        Payout storage payout = payouts[_poolId][_generation];\\n\\n        uint256 expiry = ICoverRightToken(_crToken).expiry();\\n\\n        bytes32 salt = keccak256(\\n            abi.encodePacked(_poolId, expiry, _generation)\\n        );\\n        require(\\n            ICoverRightTokenFactory(crFactory).saltToAddress(salt) == _crToken,\\n            \\\"Wrong cr token\\\"\\n        );\\n\\n        uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(\\n            _user\\n        );\\n        uint256 claimable = (claimableBalance * payout.ratio) / 10000;\\n\\n        uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();\\n\\n        claimed = (claimable * coverIndex) / SCALE;\\n\\n        ICoverRightToken(_crToken).burn(\\n            _poolId,\\n            _user,\\n            // burns the users' crToken balance, not the payout amount,\\n            // since rest of the payout will be minted as a new generation token\\n            claimableBalance\\n        );\\n\\n        SimpleIERC20(shield).transfer(_user, claimed);\\n\\n        // Amount of new generation cr token to be minted\\n        newGenerationCRAmount = claimableBalance - claimable;\\n    }\\n}\\n\",\"keccak256\":\"0x3fb74fec49afa4555be1a8eceb9b95f305209aa26ef10e4ace3184cd46004811\",\"license\":\"GPL-3.0-or-later\"},\"src/pools/SimpleIERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface SimpleIERC20 {\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(address from, address to, uint256 amount) external returns(bool);\\n}\\n\",\"keccak256\":\"0x93ccdbce4fcd2d86096e6ad8b10a06757d600a70a4eb660281238a4ef1d6be7f\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080346100b957601f61098238819003918201601f19168301916001600160401b038311848410176100be578084926080946040528339810103126100b957610047816100d4565b90610054602082016100d4565b61006c6060610065604085016100d4565b93016100d4565b9060018060a01b03928380928160018060a01b0319971687600054161760005516856002541617600255168360015416176001551690600354161760035560405161089990816100e98239f35b600080fd5b634e487b7160e01b600052604160045260246000fd5b51906001600160a01b03821682036100b95756fe608060408181526004918236101561001657600080fd5b600092833560e01c91826321241dfe146107d15750816326af4832146103ed578163304de873146103845781636f8a6e431461035b57816370d39cff14610333578163c773a2d1146100fa57508063e8adbf2f146100d2578063eced5526146100b35763f4ecd0911461008857600080fd5b346100af57816003193601126100af5760015490516001600160a01b039091168152602090f35b5080fd5b50346100af57816003193601126100af576020905164e8d4a510008152f35b50346100af57816003193601126100af5760025490516001600160a01b039091168152602090f35b8383346100af5760a03660031901126100af5782356064356044356024356084356001600160a01b038181169182900361032e57806003541690888760248c8b5195869384926315895f4760e31b84528301525afa918215610324578992610234575b50339116036101fb578487528760205285872082885260205285872083815562278d001942116101e8574262278d0001600282015560038101859055880180546001600160a01b0319169091179055845193845260208401528284015260608201527fd303ba41003252f101801d7b067a3b4ccab80e936da6462f7ead1a40c1eb941d90608090a151f35b634e487b7160e01b885260118952602488fd5b855162461bcd60e51b81526020818a0152601360248201527215dc9bdb99c81c1c9a5bdc9a5d1e481c1bdbdb606a1b6044820152606490fd5b9091503d808a833e61024681836107ee565b810160a08282031261032057815167ffffffffffffffff9081811161031c57830182601f8201121561031c578051918211610309578a519060209361029485601f19601f87011601846107ee565b83835284848301011161030557918c918c9383905b8382106102ea575094826102cf949282946102d698116102de575b505050508401610826565b9201610826565b50908a61015d565b0101528c8138806102c4565b8181018701518284018801528e95508f9450908601906102a9565b8c80fd5b634e487b7160e01b8c5260418d5260248cfd5b8b80fd5b8980fd5b88513d8b823e3d90fd5b600080fd5b5050346100af57816003193601126100af57905490516001600160a01b039091168152602090f35b5050346100af57816003193601126100af5760035490516001600160a01b039091168152602090f35b919050346103e957806003193601126103e9578060a093833581528360205281812060243582526020522091825492600181015492600282015491600381015493600180891b0391015416938151958652602086015284015260608301526080820152f35b8280fd5b905082346107ce5760803660031901126107ce576001600160a01b0390823582811691908290036107ce5760248035918483168093036107ce57604435956064359486600254163303610797578783526020968288528984208785528852898420968a51906370c264df60e11b8252898286818b5afa918215610662578692610768575b508b51908a8201928c84528d8301526060820152606081526080810167ffffffffffffffff92828210848311176107565781898f8e938380925286519020886001541690631620909560e01b835260848801525afa91821561069f579184918c8b948a9361071b575b50505016036106e8578a516382b2ed1360e01b81528481018490529689888881845afa9788156106625786986106a9575b50848a8d85836127106105248f8f90600301549061083a565b049d015416905192838092631b20a87760e31b82525afa90811561069f578791610670575b5061055a64e8d4a51000918b61083a565b049a813b1561066c57869291606484928f519586938492634f752fb360e11b84528b840152898d8401528d60448401525af1801561066257908a94939291610634575b5050906044859392845416918c51948593849263a9059cbb60e01b8452888401528d8a8401525af1801561062a576105f7575b508484106105e75750505084519384520390820152f35b634e487b7160e01b825260119052fd5b8681813d8311610623575b61060c81836107ee565b810103126103e95751801515036100af57886105d0565b503d610602565b89513d85823e3d90fd5b908092959693945011610650578a52929187919060448c61059d565b634e487b7160e01b8252604185528582fd5b8c513d88823e3d90fd5b8680fd5b90508a81813d8311610698575b61068781836107ee565b8101031261066c575161055a610549565b503d61067d565b8d513d89823e3d90fd5b9b9a99809998508c813d83116106e1575b6106c481836107ee565b810103126106dd579a51999a989997989697968461050b565b8580fd5b503d6106ba565b8a5162461bcd60e51b81528085018a9052600e818801526d2bb937b7339031b9103a37b5b2b760911b6044820152606490fd5b925092509250813d831161074f575b61073481856107ee565b810103126106dd57826107478992610826565b8e8c816104da565b503d61072a565b634e487b7160e01b8852604187528888fd5b9091508981813d8311610790575b61078081836107ee565b810103126106dd5751908c610471565b503d610776565b885162461bcd60e51b81526020818401526012818601527127b7363c903837b634b1bc9031b2b73a32b960711b6044820152606490fd5b80fd5b8490346100af57816003193601126100af578062278d0060209252f35b90601f8019910116810190811067ffffffffffffffff82111761081057604052565b634e487b7160e01b600052604160045260246000fd5b51906001600160a01b038216820361032e57565b806000190482118115151661084d570290565b634e487b7160e01b600052601160045260246000fdfea264697066735822122093fca9586bce87bd0eb10eb06604091111354da6508caa505e0f8f218a60b6e564736f6c634300080f0033",
+  "deployedBytecode": "0x608060408181526004918236101561001657600080fd5b600092833560e01c91826321241dfe146107d15750816326af4832146103ed578163304de873146103845781636f8a6e431461035b57816370d39cff14610333578163c773a2d1146100fa57508063e8adbf2f146100d2578063eced5526146100b35763f4ecd0911461008857600080fd5b346100af57816003193601126100af5760015490516001600160a01b039091168152602090f35b5080fd5b50346100af57816003193601126100af576020905164e8d4a510008152f35b50346100af57816003193601126100af5760025490516001600160a01b039091168152602090f35b8383346100af5760a03660031901126100af5782356064356044356024356084356001600160a01b038181169182900361032e57806003541690888760248c8b5195869384926315895f4760e31b84528301525afa918215610324578992610234575b50339116036101fb578487528760205285872082885260205285872083815562278d001942116101e8574262278d0001600282015560038101859055880180546001600160a01b0319169091179055845193845260208401528284015260608201527fd303ba41003252f101801d7b067a3b4ccab80e936da6462f7ead1a40c1eb941d90608090a151f35b634e487b7160e01b885260118952602488fd5b855162461bcd60e51b81526020818a0152601360248201527215dc9bdb99c81c1c9a5bdc9a5d1e481c1bdbdb606a1b6044820152606490fd5b9091503d808a833e61024681836107ee565b810160a08282031261032057815167ffffffffffffffff9081811161031c57830182601f8201121561031c578051918211610309578a519060209361029485601f19601f87011601846107ee565b83835284848301011161030557918c918c9383905b8382106102ea575094826102cf949282946102d698116102de575b505050508401610826565b9201610826565b50908a61015d565b0101528c8138806102c4565b8181018701518284018801528e95508f9450908601906102a9565b8c80fd5b634e487b7160e01b8c5260418d5260248cfd5b8b80fd5b8980fd5b88513d8b823e3d90fd5b600080fd5b5050346100af57816003193601126100af57905490516001600160a01b039091168152602090f35b5050346100af57816003193601126100af5760035490516001600160a01b039091168152602090f35b919050346103e957806003193601126103e9578060a093833581528360205281812060243582526020522091825492600181015492600282015491600381015493600180891b0391015416938151958652602086015284015260608301526080820152f35b8280fd5b905082346107ce5760803660031901126107ce576001600160a01b0390823582811691908290036107ce5760248035918483168093036107ce57604435956064359486600254163303610797578783526020968288528984208785528852898420968a51906370c264df60e11b8252898286818b5afa918215610662578692610768575b508b51908a8201928c84528d8301526060820152606081526080810167ffffffffffffffff92828210848311176107565781898f8e938380925286519020886001541690631620909560e01b835260848801525afa91821561069f579184918c8b948a9361071b575b50505016036106e8578a516382b2ed1360e01b81528481018490529689888881845afa9788156106625786986106a9575b50848a8d85836127106105248f8f90600301549061083a565b049d015416905192838092631b20a87760e31b82525afa90811561069f578791610670575b5061055a64e8d4a51000918b61083a565b049a813b1561066c57869291606484928f519586938492634f752fb360e11b84528b840152898d8401528d60448401525af1801561066257908a94939291610634575b5050906044859392845416918c51948593849263a9059cbb60e01b8452888401528d8a8401525af1801561062a576105f7575b508484106105e75750505084519384520390820152f35b634e487b7160e01b825260119052fd5b8681813d8311610623575b61060c81836107ee565b810103126103e95751801515036100af57886105d0565b503d610602565b89513d85823e3d90fd5b908092959693945011610650578a52929187919060448c61059d565b634e487b7160e01b8252604185528582fd5b8c513d88823e3d90fd5b8680fd5b90508a81813d8311610698575b61068781836107ee565b8101031261066c575161055a610549565b503d61067d565b8d513d89823e3d90fd5b9b9a99809998508c813d83116106e1575b6106c481836107ee565b810103126106dd579a51999a989997989697968461050b565b8580fd5b503d6106ba565b8a5162461bcd60e51b81528085018a9052600e818801526d2bb937b7339031b9103a37b5b2b760911b6044820152606490fd5b925092509250813d831161074f575b61073481856107ee565b810103126106dd57826107478992610826565b8e8c816104da565b503d61072a565b634e487b7160e01b8852604187528888fd5b9091508981813d8311610790575b61078081836107ee565b810103126106dd5751908c610471565b503d610776565b885162461bcd60e51b81526020818401526012818601527127b7363c903837b634b1bc9031b2b73a32b960711b6044820152606490fd5b80fd5b8490346100af57816003193601126100af578062278d0060209252f35b90601f8019910116810190811067ffffffffffffffff82111761081057604052565b634e487b7160e01b600052604160045260246000fd5b51906001600160a01b038216820361032e57565b806000190482118115151661084d570290565b634e487b7160e01b600052601160045260246000fdfea264697066735822122093fca9586bce87bd0eb10eb06604091111354da6508caa505e0f8f218a60b6e564736f6c634300080f0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "claim(address,address,uint256,uint256)": {
+        "params": {
+          "_crToken": "Cover right token address",
+          "_generation": "Generation of priority pool (1 if no liquidations occurred)",
+          "_poolId": "Pool Id",
+          "_user": "User address"
+        }
+      },
+      "newPayout(uint256,uint256,uint256,uint256,address)": {
+        "params": {
+          "_amount": "Amount of tokens to be registered",
+          "_generation": "Generation of priority pool (1 if no liquidations occurred)",
+          "_poolAddress": "Address of priority pool",
+          "_poolId": "Pool Id",
+          "_ratio": "Current ratio payout has been registered at"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "claim(address,address,uint256,uint256)": {
+        "notice": "Claim payout for a user"
+      },
+      "newPayout(uint256,uint256,uint256,uint256,address)": {
+        "notice": "Registers new Payout in Payout Pool"
+      }
+    },
+    "notice": "Payout Pool         Every time there is a report passed, some assets will be moved to this pool         It is stored as a Payout struct         - amount       Total amount of this payout         - remaining    Remaining amount         - endTimestamp After this timestamp, no more claims         - ratio        Max ratio of a user's crToken",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 16304,
+        "contract": "src/pools/PayoutPool.sol:PayoutPool",
+        "label": "shield",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 16306,
+        "contract": "src/pools/PayoutPool.sol:PayoutPool",
+        "label": "crFactory",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 16308,
+        "contract": "src/pools/PayoutPool.sol:PayoutPool",
+        "label": "policyCenter",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_address"
+      },
+      {
+        "astId": 16310,
+        "contract": "src/pools/PayoutPool.sol:PayoutPool",
+        "label": "priorityPoolFactory",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_address"
+      },
+      {
+        "astId": 16328,
+        "contract": "src/pools/PayoutPool.sol:PayoutPool",
+        "label": "payouts",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Payout)16321_storage))"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_uint256,t_mapping(t_uint256,t_struct(Payout)16321_storage))": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => mapping(uint256 => struct PayoutPool.Payout))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_uint256,t_struct(Payout)16321_storage)"
+      },
+      "t_mapping(t_uint256,t_struct(Payout)16321_storage)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => struct PayoutPool.Payout)",
+        "numberOfBytes": "32",
+        "value": "t_struct(Payout)16321_storage"
+      },
+      "t_struct(Payout)16321_storage": {
+        "encoding": "inplace",
+        "label": "struct PayoutPool.Payout",
+        "members": [
+          {
+            "astId": 16312,
+            "contract": "src/pools/PayoutPool.sol:PayoutPool",
+            "label": "amount",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16314,
+            "contract": "src/pools/PayoutPool.sol:PayoutPool",
+            "label": "remaining",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16316,
+            "contract": "src/pools/PayoutPool.sol:PayoutPool",
+            "label": "endTiemstamp",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16318,
+            "contract": "src/pools/PayoutPool.sol:PayoutPool",
+            "label": "ratio",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 16320,
+            "contract": "src/pools/PayoutPool.sol:PayoutPool",
+            "label": "priorityPool",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_address"
+          }
+        ],
+        "numberOfBytes": "160"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}
