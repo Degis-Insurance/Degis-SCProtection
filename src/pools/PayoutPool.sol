@@ -7,9 +7,7 @@ import "../interfaces/ICoverRightToken.sol";
 import "../interfaces/IPriorityPool.sol";
 import "../interfaces/IPriorityPoolFactory.sol";
 
-
 import "./SimpleIERC20.sol";
-
 
 /**
  * @notice Payout Pool
@@ -88,7 +86,7 @@ contract PayoutPool {
         uint256 _amount,
         uint256 _ratio,
         address _poolAddress
-    ) external onlyPriorityPool {
+    ) external onlyPriorityPool(_poolId) {
         Payout storage payout = payouts[_poolId][_generation];
 
         payout.amount = _amount;
