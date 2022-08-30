@@ -37,7 +37,6 @@ abstract contract ProtectionPoolDependencies is CommonDependencies {
     address public priorityPoolFactory;
     address public policyCenter;
     address public incidentReport;
-    address public premiumRewardPool;
 
     function _setPolicyCenter(address _policyCenter) internal virtual {
         policyCenter = _policyCenter;
@@ -52,12 +51,5 @@ abstract contract ProtectionPoolDependencies is CommonDependencies {
 
     function _setIncidentReport(address _incidentReport) internal virtual {
         incidentReport = _incidentReport;
-    }
-
-    function _setPremiumRewardPool(address _premiumRewardPool)
-        internal
-        virtual
-    {
-        premiumRewardPool = _premiumRewardPool;
     }
 }
