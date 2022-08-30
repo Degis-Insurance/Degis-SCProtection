@@ -304,7 +304,7 @@ contract PolicyCenter is
 
         // Mint PRO-LP tokens and transfer shield
         IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
-        IERC20(shield).transferFrom(msg.sender, protectionPool, _amount);
+        SimpleIERC20(shield).transferFrom(msg.sender, protectionPool, _amount);
 
         emit LiquidityProvided(msg.sender, _amount);
     }

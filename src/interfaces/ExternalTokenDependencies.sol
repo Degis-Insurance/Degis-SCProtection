@@ -5,6 +5,7 @@ pragma solidity ^0.8.13;
 import "./IVeDEG.sol";
 import "./IDegisToken.sol";
 import "./IShield.sol";
+import "./CommonDependencies.sol";
 
 /**
  * @notice External token dependencies
@@ -13,12 +14,10 @@ import "./IShield.sol";
  *         They are set as immutable
  */
 
-abstract contract ExternalTokenDependencies {
-    uint256 public constant SCALE = 1e12;
-
-    IDegisToken public immutable deg;
-    IVeDEG public immutable veDeg;
-    IShield public immutable shield;
+abstract contract ExternalTokenDependencies is CommonDependencies {
+    IDegisToken immutable deg;
+    IVeDEG immutable veDeg;
+    IShield immutable shield;
 
     constructor(
         address _deg,

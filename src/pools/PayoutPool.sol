@@ -8,6 +8,9 @@ import "../interfaces/IPriorityPool.sol";
 import "../interfaces/IPriorityPoolFactory.sol";
 
 
+import "./SimpleIERC20.sol";
+
+
 /**
  * @notice Payout Pool
  *
@@ -140,7 +143,7 @@ contract PayoutPool {
             claimableBalance
         );
 
-        IERC20(shield).transfer(_user, claimed);
+        SimpleIERC20(shield).transfer(_user, claimed);
 
         // Amount of new generation cr token to be minted
         newGenerationCRAmount = claimableBalance - claimable;

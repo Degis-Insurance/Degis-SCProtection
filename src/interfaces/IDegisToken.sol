@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../pools/SimpleIERC20.sol";
 
-interface IDegisToken is IERC20 {
+interface IDegisToken is SimpleIERC20 {
     // Mint degis token
     function mintDegis(address _account, uint256 _amount) external;
 
