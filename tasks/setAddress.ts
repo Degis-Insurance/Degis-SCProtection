@@ -22,7 +22,7 @@ import { parseUnits } from "ethers/lib/utils";
 
 task("setAllAddress", "Set all addresses");
 
-task("setReinsurancePool", "Set contract address in reinsurancePool").setAction(
+task("setProtectionPool", "Set contract address in protectionPool").setAction(
   async (_, hre) => {
     console.log("\nSetting contract addresses in reinsurance pool\n");
 
@@ -34,38 +34,39 @@ task("setReinsurancePool", "Set contract address in reinsurancePool").setAction(
 
     const addressList = readAddressList();
 
-    const insurancePoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
+    // Addresses to be set
+    const priorityPoolFactoryAddress =
+      addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
+  
 
-    const reinsurancePool: ProtectionPool = new ProtectionPool__factory(
+    const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
-    ).attach(addressList[network.name].ReinsurancePool);
+    ).attach(addressList[network.name].ProtectionPool);
 
-    if ((await reinsurancePool.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await reinsurancePool.setPolicyCenter(policyCenterAddress);
+    if ((await protectionPool.policyCenter()) != policyCenterAddress) {
+      const tx_1 = await protectionPool.setPolicyCenter(policyCenterAddress);
       console.log("Tx details: ", await tx_1.wait());
     }
 
     if (
-      (await reinsurancePool.priorityPoolFactory()) !=
-      insurancePoolFactoryAddress
+      (await protectionPool.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx_2 = await reinsurancePool.setPriorityPoolFactory(
-        insurancePoolFactoryAddress
+      const tx_2 = await protectionPool.setPriorityPoolFactory(
+        priorityPoolFactoryAddress
       );
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    if ((await reinsurancePool.incidentReport()) != incidentReportAddress) {
-      const tx_3 = await reinsurancePool.setIncidentReport(
+    if ((await protectionPool.incidentReport()) != incidentReportAddress) {
+      const tx_3 = await protectionPool.setIncidentReport(
         incidentReportAddress
       );
       console.log("Tx details: ", await tx_3.wait());
     }
 
-    console.log("\nFinish setting contract addresses in reinsurance pool\n");
+    console.log("\nFinish setting contract addresses in protection pool\n");
   }
 );
 

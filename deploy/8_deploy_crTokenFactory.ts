@@ -19,11 +19,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
+  const policyCenterAddress = addressList[network.name].PolicyCenter;
+
   // CoverRightTokenFactory contract artifact
   const crTokenFactory = await deploy("CoverRightTokenFactory", {
     contract: "CoverRightTokenFactory",
     from: deployer,
-    args: [],
+    args: [policyCenterAddress],
     log: true,
   });
   addressList[network.name].CoverRightTokenFactory = crTokenFactory.address;

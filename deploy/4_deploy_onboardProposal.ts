@@ -38,8 +38,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].OnboardProposal = onboardProposal.address;
 
-  console.log("\ndeployed to address: ", onboardProposal.address);
-  
+  console.log(
+    "\nOnboardProposal deployed to address: ",
+    onboardProposal.address
+  );
+
   // Store the address list after deployment
   storeAddressList(addressList);
 };
