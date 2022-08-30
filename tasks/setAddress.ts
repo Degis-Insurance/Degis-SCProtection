@@ -379,6 +379,6 @@ task("mintToken").setAction(async (_, hre) => {
     addressList[network.name].MockDEG
   );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("1000"));
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
   console.log("tx details", await tx.wait());
 });

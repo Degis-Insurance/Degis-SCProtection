@@ -26,12 +26,10 @@ task("proposeNewPool", "Proposa a new pool in onboard proposal")
       dev_account
     ).attach(addressList[network.name].OnboardProposal);
 
-    console.log("hello");
-
     const tx = await onboardProposal.propose(
       taskArgs.name,
       taskArgs.token,
-      parseUnits(taskArgs.capacity, 6),
+      taskArgs.capacity,
       taskArgs.premium
     );
 

@@ -25,19 +25,25 @@ export const clearAddressList = function () {
 };
 
 ///
-/// Naughty Price Pool Info Record
+/// Onboard proposal list info
 ///
-export const readNaughtyPoolList = function () {
-  return JSON.parse(fs.readFileSync("info/NPPool.json", "utf-8"));
+export const readProposalList = function () {
+  return JSON.parse(fs.readFileSync("info/proposals.json", "utf-8"));
 };
 
-export const storeNaughtyPoolList = function (NPPoolList: object) {
-  fs.writeFileSync("info/NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
+export const storeProposalList = function (proposalList: object) {
+  fs.writeFileSync(
+    "info/proposals.json",
+    JSON.stringify(proposalList, null, "\t")
+  );
 };
 
-export const clearNaughtyPoolList = function () {
-  const emptyList = {};
-  fs.writeFileSync("info/NPPool.json", JSON.stringify(emptyList, null, "\t"));
+export const readReportList = function () {
+  return JSON.parse(fs.readFileSync("info/reports.json", "utf-8"));
+};
+
+export const storeReportList = function (reportList: object) {
+  fs.writeFileSync("info/reports.json", JSON.stringify(reportList, null, "\t"));
 };
 
 ///
