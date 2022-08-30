@@ -140,9 +140,10 @@ contract PolicyCenter is
         onlyOwner
     {
         // up to 1000bps, left over goes to treasury
-        require(_priority + _protection <= 10000, "Invalid split");
-        require(_priority > 0, "has not given an insurance split");
-        require(_protection > 0, "has not given a protection split");
+        if (_priority == 0 ||
+            _protection == 0 ||
+            _priority + _protection > 10000
+        ) revert PolicyCenter__InvalidPremiumSplit();
         //sets insurance and protection splits
         premiumSplits = [_priority, _protection];
     }
@@ -243,9 +244,10 @@ contract PolicyCenter is
         uint256 _coverDuration,
         uint256 _maxPayment
     ) external poolExists(_poolId) returns (address) {
-        require(_coverAmount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
-        require(_withinLength(_coverDuration), "Wrong cover length");
-        require(_poolId > 0, "Wrong pool id");
+        if (_coverAmount < MIN_COVER_AMOUNT)
+            revert PolicyCenter__CoverAmountTooSmall();
+        if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
+        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
 
         _checkCapacity(_poolId, _coverAmount);
 
@@ -256,7 +258,7 @@ contract PolicyCenter is
             _coverDuration
         );
         // Check if premium cost is within limits given by user
-        require(premium <= _maxPayment, "Premium too high");
+        if (premium > _maxPayment) revert PolicyCenter__PremiumTooHigh();
 
         // Mint cover right tokens to buyer
         // CR token has different months and generations
@@ -461,7 +463,8 @@ contract PolicyCenter is
         address _crToken,
         uint256 _generation
     ) public poolExists(_poolId) {
-        if (_poolId == 0) revert PolicyCenter__WrongPriorityPoolID();
+        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
+        
 
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory

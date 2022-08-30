@@ -33,14 +33,21 @@ contract PolicyCenterTest is
     uint256 internal constant PREMIUMRATIO_2 = 250;
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
-    uint256 internal constant PAYOUT = 1000e6;
+
+    uint256 internal constant ZERO_TIME = 0;
     uint256 internal constant LIQUIDITY = 1000 ether;
 
     uint256 internal constant VOTE_FOR = 1;
     uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
-    uint256 internal constant ZERO_TIME = 0;
+    uint256 internal constant PROPOSAL_VOTE_TIME = 0;
+    uint256 internal constant INCIDENT_VOTE_TIME = PENDING_PERIOD;
+
+    uint256 internal constant PROPOSAL_SETTLE_TIME =
+        PROPOSAL_VOTE_TIME + PROPOSAL_VOTING_PERIOD;
+    uint256 internal constant INCIDENT_SETTLE_TIME =
+        INCIDENT_VOTE_TIME + INCIDENT_VOTING_PERIOD;
 
     IPriorityPool internal joePool;
     IPriorityPool internal ptpPool;
@@ -100,6 +107,9 @@ contract PolicyCenterTest is
         ptpLPAddress = ptpPool.currentLPAddress();
         gmxLPAddress = gmxPool.currentLPAddress();
 
+        // Mint veDEG for voters
+        veDEG.mint(ALICE, 100 ether);
+        veDEG.mint(BOB, 100 ether);
     }
 
     function testProvideLiquidity() public {
@@ -143,6 +153,10 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Not provide liquidity directly to protection pool");
 
+        // Revert and take a new snapshot
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
+
         // # --------------------------------------------------------------------//
         // # Should be able to provide liquidity # //
         // # --------------------------------------------------------------------//
@@ -154,15 +168,15 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Provide liquidity");
 
+
         // # --------------------------------------------------------------------//
         // # Should be able to provide liquidity in different times # //
         // # --------------------------------------------------------------------//
-
-        vm.revertTo(snapshot_1);
+        
 
         shield.mint(CHARLIE, LIQUIDITY);
         vm.prank(CHARLIE);
-        shield.approve(address(policyCenter), LIQUIDITY * 2);
+        shield.increaseAllowance(address(policyCenter), LIQUIDITY);
         vm.warp(365 days);
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
@@ -186,14 +200,80 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Provide liquidity by multiple users");
 
 
+        // Revert and take a new snapshot
+        vm.revertTo(snapshot_2);
+       // mint tokens so Bob can report pool
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        vm.prank(CHARLIE);
+        // report any priority pool
+        incidentReport.report(PTP_ID, PAYOUT);
 
         // # --------------------------------------------------------------------//
-        // # Should not be able to provide liquidity during incident report # //
+        // # Should not be able to provide liquidity during any incident report # //
         // # --------------------------------------------------------------------//
 
+        shield.mint(CHARLIE, LIQUIDITY);
+        vm.prank(CHARLIE);
+        shield.increaseAllowance(address(policyCenter), LIQUIDITY);
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__Paused.selector);
+        policyCenter.provideLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Not provide liquidity while there is an incident report");
+
+
+        // vote and terminate incident report
+        vm.warp(INCIDENT_VOTE_TIME);
+        // Start voting incident report 1 (PTP incident)
+        incidentReport.startVoting(1);
+
+        // Take a new snapshot
+        uint256 snapshot_3 = vm.snapshot();
+
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
         // # --------------------------------------------------------------------//
-        // # Should be able to provide liquidity during report after # //
+        // # Should be able to provide liquidity after a false report # //
         // # --------------------------------------------------------------------//
+
+        shield.mint(CHARLIE, LIQUIDITY);
+        vm.prank(CHARLIE);
+        shield.increaseAllowance(address(policyCenter), LIQUIDITY);
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityProvided(LIQUIDITY, LIQUIDITY, CHARLIE);
+
+        console.log(unicode"✅ Provide liquidity after a false report");
+
+
+        // Revert to snapshot
+        vm.revertTo(snapshot_3);
+        
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to provide liquidity after a truthful report # //
+        // # --------------------------------------------------------------------//
+
+        shield.mint(CHARLIE, LIQUIDITY);
+        vm.prank(CHARLIE);
+        shield.increaseAllowance(address(policyCenter), LIQUIDITY);
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityProvided(LIQUIDITY, LIQUIDITY, CHARLIE);
+
+        console.log(unicode"✅ Provide liquidity after a truthful report");
+
     }
 
     function _provideLiquidity(address _user) private {
@@ -203,6 +283,172 @@ contract PolicyCenterTest is
         shield.approve(address(policyCenter), LIQUIDITY);
         vm.prank(_user);
         policyCenter.provideLiquidity(LIQUIDITY);
+    }
+
+    function testRemoveLiquidity() public {
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove liquidity without providing liquidity # //
+        // # --------------------------------------------------------------------//
+        
+        vm.prank(CHARLIE);
+        vm.expectRevert(ProtectionPool__ExceededTotalSupply.selector);
+        policyCenter.removeLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Not remove liquidity without providing liquidity");
+        
+
+        // Charlie provides liquidity
+        _provideLiquidity(CHARLIE);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove other user's liquidity # //
+        // # --------------------------------------------------------------------//
+
+        // Alice attempts to remove liquidity provided by Charlie 
+        vm.prank(ALICE);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
+        policyCenter.removeLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Not remove other user's liquidity");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove more then liquidity provided without supply # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(ProtectionPool__ExceededTotalSupply.selector);
+        policyCenter.removeLiquidity(LIQUIDITY + 1);
+
+        console.log(unicode"✅ Not remove more then liquidity provided");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityRemoved(LIQUIDITY, LIQUIDITY, CHARLIE);
+        policyCenter.removeLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Remove liquidity");
+
+
+        // Provide liquidity by Charlie again
+        _provideLiquidity(CHARLIE);
+        // Provide extra liquidity by Alice
+        _provideLiquidity(ALICE);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove more liquidity then provided with supply # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: burn amount exceeds balance");
+        policyCenter.removeLiquidity(LIQUIDITY * 2);
+
+        console.log(unicode"✅ Remove liquidity");
+
+        // Provide liquidity by Charlie again
+        _provideLiquidity(CHARLIE);
+
+        uint256 snapshot_1 = vm.snapshot();
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity after considrable time # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(365 days);
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityRemoved(LIQUIDITY, LIQUIDITY, CHARLIE);
+        policyCenter.removeLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Remove liquidity after a year");
+
+
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
+
+        // Provide liquidity twice by Charlie
+        _provideLiquidity(CHARLIE);
+        _provideLiquidity(CHARLIE);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity provided in multiple instances # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityRemoved(LIQUIDITY * 2, LIQUIDITY * 2, CHARLIE);
+        policyCenter.removeLiquidity(LIQUIDITY * 2);
+
+        console.log(unicode"✅ Remove liquidity after a year");
+
+        vm.revertTo(snapshot_2);
+
+        // report any priority pool
+        incidentReport.report(PTP_ID, PAYOUT);
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to remove liquidity during any incident report # //
+        // # --------------------------------------------------------------------//
+
+        _provideLiquidity(CHARLIE);
+        vm.prank(CHARLIE);
+        vm.expectRevert("Paused");
+        policyCenter.removeLiquidity(LIQUIDITY * 2);
+
+
+        console.log(unicode"✅ Not remove liquidity during any incident report");
+
+
+        // vote and terminate incident report
+        vm.warp(INCIDENT_VOTE_TIME);
+        // Start voting incident report 1 (PTP incident)
+        incidentReport.startVoting(2);
+
+        // Take a new snapshot
+        uint256 snapshot_3 = vm.snapshot();
+
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(2, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(2);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity after a false report # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityRemoved(LIQUIDITY, LIQUIDITY, CHARLIE);
+        policyCenter.removeLiquidity(LIQUIDITY);
+
+        console.log(unicode"✅ Remove liquidity after a false report");
+
+
+        // Revert to snapshot
+        vm.revertTo(snapshot_3);
+        
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(2);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to remove liquidity after a truthful report # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityProvided(LIQUIDITY, LIQUIDITY, CHARLIE);
+
+        console.log(unicode"✅ Remove liquidity after a truthful report");
     }
 
     
@@ -318,17 +564,63 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Stake provided liquidity");
 
-        // # --------------------------------------------------------------------//
-        // # Should not be able to stake liquidity during incident report # //
-        // # --------------------------------------------------------------------//
+         // Revert and take a new snapshot
+        vm.revertTo(snapshot_3);
+        uint256 snapshot_4 = vm.snapshot();
+       // mint tokens so Bob can report pool
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        vm.prank(CHARLIE);
+        // report unrelated priority pool
+        incidentReport.report(JOE_ID, PAYOUT);
 
         // # --------------------------------------------------------------------//
-        // # Should not be able to stake after incident to old LPAddress # //
+        // # Should be able to stake to not reported  Pool during an incident # //
         // # --------------------------------------------------------------------//
 
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
+
+        console.log(unicode"✅ Stake to not reported Priority Pool during a report");
+
+
+        vm.revertTo(snapshot_4);
+        // mint tokens so Bob can report pool
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        vm.prank(CHARLIE);
+        // report unrelated priority pool
+        incidentReport.report(JOE_ID, PAYOUT);
+
         // # --------------------------------------------------------------------//
-        // # Should be able to stake after incident to new LPAddress # //
+        // # Should not be able to stake during incident report # //
         // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("Paused");
+        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
+
+        console.log(unicode"✅ Not stake to reported Priority Pool");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to stake after incident settles # //
+        // # --------------------------------------------------------------------//
+
+        // Vote and settle
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
+
+        console.log(unicode"✅ Stake to not reported Priority Pool during a report");
         
     }
 
@@ -397,6 +689,9 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Unstake less then staked amount");
 
+
+        uint256 snapshot_1 = vm.snapshot();
+
         // # --------------------------------------------------------------------//
         // # Should be able to unstake staked amount # //
         // # --------------------------------------------------------------------//
@@ -408,177 +703,330 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Unstake staked amount");
 
+       // mint tokens so Bob can report pool
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        vm.prank(CHARLIE);
+        // report unrelated priority pool
+        incidentReport.report(JOE_ID, PAYOUT);
+
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
+    
         // # --------------------------------------------------------------------//
         // # Should not be able to unstake liquidity during incident report # //
         // # --------------------------------------------------------------------//
 
+        vm.prank(CHARLIE);
+        vm.expectRevert("Paused");
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(unicode"✅ Not unstake liquidity during incident report");
+
         // # --------------------------------------------------------------------//
-        // # Should be able to unstake after incident # //
+        // # Should be able to unstake liquidity to unrelated incident report # //
         // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        vm.revertTo(snapshot_2);
+        uint256 snapshot_3 = vm.snapshot();
+
+        console.log(unicode"✅ Unstake liquidity during unrelated incident report");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake after truthful incident report # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(INCIDENT_VOTING_TIME);
+        // Vote and settle
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(unicode"✅ Unstake liquidity after truthful incident report");
+
+
+        vm.revertTo(snapshot_3);
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake after false incident report # //
+        // # --------------------------------------------------------------------//
+
+        vm.warp(INCIDENT_VOTING_TIME);
+        // Vote and settle
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY, CHARLIE);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(unicode"✅ Unstake liquidity after false incident report");
+
     }
 
     function testBuyCover() public {
+
+        // get Cover Price for a given amount of tokens
+        (uint256 price, uint256 coverLength) = joePool.coverPrice(COVER_AMOUNT, 3);
+
+        uint256 maxPayment = price * 1.1;
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy cover without native tokens # //
         // # --------------------------------------------------------------------//
 
         // buy with shield
+        shield.mint(CHARLIE, COVER_AMOUNT);
+
+        vm.prank(CHARLIE);
+        shield.approve(address(policyCenter), COVER_AMOUNT);
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT);
+
 
         // buy with other pool's native tokens
+        gmx.mint(BOB, COVER_AMOUNT);
 
+        vm.prank(CHARLIE);
+        gmx.approve(address(policyCenter), COVER_AMOUNT);
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3);
+
+        joe.mint(CHARLIE, COVER_AMOUNT);
         // # --------------------------------------------------------------------//
         // # Should not be able to buy 0 cover # //
         // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__ZeroAmount.selector);
+        policyCenter.buyCover(JOE_ID, 0, 3, maxPayment);
+
+        console.log(unicode"✅ Not buy 0 cover");
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy without enough tokens # //
         // # --------------------------------------------------------------------//
 
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__NotEnoughTokens.selector);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT + 1, 3, maxPayment);
+
+        console.log(unicode"✅ Not buy without enough tokens");
+
         // # --------------------------------------------------------------------//
         // # Should not be able to buy bad length covers # //
         // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__BadLength.selector);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 4, maxPayment);
+
+        console.log(unicode"✅ Not buy bad length covers");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy with low max payment # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__CoverAmountTooSmall.selector);
+        policyCenter.buyCover(JOE_ID, MIN_COVER_AMOUNT - 1, 3, maxPayment);
+
+        console.log(unicode"✅ Not buy low max payment");
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy with low max payment # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__PremiumTooHigh.selector);
+        policyCenter.buyCover(JOE_ID, 1, 3, maxPayment / 2);
+
+        console.log(unicode"✅ Not buy low max payment");
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to buy cover # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit BuyCover(COVER_AMOUNT, CHARLIE);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+
+        console.log(unicode"✅ Buy cover");
+
+
+        deg.mintDegis(ALICE, REPORT_THRESHOLD);
+        vm.prank(ALICE);
+        incidentReport.report(JOE_ID, PAYOUT);
+
+        uint256 snapshot_1 = vm.snapshot();
+
+        // # --------------------------------------------------------------------//
+        // # Should not be able to buy during incident report # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert("Paused");
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+
+        console.log(unicode"✅ Not buy cover during incident report");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to buy after truthful incident report # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+
+        deg.mintDegis(ALICE, REPORT_THRESHOLD);
+        vm.prank(ALICE);
+        incidentReport.report(JOE_ID, PAYOUT);
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__BadLength.selector);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+
+        console.log(unicode"✅ Buy cover after truthful incident report");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to buy after false incident report # //
+        // # --------------------------------------------------------------------//
+
+        vm.revertTo(snapshot_1);
+
+        deg.mintDegis(ALICE, REPORT_THRESHOLD);
+        vm.prank(ALICE);
+        incidentReport.report(JOE_ID, PAYOUT);
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__BadLength.selector);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+
+        console.log(unicode"✅ Buy cover after false incident report");
+
 
         
     }
 
     function testClaimPayout() public {
 
+        incidentReport.report(1, PAYOUT);
+        vm.warp(INCIDENT_VOTE_TIME);
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(current_timestamp + INCIDENT_SETTLE_TIME);
+        incidentReport.settle(2);
+
         // # --------------------------------------------------------------------//
         // # Should not be to claim payout prior to liquidation # //
         // # --------------------------------------------------------------------//
 
+        vm.prank(CHARLIE);
+        vm.expectRevert(PayoutPool__NoPayout.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+
+        console.log(unicode"✅ Not claim payout prior to liquidation");
+
         // # --------------------------------------------------------------------//
-        // # Should not be to claim wrong cover right address # //
+        // # Should not be to claim with wrong cover right address # //
         // # --------------------------------------------------------------------//
+
+        vm.prank(CHARLIE);
+        vm.expectRevert(PayoutPool__WrongCRToken.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+
+        console.log(unicode"✅ Not claim with wrong address");
 
         // # --------------------------------------------------------------------//
         // # Should not be to claim wrong pool id # //
         // # --------------------------------------------------------------------//
 
+        vm.prank(CHARLIE);
+        vm.expectRevert(PolicyCenter__NonExistentPool.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+
+        console.log(unicode"✅ Not claim with wrong pool id");
+
         // # --------------------------------------------------------------------//
         // # Should not be to claim wrong generation # //
         // # --------------------------------------------------------------------//
 
-        // # --------------------------------------------------------------------//
-        // # Should be to claim payout # //
-        // # --------------------------------------------------------------------//
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to claim payout from previous generation # //
-        // # --------------------------------------------------------------------//
-    }
-
-    function testRemoveLiquidity() public {
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to remove liquidity without providing liquidity # //
-        // # --------------------------------------------------------------------//
-        
         vm.prank(CHARLIE);
-        vm.expectRevert(ProtectionPool__ExceededTotalSupply.selector);
-        policyCenter.removeLiquidity(LIQUIDITY);
+        vm.expectRevert(PolicyCenter__NonExistentPool.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
 
-        console.log(unicode"✅ Not remove liquidity without providing liquidity");
-        
-
-        // Charlie provides liquidity
-        _provideLiquidity(CHARLIE);
+        console.log(unicode"✅ Not claim with non existent generation");
 
         // # --------------------------------------------------------------------//
-        // # Should not be able to remove other user's liquidity # //
+        // # Should be able to claim payout # //
         // # --------------------------------------------------------------------//
-
-        // Alice attempts to remove liquidity provided by Charlie 
-        vm.prank(ALICE);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
-        policyCenter.removeLiquidity(LIQUIDITY);
-
-        console.log(unicode"✅ Not remove other user's liquidity");
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to remove more then liquidity provided without supply # //
-        // # --------------------------------------------------------------------//
-
-        vm.prank(CHARLIE);
-        vm.expectRevert(ProtectionPool__ExceededTotalSupply.selector);
-        policyCenter.removeLiquidity(LIQUIDITY + 1);
-
-        console.log(unicode"✅ Not remove more then liquidity provided");
-
-        // # --------------------------------------------------------------------//
-        // # Should be able to remove liquidity # //
-        // # --------------------------------------------------------------------//
-
-        vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
-        emit LiquidityRemoved(LIQUIDITY, LIQUIDITY, CHARLIE);
-        policyCenter.removeLiquidity(LIQUIDITY);
-
-        console.log(unicode"✅ Remove liquidity");
-
-
-        // Provide liquidity by Charlie again
-        _provideLiquidity(CHARLIE);
-        // Provide extra liquidity by Alice
-        _provideLiquidity(ALICE);
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to remove more liquidity then provided with supply # //
-        // # --------------------------------------------------------------------//
-
-        vm.prank(CHARLIE);
-        vm.expectRevert("ERC20: burn amount exceeds balance");
-        policyCenter.removeLiquidity(LIQUIDITY * 2);
-
-        console.log(unicode"✅ Remove liquidity");
-
-        // Provide liquidity by Charlie again
-        _provideLiquidity(CHARLIE);
 
         uint256 snapshot_1 = vm.snapshot();
 
-        // # --------------------------------------------------------------------//
-        // # Should be able to remove liquidity after considrable time # //
-        // # --------------------------------------------------------------------//
-
-        vm.warp(365 days);
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit LiquidityRemoved(LIQUIDITY, LIQUIDITY, CHARLIE);
-        policyCenter.removeLiquidity(LIQUIDITY);
+        emit PayoutClaimed(CHARLIE);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
 
-        console.log(unicode"✅ Remove liquidity after a year");
+        console.log(unicode"✅ Claim from current generation");
 
 
+        // # --------------------------------------------------------------------//
+        // # Should be able to claim payout from previous generation # //
+        // # --------------------------------------------------------------------//
+
+        // Revert to snapshot
         vm.revertTo(snapshot_1);
 
-        // Provide liquidity twice by Charlie
-        _provideLiquidity(CHARLIE);
-        _provideLiquidity(CHARLIE);
+        uint256 current_timestamp = now;
 
-        // # --------------------------------------------------------------------//
-        // # Should be able to remove liquidity provided in multiple instances # //
-        // # --------------------------------------------------------------------//
+        veDEG.mint(ALICE, 100 ether);
+        veDEG.mint(BOB, 100 ether);
+
+        // Report Joe Pool once again
+        incidentReport.report(1, PAYOUT);
+        vm.warp(INCIDENT_VOTE_TIME);
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(ALICE);
+        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(current_timestamp + INCIDENT_SETTLE_TIME);
+        incidentReport.settle(2);
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit LiquidityRemoved(LIQUIDITY * 2, LIQUIDITY * 2, CHARLIE);
-        policyCenter.removeLiquidity(LIQUIDITY * 2);
+        emit PayoutClaimed(CHARLIE);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
 
-        console.log(unicode"✅ Remove liquidity after a year");
+        console.log(unicode"✅ Claim Payout from previous generation");
 
-        // # --------------------------------------------------------------------//
-        // # Should not be able to remove liquidity during liquidation # //
-        // # --------------------------------------------------------------------//
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to remove liquidity after complete liquidation # //
-        // # --------------------------------------------------------------------//
-
-        // # --------------------------------------------------------------------//
-        // # Should be able to remove liquidity after partial liquidation # //
-        // # --------------------------------------------------------------------//
     }
 
 }
