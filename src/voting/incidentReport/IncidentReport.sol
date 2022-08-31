@@ -405,6 +405,8 @@ contract IncidentReport is
         // @note This is a inline bookmark
         poolReports[_poolId].push(currentId);
 
+        _pausePools(_poolId);
+
         emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);
     }
 

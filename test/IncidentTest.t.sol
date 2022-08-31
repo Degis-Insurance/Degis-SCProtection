@@ -169,7 +169,7 @@ contract IncidentTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Only owner");
         incidentReport.closeReport(1);
 
         console.log(unicode"✅ Not close a report by non-owner");
