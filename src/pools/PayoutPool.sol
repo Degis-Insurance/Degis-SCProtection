@@ -49,6 +49,7 @@ contract PayoutPool {
         uint256 _ratio
     );
 
+    error PayoutPool__OnlyPriorityPool();
     error PayoutPool__NotPolicyCenter();
     error PayoutPool__WrongCRToken();
     error PayoutPool__NoPayout();
@@ -72,7 +73,8 @@ contract PayoutPool {
         (, address poolAddress, , , ) = IPriorityPoolFactory(
             priorityPoolFactory
         ).pools(_poolId);
-        require(poolAddress == msg.sender, "Wrong priority pool");
+        if (poolAddress != msg.sender)
+            revert PayoutPool__OnlyPriorityPool();
         _;
     }
 

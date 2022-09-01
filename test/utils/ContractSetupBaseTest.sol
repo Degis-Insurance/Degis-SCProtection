@@ -57,6 +57,7 @@ contract ContractSetupBaseTest is BaseTest {
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
+
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
 
@@ -194,7 +195,5 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
-
-        // 
     }
 }

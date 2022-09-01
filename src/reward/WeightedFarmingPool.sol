@@ -72,6 +72,15 @@ contract WeightedFarmingPool  {
         uint256 reward
     );
 
+    error WeightedFarmingPool__AlreadySupported();
+    error WeightedFarmingPool__WrongWeightLength();
+    error WeightedFarmingPool__WrongDateLength();
+    error WeightedFarmingPool__ZeroAmount();
+    error WeightedFarmingPool__InexistentPool();
+    error WeightedFarmingPool__OnlyPolicyCenter();
+    error WeightedFarmingPool__NoPendingRewards();
+    error WeightedFarmingPool__NotInPool();
+
     constructor(
         address _premiumRewardPool
     )  {
@@ -126,7 +135,8 @@ contract WeightedFarmingPool  {
         uint256 _weight
     ) public {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
-        require(!supported[key], "Already supported");
+        if(supported[key])
+            revert WeightedFarmingPool__AlreadySupported();
 
         supported[key] = true;
         pools[_id].tokens.push(_token);
@@ -163,7 +173,8 @@ contract WeightedFarmingPool  {
 
         uint256 weightLength = _weights.length;
 
-        require(weightLength == pool.weight.length, "Wrong weight length");
+        if (weightLength != pool.weight.length)
+            revert WeightedFarmingPool__WrongWeightLength();
 
         for (uint256 i; i < weightLength; ) {
             pool.weight[i] = _weights[i];
@@ -182,7 +193,9 @@ contract WeightedFarmingPool  {
         uint256[] memory _years,
         uint256[] memory _months
     ) external {
-        require(_years.length == _months.length, "Wrong length");
+        if (_years.length != _months.length)
+            revert WeightedFarmingPool__WrongDateLength();
+
         uint256 length = _years.length;
         for (uint256 i; i < length; ) {
             speed[_id][_years[i]][_months[i]] += _newSpeed;
@@ -203,10 +216,8 @@ contract WeightedFarmingPool  {
         uint256 _amount,
         address _user
     ) external {
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can call stakedLiquidity"
-        );
+        if(msg.sender != policyCenter)
+            revert WeightedFarmingPool__OnlyPolicyCenter();
 
         _deposit(_id, _token, _amount, _user);
     }
@@ -231,10 +242,8 @@ contract WeightedFarmingPool  {
         uint256 _amount,
         address _user
     ) external {
-        require(
-            msg.sender == policyCenter,
-            "Only policyCenter can call stakedLiquidity"
-        );
+        if(msg.sender != policyCenter)
+            revert WeightedFarmingPool__OnlyPolicyCenter();
 
         _withdraw(_id, _token, _amount, _user);
     }
@@ -261,8 +270,10 @@ contract WeightedFarmingPool  {
         uint256 _amount,
         address _user
     ) internal {
-        require(_amount > 0, "Zero amount");
-        require(_id <= counter, "Pool not exists");
+        if (_amount == 0)
+            revert WeightedFarmingPool__ZeroAmount();
+        if (_id > counter)
+            revert WeightedFarmingPool__InexistentPool();
 
         updatePool(_id);
 
@@ -302,9 +313,10 @@ contract WeightedFarmingPool  {
         uint256 _amount,
         address _user
     ) internal {
-        require(_amount > 0, "Zero amount");
-        require(_id <= counter, "Pool not exists");
-
+        if (_amount == 0)
+            revert WeightedFarmingPool__ZeroAmount();
+        if (_id > counter)
+            revert WeightedFarmingPool__InexistentPool();
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
@@ -364,7 +376,8 @@ contract WeightedFarmingPool  {
             SCALE -
             user.rewardDebt;
 
-        require(pending > 0, "No pending reward");
+        if (pending <= 0)
+            revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
@@ -527,6 +540,6 @@ contract WeightedFarmingPool  {
             }
         }
 
-        revert("Not in the pool");
+        revert WeightedFarmingPool__NotInPool();
     }
 }

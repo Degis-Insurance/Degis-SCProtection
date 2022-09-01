@@ -32,6 +32,9 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "forge-std/console.sol";
+
+
 /**
  * @title Policy Center
  *
@@ -205,7 +208,8 @@ contract PolicyCenter is
         address _token,
         uint256 _poolId
     ) external {
-        require(msg.sender == priorityPoolFactory, "Only factory can store");
+        if (msg.sender != priorityPoolFactory)
+            revert PolicyCenter__OnlyPriorityPoolFactory();
 
         tokenByPoolId[_poolId] = _token;
         priorityPools[_poolId] = _pool;
@@ -266,6 +270,7 @@ contract PolicyCenter is
         ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
         // Split the premium income and update the pool status
+        console.log("Premium: ", premium);
         (
             uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool,
@@ -517,14 +522,21 @@ contract PolicyCenter is
         // Swap for USDC and return the received amount
         received = IExchange(exchange).swapExactTokensForTokens(
             _amount,
-            ((_amount * (10000 - SLIPPAGE)) / 1000),
+            ((_amount * (10000 - SLIPPAGE)) / 10000),
             path,
             address(this),
             block.timestamp + 1
         );
 
+
+        // approve shield to use usdc
+        IERC20(USDC).approve(exchange, received);
+
         // Deposit USDC and get back shield
         shield.deposit(1, USDC, received, received);
+
+        // remove approval after making the deposit
+        IERC20(USDC).approve(exchange, 0);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }
@@ -661,10 +673,10 @@ contract PolicyCenter is
         // Price in 18 decimals
         uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
 
-        premiumInNativeToken = (_premium * 1e12) / price;
+        premiumInNativeToken = _premium * 1e18 / price;
 
         // Pay native tokens
-        IERC20(_token).safeTransferFrom(
+        IERC20(_token).transferFrom(
             msg.sender,
             address(this),
             premiumInNativeToken
