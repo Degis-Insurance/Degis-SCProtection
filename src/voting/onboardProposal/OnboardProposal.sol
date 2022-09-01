@@ -117,7 +117,7 @@ contract OnboardProposal is
         allProposals = new Proposal[](totalProposal);
 
         for (uint256 i; i < totalProposal; ) {
-            allProposals[i] = proposals[i];
+            allProposals[i] = proposals[i+1];
 
             unchecked {
                 ++i;

@@ -88,6 +88,8 @@ contract PolicyCenter is
         // Initialize premium split standard in bps
         // 45% to protectionPool, 50% to insurancePool, 5% to treasury
         premiumSplits = [4500, 5000];
+
+        IERC20(USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -220,6 +222,7 @@ contract PolicyCenter is
     function approvePoolToken(address _token) external onlyOwner {
         _approvePoolToken(_token);
     }
+
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
