@@ -5,6 +5,7 @@ import "@nomiclabs/hardhat-waffle";
 import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
+import "@nomiclabs/hardhat-etherscan";
 import { HardhatUserConfig, task } from "hardhat/config";
 
 import example from "./tasks/example";
@@ -14,6 +15,7 @@ dotenv.config();
 
 import "./tasks/setAddress";
 import "./tasks/voting/onboard";
+import "./tasks/executor/executor";
 
 function getRemappings() {
   return fs
@@ -63,6 +65,11 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
+    },
+  },
+  etherscan: {
+    apiKey: {
+      avalancheFujiTestnet: "CHSGYSXFKHQC7UX7MRAYW43Q238741N2N4",
     },
   },
   paths: {

@@ -327,8 +327,10 @@ task("setExecutor", "Set contract address in executor").setAction(
       console.log("Tx details: ", await tx_3.wait());
     }
 
+    console.log("proposal", await executor.onboardProposal());
+
     if ((await executor.treasury()) != treasuryAddress) {
-      const tx_4 = await executor.setOnboardProposal(treasuryAddress);
+      const tx_4 = await executor.setTreasury(treasuryAddress);
       console.log("Tx details: ", await tx_4.wait());
     }
 

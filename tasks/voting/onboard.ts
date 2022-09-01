@@ -3,6 +3,8 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 import {
+  MockVeDEG,
+  MockVeDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
 } from "../../typechain-types";
@@ -74,6 +76,25 @@ task("settle", "Settle a voting")
     const tx = await onboardProposal.settle(taskArgs.id);
     console.log("Tx details:", await tx.wait());
 
-    // const p = await onboardProposal.proposals(2);
-    // console.log(p.result);
+    const p = await onboardProposal.proposals(1);
+    console.log(p.result);
+  });
+
+task("getProposal", "Get proposal info")
+  .addParam("id", "proposal id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const onboardProposal: OnboardProposal = new OnboardProposal__factory(
+      dev_account
+    ).attach(addressList[network.name].OnboardProposal);
+
+    const proposal = await onboardProposal.proposals(taskArgs.id);
+    console.log(proposal);
   });
