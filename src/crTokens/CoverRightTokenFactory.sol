@@ -19,6 +19,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     mapping(bytes32 => uint256) public generation;
 
     address public policyCenter;
+    address public incidentReport;
 
     event NewCRTokenDeployed(
         uint256 poolId,
@@ -28,8 +29,9 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
-    constructor(address _policyCenter) OwnableWithoutContext(msg.sender) {
+    constructor(address _policyCenter, address _incidentReport) OwnableWithoutContext(msg.sender) {
         policyCenter = _policyCenter;
+        incidentReport = _incidentReport;
     }
 
     function setPolicyCenter(address _policyCenter) public onlyOwner {
@@ -67,7 +69,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
             _tokenName,
             _expiry,
             _generation,
-            policyCenter
+            policyCenter,
+            incidentReport
         );
 
         newCRToken = _deploy(bytecode, salt);
@@ -97,13 +100,14 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         string memory _tokenName,
         uint256 _expiry,
         uint256 _generation,
-        address _policyCenter
+        address _policyCenter,
+        address _incidentReport
     ) internal pure returns (bytes memory code) {
         bytes memory bytecode = type(CoverRightToken).creationCode;
 
         code = abi.encodePacked(
             bytecode,
-            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation, _policyCenter)
+            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation, _policyCenter, _incidentReport)
         );
     }
 

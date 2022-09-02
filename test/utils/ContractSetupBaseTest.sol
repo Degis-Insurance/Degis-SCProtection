@@ -7,9 +7,9 @@ import "./BaseTest.sol";
 import "src/core/PolicyCenter.sol";
 import "src/core/Executor.sol";
 
-import { PriorityPoolFactory } from "src/pools/priorityPool/PriorityPoolFactory.sol";
-import { ProtectionPool } from "src/pools/protectionPool/ProtectionPool.sol";
-import { PriorityPool } from "src/pools/priorityPool/PriorityPool.sol";
+import {PriorityPoolFactory} from "src/pools/priorityPool/PriorityPoolFactory.sol";
+import {ProtectionPool} from "src/pools/protectionPool/ProtectionPool.sol";
+import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
@@ -67,9 +67,6 @@ contract ContractSetupBaseTest is BaseTest {
         _setupPolicyCenter();
         _setupExecutor();
 
-        _setupCRFactory();
-
-        _setupPayoutPool();
         _setupPremiumRewardPool();
         _setupTreasury();
 
@@ -77,6 +74,9 @@ contract ContractSetupBaseTest is BaseTest {
 
         _setupIncidentReport();
         _setupOnboardProposal();
+
+        _setupCRFactory();
+        _setupPayoutPool();
 
         _setAddresses();
     }
@@ -112,7 +112,10 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupCRFactory() internal {
-        crFactory = new CoverRightTokenFactory(address(policyCenter));
+        crFactory = new CoverRightTokenFactory(
+            address(policyCenter),
+            address(incidentReport)
+        );
     }
 
     function _setupPayoutPool() internal {
@@ -121,7 +124,6 @@ contract ContractSetupBaseTest is BaseTest {
             address(policyCenter),
             address(crFactory),
             address(priorityPoolFactory)
-
         );
     }
 
@@ -134,7 +136,7 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor));
+        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
     }
 
     function _setupFarmingPool() internal {

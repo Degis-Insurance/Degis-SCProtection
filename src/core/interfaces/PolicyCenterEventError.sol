@@ -74,4 +74,5 @@ interface PolicyCenterEventError {
     error PolicyCenter__PremiumTooHigh();
     error PolicyCenter__InvalidPremiumSplit();
     error PolicyCenter__PoolPaused();
+    error PolicyCenter__OnlyTreasury();
 }

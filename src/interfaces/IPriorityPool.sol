@@ -21,6 +21,8 @@ interface IPriorityPool {
 
     function generation() external view returns (uint256);
 
+    function crTokenAddress(uint256 generation) external view returns (address);
+
     function poolInfo()
         external
         view

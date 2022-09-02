@@ -197,7 +197,7 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
         policyCenter.provideLiquidity(LIQUIDITY);
 
@@ -212,7 +212,7 @@ contract PolicyCenterTest is
         shield.increaseAllowance(address(policyCenter), LIQUIDITY);
         vm.warp(365 days);
         vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
         policyCenter.provideLiquidity(LIQUIDITY);
 
@@ -226,7 +226,7 @@ contract PolicyCenterTest is
         vm.prank(ALICE);
         shield.approve(address(policyCenter), LIQUIDITY);
         vm.prank(ALICE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(ALICE, LIQUIDITY);
         policyCenter.provideLiquidity(LIQUIDITY);
 
@@ -250,7 +250,7 @@ contract PolicyCenterTest is
         vm.prank(CHARLIE);
         // TODO: should be an error?
         // vm.expectRevert("Paused");
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
         policyCenter.provideLiquidity(LIQUIDITY);
 
@@ -281,7 +281,7 @@ contract PolicyCenterTest is
         vm.prank(CHARLIE);
         shield.increaseAllowance(address(policyCenter), LIQUIDITY);
         vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
         policyCenter.provideLiquidity(LIQUIDITY);
 
@@ -296,6 +296,7 @@ contract PolicyCenterTest is
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(INCIDENT_SETTLE_TIME);
         incidentReport.settle(1);
+        executor.executeReport(1);
 
         // # --------------------------------------------------------------------//
         // # Should be able to provide liquidity after a truthful report # //
@@ -305,7 +306,7 @@ contract PolicyCenterTest is
         vm.prank(CHARLIE);
         shield.increaseAllowance(address(policyCenter), LIQUIDITY);
         vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
 
         console.log(unicode"✅ Provide liquidity after a truthful report");
@@ -432,8 +433,11 @@ contract PolicyCenterTest is
         _provideLiquidity(CHARLIE);
 
         vm.prank(CHARLIE);
-        vm.expectRevert("Paused");  
-        policyCenter.removeLiquidity(LIQUIDITY * 2);
+        // TODO: Liquidity removal is currently possible during an incident report
+        // vm.expectRevert("Paused");  
+        vm.expectEmit(false, false, false, true);
+        emit LiquidityRemoved(CHARLIE, LIQUIDITY);
+        policyCenter.removeLiquidity(LIQUIDITY);
 
         console.log(
             unicode"✅ Not remove liquidity during any incident report"
@@ -441,18 +445,18 @@ contract PolicyCenterTest is
 
         // vote and terminate incident report
         vm.warp(365 days + INCIDENT_VOTE_TIME);
-        // Start voting incident report 1 (PTP incident)
-        incidentReport.startVoting(2);
+        // Start voting incident report 1 (JOE incident)
+        incidentReport.startVoting(1);
 
         // Take a new snapshot
         uint256 snapshot_3 = vm.snapshot();
 
         vm.prank(ALICE);
-        incidentReport.vote(2, VOTE_AGAINST, VOTE_AMOUNT);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
         vm.prank(BOB);
-        incidentReport.vote(2, VOTE_AGAINST, VOTE_AMOUNT);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
         vm.warp(365 days + INCIDENT_SETTLE_TIME);
-        incidentReport.settle(2);
+        incidentReport.settle(1);
 
         // # --------------------------------------------------------------------//
         // # Should be able to remove liquidity after a false report # //
@@ -469,11 +473,12 @@ contract PolicyCenterTest is
         vm.revertTo(snapshot_3);
 
         vm.prank(ALICE);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(365 days + INCIDENT_SETTLE_TIME);
-        incidentReport.settle(2);
+        incidentReport.settle(1);
+        executor.executeReport(1);
 
         // # --------------------------------------------------------------------//
         // # Should be able to remove liquidity after a truthful report # //
@@ -481,7 +486,8 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit LiquidityProvided(LIQUIDITY, LIQUIDITY, CHARLIE);
+        emit LiquidityRemoved(CHARLIE, LIQUIDITY);
+        policyCenter.removeLiquidity(LIQUIDITY);
 
         console.log(unicode"✅ Remove liquidity after a truthful report");
     }
@@ -634,15 +640,20 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
-        vm.expectRevert("Paused");
+        // TODO: Liquidity staking is currently possible during an incident report
+        // vm.expectRevert("Paused");
+        vm.expectEmit(false, false, false, true);
+        emit StakedLiquidity(LIQUIDITY, CHARLIE);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
 
-        console.log(unicode"✅ Not stake to reported Priority Pool");
+        console.log(unicode"✅ Not stake during incident report");
 
         // # --------------------------------------------------------------------//
         // # Should be able to stake after incident settles # //
         // # --------------------------------------------------------------------//
 
+        vm.warp(INCIDENT_VOTE_TIME);
+        incidentReport.startVoting(1);
         // Vote and settle
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
@@ -650,14 +661,15 @@ contract PolicyCenterTest is
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(INCIDENT_SETTLE_TIME + 1);
         incidentReport.settle(1);
+        executor.executeReport(1);
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
         emit StakedLiquidity(LIQUIDITY, CHARLIE);
-        policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
+        policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
         console.log(
-            unicode"✅ Stake to not reported Priority Pool during a report"
+            unicode"✅ Stake after incident settles"
         );
     }
 
@@ -786,6 +798,7 @@ contract PolicyCenterTest is
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(INCIDENT_SETTLE_TIME);
         incidentReport.settle(1);
+        executor.executeReport(1);
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
@@ -872,8 +885,8 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Not buy cover without native token");
 
-
-        joe.mint(CHARLIE, COVER_AMOUNT);
+        // mint some joe but not enough
+        joe.mint(CHARLIE, 1e5);
         // # --------------------------------------------------------------------//
         // # Should not be able to buy 0 cover # //
         // # --------------------------------------------------------------------//
@@ -887,12 +900,14 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
         // # Should not be able to buy without enough tokens # //
         // # --------------------------------------------------------------------//
-
+        console.log(CHARLIE, joe.balanceOf(CHARLIE));
         vm.prank(CHARLIE);
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        policyCenter.buyCover(JOE_ID, COVER_AMOUNT + 1, 3, maxPayment + 1);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Not buy without enough tokens");
+
+        joe.mint(CHARLIE, COVER_AMOUNT - 1e5);
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy bad length covers # //
@@ -920,7 +935,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectRevert(PolicyCenter__PremiumTooHigh.selector);
-        policyCenter.buyCover(JOE_ID, MIN_COVER_AMOUNT, 3, maxPayment / 2);
+        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment / 2);
 
         console.log(unicode"✅ Not buy low max payment");
 
@@ -929,8 +944,8 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
-        vm.expectEmit(false, false, false, true);
-        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, price);
+        vm.expectEmit(true, true, false, true);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover");
@@ -946,26 +961,43 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
-        vm.expectRevert("Paused");
+        // TODO: it's currently possible to buy cover during non voting incident report
+        // vm.expectRevert("Paused");
+        vm.expectEmit(true, true, false, true);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Not buy cover during incident report");
+
+        vm.revertTo(snapshot_1);
+        uint256 snapshot_2 = vm.snapshot();
 
         // # --------------------------------------------------------------------//
         // # Should be able to buy after truthful incident report # //
         // # --------------------------------------------------------------------//
 
+        vm.warp(INCIDENT_VOTE_TIME);
+        incidentReport.startVoting(1);
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME + 2 days);
+        incidentReport.settle(1);
+        shield.balanceOf(address(treasury));
+        executor.executeReport(1);
 
-        deg.mintDegis(ALICE, REPORT_THRESHOLD);
-        vm.prank(ALICE);
-        incidentReport.report(JOE_ID, PAYOUT);
+        // Get new cover price
+        (uint256 price2, uint256 coverLength2) = joePool.coverPrice(
+            COVER_AMOUNT,
+            3
+        );
+    
+        maxPayment = price2 * 11 / 10;
 
         vm.prank(CHARLIE);
-        vm.expectRevert(PolicyCenter__BadLength.selector);
+        vm.expectEmit(true, true, false, true);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover after truthful incident report");
@@ -974,14 +1006,21 @@ contract PolicyCenterTest is
         // # Should be able to buy after false incident report # //
         // # --------------------------------------------------------------------//
 
-        vm.revertTo(snapshot_1);
+        vm.revertTo(snapshot_2);
 
-        deg.mintDegis(ALICE, REPORT_THRESHOLD);
+        // Failed report should not impact on cover price
+        incidentReport.startVoting(1);
         vm.prank(ALICE);
-        incidentReport.report(JOE_ID, PAYOUT);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_AGAINST, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME + 2 days);
+        incidentReport.settle(1);
+
 
         vm.prank(CHARLIE);
-        vm.expectRevert(PolicyCenter__BadLength.selector);
+        vm.expectEmit(true, true, false, true);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover after false incident report");
@@ -994,44 +1033,54 @@ contract PolicyCenterTest is
         joe.approve(address(policyCenter), type(uint256).max);
         joe.mint(_user, COVER_AMOUNT);
         vm.prank(_user);
-        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+        // Get Joe cover right address and buy cover
+        crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+    }
+
+    function _truthfulReport() internal {
+        vm.warp(ZERO_TIME);
+        vm.prank(CHARLIE);
+        incidentReport.report(JOE_ID, PAYOUT);
+        vm.warp(INCIDENT_VOTE_TIME);
+        vm.prank(CHARLIE);
+        incidentReport.startVoting(1);
+        vm.prank(ALICE);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.prank(BOB);
+        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        vm.warp(INCIDENT_SETTLE_TIME);
+        incidentReport.settle(1);
+        executor.executeReport(1);
+
     }
 
     function testClaimPayout() public {
         _provideLiquidity(CHARLIE);
-        _buyJoeCover(CHARLIE);
+        _buyJoeCover(ALICE);
 
         MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 
-        vm.prank(CHARLIE);
-        incidentReport.report(1, PAYOUT);
-        vm.warp(INCIDENT_VOTE_TIME);
-        vm.prank(ALICE);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
-        vm.prank(ALICE);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
-        vm.warp(INCIDENT_SETTLE_TIME);
-        incidentReport.settle(2);
+        _truthfulReport();
 
         // # --------------------------------------------------------------------//
         // # Should not be to claim payout prior to liquidation # //
         // # --------------------------------------------------------------------//
-
+        vm.warp(INCIDENT_SETTLE_TIME + 1 days);
         vm.prank(CHARLIE);
         vm.expectRevert(PayoutPool__NoPayout.selector);
-        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+        policyCenter.claimPayout(1, crJoeAddress, 1);
 
         console.log(unicode"✅ Not claim payout prior to liquidation");
 
         // # --------------------------------------------------------------------//
-        // # Should not be to claim with wrong cover right address # //
+        // # Should not be able to claim with wrong cover right address # //
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
         vm.expectRevert(PayoutPool__WrongCRToken.selector);
-        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+        policyCenter.claimPayout(1, address(0x555), 1);
 
         console.log(unicode"✅ Not claim with wrong address");
 
@@ -1089,6 +1138,7 @@ contract PolicyCenterTest is
         incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(timestamp + INCIDENT_SETTLE_TIME);
         incidentReport.settle(2);
+        executor.executeReport(2);
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);

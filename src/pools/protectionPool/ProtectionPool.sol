@@ -242,8 +242,11 @@ contract ProtectionPool is
             SimpleIERC20(shield).balanceOf(address(this)) <
             getTotalCovered() + shieldToTransfer
         ) revert ProtectionPool__NotEnoughLiquidity();
+        
+        // Burn PRO_LP tokens from the user or from the calling priority pool
+        address payer = msg.sender == policyCenter ? _provider : msg.sender;
+        _burn(payer, _amount);
 
-        _burn(_provider, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);

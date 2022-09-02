@@ -58,7 +58,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         string memory _name,
         uint256 _expiry,
         uint256 _generation,
-        address _policyCenter
+        address _policyCenter,
+        address _incidentReport
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
@@ -66,6 +67,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         POOL_ID = _poolId;
         generation = _generation;
         policyCenter = _policyCenter;
+        incidentReport = _incidentReport;
     }
 
     modifier onlyPolicyCenter() {

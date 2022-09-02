@@ -270,7 +270,6 @@ contract PolicyCenter is
         ICoverRightToken(crToken).mint(_poolId, msg.sender, _coverAmount);
 
         // Split the premium income and update the pool status
-        console.log("Premium: ", premium);
         (
             uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool,
@@ -530,13 +529,11 @@ contract PolicyCenter is
 
 
         // approve shield to use usdc
-        IERC20(USDC).approve(exchange, received);
+        IERC20(USDC).approve(address(shield), received);
 
         // Deposit USDC and get back shield
         shield.deposit(1, USDC, received, received);
 
-        // remove approval after making the deposit
-        IERC20(USDC).approve(exchange, 0);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }
@@ -727,6 +724,17 @@ contract PolicyCenter is
         toTreasury = amountReceived - toProtection;
 
         emit PremiumSplitted(toPriority, toProtection, toTreasury);
+    }
+
+    /**
+    * @notice Allows treasury to withdraw funds from the contract
+    *
+    * @param _reporter        Reporter address to be paid
+    * @param _amount          Amount to transfer from Policy Center
+    */
+    function treasuryTransfer(address _reporter, uint256 _amount) external {
+        if (msg.sender != treasury) revert PolicyCenter__OnlyTreasury();
+        IShield(shield).transfer(_reporter, _amount);
     }
 
     /**

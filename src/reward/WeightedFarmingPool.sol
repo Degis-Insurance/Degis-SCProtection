@@ -10,6 +10,8 @@ import "../interfaces/IPremiumRewardPool.sol";
 
 import "../libraries/DateTime.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @notice Weighted Farming Pool
  *
@@ -528,9 +530,11 @@ contract WeightedFarmingPool  {
         internal
         view
         returns (uint256)
-    {
+    {   
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
+        console.log(length);
+        console.log(allTokens[0]);
 
         for (uint256 i = 0; i <= length; ) {
             if (allTokens[i] == _token) return i;

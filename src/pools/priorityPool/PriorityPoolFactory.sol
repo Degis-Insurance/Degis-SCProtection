@@ -76,7 +76,7 @@ contract PriorityPoolFactory is
     // Whether a pool is already dynamic
     mapping(address => bool) public dynamic;
 
-    uint256 internal dynamicPoolCounter;
+    uint256 public dynamicPoolCounter;
 
     // Record whether a protocol token or pool address has been registered
     mapping(address => bool) public poolRegistered;
