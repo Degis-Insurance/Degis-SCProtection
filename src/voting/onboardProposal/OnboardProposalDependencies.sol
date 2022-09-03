@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IExecutor.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 
 abstract contract OnboardProposalDependencies {
