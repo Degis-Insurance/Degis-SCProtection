@@ -516,7 +516,7 @@ contract PolicyCenter is
         // Swap for USDC and return the received amount
         received = IExchange(exchange).swapExactTokensForTokens(
             _amount,
-            ((_amount * (10000 - SLIPPAGE)) / 1000),
+            ((_amount * (10000 - SLIPPAGE)) / 10000),
             path,
             address(this),
             block.timestamp + 1
@@ -660,7 +660,10 @@ contract PolicyCenter is
         // Price in 18 decimals
         uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
 
-        premiumInNativeToken = (_premium * 1e12) / price;
+        // @audit Fix decimal for native tokens
+        // Check the real decimal diff
+        uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
+        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
 
         // Pay native tokens
         IERC20(_token).safeTransferFrom(
@@ -714,6 +717,12 @@ contract PolicyCenter is
         toTreasury = amountReceived - toProtection;
 
         emit PremiumSplitted(toPriority, toProtection, toTreasury);
+
+        // @audit Add real transfer
+        // Transfer tokens to different pools
+        IERC20(nativeToken).transfer(weightedFarmingPool, toPriority);
+        shield.transfer(protectionPool, toProtection);
+        shield.transfer(treasury, toTreasury);
     }
 
     /**

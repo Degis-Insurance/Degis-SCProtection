@@ -129,7 +129,7 @@ contract ProtectionPool is
     }
 
     // @audit change decimal
-    function decimals() public pure override returns(uint8) {
+    function decimals() public pure override returns (uint8) {
         return 6;
     }
 
@@ -151,7 +151,6 @@ contract ProtectionPool is
     {
         _setPriorityPoolFactory(_priorityPoolFactory);
     }
-
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -248,8 +247,10 @@ contract ProtectionPool is
             getTotalCovered() + shieldToTransfer
         ) revert ProtectionPool__NotEnoughLiquidity();
 
-        // @audit Change path 
-        _burn(_provider, _amount);
+        // @audit Change path
+        //
+        address realPayer = msg.sender == policyCenter ? _provider : msg.sender;
+        _burn(realPayer, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
