@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../interfaces/IPremiumRewardPool.sol";
 
-
 import "../libraries/DateTime.sol";
 
 /**
@@ -22,7 +21,7 @@ import "../libraries/DateTime.sol";
  *
  *         Different generations of PRI-LP-1-JOE-G1
  */
-contract WeightedFarmingPool  {
+contract WeightedFarmingPool {
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
@@ -55,6 +54,7 @@ contract WeightedFarmingPool  {
         uint256 share;
         uint256 rewardDebt;
     }
+    // Pool Id => User address => User Info
     mapping(uint256 => mapping(address => UserInfo)) public users;
 
     // Keccak256(poolId, token) => Whether supported
@@ -72,10 +72,17 @@ contract WeightedFarmingPool  {
         uint256 reward
     );
 
-    constructor(
-        address _premiumRewardPool
-    )  {
+    constructor(address _premiumRewardPool) {
         premiumRewardPool = _premiumRewardPool;
+    }
+
+    // @audit Add view functions for user lp amount
+    function getUserLPAmount(uint256 _poolId, address _user)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return users[_poolId][_user].amount;
     }
 
     function setPolicyCenter(address _policyCenter) public {

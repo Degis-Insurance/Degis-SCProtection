@@ -128,6 +128,11 @@ contract ProtectionPool is
         }
     }
 
+    // @audit change decimal
+    function decimals() public pure override returns(uint8) {
+        return 6;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -243,6 +248,7 @@ contract ProtectionPool is
             getTotalCovered() + shieldToTransfer
         ) revert ProtectionPool__NotEnoughLiquidity();
 
+        // @audit Change path 
         _burn(_provider, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 

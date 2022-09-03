@@ -402,7 +402,6 @@ contract IncidentReport is
         deg.burnDegis(_user, REPORT_THRESHOLD);
 
         // TODO: Check this part
-        // @note This is a inline bookmark
         poolReports[_poolId].push(currentId);
 
         emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);
