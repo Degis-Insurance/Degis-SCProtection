@@ -3,7 +3,6 @@
 pragma solidity ^0.8.13;
 
 import "../interfaces/IShield.sol";
-import "../interfaces/IPolicyCenter.sol";
 
 contract Treasury {
     address public owner;
@@ -41,7 +40,7 @@ contract Treasury {
         uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
 
         poolIncome[_poolId] -= amount;
-        IPolicyCenter(policyCenter).treasuryTransfer(_reporter, amount);
+        SimpleIERC20(shield).transfer(_reporter, amount);
 
         emit ReporterRewarded(_reporter, amount);
     }

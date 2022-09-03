@@ -3,7 +3,6 @@
 pragma solidity ^0.8.13;
 
 import "./CoverRightToken.sol";
-import "../interfaces/IPolicyCenter.sol";
 import "../util/OwnableWithoutContext.sol";
 
 import "forge-std/console.sol";
