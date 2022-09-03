@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "../interfaces/IShield.sol";
+import "../interfaces/IPolicyCenter.sol";
 
 contract Treasury {
     address public owner;
@@ -11,16 +12,18 @@ contract Treasury {
 
     address public shield;
 
+    address public policyCenter;
+
     uint256 public constant REPORTER_REWARD = 1000;
 
     mapping(uint256 => uint256) public poolIncome;
 
     event ReporterRewarded(address reporter, uint256 amount);
 
-    constructor(address _shield, address _executor) {
+    constructor(address _shield, address _executor, address _policyCenter) {
         executor = _executor;
         shield = _shield;
-
+        policyCenter = _policyCenter;
         owner = msg.sender;
     }
 
@@ -38,7 +41,7 @@ contract Treasury {
         uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
 
         poolIncome[_poolId] -= amount;
-        SimpleIERC20(shield).transfer(_reporter, amount);
+        IPolicyCenter(policyCenter).treasuryTransfer(_reporter, amount);
 
         emit ReporterRewarded(_reporter, amount);
     }

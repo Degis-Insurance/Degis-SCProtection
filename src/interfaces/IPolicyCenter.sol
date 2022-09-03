@@ -117,6 +117,8 @@ interface IPolicyCenter {
         uint256 _poolId
     ) external;
 
+    function treasuryTransfer(address _reporter, uint256 _amount) external;
+
     function tokenByPoolId(uint256) external view returns (address);
 
     function totalRewardsByPoolId(uint256) external view returns (uint256);

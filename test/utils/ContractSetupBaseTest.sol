@@ -7,8 +7,9 @@ import "./BaseTest.sol";
 import "src/core/PolicyCenter.sol";
 import "src/core/Executor.sol";
 
-import "src/pools/priorityPool/PriorityPoolFactory.sol";
-import "src/pools/protectionPool/ProtectionPool.sol";
+import {PriorityPoolFactory} from "src/pools/priorityPool/PriorityPoolFactory.sol";
+import {ProtectionPool} from "src/pools/protectionPool/ProtectionPool.sol";
+import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
@@ -56,6 +57,7 @@ contract ContractSetupBaseTest is BaseTest {
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
+
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
 
@@ -65,9 +67,6 @@ contract ContractSetupBaseTest is BaseTest {
         _setupPolicyCenter();
         _setupExecutor();
 
-        _setupCRFactory();
-
-        _setupPayoutPool();
         _setupPremiumRewardPool();
         _setupTreasury();
 
@@ -75,6 +74,9 @@ contract ContractSetupBaseTest is BaseTest {
 
         _setupIncidentReport();
         _setupOnboardProposal();
+
+        _setupCRFactory();
+        _setupPayoutPool();
 
         _setAddresses();
     }
@@ -110,14 +112,18 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupCRFactory() internal {
-        crFactory = new CoverRightTokenFactory(address(policyCenter));
+        crFactory = new CoverRightTokenFactory(
+            address(policyCenter),
+            address(incidentReport)
+        );
     }
 
     function _setupPayoutPool() internal {
         payoutPool = new PayoutPool(
             address(shield),
             address(policyCenter),
-            address(crFactory)
+            address(crFactory),
+            address(priorityPoolFactory)
         );
     }
 
@@ -130,7 +136,7 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor));
+        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
     }
 
     function _setupFarmingPool() internal {
@@ -191,7 +197,5 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
-
-        // 
     }
 }

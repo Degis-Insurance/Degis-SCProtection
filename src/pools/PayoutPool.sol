@@ -49,6 +49,11 @@ contract PayoutPool {
         uint256 _ratio
     );
 
+    error PayoutPool__OnlyPriorityPool();
+    error PayoutPool__NotPolicyCenter();
+    error PayoutPool__WrongCRToken();
+    error PayoutPool__NoPayout();
+
     constructor(
         address _shield,
         address _policyCenter,
@@ -68,7 +73,8 @@ contract PayoutPool {
         (, address poolAddress, , , ) = IPriorityPoolFactory(
             priorityPoolFactory
         ).pools(_poolId);
-        require(poolAddress == msg.sender, "Wrong priority pool");
+        if (poolAddress != msg.sender)
+            revert PayoutPool__OnlyPriorityPool();
         _;
     }
 
@@ -110,7 +116,8 @@ contract PayoutPool {
         uint256 _poolId,
         uint256 _generation
     ) external returns (uint256 claimed, uint256 newGenerationCRAmount) {
-        require(msg.sender == policyCenter, "Only policy center");
+        if (msg.sender != policyCenter)
+            revert PayoutPool__NotPolicyCenter();
 
         Payout storage payout = payouts[_poolId][_generation];
 
@@ -119,15 +126,17 @@ contract PayoutPool {
         bytes32 salt = keccak256(
             abi.encodePacked(_poolId, expiry, _generation)
         );
-        require(
-            ICoverRightTokenFactory(crFactory).saltToAddress(salt) == _crToken,
-            "Wrong cr token"
-        );
+        if (
+            ICoverRightTokenFactory(crFactory).saltToAddress(salt) != _crToken)
+            revert PayoutPool__WrongCRToken();
 
         uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
             _user
         );
         uint256 claimable = (claimableBalance * payout.ratio) / 10000;
+
+        if (claimable == 0)
+            revert PayoutPool__NoPayout();
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 

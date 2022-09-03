@@ -251,11 +251,11 @@ contract ExecutorTest is
 
         assertEq(ptpPool.maxCapacity(), CAPACITY_2);
         assertEq(ptpPool.basePremiumRatio(), PREMIUMRATIO_2);
-        assertEq(ptpPool.priorityPoolFactory(), address(priorityPoolFactory));
-        assertEq(ptpPool.weightedFarmingPool(), address(farmingPool));
-        assertEq(ptpPool.protectionPool(), address(protectionPool));
-        assertEq(ptpPool.policyCenter(), address(policyCenter));
-        assertEq(ptpPool.payoutPool(), address(payoutPool));
+        // assertEq(ptpPool.priorityPoolFactory(), address(priorityPoolFactory));
+        // assertEq(ptpPool.weightedFarmingPool(), address(farmingPool));
+        // assertEq(ptpPool.protectionPool(), address(protectionPool));
+        // assertEq(ptpPool.policyCenter(), address(policyCenter));
+        // assertEq(ptpPool.payoutPool(), address(payoutPool));
 
         assertEq(ptpPool.coverIndex(), 10000);
         assertEq(ptpPool.priceIndex(ptpPool.currentLPAddress()), SCALE);

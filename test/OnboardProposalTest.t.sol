@@ -227,7 +227,7 @@ contract OnboardProposalTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert("Only owner");
         onboardProposal.closeProposal(1);
 
         console.log(unicode"✅ Not close proposal by non-owner");

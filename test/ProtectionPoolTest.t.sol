@@ -6,7 +6,7 @@ import "./utils/ContractSetupBaseTest.sol";
 
 import "src/interfaces/IProtectionPool.sol";
 
-import "src/pools/protectionPool/ProtectionPool.sol";
+import { ProtectionPool } from "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/protectionPool/ProtectionPoolEventError.sol";
 
 contract ProtectionPoolTest is ContractSetupBaseTest, ProtectionPoolEventError {

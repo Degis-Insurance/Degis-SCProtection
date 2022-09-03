@@ -62,10 +62,17 @@ interface PolicyCenterEventError {
     error PolicyCenter__AlreadyClaimedPayout();
     error PolicyCenter__WrongPriorityPoolID();
     error PolicyCenter__InsufficientCapacity();
+    error PolicyCenter__OnlyPriorityPoolFactory();
     error PolicyCenter__ZeroPremium();
     error PolicyCenter__NoLiquidity();
     error PolicyCenter__NoExchange();
     error PolicyCenter__ZeroAmount();
     error PolicyCenter__NoPayout();
     error PolicyCenter__NonExistentPool();
+    error PolicyCenter__CoverAmountTooSmall();
+    error PolicyCenter__BadLength();
+    error PolicyCenter__PremiumTooHigh();
+    error PolicyCenter__InvalidPremiumSplit();
+    error PolicyCenter__PoolPaused();
+    error PolicyCenter__OnlyTreasury();
 }
