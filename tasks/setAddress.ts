@@ -222,7 +222,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
-    const priceGetterAddress = addressList[network.name].PriceGetter;
+    const priceGetterAddress =
+      network.name == "fuji"
+        ? addressList[network.name].MockPriceGetter
+        : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
       addressList[network.name].CoverRightTokenFactory;
     const weightedFarmingPoolAddress =
@@ -255,7 +258,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
 
     if ((await policyCenter.priceGetter()) != priceGetterAddress) {
       const tx_4 = await policyCenter.setPriceGetter(priceGetterAddress);
-      console.log("Tx details: ", await tx_4.wait());
+      console.log("Tx details getter: ", await tx_4.wait());
     }
 
     if (
