@@ -47,62 +47,16 @@ export const storeReportList = function (reportList: object) {
 };
 
 ///
-/// Proxy Admin Info Record
+/// Priority Pool Info Record
 ///
-export const readProxyAdmin = function () {
-  return JSON.parse(fs.readFileSync("info/proxyAdmin.json", "utf-8"));
+export const readPriorityPoolList = function () {
+  return JSON.parse(fs.readFileSync("info/PriorityPool.json", "utf-8"));
 };
 
-export const storeProxyAdmin = function (proxyAdmin: object) {
+export const storePriorityPoolList = function (priorityPoolList: object) {
   fs.writeFileSync(
-    "info/proxyAdmin.json",
-    JSON.stringify(proxyAdmin, null, "\t")
-  );
-};
-
-export const clearProxyAdmin = function () {
-  const emptyList = {};
-  fs.writeFileSync(
-    "info/proxyAdmin.json",
-    JSON.stringify(emptyList, null, "\t")
-  );
-};
-
-///
-/// Naughty Price Token Info Record
-///
-export const readNaughtyTokenList = function () {
-  return JSON.parse(fs.readFileSync("info/NPToken.json", "utf-8"));
-};
-
-export const storeNaughtyTokenList = function (tokenList: object) {
-  fs.writeFileSync("info/NPToken.json", JSON.stringify(tokenList, null, "\t"));
-};
-
-export const clearNaughtyTokenList = function () {
-  const emptyList = {};
-  fs.writeFileSync("info/NPToken.json", JSON.stringify(emptyList, null, "\t"));
-};
-
-///
-/// Farming Pool Info Record
-///
-export const readFarmingPoolList = function () {
-  return JSON.parse(fs.readFileSync("info/FarmingPool.json", "utf-8"));
-};
-
-export const storeFarmingPoolList = function (farmingPoolList: object) {
-  fs.writeFileSync(
-    "info/FarmingPool.json",
-    JSON.stringify(farmingPoolList, null, "\t")
-  );
-};
-
-export const clearFarmingPoolList = function () {
-  const emptyList = {};
-  fs.writeFileSync(
-    "info/FarmingPool.json",
-    JSON.stringify(emptyList, null, "\t")
+    "info/PriorityPool.json",
+    JSON.stringify(priorityPoolList, null, "\t")
   );
 };
 

@@ -1,0 +1,22 @@
+{
+	"fuji": {
+		"1": {
+			"id": {
+				"type": "BigNumber",
+				"hex": "0x01"
+			},
+			"name": "Test1",
+			"token": "0xca5f5aF0a21885cf7c74040Af8489b8762EE060A",
+			"premium": {
+				"type": "BigNumber",
+				"hex": "0xc8"
+			}
+		}
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {},
+	"fujiTest": {},
+	"reserve": {}
+}

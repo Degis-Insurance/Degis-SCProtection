@@ -17,6 +17,7 @@ dotenv.config();
 import "./tasks/setAddress";
 import "./tasks/voting/onboard";
 import "./tasks/executor/executor";
+import "./tasks/pools/pool";
 
 function getRemappings() {
   return fs
