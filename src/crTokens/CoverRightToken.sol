@@ -125,6 +125,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     /**
      * @notice Get the claimable amount of a user
      *         Claimable means "without those has passed the expiry date"
+     *
+     * @param _user User address
      */
     function getClaimableOf(address _user) external view returns (uint256) {
         uint256 exclusion = getExcludedCoverageOf(_user);
@@ -138,10 +140,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      * @notice Get the excluded amount of a user
      *         Excluded means "without those are bought within a short time before voteTimestamp"
      *
-     * @param _user         User address
+     * @param _user User address
      *
-     * @return exclusion    Amount not able to claim because cover period has ended
-     *
+     * @return exclusion Amount not able to claim because cover period has ended
      */
     function getExcludedCoverageOf(address _user)
         public
