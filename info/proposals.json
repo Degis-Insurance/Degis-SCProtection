@@ -1,11 +1,9 @@
 {
-	"fuji": {
-		
-	},
-	"avax": {},
-	"avaxTest": {},
-	"localhost": {},
-	"rinkeby": {},
-	"fujiTest": {},
-	"reserve": {}
+  "fuji": {},
+  "avax": {},
+  "avaxTest": {},
+  "localhost": {},
+  "rinkeby": {},
+  "fujiTest": {},
+  "reserve": {}
 }

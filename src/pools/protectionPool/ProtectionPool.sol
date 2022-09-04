@@ -258,8 +258,9 @@ contract ProtectionPool is
 
     /**
      * @notice Removes liquidity when a claim is made
-     * @param _amount        Amount of liquidity to remove
-     * @param _to            Address to transfer the liquidity to
+     *
+     * @param _amount Amount of liquidity to remove
+     * @param _to     Address to transfer the liquidity to
      */
     function removedLiquidityWhenClaimed(uint256 _amount, address _to)
         external

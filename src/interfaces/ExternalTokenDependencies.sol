@@ -13,7 +13,6 @@ import "./CommonDependencies.sol";
  *         DEG, veDEG & SHIELD
  *         They are set as immutable
  */
-
 abstract contract ExternalTokenDependencies is CommonDependencies {
     IDegisToken immutable deg;
     IVeDEG immutable veDeg;

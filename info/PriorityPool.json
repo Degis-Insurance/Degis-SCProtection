@@ -1,0 +1,17 @@
+{
+	"fuji": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0x8f62c09f660DD00Be3E5Dfec4436e99437e579fa",
+			"name": "Test1",
+			"token": "0xca5f5aF0a21885cf7c74040Af8489b8762EE060A",
+			"premium": "200"
+		}
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {},
+	"fujiTest": {},
+	"reserve": {}
+}

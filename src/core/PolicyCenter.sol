@@ -34,7 +34,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "forge-std/console.sol";
 
-
 /**
  * @title Policy Center
  *
@@ -58,6 +57,8 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    address public immutable USDC;
+
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
@@ -77,7 +78,8 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool
+        address _protectionPool,
+        address _USDC
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
@@ -92,14 +94,19 @@ contract PolicyCenter is
         // 45% to protectionPool, 50% to insurancePool, 5% to treasury
         premiumSplits = [4500, 5000];
 
-        IERC20(USDC).approve(address(shield), type(uint256).max);
+        // Set USDC (base token for shield)
+        USDC = _USDC;
+
+        IERC20(_USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // veirifies if pool exists. used throughout insurance contracts
+    /**
+     * @notice Whether the pool exists
+     */
     modifier poolExists(uint256 _poolId) {
         if (priorityPools[_poolId] == address(0))
             revert PolicyCenter__NonExistentPool();
@@ -112,7 +119,10 @@ contract PolicyCenter is
 
     /**
      * @notice Returns the current LP address for a Pool ID
-     * @param _poolId          Priority Pool ID
+     *
+     * @param _poolId Priority Pool ID
+     *
+     * @return lpAddress Current LP token address
      */
     function currentLPAddress(uint256 _poolId)
         external
@@ -124,6 +134,7 @@ contract PolicyCenter is
 
     /**
      * @notice Returns premium split used by Policy Center
+     *
      * @return toPriorityPool   Premium split to priority pool in bps
      * @return toProtectionPool Premium split to protection pool in bps
      */
@@ -137,6 +148,7 @@ contract PolicyCenter is
 
     /**
      * @notice Sets the premium splits used by Policy Center
+     *
      * @param _priority    Split for priority pool in bps
      * @param _protection  Split for protection pool in bps
      */
@@ -145,7 +157,8 @@ contract PolicyCenter is
         onlyOwner
     {
         // up to 1000bps, left over goes to treasury
-        if (_priority == 0 ||
+        if (
+            _priority == 0 ||
             _protection == 0 ||
             _priority + _protection > 10000
         ) revert PolicyCenter__InvalidPremiumSplit();
@@ -153,10 +166,6 @@ contract PolicyCenter is
         premiumSplits = [_priority, _protection];
     }
 
-    /**
-     *  @notice Set exchange address to be used for token swaps
-     *  @param _exchange Address of traderjoe contract
-     */
     function setExchange(address _exchange) external onlyOwner {
         exchange = _exchange;
     }
@@ -243,6 +252,8 @@ contract PolicyCenter is
      * @param _coverAmount   Amount to cover
      * @param _coverDuration Cover duration in month (1 ~ 3)
      * @param _maxPayment    Maximum payment user can accept
+     *
+     * @return crToken CR token address
      */
     function buyCover(
         uint256 _poolId,
@@ -470,7 +481,6 @@ contract PolicyCenter is
         uint256 _generation
     ) public poolExists(_poolId) {
         if (_poolId == 0) revert PolicyCenter__NonExistentPool();
-        
 
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
@@ -495,6 +505,7 @@ contract PolicyCenter is
             expiry,
             _generation++
         );
+
         ICoverRightToken(newCRToken).mint(
             _poolId,
             msg.sender,
@@ -556,7 +567,7 @@ contract PolicyCenter is
         returns (address crToken)
     {
         // Get the expiry timestamp
-        (uint256 year, uint256 month, uint256 expiry) = DateTimeLibrary
+        (uint256 expiry, uint256 year, uint256 month) = DateTimeLibrary
             ._getExpiry(block.timestamp, _coverDuration);
 
         (
@@ -594,6 +605,14 @@ contract PolicyCenter is
         }
     }
 
+    /**
+     * @notice Check whether need to deploy new cr token
+     *
+     * @param _poolId        Pool id
+     * @param _poolName      Pool name
+     * @param _expiry        Expiry timestamp of the cr token
+     * @param _newGeneration New generation of the cr token
+     */
     function _checkNewCRToken(
         uint256 _poolId,
         string memory _poolName,
@@ -604,8 +623,10 @@ contract PolicyCenter is
             _expiry
         );
 
+        // Check the cr token exist
         newCRToken = _getCRTokenAddress(_poolId, _expiry, _newGeneration);
 
+        // If cr token not exists, deploy it
         if (newCRToken == address(0)) {
             // CR-JOE-2022-1-G1
             string memory tokenName = string.concat(

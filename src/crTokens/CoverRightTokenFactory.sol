@@ -28,7 +28,9 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
-    constructor(address _policyCenter, address _incidentReport) OwnableWithoutContext(msg.sender) {
+    constructor(address _policyCenter, address _incidentReport)
+        OwnableWithoutContext(msg.sender)
+    {
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
     }
@@ -40,11 +42,11 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     /**
      * @notice Deploy Cover Right Token for a given pool
      *
-     * @param _poolName          Name of Priority Pool
-     * @param _poolId         	Pool Id
-     * @param _tokenName         Name of insured token (e.g. DEG)
-     * @param _expiry         	Expiry date of cover right token
-     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+     * @param _poolName   Name of Priority Pool
+     * @param _poolId     Pool Id
+     * @param _tokenName  Name of insured token (e.g. DEG)
+     * @param _expiry     Expiry date of cover right token
+     * @param _generation Generation of priority pool (1 if no liquidations occurred)
      */
     function deployCRToken(
         string calldata _poolName,
@@ -85,11 +87,11 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     /**
      * @notice Given several parameters, returns the bytecode for deploying a crToken
      *
-     * @param _poolName          Name of Priority Pool
-     * @param _poolId         	Pool Id
-     * @param _tokenName         Name of insured token (e.g. DEG)
-     * @param _expiry         	Expiry date of cover right token
-     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+     * @param _poolName   Name of Priority Pool
+     * @param _poolId     Pool Id
+     * @param _tokenName  Name of insured token (e.g. DEG)
+     * @param _expiry     Expiry date of cover right token
+     * @param _generation Generation of priority pool (1 if no liquidations occurred)
      */
     function _getCRTokenBytecode(
         string memory _poolName,
@@ -117,9 +119,10 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     /**
      * @notice Deploy function with create2
      *
-     * @param code      Byte code of the contract (creation code)
-     * @param salt      Salt for the deployment
-     * @return addr     The deployed contract address
+     * @param code Byte code of the contract (creation code)
+     * @param salt Salt for the deployment
+     *
+     * @return addr The deployed contract address
      */
     function _deploy(bytes memory code, bytes32 salt)
         internal

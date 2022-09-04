@@ -19,8 +19,12 @@ import {
   ProtectionPool__factory,
   WeightedFarmingPool,
   WeightedFarmingPool__factory,
+  PriorityPool,
+  PriorityPool__factory,
+  MockSHIELD,
+  MockSHIELD__factory,
 } from "../typechain-types";
-import { parseUnits } from "ethers/lib/utils";
+import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
   await hre.run("setProtectionPool");
@@ -220,7 +224,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
-    const priceGetterAddress = addressList[network.name].PriceGetter;
+    const priceGetterAddress =
+      network.name == "fuji"
+        ? addressList[network.name].MockPriceGetter
+        : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
       addressList[network.name].CoverRightTokenFactory;
     const weightedFarmingPoolAddress =
@@ -253,7 +260,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
 
     if ((await policyCenter.priceGetter()) != priceGetterAddress) {
       const tx_4 = await policyCenter.setPriceGetter(priceGetterAddress);
-      console.log("Tx details: ", await tx_4.wait());
+      console.log("Tx details getter: ", await tx_4.wait());
     }
 
     if (
@@ -381,6 +388,79 @@ task("mintToken").setAction(async (_, hre) => {
     addressList[network.name].MockDEG
   );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  const shield: MockSHIELD = new MockSHIELD__factory(dev_account).attach(
+    addressList[network.name].MockShield
+  );
+
+  // const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  // console.log("tx details", await tx.wait());
+
+  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
   console.log("tx details", await tx.wait());
+});
+
+task("approveToken", "Approve token").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const shield: MockSHIELD = new MockSHIELD__factory(dev_account).attach(
+    addressList[network.name].MockShield
+  );
+
+  const tx = await shield.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("1000000000", 6)
+  );
+  console.log("tx details", await tx.wait());
+});
+
+task("approvePROLP", "Approve pro lp token").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const protectionPool: ProtectionPool = new ProtectionPool__factory(
+    dev_account
+  ).attach(addressList[network.name].ProtectionPool);
+
+  const tx = await protectionPool.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("1000000000", 6)
+  );
+  console.log("tx details", await tx.wait());
+});
+
+task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+    dev_account
+  ).attach(addressList[network.name].PriorityPoolFactory);
+
+  const pool1Address = (await factory.pools(1)).poolAddress;
+
+  const priorityPool: PriorityPool = new PriorityPool__factory(
+    dev_account
+  ).attach(pool1Address);
+
+  const ratio = await priorityPool.dynamicPremiumRatio(parseUnits("10", 6));
+  console.log("ratio", ratio.toString());
+
+  const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
+  console.log("price", formatUnits(price.price, 6));
 });

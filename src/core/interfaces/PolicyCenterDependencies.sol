@@ -24,8 +24,8 @@ abstract contract PolicyCenterDependencies {
     uint256 constant PREMIUM_TO_PROTECTION = 5000;
     uint256 constant PREMIUM_TO_TREASURY = 500;
 
-    // TODO: USDC address
-    address constant public USDC = address(0x10);
+    // // TODO: USDC address
+    // address public immutable USDC;
 
     uint256 constant SLIPPAGE = 10;
 

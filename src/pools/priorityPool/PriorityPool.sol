@@ -193,7 +193,7 @@ contract PriorityPool is
     /**
      * @notice Get the current generation PRI-LP token address
      *
-     * @return address of Priority Pool LP token
+     * @return lpAddress Current pri-lp address
      */
     function currentLPAddress() public view returns (address) {
         return lpTokenAddress[generation];
@@ -215,13 +215,14 @@ contract PriorityPool is
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        // end timestamp always returns 3
+        //@audit Rerurn value order change
         (uint256 endTimestamp, , ) = DateTimeLibrary._getExpiry(
             block.timestamp,
             _coverDuration
         );
        
         length = endTimestamp - block.timestamp;
+
         // Price depends on the real timestamp length
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }
@@ -257,6 +258,9 @@ contract PriorityPool is
     /**
      * @notice Current minimum asset requirement for Protection Pool
      *         Min requirement * capacity ratio = active covered
+     *
+     *         Total assets in protection pool should be larger than any of the "minAssetRequirement"
+     *         Or the cover index would be cut
      */
     function minAssetRequirement() public view returns (uint256) {
         return (activeCovered() * 10000) / maxCapacity;
@@ -319,6 +323,13 @@ contract PriorityPool is
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Set the max capacity of this priority pool manually
+     *         Only owner set this function on a monthly / quaterly base
+     *
+     * @param _isUp        Whether it should increase the capacity
+     * @param _maxCapacity New max capacity of this pool
+     */
     function setMaxCapacity(bool _isUp, uint256 _maxCapacity) external {
         require(msg.sender == owner);
 
@@ -337,6 +348,12 @@ contract PriorityPool is
         );
     }
 
+    /**
+     * @notice Set the cover index of this priority pool
+     *         Only called from protection pool
+     *
+     * @param _newIndex New cover index
+     */
     function setCoverIndex(uint256 _newIndex) external {
         require(msg.sender == protectionPool, "Only protection pool");
 

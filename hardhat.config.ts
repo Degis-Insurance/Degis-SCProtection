@@ -6,6 +6,7 @@ import "hardhat-deploy";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
 import "@nomiclabs/hardhat-etherscan";
+import "hardhat-contract-sizer";
 import { HardhatUserConfig, task } from "hardhat/config";
 
 import example from "./tasks/example";
@@ -16,6 +17,8 @@ dotenv.config();
 import "./tasks/setAddress";
 import "./tasks/voting/onboard";
 import "./tasks/executor/executor";
+import "./tasks/pools/pool";
+import "./tasks/weightedFarming"
 
 function getRemappings() {
   return fs
@@ -91,6 +94,13 @@ const config: HardhatUserConfig = {
         return line;
       },
     }),
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: false,
+    only: [],
   },
 };
 
