@@ -9,6 +9,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
+  if (network.name == "avax") {
+    console.log("You are deploying mock tokens on mainnet!!!");
+    return;
+  }
+
   const { deployer } = await getNamedAccounts();
 
   console.log("\n-----------------------------------------------------------");
@@ -19,20 +24,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // MockExchange contract artifact
-  const exchange = await deploy("MockExchange", {
-    contract: "MockExchange",
+  // Proxy Admin contract artifact
+  const mockUSDC = await deploy("MockERC20", {
+    contract: "MockERC20",
     from: deployer,
-    args: [],
+    args: ["MockUSDC", "MockUSDC", 6],
     log: true,
   });
-  addressList[network.name].MockExchange = exchange.address;
+  addressList[network.name].MockUSDC = mockUSDC.address;
 
-  console.log("mock exchange deployed to address: ", exchange.address, "\n");
+  console.log("mock usdc token deployed to address: ", mockUSDC.address, "\n");
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["MockExchange"];
+func.tags = ["MockUSDC"];
 export default func;

@@ -19,6 +19,8 @@ import {
   ProtectionPool__factory,
   WeightedFarmingPool,
   WeightedFarmingPool__factory,
+  PriorityPool,
+  PriorityPool__factory,
 } from "../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -383,4 +385,30 @@ task("mintToken").setAction(async (_, hre) => {
 
   const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
   console.log("tx details", await tx.wait());
+});
+
+task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+    dev_account
+  ).attach(addressList[network.name].PriorityPoolFactory);
+
+  const pool1Address = (await factory.pools(1)).poolAddress;
+
+  const priorityPool: PriorityPool = new PriorityPool__factory(
+    dev_account
+  ).attach(pool1Address);
+
+  const ratio = await priorityPool.dynamicPremiumRatio(parseUnits("10", 6));
+  console.log("ratio", ratio.toString());
+
+  const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
+  console.log("price", price.toString());
 });

@@ -30,12 +30,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
 
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
+  const USDCAddress =
+    network.name == "fuji"
+      ? addressList[network.name].MockUSDC
+      : addressList[network.name].USDC;
 
   // PolicyCenter contract artifact
   const policyCenter = await deploy("PolicyCenter", {
     contract: "PolicyCenter",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
+    args: [
+      degAddress,
+      veDegAddress,
+      shieldAddress,
+      protectionPoolAddress,
+      USDCAddress,
+    ],
     log: true,
   });
   addressList[network.name].PolicyCenter = policyCenter.address;

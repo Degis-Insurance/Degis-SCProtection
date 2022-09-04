@@ -23,3 +23,5 @@ task("executeProposal", "Execute a proposal when it is passed")
     const tx = await executor.executeProposal(taskArgs.id);
     console.log("tx details", await tx.wait());
   });
+
+task("executeReport");

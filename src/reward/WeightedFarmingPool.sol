@@ -83,11 +83,13 @@ contract WeightedFarmingPool {
     error WeightedFarmingPool__NoPendingRewards();
     error WeightedFarmingPool__NotInPool();
 
-    constructor(
-        address _premiumRewardPool
-    )  {
+    constructor(address _premiumRewardPool) {
         premiumRewardPool = _premiumRewardPool;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     // @audit Add view functions for user lp amount
     function getUserLPAmount(uint256 _poolId, address _user)
@@ -96,6 +98,19 @@ contract WeightedFarmingPool {
         returns (uint256[] memory)
     {
         return users[_poolId][_user].amount;
+    }
+
+    function getPoolArrays(uint256 _poolId)
+        external
+        view
+        returns (
+            address[] memory,
+            uint256[] memory,
+            uint256[] memory
+        )
+    {
+        PoolInfo storage pool = pools[_poolId];
+        return (pool.tokens, pool.amount, pool.weight);
     }
 
     function setPolicyCenter(address _policyCenter) public {
@@ -146,8 +161,7 @@ contract WeightedFarmingPool {
         uint256 _weight
     ) public {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
-        if(supported[key])
-            revert WeightedFarmingPool__AlreadySupported();
+        if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
         supported[key] = true;
         pools[_id].tokens.push(_token);
@@ -227,7 +241,7 @@ contract WeightedFarmingPool {
         uint256 _amount,
         address _user
     ) external {
-        if(msg.sender != policyCenter)
+        if (msg.sender != policyCenter)
             revert WeightedFarmingPool__OnlyPolicyCenter();
 
         _deposit(_id, _token, _amount, _user);
@@ -253,7 +267,7 @@ contract WeightedFarmingPool {
         uint256 _amount,
         address _user
     ) external {
-        if(msg.sender != policyCenter)
+        if (msg.sender != policyCenter)
             revert WeightedFarmingPool__OnlyPolicyCenter();
 
         _withdraw(_id, _token, _amount, _user);
@@ -281,10 +295,8 @@ contract WeightedFarmingPool {
         uint256 _amount,
         address _user
     ) internal {
-        if (_amount == 0)
-            revert WeightedFarmingPool__ZeroAmount();
-        if (_id > counter)
-            revert WeightedFarmingPool__InexistentPool();
+        if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
+        if (_id > counter) revert WeightedFarmingPool__InexistentPool();
 
         updatePool(_id);
 
@@ -324,10 +336,8 @@ contract WeightedFarmingPool {
         uint256 _amount,
         address _user
     ) internal {
-        if (_amount == 0)
-            revert WeightedFarmingPool__ZeroAmount();
-        if (_id > counter)
-            revert WeightedFarmingPool__InexistentPool();
+        if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
+        if (_id > counter) revert WeightedFarmingPool__InexistentPool();
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
@@ -387,8 +397,7 @@ contract WeightedFarmingPool {
             SCALE -
             user.rewardDebt;
 
-        if (pending <= 0)
-            revert WeightedFarmingPool__NoPendingRewards();
+        if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
@@ -539,7 +548,7 @@ contract WeightedFarmingPool {
         internal
         view
         returns (uint256)
-    {   
+    {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
         console.log(length);

@@ -11,18 +11,15 @@ contract Treasury {
 
     address public shield;
 
-    address public policyCenter;
-
     uint256 public constant REPORTER_REWARD = 1000;
 
     mapping(uint256 => uint256) public poolIncome;
 
     event ReporterRewarded(address reporter, uint256 amount);
 
-    constructor(address _shield, address _executor, address _policyCenter) {
+    constructor(address _shield, address _executor) {
         executor = _executor;
         shield = _shield;
-        policyCenter = _policyCenter;
         owner = msg.sender;
     }
 

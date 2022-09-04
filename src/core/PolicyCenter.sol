@@ -34,7 +34,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "forge-std/console.sol";
 
-
 /**
  * @title Policy Center
  *
@@ -58,6 +57,8 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    address public immutable USDC;
+
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
@@ -77,7 +78,8 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool
+        address _protectionPool,
+        address _USDC
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
@@ -92,7 +94,9 @@ contract PolicyCenter is
         // 45% to protectionPool, 50% to insurancePool, 5% to treasury
         premiumSplits = [4500, 5000];
 
-        IERC20(USDC).approve(address(shield), type(uint256).max);
+        USDC = _USDC;
+
+        IERC20(_USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -145,7 +149,8 @@ contract PolicyCenter is
         onlyOwner
     {
         // up to 1000bps, left over goes to treasury
-        if (_priority == 0 ||
+        if (
+            _priority == 0 ||
             _protection == 0 ||
             _priority + _protection > 10000
         ) revert PolicyCenter__InvalidPremiumSplit();
@@ -470,7 +475,6 @@ contract PolicyCenter is
         uint256 _generation
     ) public poolExists(_poolId) {
         if (_poolId == 0) revert PolicyCenter__NonExistentPool();
-        
 
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
