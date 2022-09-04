@@ -29,6 +29,8 @@ import "./PriorityPoolToken.sol";
 import "../../libraries/DateTime.sol";
 import "../../libraries/StringUtils.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Insurance Pool (for single project)
  *
@@ -213,12 +215,12 @@ contract PriorityPool is
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        (, , uint256 endTimestamp) = DateTimeLibrary._getExpiry(
+        // end timestamp always returns 3
+        (uint256 endTimestamp, , ) = DateTimeLibrary._getExpiry(
             block.timestamp,
             _coverDuration
         );
-
-        // Length in second
+       
         length = endTimestamp - block.timestamp;
         // Price depends on the real timestamp length
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);

@@ -585,7 +585,7 @@ contract PolicyCenterTest is
         emit StakedLiquidity(LIQUIDITY, CHARLIE);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
-        console.log(unicode"✅ Stake provided liquidity to multiple pools");
+        console.log(unicode"✅ Stake to multiple pools with a single liquidity");
 
         // # --------------------------------------------------------------------//
         // # Should be able to stake to multiple priority pools # //
@@ -604,7 +604,7 @@ contract PolicyCenterTest is
         emit StakedLiquidity(LIQUIDITY / 2, CHARLIE);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY / 2);
 
-        console.log(unicode"✅ Stake provided liquidity");
+        console.log(unicode"✅ Stake to multiple pools");
 
         // Revert and take a new snapshot
         vm.revertTo(snapshot_3);
@@ -638,6 +638,7 @@ contract PolicyCenterTest is
         // # --------------------------------------------------------------------//
         // # Should not be able to stake during incident report # //
         // # --------------------------------------------------------------------//
+        uint256 snapshot_5 = vm.snapshot();
 
         vm.prank(CHARLIE);
         // TODO: Liquidity staking is currently possible during an incident report
@@ -652,6 +653,8 @@ contract PolicyCenterTest is
         // # Should be able to stake after incident settles # //
         // # --------------------------------------------------------------------//
 
+        vm.revertTo(snapshot_5);
+        
         vm.warp(INCIDENT_VOTE_TIME);
         incidentReport.startVoting(1);
         // Vote and settle
@@ -987,6 +990,7 @@ contract PolicyCenterTest is
         shield.balanceOf(address(treasury));
         executor.executeReport(1);
 
+        
         // Get new cover price
         (uint256 price2, uint256 coverLength2) = joePool.coverPrice(
             COVER_AMOUNT,
@@ -1080,7 +1084,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectRevert(PayoutPool__WrongCRToken.selector);
-        policyCenter.claimPayout(1, address(0x555), 1);
+        policyCenter.claimPayout(1, CHARLIE, 1);
 
         console.log(unicode"✅ Not claim with wrong address");
 
@@ -1090,7 +1094,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectRevert(PolicyCenter__NonExistentPool.selector);
-        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+        policyCenter.claimPayout(PTP_ID, crJoeAddress, 1);
 
         console.log(unicode"✅ Not claim with wrong pool id");
 
@@ -1100,7 +1104,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectRevert(PolicyCenter__NonExistentPool.selector);
-        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 2);
 
         console.log(unicode"✅ Not claim with non existent generation");
 

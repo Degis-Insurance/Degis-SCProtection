@@ -381,7 +381,6 @@ library DateTimeLibrary {
             // Add one month
             monthsToAdd += 1;
         }
-
         return _getFutureMonthEndTime(_now, monthsToAdd);
     }
 
@@ -403,7 +402,6 @@ library DateTimeLibrary {
         )
     {
         uint256 futureTimestamp = addMonths(_timestamp, _monthsToAdd);
-
         return _getMonthEndTimestamp(futureTimestamp);
     }
 
@@ -425,10 +423,9 @@ library DateTimeLibrary {
     {
         // Get the year and month from the date
         (year, month, ) = timestampToDate(_timestamp);
-
+        
         // Count the total number of days of that month and year
         uint256 daysInMonth = _getDaysInMonth(year, month);
-
         // Get the month end timestamp
         endTimestamp = timestampFromDateTime(
             year,

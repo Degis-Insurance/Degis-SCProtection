@@ -64,7 +64,8 @@ abstract contract SimpleERC20 {
         public
         virtual
         returns (bool)
-    {
+    {   
+        require(balanceOf[msg.sender] >= amount, "ERC20: transfer amount exceeds balance");
         balanceOf[msg.sender] -= amount;
 
         // Cannot overflow because the sum of all user
