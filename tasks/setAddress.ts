@@ -22,7 +22,7 @@ import {
   PriorityPool,
   PriorityPool__factory,
 } from "../typechain-types";
-import { parseUnits } from "ethers/lib/utils";
+import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
   await hre.run("setProtectionPool");
@@ -413,5 +413,5 @@ task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
   console.log("ratio", ratio.toString());
 
   const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
-  console.log("price", price.toString());
+  console.log("price", formatUnits(price.price, 6));
 });
