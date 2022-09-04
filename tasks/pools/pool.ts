@@ -11,8 +11,14 @@ import {
   MockVeDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
+  PolicyCenter,
+  PolicyCenter__factory,
+  PriorityPool,
   PriorityPoolFactory,
   PriorityPoolFactory__factory,
+  PriorityPool__factory,
+  ProtectionPool,
+  ProtectionPool__factory,
 } from "../../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -49,12 +55,97 @@ task("deployPriorityPool", "Deploy a new priority pool by owner")
 
     // Store the new farming pool
     const poolObject = {
-      id: currentCounter,
+      id: currentCounter.toString(),
+      poolAddress: poolInfo.poolAddress,
       name: poolInfo.protocolName,
       token: poolInfo.protocolToken,
-      premium: poolInfo.basePremiumRatio,
+      premium: poolInfo.basePremiumRatio.toString(),
     };
     priorityPoolList[network.name][currentCounter.toString()] = poolObject;
 
     storePriorityPoolList(priorityPoolList);
   });
+
+task("provideLiquidity", "Provide liquidity to protection pool").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+    const priorityPoolList = readPriorityPoolList();
+
+    const protectionPool: ProtectionPool = new ProtectionPool__factory(
+      dev_account
+    ).attach(addressList[network.name].ProtectionPool);
+
+    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
+      addressList[network.name].PolicyCenter
+    );
+
+    const tx = await center.provideLiquidity(parseUnits("100", 6));
+    console.log("Tx details: ", await tx.wait());
+  }
+);
+
+task("stakeLiquidity", "Stake liquidity to priority pool").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+    const priorityPoolList = readPriorityPoolList();
+
+    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
+      addressList[network.name].PolicyCenter
+    );
+
+    const tx = await center.stakeLiquidity(1, parseUnits("10", 6));
+    console.log("Tx details: ", await tx.wait());
+  }
+);
+
+task("unstakeLiquidity", "UnStake liquidity from priority pool").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+    const priorityPoolList = readPriorityPoolList();
+
+    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
+      addressList[network.name].PolicyCenter
+    );
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const priAddress = (await factory.pools(1)).poolAddress;
+    console.log("Priority pool address:", priAddress);
+    const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      priAddress
+    );
+
+    const priLPAddress = await priPool.currentLPAddress();
+
+    const priceIndex = await priPool.priceIndex(priLPAddress);
+    console.log("Price index of lp token: ", priceIndex.toString());
+
+    const tx = await center.unstakeLiquidity(
+      1,
+      priLPAddress,
+      parseUnits("10", 6)
+    );
+
+    console.log("Tx details: ", await tx.wait());
+  }
+);

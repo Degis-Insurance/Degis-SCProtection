@@ -50,7 +50,7 @@ interface IPriorityPool {
         address _lpToken,
         uint256 _amount,
         address _provider
-    ) external returns (address);
+    ) external;
 
     function coverPrice(uint256 _amount, uint256 _length)
         external
@@ -64,5 +64,4 @@ interface IPriorityPool {
     function paused() external view returns (bool);
 
     function basePremiumRatio() external view returns (uint256);
-
 }

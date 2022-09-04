@@ -21,6 +21,8 @@ import {
   WeightedFarmingPool__factory,
   PriorityPool,
   PriorityPool__factory,
+  MockSHIELD,
+  MockSHIELD__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -386,7 +388,54 @@ task("mintToken").setAction(async (_, hre) => {
     addressList[network.name].MockDEG
   );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  const shield: MockSHIELD = new MockSHIELD__factory(dev_account).attach(
+    addressList[network.name].MockShield
+  );
+
+  // const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  // console.log("tx details", await tx.wait());
+
+  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  console.log("tx details", await tx.wait());
+});
+
+task("approveToken", "Approve token").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const shield: MockSHIELD = new MockSHIELD__factory(dev_account).attach(
+    addressList[network.name].MockShield
+  );
+
+  const tx = await shield.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("1000000000", 6)
+  );
+  console.log("tx details", await tx.wait());
+});
+
+task("approvePROLP", "Approve pro lp token").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const protectionPool: ProtectionPool = new ProtectionPool__factory(
+    dev_account
+  ).attach(addressList[network.name].ProtectionPool);
+
+  const tx = await protectionPool.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("1000000000", 6)
+  );
   console.log("tx details", await tx.wait());
 });
 
