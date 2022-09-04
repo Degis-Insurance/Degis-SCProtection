@@ -162,10 +162,11 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
 
         // Check those bought within 2 days
         for (uint256 i; i < EXCLUDE_DAYS; ) {
-            uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+            if (voteTimestamp > i * 1 days) {
+                uint256 date = _getEOD(voteTimestamp - (i * 1 days));
 
-            exclusion += coverStartFrom[_user][date];
-
+                exclusion += coverStartFrom[_user][date];
+            }
             unchecked {
                 ++i;
             }

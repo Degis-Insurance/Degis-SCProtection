@@ -18,6 +18,7 @@ import "./tasks/setAddress";
 import "./tasks/voting/onboard";
 import "./tasks/executor/executor";
 import "./tasks/pools/pool";
+import "./tasks/weightedFarming"
 
 function getRemappings() {
   return fs
