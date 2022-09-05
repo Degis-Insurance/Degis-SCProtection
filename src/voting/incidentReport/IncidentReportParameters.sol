@@ -12,13 +12,13 @@ abstract contract IncidentReportParameters is VotingParameters {
     // TODO: change parameters
     // Voting time length parameters
     // uint256 constant PENDING_PERIOD = 3 days;
-    uint256 constant PENDING_PERIOD = 1 hours;
+    uint256 constant PENDING_PERIOD = 2 hours;
 
     // 16 hours for fuji, 2 hours for fujiInternal
-    uint256 constant INCIDENT_VOTING_PERIOD = 1 hours;
+    uint256 constant INCIDENT_VOTING_PERIOD = 16 hours;
 
-    uint256 constant EXTEND_PERIOD = 1 hours;
-    uint256 constant SAMPLE_PERIOD = 1 hours;
+    uint256 constant EXTEND_PERIOD = 4 hours;
+    uint256 constant SAMPLE_PERIOD = 2 hours;
 
     // Quorum parameter
     // TODO: 10% for test
