@@ -27,6 +27,8 @@ import {
   MockERC20__factory,
   MockUSDC,
   MockUSDC__factory,
+  CoverRightToken,
+  CoverRightToken__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -379,6 +381,8 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
   }
 );
 
+task("setPayoutPool", "Set address in payout pool");
+
 task("mintToken").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -492,3 +496,27 @@ task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
   const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
   console.log("price", formatUnits(price.price, 6));
 });
+
+task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const crToken: CoverRightToken = new CoverRightToken__factory(
+      dev_account
+    ).attach("0x1AAFFEBF367DEd9eF5819A747b24b02f44002A5B");
+
+    const tx = await crToken.setPolicyCenter(
+      addressList[network.name].PolicyCenter
+    );
+    console.log("Tx details: ", await tx.wait());
+
+    // const policyCenterAddress = await crToken.generation();
+    // console.log("policy center address", policyCenterAddress);
+  }
+);
