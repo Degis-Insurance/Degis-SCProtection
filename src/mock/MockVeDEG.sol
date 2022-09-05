@@ -8,9 +8,11 @@ contract MockVeDEG is ERC20 {
 
     uint8 public _decimals; //How many decimals to show.
 
-    mapping(address => bool) public whitelist;
-
     mapping(address => uint256) public locked;
+
+    mapping(address => bool) public alreadyMinted;
+
+    address public owner;
 
     constructor(
         uint256 _initialAmount,
@@ -18,28 +20,26 @@ contract MockVeDEG is ERC20 {
         uint8 _decimalUnits,
         string memory _tokenSymbol
     ) ERC20(_tokenName, _tokenSymbol) {
+        require(_decimalUnits == 18);
+
         _mint(msg.sender, _initialAmount);
 
         _decimals = _decimalUnits; // Amount of decimals for display purposes
 
-        whitelist[msg.sender] = true;
+        owner = msg.sender;
     }
 
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
 
-    modifier whitelisted() {
-        require(whitelist[msg.sender], "not whitelisted address");
-        _;
-    }
-
-    function setWhitelist(address _address, bool _status) public {
-        whitelist[_address] = _status;
-    }
-
-    function mint(address user, uint256 amount) public {
-        _mint(user, amount);
+    function mint(address _user, uint256 _amount) public {
+        if (msg.sender != owner) {
+            require(_amount == 10000 ether, "Wrong amount");
+            require(!alreadyMinted[_user], "Already minted");
+        }
+        alreadyMinted[_user] = true;
+        _mint(_user, _amount);
     }
 
     function lockVeDEG(address _owner, uint256 _value) public {

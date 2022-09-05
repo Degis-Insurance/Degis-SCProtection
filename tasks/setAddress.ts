@@ -23,6 +23,8 @@ import {
   PriorityPool__factory,
   MockSHIELD,
   MockSHIELD__factory,
+  MockERC20,
+  MockERC20__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -225,7 +227,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
     const priceGetterAddress =
-      network.name == "fuji"
+      network.name == "fuji" || network.name == "fujiInternal"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -396,6 +398,26 @@ task("mintToken").setAction(async (_, hre) => {
   // console.log("tx details", await tx.wait());
 
   const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  console.log("tx details", await tx.wait());
+});
+
+task("mintMockUSD").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const usd: MockERC20 = new MockERC20__factory(dev_account).attach(
+    addressList[network.name].MockUSDC
+  );
+
+  const tx = await usd.mint(
+    addressList[network.name].MockExchange,
+    parseUnits("1000000", 18)
+  );
   console.log("tx details", await tx.wait());
 });
 

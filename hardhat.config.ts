@@ -18,7 +18,7 @@ import "./tasks/setAddress";
 import "./tasks/voting/onboard";
 import "./tasks/executor/executor";
 import "./tasks/pools/pool";
-import "./tasks/weightedFarming"
+import "./tasks/weightedFarming";
 
 function getRemappings() {
   return fs
@@ -53,6 +53,15 @@ const config: HardhatUserConfig = {
     hardhat: {},
     localhost: {},
     fuji: {
+      url: process.env.FUJI_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
+        count: 20,
+      },
+      timeout: 60000,
+    },
+    fujiInternal: {
       url: process.env.FUJI_URL || "",
       accounts: {
         mnemonic:

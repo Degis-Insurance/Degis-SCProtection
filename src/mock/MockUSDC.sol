@@ -4,14 +4,10 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MockERC20 is ERC20 {
-    uint256 public constant MAX_HOLD = 10000 ether;
-
+contract MockUSDC is ERC20 {
     uint8 private _decimals;
 
     address public owner;
-
-    mapping(address => uint256) alreadyMinted;
 
     function decimals() public view override returns (uint8) {
         return _decimals;
@@ -22,23 +18,20 @@ contract MockERC20 is ERC20 {
         string memory _symbol,
         uint256 _decimal
     ) ERC20(_name, _symbol) {
-        _decimals = uint8(_decimal);
+        require(_decimal == 6);
 
-        owner = msg.sender;
+        _decimals = uint8(_decimal);
     }
 
     function mint(address _to, uint256 _amount) external {
-        if (msg.sender != owner) {
-            require(alreadyMinted[_to] + _amount <= MAX_HOLD);
-        }
+        require(msg.sender == owner);
 
-        alreadyMinted[_to] += _amount;
         _mint(_to, _amount);
     }
 
     function burn(address _to, uint256 _amount) external {
         require(msg.sender == owner);
-        alreadyMinted[_to] -= _amount;
+
         _burn(_to, _amount);
     }
 }
