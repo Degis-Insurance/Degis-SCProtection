@@ -25,6 +25,8 @@ import {
   MockSHIELD__factory,
   MockERC20,
   MockERC20__factory,
+  MockUSDC,
+  MockUSDC__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -413,14 +415,15 @@ task("mintMockUSD").setAction(async (_, hre) => {
 
   const addressList = readAddressList();
 
-  const usd: MockERC20 = new MockERC20__factory(dev_account).attach(
+  const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
     addressList[network.name].MockUSDC
   );
 
   const tx = await usd.mint(
     addressList[network.name].MockExchange,
-    parseUnits("1000000", 18)
+    parseUnits("1000000", 6)
   );
+
   console.log("tx details", await tx.wait());
 });
 

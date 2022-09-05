@@ -8,7 +8,22 @@
 			"premium": "200"
 		}
 	},
-    "fujiInternal": {},
+	"fujiInternal": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0xB3E87DD702D945f660E5061ab22e5Da2aBcad287",
+			"name": "Project1",
+			"token": "0x8891063f1622f5335431CF054B157d4B9a5a020b",
+			"premium": "200"
+		},
+		"2": {
+			"id": "2",
+			"poolAddress": "0x8ed5FcD5e8840DA7eF2DD86e11DC452360b9E949",
+			"name": "Project2",
+			"token": "0xDaa32f53e46FF44b911e876FA8122C3cbBb6603a",
+			"premium": "200"
+		}
+	},
 	"avax": {},
 	"avaxTest": {},
 	"localhost": {},

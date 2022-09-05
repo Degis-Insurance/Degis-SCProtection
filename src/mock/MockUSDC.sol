@@ -20,6 +20,8 @@ contract MockUSDC is ERC20 {
     ) ERC20(_name, _symbol) {
         require(_decimal == 6);
 
+        owner = msg.sender;
+
         _decimals = uint8(_decimal);
     }
 
