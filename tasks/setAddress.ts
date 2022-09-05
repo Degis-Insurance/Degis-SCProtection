@@ -158,7 +158,7 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
     const addressList = readAddressList();
 
     const priorityPoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
+      addressList[network.name].PriorityPoolFactory;
 
     const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
@@ -190,7 +190,7 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
     const addressList = readAddressList();
 
     const priorityPoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
+      addressList[network.name].PriorityPoolFactory;
 
     const onboardProposal: OnboardProposal = new OnboardProposal__factory(
       dev_account
@@ -394,11 +394,14 @@ task("mintToken").setAction(async (_, hre) => {
     addressList[network.name].MockShield
   );
 
-  // const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
-  // console.log("tx details", await tx.wait());
-
-  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
   console.log("tx details", await tx.wait());
+
+  const balance = await deg.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 18));
+
+  // const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  // console.log("tx details", await tx.wait());
 });
 
 task("mintMockUSD").setAction(async (_, hre) => {

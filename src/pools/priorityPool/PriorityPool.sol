@@ -516,8 +516,10 @@ contract PriorityPool is
         IWeightedFarmingPool(_weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
-            priceIndex[newLPAddress]
+            SCALE
         );
+
+        priceIndex[newLPAddress] = SCALE;
 
         isLPToken[newLPAddress] = true;
 
