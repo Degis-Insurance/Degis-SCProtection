@@ -73,8 +73,7 @@ contract PayoutPool {
         (, address poolAddress, , , ) = IPriorityPoolFactory(
             priorityPoolFactory
         ).pools(_poolId);
-        if (poolAddress != msg.sender)
-            revert PayoutPool__OnlyPriorityPool();
+        if (poolAddress != msg.sender) revert PayoutPool__OnlyPriorityPool();
         _;
     }
 
@@ -116,8 +115,7 @@ contract PayoutPool {
         uint256 _poolId,
         uint256 _generation
     ) external returns (uint256 claimed, uint256 newGenerationCRAmount) {
-        if (msg.sender != policyCenter)
-            revert PayoutPool__NotPolicyCenter();
+        if (msg.sender != policyCenter) revert PayoutPool__NotPolicyCenter();
 
         Payout storage payout = payouts[_poolId][_generation];
 
@@ -126,8 +124,7 @@ contract PayoutPool {
         bytes32 salt = keccak256(
             abi.encodePacked(_poolId, expiry, _generation)
         );
-        if (
-            ICoverRightTokenFactory(crFactory).saltToAddress(salt) != _crToken)
+        if (ICoverRightTokenFactory(crFactory).saltToAddress(salt) != _crToken)
             revert PayoutPool__WrongCRToken();
 
         uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
@@ -135,8 +132,7 @@ contract PayoutPool {
         );
         uint256 claimable = (claimableBalance * payout.ratio) / 10000;
 
-        if (claimable == 0)
-            revert PayoutPool__NoPayout();
+        if (claimable == 0) revert PayoutPool__NoPayout();
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 

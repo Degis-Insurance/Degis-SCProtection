@@ -151,9 +151,10 @@ contract WeightedFarmingPool {
 
     /**
      * @notice Registers Cover Right Token to a given pool
-     * @param _id                Pool Id
-     * @param _token         	Cover Right Token address
-     * @param _weight         	Weight of the token in the pool
+     *
+     * @param _id     Pool Id
+     * @param _token  Cover Right Token address
+     * @param _weight Weight of the token in the pool
      */
     function addToken(
         uint256 _id,

@@ -71,7 +71,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     }
 
     modifier onlyPolicyCenter() {
-        require(msg.sender == policyCenter, "Only policy center");
+        if (policyCenter != address(0)) {
+            require(msg.sender == policyCenter, "Only policy center");
+        }
         _;
     }
 

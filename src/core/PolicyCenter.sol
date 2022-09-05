@@ -67,8 +67,6 @@ contract PolicyCenter is
     // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
-    // Year => Month => Total Cover Amount
-    mapping(uint256 => mapping(uint256 => uint256)) coverInMonth;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //

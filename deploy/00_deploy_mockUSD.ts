@@ -25,8 +25,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   // Proxy Admin contract artifact
-  const mockUSDC = await deploy("MockERC20", {
-    contract: "MockERC20",
+  const mockUSDC = await deploy("MockUSDC", {
+    contract: "MockUSDC",
     from: deployer,
     args: ["MockUSDC", "MockUSDC", 6],
     log: true,

@@ -6,9 +6,11 @@ import "../interfaces/VotingParameters.sol";
 
 abstract contract OnboardProposalParameters is VotingParameters {
     // TODO: Parameters for test
-    uint256 constant PROPOSAL_VOTING_PERIOD = 4 hours;
+    //       2 hours for fujiInternal, 18 hours for fuji
+    uint256 constant PROPOSAL_VOTING_PERIOD = 18 hours;
 
     // minimum 50% votes
+    // TODO: 10% when test
     uint256 constant PROPOSAL_QUORUM_RATIO = 10;
 
     // DEG threshold for starting a report

@@ -23,6 +23,12 @@ import {
   PriorityPool__factory,
   MockSHIELD,
   MockSHIELD__factory,
+  MockERC20,
+  MockERC20__factory,
+  MockUSDC,
+  MockUSDC__factory,
+  CoverRightToken,
+  CoverRightToken__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -156,7 +162,7 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
     const addressList = readAddressList();
 
     const priorityPoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
+      addressList[network.name].PriorityPoolFactory;
 
     const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
@@ -188,7 +194,7 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
     const addressList = readAddressList();
 
     const priorityPoolFactoryAddress =
-      addressList[network.name].InsurancePoolFactory;
+      addressList[network.name].PriorityPoolFactory;
 
     const onboardProposal: OnboardProposal = new OnboardProposal__factory(
       dev_account
@@ -225,7 +231,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
     const priceGetterAddress =
-      network.name == "fuji"
+      network.name == "fuji" || network.name == "fujiInternal"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -375,6 +381,8 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
   }
 );
 
+task("setPayoutPool", "Set address in payout pool");
+
 task("mintToken").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -392,10 +400,34 @@ task("mintToken").setAction(async (_, hre) => {
     addressList[network.name].MockShield
   );
 
-  // const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
-  // console.log("tx details", await tx.wait());
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  console.log("tx details", await tx.wait());
 
-  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  const balance = await deg.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 18));
+
+  // const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  // console.log("tx details", await tx.wait());
+});
+
+task("mintMockUSD").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
+    addressList[network.name].MockUSDC
+  );
+
+  const tx = await usd.mint(
+    addressList[network.name].MockExchange,
+    parseUnits("1000000", 6)
+  );
+
   console.log("tx details", await tx.wait());
 });
 
@@ -464,3 +496,27 @@ task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
   const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
   console.log("price", formatUnits(price.price, 6));
 });
+
+task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const crToken: CoverRightToken = new CoverRightToken__factory(
+      dev_account
+    ).attach("0x1AAFFEBF367DEd9eF5819A747b24b02f44002A5B");
+
+    const tx = await crToken.setPolicyCenter(
+      addressList[network.name].PolicyCenter
+    );
+    console.log("Tx details: ", await tx.wait());
+
+    // const policyCenterAddress = await crToken.generation();
+    // console.log("policy center address", policyCenterAddress);
+  }
+);
