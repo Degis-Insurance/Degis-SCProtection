@@ -68,8 +68,16 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         policyCenter = _policyCenter;
     }
 
+    /**
+     * @notice Only policy center address
+     *         When first deployed, policy center is not initialized, so add a check
+     *         TODO: if this has potential risks?
+     */
+     
     modifier onlyPolicyCenter() {
-        require(msg.sender == policyCenter, "Only policy center");
+        if (policyCenter != address(0)) {
+            require(msg.sender == policyCenter, "Only policy center");
+        }
         _;
     }
 
