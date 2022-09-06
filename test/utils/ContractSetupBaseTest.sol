@@ -114,18 +114,20 @@ contract ContractSetupBaseTest is BaseTest {
         payoutPool = new PayoutPool(
             address(shield),
             address(policyCenter),
-            address(crFactory)
+            address(crFactory),
+            address(priorityPoolFactory)
         );
     }
-
- 
 
     function _setupTreasury() internal {
         treasury = new Treasury(address(shield), address(executor));
     }
 
     function _setupFarmingPool() internal {
-        farmingPool = new WeightedFarmingPool(address(premiumPool));
+        farmingPool = new WeightedFarmingPool(
+            address(policyCenter),
+            address(priorityPoolFactory)
+        );
     }
 
     function _setupIncidentReport() internal {
@@ -182,6 +184,6 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
 
-        // 
+        //
     }
 }

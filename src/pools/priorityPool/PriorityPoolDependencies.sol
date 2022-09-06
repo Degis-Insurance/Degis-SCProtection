@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-interface IPriorityPoolFactory {
+import "../../interfaces/IPayoutPool.sol";
+
+interface IFactory {
     function dynamicPoolCounter() external view returns (uint256);
 
     function updateMaxCapacity(bool _isUp, uint256 _maxCapacity) external;
@@ -12,7 +14,7 @@ interface IPriorityPoolFactory {
     function executor() external view returns (address);
 }
 
-interface IProtectionPool {
+interface ISimpleProtectionPool {
     function getTotalCovered() external view returns (uint256);
 
     function getLatestPrice() external returns (uint256);
@@ -26,27 +28,7 @@ interface IProtectionPool {
     function pauseProtectionPool(bool _paused) external;
 }
 
-interface IPolicyCenter {
-    function storePoolInformation(
-        address _pool,
-        address _token,
-        uint256 _poolId
-    ) external;
-}
-
-
-
-interface IPayoutPool {
-    function newPayout(
-        uint256 _poolId,
-        uint256 _generation,
-        uint256 _amount,
-        uint256 _ratio,
-        address _poolAddress
-    ) external;
-}
-
-interface IWeightedFarmingPool {
+interface ISimpleWeightedFarmingPool {
     function addPool(address _token) external;
 
     function addToken(
@@ -66,6 +48,14 @@ interface IWeightedFarmingPool {
         uint256 _id,
         address _token,
         uint256 _newWeight
+    ) external;
+}
+
+interface ISimplePolicyCenter {
+    function storePoolInformation(
+        address _pool,
+        address _token,
+        uint256 _poolId
     ) external;
 }
 

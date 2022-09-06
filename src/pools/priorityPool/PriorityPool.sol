@@ -174,7 +174,7 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
-        if (msg.sender != IPriorityPoolFactory(priorityPoolFactory).executor())
+        if (msg.sender != IFactory(priorityPoolFactory).executor())
             revert PriorityPool__OnlyExecutor();
         _;
     }
@@ -282,7 +282,7 @@ contract PriorityPool is
         if (fromStart > 7 days) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                (IProtectionPool(protectionPool).getTotalCovered() +
+                (ISimpleProtectionPool(protectionPool).getTotalCovered() +
                     _coverAmount);
 
             address lp = currentLPAddress();
@@ -291,7 +291,7 @@ contract PriorityPool is
                 SimpleERC20(protectionPool).totalSupply();
 
             // Total dynamic pools
-            uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
+            uint256 numofPools = IFactory(priorityPoolFactory)
                 .dynamicPoolCounter();
 
             // Dynamic premium ratio
@@ -329,10 +329,7 @@ contract PriorityPool is
             diff = maxCapacity - _maxCapacity;
         }
 
-        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
-            _isUp,
-            diff
-        );
+        IFactory(priorityPoolFactory).updateMaxCapacity(_isUp, diff);
     }
 
     function setCoverIndex(uint256 _newIndex) external {
@@ -465,7 +462,7 @@ contract PriorityPool is
     function _updateDynamic() internal {
         // Put the cheaper check in the first place
         if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
-            IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
+            IFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
     }
@@ -495,7 +492,7 @@ contract PriorityPool is
         newLPAddress = address(new PriorityPoolToken(_name));
         lpTokenAddress[currentGeneration] = newLPAddress;
 
-        IWeightedFarmingPool(_weightedFarmingPool).addToken(
+        ISimpleWeightedFarmingPool(_weightedFarmingPool).addToken(
             poolId,
             newLPAddress,
             SCALE
@@ -600,7 +597,7 @@ contract PriorityPool is
             }
         }
 
-        IWeightedFarmingPool(weightedFarmingPool).updateRewardSpeed(
+        ISimpleWeightedFarmingPool(weightedFarmingPool).updateRewardSpeed(
             poolId,
             _newSpeed,
             _years,
@@ -619,7 +616,7 @@ contract PriorityPool is
             address(this)
         );
 
-        IProtectionPool proPool = IProtectionPool(protectionPool);
+        ISimpleProtectionPool proPool = ISimpleProtectionPool(protectionPool);
 
         uint256 proLPPrice = proPool.getLatestPrice();
 
@@ -668,7 +665,7 @@ contract PriorityPool is
         address lp = currentLPAddress();
 
         // Update the farming pool with the new price index
-        IWeightedFarmingPool(weightedFarmingPool).updateWeight(
+        ISimpleWeightedFarmingPool(weightedFarmingPool).updateWeight(
             poolId,
             lp,
             priceIndex[lp]

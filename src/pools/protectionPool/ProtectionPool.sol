@@ -109,7 +109,7 @@ contract ProtectionPool is
      * @return covered Covered amount
      */
     function getTotalCovered() public view returns (uint256 covered) {
-        IPriorityPoolFactory factory = IPriorityPoolFactory(
+        ISimplePriorityPoolFactory factory = ISimplePriorityPoolFactory(
             priorityPoolFactory
         );
 
@@ -119,7 +119,7 @@ contract ProtectionPool is
             (, address poolAddress, , , ) = factory.pools(i);
 
             if (factory.dynamic(poolAddress)) {
-                covered += IPriorityPool(poolAddress).activeCovered();
+                covered += ISimplePriorityPool(poolAddress).activeCovered();
             }
 
             unchecked {
@@ -156,7 +156,7 @@ contract ProtectionPool is
      * @notice Update index cut when claim happened
      */
     function updateIndexCut() public {
-        IPriorityPoolFactory factory = IPriorityPoolFactory(
+        ISimplePriorityPoolFactory factory = ISimplePriorityPoolFactory(
             priorityPoolFactory
         );
 
@@ -170,11 +170,11 @@ contract ProtectionPool is
         for (uint256 i; i < poolAmount; ) {
             (, address poolAddress, , , ) = factory.pools(i);
 
-            minRequirement = IPriorityPool(poolAddress).minAssetRequirement();
+            minRequirement = ISimplePriorityPool(poolAddress).minAssetRequirement();
 
             if (minRequirement > currentReserved) {
                 indexToCut = (currentReserved * SCALE) / minRequirement;
-                IPriorityPool(poolAddress).setCoverIndex(indexToCut);
+                ISimplePriorityPool(poolAddress).setCoverIndex(indexToCut);
             }
 
             unchecked {
@@ -225,7 +225,7 @@ contract ProtectionPool is
     {
         if (
             msg.sender != policyCenter &&
-            !IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+            !ISimplePriorityPoolFactory(priorityPoolFactory).poolRegistered(
                 msg.sender
             )
         ) revert ProtectionPool__OnlyPriorityPoolOrPolicyCenter();
@@ -258,7 +258,7 @@ contract ProtectionPool is
         external
     {
         if (
-            !IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+            !ISimplePriorityPoolFactory(priorityPoolFactory).poolRegistered(
                 msg.sender
             )
         ) revert ProtectionPool__OnlyPriorityPool();

@@ -3,20 +3,6 @@
 pragma solidity ^0.8.13;
 
 interface IPolicyCenter {
-    event CoverageBought(
-        uint256 paid,
-        address buyer,
-        uint256 poolId,
-        uint256 length,
-        uint256 amount
-    );
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event Payout(uint256 _amount, address _address);
-    event Reward(uint256 _amount, address _address);
-
     function approvePoolToken(address _token) external;
 
     function buyCover(
@@ -109,8 +95,6 @@ interface IPolicyCenter {
     function storeCoverTokenInformation(address _coverToken, uint256 _poolId)
         external;
 
-    function shield() external view returns (address);
-
     function storePoolInformation(
         address _pool,
         address _token,
@@ -124,6 +108,4 @@ interface IPolicyCenter {
     function transferOwnership(address newOwner) external;
 
     function treasury() external view returns (uint256);
-
-    function veDeg() external view returns (address);
 }

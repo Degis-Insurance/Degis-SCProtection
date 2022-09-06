@@ -5,7 +5,6 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
 import "../libraries/DateTime.sol";
 
 /**
@@ -20,16 +19,15 @@ import "../libraries/DateTime.sol";
  *
  *         Different generations of PRI-LP-1-JOE-G1
  */
-contract WeightedFarmingPool  {
+contract WeightedFarmingPool {
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
     uint256 public constant SCALE = 1e12;
 
-    // 4 decimals precision for weight
-    uint256 public constant BASE_WEIGHT = 10000;
-
     address public policyCenter;
+
+    address public priorityPoolFactory;
 
     uint256 public counter;
 
@@ -69,6 +67,10 @@ contract WeightedFarmingPool  {
         uint256 reward
     );
 
+    constructor(address _policyCenter, address _priorityPoolFactory) {
+        policyCenter = _policyCenter;
+        priorityPoolFactory = _priorityPoolFactory;
+    }
 
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
@@ -356,8 +358,6 @@ contract WeightedFarmingPool  {
             SCALE -
             user.rewardDebt;
 
-        require(pending > 0, "No pending reward");
-
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
             _to,
@@ -374,7 +374,11 @@ contract WeightedFarmingPool  {
      *
      * @param _id Pool id
      */
-    function _updateReward(uint256 _id) internal returns (uint256 totalReward) {
+    function _updateReward(uint256 _id)
+        internal
+        view
+        returns (uint256 totalReward)
+    {
         PoolInfo storage pool = pools[_id];
 
         uint256 currentTime = block.timestamp;
@@ -503,7 +507,7 @@ contract WeightedFarmingPool  {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
 
-        for (uint256 i = 0; i <= length; ) {
+        for (uint256 i; i < length; ) {
             if (allTokens[i] == _token) return i;
 
             unchecked {

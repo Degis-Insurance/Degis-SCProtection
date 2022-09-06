@@ -156,7 +156,6 @@ contract PriorityPoolFactory is
         policyCenter = _policyCenter;
     }
 
-
     function setWeightedFarmingPool(address _weightedFarmingPool)
         external
         onlyOwner
@@ -232,14 +231,14 @@ contract PriorityPoolFactory is
         poolAddressToId[newPoolAddress] = currentPoolId;
 
         // Store pool information in Policy Center
-        IPolicyCenter(policyCenter).storePoolInformation(
+        ISimplePolicyCenter(policyCenter).storePoolInformation(
             newPoolAddress,
             _protocolToken,
             currentPoolId
         );
 
         // Add reward token in farming pool
-        IWeightedFarmingPool(weightedFarmingPool).addPool(_protocolToken);
+        ISimpleWeightedFarmingPool(weightedFarmingPool).addPool(_protocolToken);
 
         emit PoolCreated(
             currentPoolId,
@@ -291,7 +290,7 @@ contract PriorityPoolFactory is
 
         IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
 
-        IProtectionPool(protectionPool).pauseProtectionPool(_paused);
+        ISimpleProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }
 
     // ---------------------------------------------------------------------------------------- //
