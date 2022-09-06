@@ -223,7 +223,6 @@ contract PolicyCenter is
         _approvePoolToken(_token);
     }
 
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -661,7 +660,10 @@ contract PolicyCenter is
         // Price in 18 decimals
         uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
 
-        premiumInNativeToken = (_premium * 1e12) / price;
+        // @audit Fix decimal for native tokens
+        // Check the real decimal diff
+        uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
+        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
 
         // Pay native tokens
         IERC20(_token).safeTransferFrom(
