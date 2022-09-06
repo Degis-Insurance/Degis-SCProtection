@@ -9,7 +9,7 @@ import "../interfaces/IPremiumRewardPool.sol";
 
 import "../libraries/DateTime.sol";
 
-import "forge-std/console.sol";
+import "./WeightedFarmingPoolEventError.sol";
 
 /**
  * @notice Weighted Farming Pool
@@ -23,7 +23,7 @@ import "forge-std/console.sol";
  *
  *         Different generations of PRI-LP-1-JOE-G1
  */
-contract WeightedFarmingPool {
+contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
@@ -62,26 +62,6 @@ contract WeightedFarmingPool {
     // Keccak256(poolId, token) => Whether supported
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
-
-    event PoolAdded(uint256 poolId, address token);
-    event NewTokenAdded(uint256 poolId, address token, uint256 weight);
-    event PoolUpdated(uint256 poolId, uint256 accRewardPerShare);
-    event WeightChanged(uint256 poolId);
-    event Harvest(
-        uint256 poolId,
-        address user,
-        address receiver,
-        uint256 reward
-    );
-
-    error WeightedFarmingPool__AlreadySupported();
-    error WeightedFarmingPool__WrongWeightLength();
-    error WeightedFarmingPool__WrongDateLength();
-    error WeightedFarmingPool__ZeroAmount();
-    error WeightedFarmingPool__InexistentPool();
-    error WeightedFarmingPool__OnlyPolicyCenter();
-    error WeightedFarmingPool__NoPendingRewards();
-    error WeightedFarmingPool__NotInPool();
 
     constructor(address _premiumRewardPool) {
         premiumRewardPool = _premiumRewardPool;
@@ -339,6 +319,7 @@ contract WeightedFarmingPool {
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+        
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
@@ -361,7 +342,8 @@ contract WeightedFarmingPool {
         IERC20(_token).transfer(_user, _amount);
 
         uint256 index = _getIndex(_id, _token);
-
+        if (user.amount[index] < _amount)
+            revert WeightedFarmingPool__ExceedsStakedAmount();
         user.amount[index] -= _amount;
         user.share -= _amount * pool.weight[index];
 
@@ -529,8 +511,6 @@ contract WeightedFarmingPool {
     ) internal returns (uint256 actualAmount) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
-        require(balance > 0, "Zero balance");
-
         if (_amount > balance) {
             actualAmount = balance;
         } else {
@@ -552,8 +532,6 @@ contract WeightedFarmingPool {
     {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
-        console.log(length);
-        console.log(allTokens[0]);
 
         for (uint256 i = 0; i <= length; ) {
             if (allTokens[i] == _token) return i;

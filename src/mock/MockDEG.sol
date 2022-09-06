@@ -28,21 +28,12 @@ contract MockDEG is ERC20 {
     }
 
     function mintDegis(address _account, uint256 _amount) external {
-        if (msg.sender != owner) {
-            require(_amount == 10000 ether, "Wrong amount");
-            require(!alreadyMinted[_account], "Already minted");
-        }
 
         alreadyMinted[_account] = true;
         _mint(_account, _amount);
     }
 
     function mint(address _account, uint256 _amount) external {
-        if (msg.sender != owner) {
-            require(_amount == 10000 ether, "Wrong amount");
-            require(!alreadyMinted[_account], "Already minted");
-        }
-
         alreadyMinted[_account] = true;
         _mint(_account, _amount);
     }

@@ -141,9 +141,6 @@ contract PriceGetter is OwnableWithoutContext {
             uint80 answeredInRound
         ) = AggregatorV3Interface(priceFeed.priceFeedAddress).latestRoundData();
 
-        // require(price > 0, "Only accept price that > 0");
-        if (price < 0) price = 0;
-
         emit LatestPriceGet(
             roundID,
             price,

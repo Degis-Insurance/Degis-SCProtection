@@ -34,10 +34,6 @@ contract MockVeDEG is ERC20 {
     }
 
     function mint(address _user, uint256 _amount) public {
-        if (msg.sender != owner) {
-            require(_amount == 10000 ether, "Wrong amount");
-            require(!alreadyMinted[_user], "Already minted");
-        }
         alreadyMinted[_user] = true;
         _mint(_user, _amount);
     }

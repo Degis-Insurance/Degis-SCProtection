@@ -26,7 +26,7 @@ import "src/mock/MockERC20.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/mock/MockSHIELD.sol";
-import "src/mock/MockExchange.sol";
+import { MockExchange } from "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
 
 contract ContractSetupBaseTest is BaseTest {
@@ -49,6 +49,7 @@ contract ContractSetupBaseTest is BaseTest {
     MockDEG internal deg;
     MockVeDEG internal veDEG;
     MockSHIELD internal shield;
+    MockERC20 internal USDC;
     MockPriceGetter internal priceGetter;
     MockExchange internal exchange;
 
@@ -57,6 +58,7 @@ contract ContractSetupBaseTest is BaseTest {
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
+        USDC = new MockERC20("USDCircle", "USDC", 6);
 
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
@@ -103,7 +105,9 @@ contract ContractSetupBaseTest is BaseTest {
             address(deg),
             address(veDEG),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(USDC)
+
         );
     }
 
@@ -136,7 +140,7 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
+        treasury = new Treasury(address(shield), address(executor));
     }
 
     function _setupFarmingPool() internal {
