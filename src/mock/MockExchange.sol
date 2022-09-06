@@ -3,10 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface IERC20Decimals {
-    function decimals() external view returns (uint8);
-}
+import "../interfaces/IERC20Decimals.sol";
 
 contract MockExchange {
     constructor() {}
@@ -27,7 +24,9 @@ contract MockExchange {
         uint256 decimalDiff = IERC20Decimals(path[0]).decimals() -
             IERC20Decimals(path[1]).decimals();
 
-        amountOut = amountIn * 10**decimalDiff;
+        // E.g. amountIn = 1e18
+        //      amountOut = 1e6
+        amountOut = amountIn / 10**decimalDiff;
 
         IERC20(path[1]).transfer(to, amountOut);
     }

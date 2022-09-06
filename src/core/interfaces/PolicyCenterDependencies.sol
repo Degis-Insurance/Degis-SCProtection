@@ -11,10 +11,9 @@ import "../../interfaces/IPayoutPool.sol";
 import "../../interfaces/IWeightedFarmingPool.sol";
 import "../../interfaces/ITreasury.sol";
 import "../../interfaces/IExchange.sol";
+import "../../interfaces/IERC20Decimals.sol";
 
-interface IERC20Decimals {
-    function decimals() external view returns (uint8);
-}
+
 
 abstract contract PolicyCenterDependencies {
     uint256 constant MAX_COVER_LENGTH = 3;

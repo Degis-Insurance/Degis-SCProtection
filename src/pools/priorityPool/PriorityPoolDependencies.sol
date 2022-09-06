@@ -34,9 +34,6 @@ interface IPolicyCenter {
     ) external;
 }
 
-interface IPremiumRewardPool {
-    function register(address _pool, address _token) external;
-}
 
 interface IPayoutPool {
     function newPayout(

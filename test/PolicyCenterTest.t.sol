@@ -64,7 +64,6 @@ contract PolicyCenterTest is
     MockERC20 internal joe;
     MockERC20 internal ptp;
     MockERC20 internal gmx;
-    MockERC20 internal usdc;
 
     address internal joeLPAddress;
     address internal ptpLPAddress;
@@ -87,13 +86,6 @@ contract PolicyCenterTest is
 
     function setUp() public {
         setUpContracts();
-
-        // Deploy usdc
-        usdc = new MockERC20("USDC", "USDC", 18);
-
-        // Set USDC address to current mainnet address
-        bytes memory bytecode = address(usdc).code;
-        vm.etch(policyCenter.USDC(), bytecode);
 
         vm.warp(ZERO_TIME);
 
@@ -141,7 +133,9 @@ contract PolicyCenterTest is
         // Fund exchange
         deg.mintDegis(address(exchange), 1000 ether);
         shield.mint(address(exchange), 1000 ether);
-        MockERC20(policyCenter.USDC()).mint(address(exchange), 1000 ether);
+
+        usdc.mint(address(exchange), 1000 ether);
+
         joe.mint(address(exchange), 1000 ether);
         ptp.mint(address(exchange), 1000 ether);
         gmx.mint(address(exchange), 1000 ether);
@@ -289,7 +283,7 @@ contract PolicyCenterTest is
 
         // Revert to snapshot
         vm.revertTo(snapshot_3);
-        
+
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
@@ -417,7 +411,9 @@ contract PolicyCenterTest is
         emit LiquidityRemoved(CHARLIE, LIQUIDITY * 2);
         policyCenter.removeLiquidity(LIQUIDITY * 2);
 
-        console.log(unicode"✅ Remove liquidity provided in multiple instances");
+        console.log(
+            unicode"✅ Remove liquidity provided in multiple instances"
+        );
 
         vm.revertTo(snapshot_2);
 
@@ -434,7 +430,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         // TODO: Liquidity removal is currently possible during an incident report
-        // vm.expectRevert("Paused");  
+        // vm.expectRevert("Paused");
         vm.expectEmit(false, false, false, true);
         emit LiquidityRemoved(CHARLIE, LIQUIDITY);
         policyCenter.removeLiquidity(LIQUIDITY);
@@ -668,9 +664,7 @@ contract PolicyCenterTest is
         emit StakedLiquidity(LIQUIDITY, CHARLIE);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
-        console.log(
-            unicode"✅ Stake after incident settles"
-        );
+        console.log(unicode"✅ Stake after incident settles");
     }
 
     function _stake(address _user) private {
@@ -748,7 +742,6 @@ contract PolicyCenterTest is
         policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
 
         console.log(unicode"✅ Unstake staked amount");
-
 
         vm.prank(CHARLIE);
         // mint tokens so Charlie can report pool
@@ -839,12 +832,12 @@ contract PolicyCenterTest is
             3
         );
 
-        uint256 maxPayment = price * 11 / 10;
+        uint256 maxPayment = (price * 11) / 10;
 
         // approve JOE
         vm.prank(CHARLIE);
         joe.approve(address(policyCenter), type(uint256).max);
-        MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
+
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy cover without provided liquidity # //
@@ -992,8 +985,8 @@ contract PolicyCenterTest is
             COVER_AMOUNT,
             3
         );
-    
-        maxPayment = price2 * 11 / 10;
+
+        maxPayment = (price2 * 11) / 10;
 
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
@@ -1017,7 +1010,6 @@ contract PolicyCenterTest is
         vm.warp(INCIDENT_SETTLE_TIME + 2 days);
         incidentReport.settle(1);
 
-
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
         emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
@@ -1028,13 +1020,18 @@ contract PolicyCenterTest is
 
     function _buyJoeCover(address _user) internal {
         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
-        uint256 maxPayment = price * 11 / 10;
+        uint256 maxPayment = (price * 11) / 10;
         vm.prank(_user);
         joe.approve(address(policyCenter), type(uint256).max);
         joe.mint(_user, COVER_AMOUNT);
         vm.prank(_user);
         // Get Joe cover right address and buy cover
-        crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+        crJoeAddress = policyCenter.buyCover(
+            JOE_ID,
+            COVER_AMOUNT,
+            3,
+            maxPayment
+        );
     }
 
     function _truthfulReport() internal {
@@ -1051,14 +1048,12 @@ contract PolicyCenterTest is
         vm.warp(INCIDENT_SETTLE_TIME);
         incidentReport.settle(1);
         executor.executeReport(1);
-
     }
 
     function testClaimPayout() public {
         _provideLiquidity(CHARLIE);
         _buyJoeCover(ALICE);
 
-        MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 

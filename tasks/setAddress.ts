@@ -111,7 +111,6 @@ task(
 
   const executorAddress = addressList[network.name].Executor;
   const policyCenterAddress = addressList[network.name].PolicyCenter;
-  const premiumRewardPoolAddress = addressList[network.name].PremiumRewardPool;
   const weightedFarmingPoolAddress =
     addressList[network.name].WeightedFarmingPool;
   const incidentReportAddress = addressList[network.name].IncidentReport;
@@ -127,11 +126,6 @@ task(
 
   const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
   console.log("Tx details: ", await tx_2.wait());
-
-  const tx_3 = await priorityPoolFactory.setPremiumRewardPool(
-    premiumRewardPoolAddress
-  );
-  console.log("Tx details: ", await tx_3.wait());
 
   const tx_4 = await priorityPoolFactory.setWeightedFarmingPool(
     weightedFarmingPoolAddress
@@ -425,10 +419,14 @@ task("mintMockUSD").setAction(async (_, hre) => {
 
   const tx = await usd.mint(
     addressList[network.name].MockExchange,
-    parseUnits("1000000", 6)
+    parseUnits("1000000000", 6)
   );
 
   console.log("tx details", await tx.wait());
+
+  const balance = await usd.balanceOf(addressList[network.name].MockExchange);
+
+  console.log("USDC balance:", formatUnits(balance, 6));
 });
 
 task("approveToken", "Approve token").setAction(async (_, hre) => {
@@ -520,3 +518,22 @@ task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
     // console.log("policy center address", policyCenterAddress);
   }
 );
+
+task("approvePolicyCenter").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  const tx = await policyCenter.approvePoolToken(
+    addressList[network.name].TestToken3
+  );
+  console.log("tx details:", await tx.wait());
+});

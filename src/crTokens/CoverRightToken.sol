@@ -47,7 +47,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     uint256 public immutable POOL_ID;
 
     // Those covers bought within 2 days will be excluded
-    uint256 public constant EXCLUDE_DAYS = 2;
+    // TODO: test will set it as 0
+    uint256 public constant EXCLUDE_DAYS = 0;
 
     // User address => start timestamp => cover amount
     mapping(address => mapping(uint256 => uint256)) public coverStartFrom;

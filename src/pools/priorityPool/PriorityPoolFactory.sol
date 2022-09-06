@@ -156,13 +156,7 @@ contract PriorityPoolFactory is
         policyCenter = _policyCenter;
     }
 
-    function setPremiumRewardPool(address _premiumRewardPool)
-        external
-        onlyOwner
-    {
-        premiumRewardPool = _premiumRewardPool;
-    }
-
+   
     function setWeightedFarmingPool(address _weightedFarmingPool)
         external
         onlyOwner
@@ -242,12 +236,6 @@ contract PriorityPoolFactory is
             newPoolAddress,
             _protocolToken,
             currentPoolId
-        );
-
-        // Register reward token in premium reward pool
-        IPremiumRewardPool(premiumRewardPool).register(
-            newPoolAddress,
-            _protocolToken
         );
 
         // Add reward token in farming pool

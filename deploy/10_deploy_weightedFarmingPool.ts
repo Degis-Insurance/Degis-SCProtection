@@ -19,13 +19,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const premiumRewardPoolAddress = addressList[network.name].PremiumRewardPool;
-
   // WeightedFarmingPool contract artifact
   const weightedFarmingPool = await deploy("WeightedFarmingPool", {
     contract: "WeightedFarmingPool",
     from: deployer,
-    args: [premiumRewardPoolAddress],
+    args: [],
     log: true,
   });
   addressList[network.name].WeightedFarmingPool = weightedFarmingPool.address;

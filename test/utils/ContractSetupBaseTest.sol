@@ -13,7 +13,6 @@ import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/PremiumRewardPool.sol";
 import "src/pools/Treasury.sol";
 
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -28,6 +27,7 @@ import "src/mock/MockVeDEG.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
+import "src/mock/MockUSDC.sol";
 
 contract ContractSetupBaseTest is BaseTest {
     PolicyCenter internal policyCenter;
@@ -39,7 +39,6 @@ contract ContractSetupBaseTest is BaseTest {
     Treasury internal treasury;
     PayoutPool internal payoutPool;
     WeightedFarmingPool internal farmingPool;
-    PremiumRewardPool internal premiumPool;
 
     IncidentReport internal incidentReport;
     OnboardProposal internal onboardProposal;
@@ -49,6 +48,8 @@ contract ContractSetupBaseTest is BaseTest {
     MockDEG internal deg;
     MockVeDEG internal veDEG;
     MockSHIELD internal shield;
+    MockUSDC internal usdc;
+
     MockPriceGetter internal priceGetter;
     MockExchange internal exchange;
 
@@ -57,6 +58,8 @@ contract ContractSetupBaseTest is BaseTest {
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
+
+        usdc = new MockUSDC("MockUSDC", "MockUSDC", 6);
 
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
@@ -67,7 +70,7 @@ contract ContractSetupBaseTest is BaseTest {
         _setupPolicyCenter();
         _setupExecutor();
 
-        _setupPremiumRewardPool();
+
         _setupTreasury();
 
         _setupFarmingPool();
@@ -103,7 +106,8 @@ contract ContractSetupBaseTest is BaseTest {
             address(deg),
             address(veDEG),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(usdc)
         );
     }
 
@@ -127,16 +131,9 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
-    function _setupPremiumRewardPool() internal {
-        premiumPool = new PremiumRewardPool(
-            address(shield),
-            address(priorityPoolFactory),
-            address(protectionPool)
-        );
-    }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
+        treasury = new Treasury(address(shield), address(executor));
     }
 
     function _setupFarmingPool() internal {
@@ -193,7 +190,6 @@ contract ContractSetupBaseTest is BaseTest {
         // Set factory
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setExecutor(address(executor));
-        priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));

@@ -5,8 +5,6 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/IPremiumRewardPool.sol";
-
 import "../libraries/DateTime.sol";
 
 import "forge-std/console.sol";
@@ -32,7 +30,6 @@ contract WeightedFarmingPool {
     // 4 decimals precision for weight
     uint256 public constant BASE_WEIGHT = 10000;
 
-    address public premiumRewardPool;
     address public policyCenter;
 
     uint256 public counter;
@@ -83,8 +80,8 @@ contract WeightedFarmingPool {
     error WeightedFarmingPool__NoPendingRewards();
     error WeightedFarmingPool__NotInPool();
 
-    constructor(address _premiumRewardPool) {
-        premiumRewardPool = _premiumRewardPool;
+    constructor() {
+        
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -478,12 +475,6 @@ contract WeightedFarmingPool {
                 }
             }
         }
-
-        // Distribute reward to Priority Pool
-        IPremiumRewardPool(premiumRewardPool).distributeToken(
-            pool.rewardToken,
-            totalReward
-        );
     }
 
     /**
@@ -529,7 +520,8 @@ contract WeightedFarmingPool {
     ) internal returns (uint256 actualAmount) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
-        require(balance > 0, "Zero balance");
+        // @audit remove this check
+        // require(balance > 0, "Zero balance");
 
         if (_amount > balance) {
             actualAmount = balance;
