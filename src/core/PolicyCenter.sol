@@ -55,6 +55,8 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    address public immutable USDC;
+
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
@@ -74,7 +76,8 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool
+        address _protectionPool,
+        address _USDC
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
@@ -89,7 +92,8 @@ contract PolicyCenter is
         // 45% to protectionPool, 50% to insurancePool, 5% to treasury
         premiumSplits = [4500, 5000];
 
-        IERC20(USDC).approve(address(shield), type(uint256).max);
+        USDC = _USDC;
+        IERC20(_USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -549,7 +553,7 @@ contract PolicyCenter is
         returns (address crToken)
     {
         // Get the expiry timestamp
-        (uint256 expiry, uint256 year, uint256 month ) = DateTimeLibrary
+        (uint256 expiry, uint256 year, uint256 month) = DateTimeLibrary
             ._getExpiry(block.timestamp, _coverDuration);
 
         (

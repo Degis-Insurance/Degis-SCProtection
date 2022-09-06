@@ -174,8 +174,10 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
+
         if (msg.sender != IFactory(priorityPoolFactory).executor())
             revert PriorityPool__OnlyExecutor();
+
         _;
     }
 

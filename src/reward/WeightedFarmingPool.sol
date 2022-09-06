@@ -280,12 +280,17 @@ contract WeightedFarmingPool {
         uint256 index = _getIndex(_id, _token);
 
         // check if current index exists for user
-        if (user.amount.length == 0) {
-            user.amount.push(index);
+        if (user.amount.length < index + 1) {
+            user.amount.push(0);
+        }
+        if (pool.amount.length < index + 1) {
+            pool.amount.push(0);
         }
 
         user.amount[index] += _amount;
         user.share += _amount * pool.weight[index];
+
+        pool.amount[index] += _amount;
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
@@ -502,19 +507,20 @@ contract WeightedFarmingPool {
     function _getIndex(uint256 _id, address _token)
         internal
         view
-        returns (uint256)
+        returns (uint256 index)
     {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
 
         for (uint256 i; i < length; ) {
-            if (allTokens[i] == _token) return i;
-
-            unchecked {
-                ++i;
+            if (allTokens[i] == _token) {
+                index = i;
+                break;
+            } else {
+                unchecked {
+                    ++i;
+                }
             }
         }
-
-        revert("Not in the pool");
     }
 }

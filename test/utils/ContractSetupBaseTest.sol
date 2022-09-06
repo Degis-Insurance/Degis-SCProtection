@@ -26,6 +26,7 @@ import "src/mock/MockVeDEG.sol";
 import "src/mock/MockSHIELD.sol";
 import "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
+import "src/mock/MockUSDC.sol";
 
 contract ContractSetupBaseTest is BaseTest {
     PolicyCenter internal policyCenter;
@@ -48,12 +49,15 @@ contract ContractSetupBaseTest is BaseTest {
     MockSHIELD internal shield;
     MockPriceGetter internal priceGetter;
     MockExchange internal exchange;
+    MockUSDC internal usdc;
 
     function setUpContracts() public {
         // Set up mock tokens
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
+        usdc = new MockUSDC("MockUSDC", "MockUSDC", 6);
+
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
 
@@ -98,7 +102,8 @@ contract ContractSetupBaseTest is BaseTest {
             address(deg),
             address(veDEG),
             address(shield),
-            address(protectionPool)
+            address(protectionPool),
+            address(usdc)
         );
     }
 
@@ -183,7 +188,5 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
-
-        //
     }
 }
