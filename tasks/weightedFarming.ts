@@ -52,7 +52,7 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
 
   const userInfo = await farming.users(
     1,
-    "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad"
+    "0x1be1a151ba3d24f594ee971dc9b843f23b5ba80e"
   );
   console.log(userInfo.share.toString());
 
@@ -63,7 +63,7 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
 
   const amount = await farming.getUserLPAmount(
     1,
-    "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad"
+    "0x1be1a151ba3d24f594ee971dc9b843f23b5ba80e"
   );
   console.log(amount.toString());
 
@@ -93,3 +93,64 @@ task("checkFarmings", "Check farming status").setAction(async (_, hre) => {
   const userAmount = await farming.getUserLPAmount(1, addr);
   console.log("User lp amount: ", userAmount[0]);
 });
+
+task("addPool", "Add new farming pool")
+  .addParam("rewardtoken", "reward token address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
+      dev_account
+    ).attach(addressList[network.name].WeightedFarmingPool);
+
+    const tx = await farming.addPool(taskArgs.rewardtoken);
+    console.log("Tx details:", await tx.wait());
+  });
+
+task("addToken", "Add new token into a farming pool")
+  .addParam("token", "farming lp token address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
+      dev_account
+    ).attach(addressList[network.name].WeightedFarmingPool);
+
+    const weight = parseUnits("1", 12);
+
+    const tx = await farming.addToken(1, taskArgs.token, weight);
+    console.log("Tx details:", await tx.wait());
+  });
+
+  task("updatePool", "Add new token into a farming pool")
+  .addParam("id", "farming lp token address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
+      dev_account
+    ).attach(addressList[network.name].WeightedFarmingPool);
+
+
+
+    const tx = await farming.updatePool(1);
+    console.log("Tx details:", await tx.wait());
+  });
