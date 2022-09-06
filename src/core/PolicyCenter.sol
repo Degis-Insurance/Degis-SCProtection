@@ -549,7 +549,7 @@ contract PolicyCenter is
         returns (address crToken)
     {
         // Get the expiry timestamp
-        (uint256 year, uint256 month, uint256 expiry) = DateTimeLibrary
+        (uint256 expiry, uint256 year, uint256 month ) = DateTimeLibrary
             ._getExpiry(block.timestamp, _coverDuration);
 
         (

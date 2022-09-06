@@ -213,7 +213,7 @@ contract PriorityPool is
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        (, , uint256 endTimestamp) = DateTimeLibrary._getExpiry(
+        (uint256 endTimestamp, , ) = DateTimeLibrary._getExpiry(
             block.timestamp,
             _coverDuration
         );
