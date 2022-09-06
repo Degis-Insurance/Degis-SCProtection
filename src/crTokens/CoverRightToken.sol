@@ -82,6 +82,10 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         policyCenter = _policyCenter;
     }
 
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
     /**
      * @notice Mint new crTokens when buying covers
      *

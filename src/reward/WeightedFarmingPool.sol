@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../libraries/DateTime.sol";
+import "../interfaces/IPriorityPoolFactory.sol";
 
 import "forge-std/console.sol";
 
@@ -27,10 +28,9 @@ contract WeightedFarmingPool {
 
     uint256 public constant SCALE = 1e12;
 
-    // 4 decimals precision for weight
-    uint256 public constant BASE_WEIGHT = 10000;
-
     address public policyCenter;
+
+    address public priorityPoolFactory;
 
     uint256 public counter;
 
@@ -80,8 +80,19 @@ contract WeightedFarmingPool {
     error WeightedFarmingPool__NoPendingRewards();
     error WeightedFarmingPool__NotInPool();
 
-    constructor() {
-        
+    constructor(address _policyCenter, address _priorityPoolFactory) {
+        policyCenter = _policyCenter;
+        priorityPoolFactory = _priorityPoolFactory;
+    }
+
+    modifier isPriorityPool() {
+        require(
+            IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+                msg.sender
+            ),
+            "Only Priority Pool"
+        );
+        _;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -110,8 +121,14 @@ contract WeightedFarmingPool {
         return (pool.tokens, pool.amount, pool.weight);
     }
 
+    // TODO: add owner or remove this
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
+    }
+
+    // TODO: add owner or remove this
+    function setPriorityPoolFactory(address _priorityPoolFactory) external {
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     /**
@@ -134,8 +151,9 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Registers PRI-LP token in Weighted Farming Pool
-     * @param _rewardToken       Reward token address to be given to users
+     * @notice Register a new famring pool for priority pool
+     *
+     * @param _rewardToken Reward token address (protocol native token)
      */
     function addPool(address _rewardToken) external {
         uint256 currentId = ++counter;
@@ -147,21 +165,23 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Registers Cover Right Token to a given pool
+     * @notice Register Pri-LP token
      *
      * @param _id     Pool Id
-     * @param _token  Cover Right Token address
+     * @param _token  Priority pool lp token address
      * @param _weight Weight of the token in the pool
      */
     function addToken(
         uint256 _id,
         address _token,
         uint256 _weight
-    ) public {
+    ) public isPriorityPool {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
+        // Record as supported
         supported[key] = true;
+
         pools[_id].tokens.push(_token);
         pools[_id].weight.push(_weight);
 
@@ -322,8 +342,12 @@ contract WeightedFarmingPool {
             user.amount.push(index);
         }
 
+        // Update user amount for this gen lp token
         user.amount[index] += _amount;
         user.share += _amount * pool.weight[index];
+
+        // Update pool amount for this gen lp token
+        pool.amount[index] += _amount;
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }

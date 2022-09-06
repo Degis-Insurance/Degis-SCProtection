@@ -149,3 +149,33 @@ task("unstakeLiquidity", "UnStake liquidity from priority pool").setAction(
     console.log("Tx details: ", await tx.wait());
   }
 );
+
+task("checkPri", "Check priority pool status").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+    const priorityPoolList = readPriorityPoolList();
+
+    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
+      addressList[network.name].PolicyCenter
+    );
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const priAddress = (await factory.pools(2)).poolAddress;
+    console.log("Priority pool address:", priAddress);
+    const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      priAddress
+    );
+
+    const priLPAddress = await priPool.currentLPAddress();
+    console.log("current lp address: ", priLPAddress);
+  }
+);

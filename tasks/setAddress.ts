@@ -358,6 +358,7 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
     const addressList = readAddressList();
 
     const policyCenterAddress = addressList[network.name].PolicyCenter;
+    const factoryAddress = addressList[network.name].PriorityPoolFactory;
 
     const weightedFarmingPool: WeightedFarmingPool =
       new WeightedFarmingPool__factory(dev_account).attach(
@@ -369,6 +370,13 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
         policyCenterAddress
       );
       console.log("Tx details: ", await tx_1.wait());
+    }
+
+    if ((await weightedFarmingPool.priorityPoolFactory()) != factoryAddress) {
+      const tx_2 = await weightedFarmingPool.setPriorityPoolFactory(
+        factoryAddress
+      );
+      console.log("Tx details: ", await tx_2.wait());
     }
 
     console.log("\nFinish setting contract addresses in farming pool\n");
