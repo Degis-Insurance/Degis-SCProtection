@@ -66,6 +66,9 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
     "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad"
   );
   console.log(amount.toString());
+
+  const counter = await farming.counter();
+  console.log("counter", counter.toString());
 });
 
 task("checkFarmings", "Check farming status").setAction(async (_, hre) => {

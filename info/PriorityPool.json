@@ -18,9 +18,9 @@
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0x8ed5FcD5e8840DA7eF2DD86e11DC452360b9E949",
+			"poolAddress": "0x1e48db7cB62d1d048932262086E9C813C122bf2b",
 			"name": "Project2",
-			"token": "0xDaa32f53e46FF44b911e876FA8122C3cbBb6603a",
+			"token": "0x2DDAee3Fac0e8521E0d4eaEfcE83A50706912d6C",
 			"premium": "200"
 		}
 	},
