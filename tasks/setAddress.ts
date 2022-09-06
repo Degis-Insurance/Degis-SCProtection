@@ -121,24 +121,24 @@ task(
       addressList[network.name].PriorityPoolFactory
     );
 
-  const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
-  console.log("Tx details: ", await tx_1.wait());
+  // const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
+  // console.log("Tx details: ", await tx_1.wait());
 
-  const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
-  console.log("Tx details: ", await tx_2.wait());
+  // const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
+  // console.log("Tx details: ", await tx_2.wait());
 
-  const tx_4 = await priorityPoolFactory.setWeightedFarmingPool(
+  const tx_3 = await priorityPoolFactory.setWeightedFarmingPool(
     weightedFarmingPoolAddress
   );
-  console.log("Tx details: ", await tx_4.wait());
+  console.log("Tx details: ", await tx_3.wait());
 
-  const tx_5 = await priorityPoolFactory.setIncidentReport(
-    incidentReportAddress
-  );
-  console.log("Tx details: ", await tx_5.wait());
+  // const tx_4 = await priorityPoolFactory.setIncidentReport(
+  //   incidentReportAddress
+  // );
+  // console.log("Tx details: ", await tx_4.wait());
 
-  const tx_6 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
-  console.log("Tx details: ", await tx_6.wait());
+  // const tx_5 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
+  // console.log("Tx details: ", await tx_5.wait());
 
   console.log("\nFinish setting contract addresses in priority pool factory\n");
 });
@@ -429,11 +429,9 @@ task("mintMockUSD").setAction(async (_, hre) => {
     addressList[network.name].MockExchange,
     parseUnits("1000000000", 6)
   );
-
   console.log("tx details", await tx.wait());
 
   const balance = await usd.balanceOf(addressList[network.name].MockExchange);
-
   console.log("USDC balance:", formatUnits(balance, 6));
 });
 
@@ -541,7 +539,7 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   ).attach(addressList[network.name].PolicyCenter);
 
   const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].TestToken3
+    addressList[network.name].TestToken1
   );
   console.log("tx details:", await tx.wait());
 });

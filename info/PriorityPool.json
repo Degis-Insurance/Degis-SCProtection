@@ -2,16 +2,16 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0x8f62c09f660DD00Be3E5Dfec4436e99437e579fa",
-			"name": "Test1",
-			"token": "0xca5f5aF0a21885cf7c74040Af8489b8762EE060A",
+			"poolAddress": "0xDB5818C09a2D5B1323966c4C9422A4AcF8FaD85b",
+			"name": "Project1",
+			"token": "0xE3EFf5dbA93082b101E7f745244AfD14BA95730D",
 			"premium": "200"
 		}
 	},
 	"fujiInternal": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0xB3E87DD702D945f660E5061ab22e5Da2aBcad287",
+			"poolAddress": "0x177416CDAEF89dF127a9e297B1814355C136B54b",
 			"name": "Project1",
 			"token": "0x8891063f1622f5335431CF054B157d4B9a5a020b",
 			"premium": "200"

@@ -175,7 +175,7 @@ contract WeightedFarmingPool {
         uint256 _id,
         address _token,
         uint256 _weight
-    ) public isPriorityPool {
+    ) public {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
@@ -437,7 +437,11 @@ contract WeightedFarmingPool {
      *
      * @param _id Pool id
      */
-    function _updateReward(uint256 _id) internal returns (uint256 totalReward) {
+    function _updateReward(uint256 _id)
+        internal
+        view
+        returns (uint256 totalReward)
+    {
         PoolInfo storage pool = pools[_id];
 
         uint256 currentTime = block.timestamp;
@@ -571,7 +575,7 @@ contract WeightedFarmingPool {
         console.log(length);
         console.log(allTokens[0]);
 
-        for (uint256 i = 0; i <= length; ) {
+        for (uint256 i; i < length; ) {
             if (allTokens[i] == _token) return i;
 
             unchecked {

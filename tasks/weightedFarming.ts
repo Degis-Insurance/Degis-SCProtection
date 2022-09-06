@@ -51,12 +51,12 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
   ).attach(addressList[network.name].WeightedFarmingPool);
 
   const userInfo = await farming.users(
-    2,
+    1,
     "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad"
   );
   console.log(userInfo.share.toString());
 
-  const poolInfo = await farming.getPoolArrays(2);
+  const poolInfo = await farming.getPoolArrays(1);
   console.log("Token in this farming:", poolInfo[0]);
   console.log("Amount in this farming:", poolInfo[1]);
   console.log("Weight in this farming:", poolInfo[2]);
@@ -83,13 +83,10 @@ task("checkFarmings", "Check farming status").setAction(async (_, hre) => {
 
   const addr = "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad";
 
-  const userInfo = await farming.users(2, addr);
+  const userInfo = await farming.users(1, addr);
   console.log("User shares: ", userInfo.share.toString());
   console.log("User reward debt: ", userInfo.rewardDebt.toString());
 
-  const userAmount = await farming.getUserLPAmount(2, addr);
-  console.log("User lp amount: ", userAmount.toString());
-
-  const poolInfo = await farming.pools(2);
-  console.log("poo");
+  const userAmount = await farming.getUserLPAmount(1, addr);
+  console.log("User lp amount: ", userAmount[0]);
 });

@@ -19,6 +19,7 @@ import "./tasks/voting/onboard";
 import "./tasks/executor/executor";
 import "./tasks/pools/pool";
 import "./tasks/weightedFarming";
+import "./tasks/tokens/token";
 
 function getRemappings() {
   return fs
