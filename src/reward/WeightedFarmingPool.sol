@@ -481,8 +481,6 @@ contract WeightedFarmingPool  {
     ) internal returns (uint256 actualAmount) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
-        require(balance > 0, "Zero balance");
-
         if (_amount > balance) {
             actualAmount = balance;
         } else {
