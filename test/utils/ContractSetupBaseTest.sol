@@ -12,7 +12,6 @@ import "src/pools/protectionPool/ProtectionPool.sol";
 
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/PremiumRewardPool.sol";
 import "src/pools/Treasury.sol";
 
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -38,7 +37,6 @@ contract ContractSetupBaseTest is BaseTest {
     Treasury internal treasury;
     PayoutPool internal payoutPool;
     WeightedFarmingPool internal farmingPool;
-    PremiumRewardPool internal premiumPool;
 
     IncidentReport internal incidentReport;
     OnboardProposal internal onboardProposal;
@@ -68,7 +66,6 @@ contract ContractSetupBaseTest is BaseTest {
         _setupCRFactory();
 
         _setupPayoutPool();
-        _setupPremiumRewardPool();
         _setupTreasury();
 
         _setupFarmingPool();
@@ -121,13 +118,7 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
-    function _setupPremiumRewardPool() internal {
-        premiumPool = new PremiumRewardPool(
-            address(shield),
-            address(priorityPoolFactory),
-            address(protectionPool)
-        );
-    }
+ 
 
     function _setupTreasury() internal {
         treasury = new Treasury(address(shield), address(executor));
@@ -187,7 +178,6 @@ contract ContractSetupBaseTest is BaseTest {
         // Set factory
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setExecutor(address(executor));
-        priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));

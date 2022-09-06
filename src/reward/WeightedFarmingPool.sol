@@ -5,8 +5,6 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/IPremiumRewardPool.sol";
-
 
 import "../libraries/DateTime.sol";
 
@@ -31,7 +29,6 @@ contract WeightedFarmingPool  {
     // 4 decimals precision for weight
     uint256 public constant BASE_WEIGHT = 10000;
 
-    address public premiumRewardPool;
     address public policyCenter;
 
     uint256 public counter;
@@ -72,11 +69,6 @@ contract WeightedFarmingPool  {
         uint256 reward
     );
 
-    constructor(
-        address _premiumRewardPool
-    )  {
-        premiumRewardPool = _premiumRewardPool;
-    }
 
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
@@ -444,12 +436,6 @@ contract WeightedFarmingPool  {
                 }
             }
         }
-
-        // Distribute reward to Priority Pool
-        IPremiumRewardPool(premiumRewardPool).distributeToken(
-            pool.rewardToken,
-            totalReward
-        );
     }
 
     /**
