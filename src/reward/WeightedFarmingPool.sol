@@ -533,7 +533,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
 
-        for (uint256 i = 0; i <= length; ) {
+        for (uint256 i; i < length; ) {
             if (allTokens[i] == _token) return i;
 
             unchecked {

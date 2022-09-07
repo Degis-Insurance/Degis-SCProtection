@@ -688,8 +688,13 @@ contract PolicyCenter is
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
-        uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
-        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
+        uint256 decimalDiff = IERC20Decimals(_token).decimals();
+        premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
+        console.log("premiumInNativeToken", premiumInNativeToken);
+        console.log("price", price);
+        console.log("decimalDiff", decimalDiff);
+        console.log("premium", _premium);
+
 
         // Pay native tokens
         IERC20(_token).safeTransferFrom(

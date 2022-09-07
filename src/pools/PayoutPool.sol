@@ -9,6 +9,8 @@ import "../interfaces/IPriorityPoolFactory.sol";
 
 import "./SimpleIERC20.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @notice Payout Pool
  *
@@ -51,7 +53,7 @@ contract PayoutPool {
 
     error PayoutPool__OnlyPriorityPool();
     error PayoutPool__NotPolicyCenter();
-    error PayoutPool__WrongCRToken();
+    error PayoutPool__NotMatchingPoolIdGeneration();
     error PayoutPool__NoPayout();
 
     constructor(
@@ -125,12 +127,16 @@ contract PayoutPool {
             abi.encodePacked(_poolId, expiry, _generation)
         );
         if (ICoverRightTokenFactory(crFactory).saltToAddress(salt) != _crToken)
-            revert PayoutPool__WrongCRToken();
+            revert PayoutPool__NotMatchingPoolIdGeneration();
 
         uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
             _user
         );
+
+        console.log("claimableBalance", claimableBalance);
+        console.log("payout.ratio", payout.ratio);
         uint256 claimable = (claimableBalance * payout.ratio) / 10000;
+
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 

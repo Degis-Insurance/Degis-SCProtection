@@ -291,5 +291,25 @@ contract ExecutorTest is
         assertTrue(joePool.currentLPAddress() != joeLPAddress);
 
         console.log(unicode"✅ Execute a settled report");
+
+        // # --------------------------------------------------------------------//
+        // # Should not able to execute Report twice # //
+        // # --------------------------------------------------------------------//
+
+        vm.expectRevert(Executor__AlreadyExecuted.selector);
+        executor.executeReport(1);
+
+        console.log(unicode"✅ Not execute a report twice");
+
+
+        // # --------------------------------------------------------------------//
+        // # Should not able to execute Proposal twice # //
+        // # --------------------------------------------------------------------//
+
+        vm.expectRevert(Executor__AlreadyExecuted.selector);
+        executor.executeProposal(1);
+
+        console.log(unicode"✅ Not execute a Proposal twice");
+
     }
 }
