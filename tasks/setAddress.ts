@@ -121,24 +121,24 @@ task(
       addressList[network.name].PriorityPoolFactory
     );
 
-  // const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
-  // console.log("Tx details: ", await tx_1.wait());
+  const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
+  console.log("Tx details: ", await tx_1.wait());
 
-  // const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
-  // console.log("Tx details: ", await tx_2.wait());
+  const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
+  console.log("Tx details: ", await tx_2.wait());
 
   const tx_3 = await priorityPoolFactory.setWeightedFarmingPool(
     weightedFarmingPoolAddress
   );
   console.log("Tx details: ", await tx_3.wait());
 
-  // const tx_4 = await priorityPoolFactory.setIncidentReport(
-  //   incidentReportAddress
-  // );
-  // console.log("Tx details: ", await tx_4.wait());
+  const tx_4 = await priorityPoolFactory.setIncidentReport(
+    incidentReportAddress
+  );
+  console.log("Tx details: ", await tx_4.wait());
 
-  // const tx_5 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
-  // console.log("Tx details: ", await tx_5.wait());
+  const tx_5 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
+  console.log("Tx details: ", await tx_5.wait());
 
   console.log("\nFinish setting contract addresses in priority pool factory\n");
 });

@@ -46,7 +46,8 @@ contract WeightedFarmingPool {
     mapping(uint256 => PoolInfo) public pools;
 
     // pool id => year => month => daily amount
-    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256))) speed;
+    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
+        public speed;
 
     struct UserInfo {
         uint256[] amount;
@@ -354,6 +355,7 @@ contract WeightedFarmingPool {
 
         // Update pool amount for this gen lp token
         pool.amount[index] += _amount;
+        pool.shares += _amount * pool.weight[index];
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
@@ -393,6 +395,7 @@ contract WeightedFarmingPool {
         user.share -= _amount * pool.weight[index];
 
         pool.amount[index] -= _amount;
+        pool.shares -= _amount * pool.weight[index];
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
@@ -406,7 +409,7 @@ contract WeightedFarmingPool {
         if (pool.shares > 0) {
             uint256 newReward = _updateReward(_id);
 
-            pool.accRewardPerShare += newReward / pool.shares;
+            pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -424,10 +427,11 @@ contract WeightedFarmingPool {
         UserInfo storage user = users[_id][msg.sender];
 
         uint256 pending = (user.share * pool.accRewardPerShare) /
-            SCALE -
+            (SCALE * SCALE) -
             user.rewardDebt;
 
-        if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
+        // TODO: whether should be an error
+        // if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,

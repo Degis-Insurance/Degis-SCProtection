@@ -16,6 +16,7 @@ dotenv.config();
 
 import "./tasks/setAddress";
 import "./tasks/voting/onboard";
+import "./tasks/voting/report";
 import "./tasks/executor/executor";
 import "./tasks/pools/pool";
 import "./tasks/weightedFarming";

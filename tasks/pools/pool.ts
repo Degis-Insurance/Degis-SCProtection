@@ -169,7 +169,7 @@ task("checkPri", "Check priority pool status").setAction(
       dev_account
     ).attach(addressList[network.name].PriorityPoolFactory);
 
-    const priAddress = (await factory.pools(1)).poolAddress;
+    const priAddress = (await factory.pools(2)).poolAddress;
     console.log("Priority pool address:", priAddress);
     const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
       priAddress

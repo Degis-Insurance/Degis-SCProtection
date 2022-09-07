@@ -69,15 +69,15 @@ task("settle", "Settle a voting")
 
     const addressList = readAddressList();
 
-    // const onboardProposal: OnboardProposal = new OnboardProposal__factory(
-    //   dev_account
-    // ).attach(addressList[network.name].OnboardProposal);
+    const onboardProposal: OnboardProposal = new OnboardProposal__factory(
+      dev_account
+    ).attach(addressList[network.name].OnboardProposal);
 
-    // const tx = await onboardProposal.settle(taskArgs.id);
-    // console.log("Tx details:", await tx.wait());
+    const tx = await onboardProposal.settle(taskArgs.id);
+    console.log("Tx details:", await tx.wait());
 
-    // const p = await onboardProposal.proposals(1);
-    // console.log(p.result.toString());
+    const p = await onboardProposal.proposals(1);
+    console.log(p.result.toString());
 
     const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
       addressList[network.name].MockVeDEG

@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const name = "TestToken2";
+  const name = "TestToken1";
   const symbol = "TT";
   const decimal = 18;
 
