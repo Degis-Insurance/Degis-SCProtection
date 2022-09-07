@@ -383,8 +383,8 @@ contract IncidentReport is
         uint256 _payout,
         address _user
     ) internal {
-        // Check pool can be reported
-        address pool = _checkPoolStatus(_poolId);
+        // Check whether the pool can be reported
+        address pool = _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
         reported[pool] = true;
@@ -725,13 +725,15 @@ contract IncidentReport is
      * @notice Check pool status and return address
      *         Ensure the pool:
      *             1) Exists
-     *             2) Has not been reported
+     *             2) Has not been reported'
+     *             3) The payout is less than the active covered amount
      *
      * @param _poolId Pool id
+     * @param _payout Payout amount
      *
      * @return pool Pool address
      */
-    function _checkPoolStatus(uint256 _poolId)
+    function _checkPoolStatus(uint256 _poolId, uint256 _payout)
         internal
         view
         returns (address pool)
@@ -740,6 +742,9 @@ contract IncidentReport is
 
         if (pool == address(0)) revert IncidentReport__PoolNotExist();
         if (reported[pool]) revert IncidentReport__AlreadyReported();
+
+        if (_payout > ISimplePriorityPool(pool).activeCovered())
+            revert IncidentReport__PayoutExceedCovered();
     }
 
     /**

@@ -158,6 +158,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     {
         IIncidentReport incident = IIncidentReport(incidentReport);
 
+        // Get the latest report for this pool
         uint256 reportAmount = incident.getPoolReportsAmount(POOL_ID);
         uint256 latestReportId = incident.poolReports(
             POOL_ID,

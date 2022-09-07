@@ -56,7 +56,7 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
   );
   console.log(userInfo.share.toString());
 
-  const poolInfo = await farming.getPoolArrays(1);
+  const poolInfo = await farming.getPoolArrays(2);
   console.log("Token in this farming:", poolInfo[0]);
   console.log("Amount in this farming:", poolInfo[1]);
   console.log("Weight in this farming:", poolInfo[2]);
@@ -84,14 +84,14 @@ task("checkFarmings", "Check farming status").setAction(async (_, hre) => {
     dev_account
   ).attach(addressList[network.name].WeightedFarmingPool);
 
-  const addr = "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad";
+  const addr = "0x1be1a151ba3d24f594ee971dc9b843f23b5ba80e";
 
   const userInfo = await farming.users(1, addr);
   console.log("User shares: ", userInfo.share.toString());
   console.log("User reward debt: ", userInfo.rewardDebt.toString());
 
   const userAmount = await farming.getUserLPAmount(1, addr);
-  console.log("User lp amount: ", userAmount[0]);
+  console.log("User lp amount: ", userAmount[0].toString());
 });
 
 task("addPool", "Add new farming pool")
@@ -134,7 +134,7 @@ task("addToken", "Add new token into a farming pool")
     console.log("Tx details:", await tx.wait());
   });
 
-  task("updatePool", "Add new token into a farming pool")
+task("updatePool", "Add new token into a farming pool")
   .addParam("id", "farming lp token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
@@ -148,8 +148,6 @@ task("addToken", "Add new token into a farming pool")
     const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
       dev_account
     ).attach(addressList[network.name].WeightedFarmingPool);
-
-
 
     const tx = await farming.updatePool(1);
     console.log("Tx details:", await tx.wait());

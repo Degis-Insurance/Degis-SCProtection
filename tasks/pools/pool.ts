@@ -179,3 +179,45 @@ task("checkPri", "Check priority pool status").setAction(
     console.log("current lp address: ", priLPAddress);
   }
 );
+
+task("getAllPriorityPool", "Get all priority pool list").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const poolList = await factory.getPoolAddressList();
+    console.log("Total amount: ", poolList.length);
+
+    console.log("Address list", poolList);
+  }
+);
+
+task("getPoolInfo", "Get priority pool info")
+  .addParam("id", "Pool id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const poolInfo = await factory.pools(taskArgs.id);
+    console.log("Pool name: ", poolInfo.protocolName);
+    console.log("Pool native token: ", poolInfo.protocolToken);
+    console.log("Pool address: ", poolInfo.poolAddress);
+  });

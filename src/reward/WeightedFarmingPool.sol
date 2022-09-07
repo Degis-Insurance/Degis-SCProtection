@@ -392,6 +392,8 @@ contract WeightedFarmingPool {
         user.amount[index] -= _amount;
         user.share -= _amount * pool.weight[index];
 
+        pool.amount[index] -= _amount;
+
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
 
