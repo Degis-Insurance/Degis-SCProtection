@@ -23,12 +23,12 @@ import {
   PriorityPool__factory,
   MockSHIELD,
   MockSHIELD__factory,
-  MockERC20,
-  MockERC20__factory,
   MockUSDC,
   MockUSDC__factory,
   CoverRightToken,
   CoverRightToken__factory,
+  CoverRightTokenFactory__factory,
+  CoverRightTokenFactory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -46,6 +46,8 @@ task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
   await hre.run("setExecutor");
 
   await hre.run("setFarmingPool");
+
+  await hre.run("setCRFactory");
 });
 
 task("setProtectionPool", "Set contract address in protectionPool").setAction(
@@ -225,7 +227,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress = addressList[network.name].MockExchange;
     const priceGetterAddress =
-      network.name == "fuji" || network.name == "fujiInternal"
+      network.name != "avax"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -383,57 +385,41 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
   }
 );
 
-task("setPayoutPool", "Set address in payout pool");
+task("setCRFactory", "Set cover right token factory").setAction(
+  async (_, hre) => {
+    console.log("\nSetting contract addresses in executor\n");
 
-task("mintToken").setAction(async (_, hre) => {
-  const { network } = hre;
+    const { network } = hre;
 
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
 
-  const addressList = readAddressList();
+    const addressList = readAddressList();
 
-  const deg: MockDEG = new MockDEG__factory(dev_account).attach(
-    addressList[network.name].MockDEG
-  );
+    const policyCenterAddress = addressList[network.name].PolicyCenter;
+    const incidentReportAddress = addressList[network.name].IncidentReport;
 
-  const shield: MockSHIELD = new MockSHIELD__factory(dev_account).attach(
-    addressList[network.name].MockShield
-  );
+    const crFactory: CoverRightTokenFactory =
+      new CoverRightTokenFactory__factory(dev_account).attach(
+        addressList[network.name].CoverRightTokenFactory
+      );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
-  console.log("tx details", await tx.wait());
+    if ((await crFactory.policyCenter()) != policyCenterAddress) {
+      const tx_1 = await crFactory.setPolicyCenter(policyCenterAddress);
+      console.log("Tx details: ", await tx_1.wait());
+    }
 
-  const balance = await deg.balanceOf(dev_account.address);
-  console.log(formatUnits(balance, 18));
+    if ((await crFactory.incidentReport()) != incidentReportAddress) {
+      const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
+      console.log("Tx details: ", await tx_2.wait());
+    }
 
-  // const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
-  // console.log("tx details", await tx.wait());
-});
-
-task("mintMockUSD").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
-
-  const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
-    addressList[network.name].MockUSDC
-  );
-
-  const tx = await usd.mint(
-    addressList[network.name].MockExchange,
-    parseUnits("1000000000", 6)
-  );
-  console.log("tx details", await tx.wait());
-
-  const balance = await usd.balanceOf(addressList[network.name].MockExchange);
-  console.log("USDC balance:", formatUnits(balance, 6));
-});
+    console.log(
+      "\nFinish setting contract addresses in cover right token factory\n"
+    );
+  }
+);
 
 task("approveToken", "Approve token").setAction(async (_, hre) => {
   const { network } = hre;

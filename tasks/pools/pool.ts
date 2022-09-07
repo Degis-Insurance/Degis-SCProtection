@@ -20,7 +20,7 @@ import {
   ProtectionPool,
   ProtectionPool__factory,
 } from "../../typechain-types";
-import { parseUnits } from "ethers/lib/utils";
+import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("deployPriorityPool", "Deploy a new priority pool by owner")
   .addParam("name", "Protocol name", null, types.string)
@@ -220,4 +220,28 @@ task("getPoolInfo", "Get priority pool info")
     console.log("Pool name: ", poolInfo.protocolName);
     console.log("Pool native token: ", poolInfo.protocolToken);
     console.log("Pool address: ", poolInfo.poolAddress);
+  });
+
+task("activeCovered", "Get priority pool active covered")
+  .addParam("id", "Pool id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const poolAddress = (await factory.pools(taskArgs.id)).poolAddress;
+
+    const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      poolAddress
+    );
+    const covered = await pool.activeCovered();
+    console.log("Active covered: ", formatUnits(covered, 6));
   });

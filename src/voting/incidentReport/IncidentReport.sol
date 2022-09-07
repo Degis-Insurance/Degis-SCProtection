@@ -119,8 +119,8 @@ contract IncidentReport is
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
 
-    // Pool address => whether the pool is being reported
-    mapping(address => bool) public reported;
+    // Pool id => whether the pool is being reported
+    mapping(uint256 => bool) public reported;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -250,6 +250,9 @@ contract IncidentReport is
             revert IncidentReport__WrongPeriod();
 
         currentReport.status = CLOSE_STATUS;
+        reported[_id] = false;
+
+        _unpausePools(currentReport.poolId);
 
         emit ReportClosed(_id, block.timestamp);
     }
@@ -384,10 +387,10 @@ contract IncidentReport is
         address _user
     ) internal {
         // Check whether the pool can be reported
-        address pool = _checkPoolStatus(_poolId, _payout);
+        _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
-        reported[pool] = true;
+        reported[_poolId] = true;
 
         uint256 currentId = ++reportCounter;
         // Record the new report
@@ -709,7 +712,7 @@ contract IncidentReport is
      * @param _numFor     Votes for
      * @param _numAgainst Votes against
      *
-     * @return result PASS(1), REJECT(2) or TIED(3)
+     * @return result PASS(1), REJECT(2) or TIED(3)reported
      */
     function _getVotingResult(uint256 _numFor, uint256 _numAgainst)
         internal
@@ -731,17 +734,12 @@ contract IncidentReport is
      * @param _poolId Pool id
      * @param _payout Payout amount
      *
-     * @return pool Pool address
      */
-    function _checkPoolStatus(uint256 _poolId, uint256 _payout)
-        internal
-        view
-        returns (address pool)
-    {
-        (, pool, , , ) = priorityPoolFactory.pools(_poolId);
+    function _checkPoolStatus(uint256 _poolId, uint256 _payout) internal view {
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
 
         if (pool == address(0)) revert IncidentReport__PoolNotExist();
-        if (reported[pool]) revert IncidentReport__AlreadyReported();
+        if (reported[_poolId]) revert IncidentReport__AlreadyReported();
 
         if (_payout > ISimplePriorityPool(pool).activeCovered())
             revert IncidentReport__PayoutExceedCovered();

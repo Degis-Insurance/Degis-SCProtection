@@ -53,7 +53,9 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    localhost: {},
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
     fuji: {
       url: process.env.FUJI_URL || "",
       accounts: {

@@ -11,8 +11,10 @@ import "forge-std/console.sol";
  * @notice Factory for deploying crTokens
  */
 contract CoverRightTokenFactory is OwnableWithoutContext {
+    // Salt => Already deployed
     mapping(bytes32 => bool) public deployed;
 
+    // Salt => CR token address
     mapping(bytes32 => address) public saltToAddress;
 
     mapping(bytes32 => uint256) public generation;
@@ -37,6 +39,10 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     function setPolicyCenter(address _policyCenter) public onlyOwner {
         policyCenter = _policyCenter;
+    }
+
+    function setIncidentReport(address _incidentReport) public onlyOwner {
+        incidentReport = _incidentReport;
     }
 
     /**

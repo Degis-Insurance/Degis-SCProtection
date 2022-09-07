@@ -19,19 +19,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // PriceGetter contract artifact
-  const priceGetter = await deploy("PriceGetter", {
-    contract: "PriceGetter",
-    from: deployer,
-    args: [],
-    log: true,
-  });
-  addressList[network.name].PriceGetter = priceGetter.address;
+  if (network.name == "avax") {
+    // PriceGetter contract artifact
+    const priceGetter = await deploy("PriceGetter", {
+      contract: "PriceGetter",
+      from: deployer,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].PriceGetter = priceGetter.address;
 
-  console.log("PriceGetter deployed to address: ", priceGetter.address, "\n");
+    console.log("PriceGetter deployed to address: ", priceGetter.address, "\n");
 
-  // Store the address list after deployment
-  storeAddressList(addressList);
+    // Store the address list after deployment
+    storeAddressList(addressList);
+  }
 };
 
 func.tags = ["PriceGetter"];

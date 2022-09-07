@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
   const USDCAddress =
-    network.name == "fuji" || network.name == "fujiInternal"
+    network.name != "avax"
       ? addressList[network.name].MockUSDC
       : addressList[network.name].USDC;
 

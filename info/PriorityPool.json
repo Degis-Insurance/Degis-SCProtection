@@ -2,9 +2,9 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0xDB5818C09a2D5B1323966c4C9422A4AcF8FaD85b",
+			"poolAddress": "0x271423abaD20AFF5811658289EA003D5e1c7f3E0",
 			"name": "Project1",
-			"token": "0xE3EFf5dbA93082b101E7f745244AfD14BA95730D",
+			"token": "0xcb1d663D727fe5eDb9306E5834510B935c67a408",
 			"premium": "200"
 		}
 	},
