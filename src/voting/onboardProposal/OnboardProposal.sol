@@ -373,8 +373,9 @@ contract OnboardProposal is
         UserVote storage userVote = votes[_user][_id];
 
         // @audit Add claimed check
+        // ! Critical
         if (userVote.claimed) revert OnboardProposal__AlreadyClaimed();
-        
+
         // Unlock the veDEG used for voting
         // No reward / punishment
         veDeg.unlockVeDEG(_user, userVote.amount);
