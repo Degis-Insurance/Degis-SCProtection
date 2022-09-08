@@ -120,8 +120,8 @@ contract IncidentReport is
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
 
-    // Pool address => whether the pool is being reported
-    mapping(address => bool) public reported;
+    // Pool id => whether the pool is being reported
+    mapping(uint256 => bool) public reported;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -183,7 +183,11 @@ contract IncidentReport is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -251,12 +255,11 @@ contract IncidentReport is
 
         currentReport.status = CLOSE_STATUS;
 
-        (, address pool, , , ) = priorityPoolFactory.pools(
-            currentReport.poolId
-        );
-        reported[pool] = false;
+        uint256 poolId = currentReport.poolId;
 
-        _unpausePools(currentReport.poolId);
+        reported[poolId] = false;
+
+        _unpausePools(poolId);
 
         emit ReportClosed(_id, block.timestamp);
     }
@@ -307,14 +310,16 @@ contract IncidentReport is
         if (res > 0) {
             currentReport.status = SETTLED_STATUS;
             if (_checkQuorum(currentReport.numFor + currentReport.numAgainst)) {
-                currentReport.result = res;
-                _settleVotingReward(_id);
-                emit ReportSettled(_id, res);
-
                 // REJECT or TIED: unlock the priority pool & protection pool immediately
                 if (res != PASS_RESULT) {
-                    _unpausePools(currentReport.poolId);
+                    uint256 poolId = currentReport.poolId;
+                    _unpausePools(poolId);
+                    reported[poolId] = false;
                 }
+
+                currentReport.result = res;
+                _settleVotingReward(_id, res);
+                emit ReportSettled(_id, res);
             } else {
                 currentReport.result = FAILED_RESULT;
                 // FAILED: unlock the priority pool & protection pool immediately
@@ -352,7 +357,7 @@ contract IncidentReport is
         uint256 finalResult = reports[_id].result;
 
         if (finalResult == 0) revert IncidentReport__NotSettled();
-        if (userVote.choice == finalResult)
+        if (userVote.choice == finalResult || finalResult == TIED_RESULT)
             revert IncidentReport__NotWrongChoice();
         if (userVote.paid) revert IncidentReport__AlreadyPaid();
 
@@ -371,6 +376,20 @@ contract IncidentReport is
 
     function unpausePools(uint256 _poolId) external onlyOwner {
         _unpausePools(_poolId);
+    }
+
+     /**
+     * @notice Executed by executor
+     *
+     * @param _reportId Report id
+     */
+    function executed(uint256 _reportId) external {
+        require(msg.sender == executor);
+
+        uint256 poolId = reports[_reportId].poolId;
+        reported[poolId] = false;
+
+        _unpausePools(poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -394,10 +413,10 @@ contract IncidentReport is
         address _user
     ) internal {
         // Check pool can be reported
-        address pool = _checkPoolStatus(_poolId);
+        _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
-        reported[pool] = true;
+        reported[_poolId] = true;
 
         uint256 currentId = ++reportCounter;
         // Record the new report
@@ -520,18 +539,18 @@ contract IncidentReport is
     /**
      * @notice Settle voting reward depending on the result
      *
-     * @param _id Report id
+     * @param _id     Report id
+     * @param _result Settle result
      */
-    function _settleVotingReward(uint256 _id) internal {
+    function _settleVotingReward(uint256 _id, uint256 _result) internal {
         Report storage currentReport = reports[_id];
 
         uint256 numFor = currentReport.numFor;
         uint256 numAgainst = currentReport.numAgainst;
-        uint256 result = currentReport.result;
 
         uint256 totalRewardToVoters;
 
-        if (result == PASS_RESULT) {
+        if (_result == PASS_RESULT) {
             // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
             deg.mintDegis(
                 currentReport.reporter,
@@ -543,7 +562,7 @@ contract IncidentReport is
 
             // Update deg reward for those who vote for
             currentReport.votingReward = (totalRewardToVoters * SCALE) / numFor;
-        } else if (result == REJECT_RESULT) {
+        } else if (_result == REJECT_RESULT) {
             // Total deg reward = reporter's DEG + those who vote for
             totalRewardToVoters =
                 REPORT_THRESHOLD +
@@ -736,18 +755,17 @@ contract IncidentReport is
      *             2) Has not been reported
      *
      * @param _poolId Pool id
+     * @param _payout Payout amount
      *
-     * @return pool Pool address
      */
-    function _checkPoolStatus(uint256 _poolId)
-        internal
-        view
-        returns (address pool)
-    {
-        (, pool, , , ) = priorityPoolFactory.pools(_poolId);
+    function _checkPoolStatus(uint256 _poolId, uint256 _payout) internal view {
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
 
         if (pool == address(0)) revert IncidentReport__PoolNotExist();
-        if (reported[pool]) revert IncidentReport__AlreadyReported();
+        if (reported[_poolId]) revert IncidentReport__AlreadyReported();
+
+        if (_payout > ISimplePriorityPool(pool).activeCovered())
+            revert IncidentReport__PayoutExceedCovered();
     }
 
     /**

@@ -154,4 +154,6 @@ interface IIncidentReport {
         external
         view
         returns (uint256);
+
+    function executed(uint256 _reportId) external;
 }

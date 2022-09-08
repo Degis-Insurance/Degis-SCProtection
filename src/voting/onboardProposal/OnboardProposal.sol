@@ -1,4 +1,4 @@
- // SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 /*
  //======================================================================\\
@@ -117,7 +117,7 @@ contract OnboardProposal is
         allProposals = new Proposal[](totalProposal);
 
         for (uint256 i; i < totalProposal; ) {
-            allProposals[i] = proposals[i+1];
+            allProposals[i] = proposals[i + 1];
 
             unchecked {
                 ++i;
@@ -166,7 +166,7 @@ contract OnboardProposal is
     function startVoting(uint256 _id) external onlyOwner {
         Proposal storage proposal = proposals[_id];
 
-        if(proposal.status != PENDING_STATUS)
+        if (proposal.status != PENDING_STATUS)
             revert OnboardProposal__WrongStatus();
 
         proposal.status = VOTING_STATUS;
@@ -190,7 +190,7 @@ contract OnboardProposal is
 
         proposal.status = CLOSE_STATUS;
 
-        proposed[proposal.protocolToken] = false;        
+        proposed[proposal.protocolToken] = false;
 
         emit ProposalClosed(_id, block.timestamp);
     }
@@ -236,6 +236,13 @@ contract OnboardProposal is
                 proposal.numAgainst
             );
 
+            // If this proposal not passed, allow new proposals for the same project
+            // If it passed, not allow the same proposals
+            if (res != PASS_RESULT) {
+                // Allow for new proposals to be proposed for this protocol
+                proposed[proposal.protocolToken] = false;
+            }
+
             proposal.result = res;
             proposal.status = SETTLED_STATUS;
 
@@ -246,11 +253,11 @@ contract OnboardProposal is
             proposal.result = FAILED_RESULT;
             proposal.status = SETTLED_STATUS;
 
+            // Allow for new proposals to be proposed for this protocol
+            proposed[proposal.protocolToken] = false;
+
             emit ProposalFailed(_id);
         }
-
-        // Allow for new proposals to be proposed for this protocol
-        proposed[proposal.protocolToken] = false;
     }
 
     /**
@@ -261,7 +268,7 @@ contract OnboardProposal is
     function claim(uint256 _id) external {
         _claim(_id, msg.sender);
     }
-    
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -285,13 +292,12 @@ contract OnboardProposal is
             revert OnboardProposal__AlreadyProtected();
 
         if (_maxCapacity == 0 || _maxCapacity > MAX_CAPACITY_RATIO)
-                revert OnboardProposal__WrongCapacity();
+            revert OnboardProposal__WrongCapacity();
 
         if (_basePremiumRatio >= 10000 || _basePremiumRatio == 0)
             revert OnboardProposal__WrongPremium();
 
-        if (proposed[_token])
-            revert OnboardProposal__AlreadyProposed();
+        if (proposed[_token]) revert OnboardProposal__AlreadyProposed();
 
         // Burn degis tokens to start a proposal
         deg.burnDegis(_user, PROPOSE_THRESHOLD);
@@ -330,12 +336,10 @@ contract OnboardProposal is
         // Should be manually switched on the voting process
         if (proposal.status != VOTING_STATUS)
             revert OnboardProposal__WrongStatus();
-        if (_isFor != 1 && _isFor != 2)
-            revert OnboardProposal__WrongChoice();
+        if (_isFor != 1 && _isFor != 2) revert OnboardProposal__WrongChoice();
         if (_passedVotingPeriod(proposal.voteTimestamp))
             revert OnboardProposal__WrongPeriod();
-        if (_amount == 0)
-            revert OnboardProposal__ZeroAmount();
+        if (_amount == 0) revert OnboardProposal__ZeroAmount();
 
         _enoughVeDEG(_user, _amount);
 
@@ -345,7 +349,7 @@ contract OnboardProposal is
         // Record the user's choice
         UserVote storage userVote = votes[_user][_id];
         if (userVote.amount > 0) {
-           if (userVote.choice != _isFor)
+            if (userVote.choice != _isFor)
                 revert OnboardProposal__ChooseBothSides();
         } else {
             userVote.choice = _isFor;
@@ -428,7 +432,8 @@ contract OnboardProposal is
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
-        return _totalVotes >= (veDeg.totalSupply() * PROPOSAL_QUORUM_RATIO) / 100;
+        return
+            _totalVotes >= (veDeg.totalSupply() * PROPOSAL_QUORUM_RATIO) / 100;
     }
 
     /**
@@ -440,7 +445,6 @@ contract OnboardProposal is
      */
     function _enoughVeDEG(address _user, uint256 _amount) internal view {
         uint256 unlockedBalance = veDeg.balanceOf(_user) - veDeg.locked(_user);
-        if (unlockedBalance < _amount)
-            revert OnboardProposal__NotEnoughVeDEG();
+        if (unlockedBalance < _amount) revert OnboardProposal__NotEnoughVeDEG();
     }
 }
