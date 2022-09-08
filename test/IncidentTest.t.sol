@@ -21,9 +21,9 @@ contract IncidentTest is
     uint256 internal constant SCALE = 1e12;
 
     // Max capacities for pools (100 = 100%)
-    uint256 internal constant CAPACITY_1 = 40;
-    uint256 internal constant CAPACITY_2 = 30;
-    uint256 internal constant CAPACITY_3 = 40;
+    uint256 internal constant CAPACITY_1 = 4000;
+    uint256 internal constant CAPACITY_2 = 3000;
+    uint256 internal constant CAPACITY_3 = 4000;
 
     // Base premium ratio for pools (10000 = 100%)
     uint256 internal constant PREMIUMRATIO_1 = 200;
@@ -85,6 +85,14 @@ contract IncidentTest is
                 PREMIUMRATIO_3
             )
         );
+
+        shield.mint(address(this), 10000 ether);
+        shield.approve(address(policyCenter), type(uint256).max);
+        policyCenter.provideLiquidity(1000 ether);
+
+        joe.mint(address(this), 1000 ether);
+        joe.approve(address(policyCenter), type(uint256).max);
+        policyCenter.buyCover(1, 1000e6, 1, type(uint256).max);
     }
 
     function testReport() public {
@@ -542,7 +550,6 @@ contract IncidentTest is
         // Start a report and start voting
         _report();
         _startVoting();
-
 
         // Preparations
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);

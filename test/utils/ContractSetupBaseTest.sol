@@ -112,7 +112,10 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupCRFactory() internal {
-        crFactory = new CoverRightTokenFactory(address(policyCenter));
+        crFactory = new CoverRightTokenFactory(
+            address(policyCenter),
+            address(incidentReport)
+        );
     }
 
     function _setupPayoutPool() internal {
@@ -154,6 +157,7 @@ contract ContractSetupBaseTest is BaseTest {
     function _setAddresses() internal {
         // Set incident report
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+        incidentReport.setExecutor(address(executor));
 
         // Set onboard proposal
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -188,5 +192,10 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
+
+        // Set cr factory
+        crFactory.setPayoutPool(address(payoutPool));
+
+        usdc.mint(address(exchange), 10000000 ether);
     }
 }

@@ -30,4 +30,16 @@ contract MockSHIELD is ERC20 {
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
+
+    function deposit(
+        uint256 _type,
+        address _token,
+        uint256 _transfer,
+        uint256 _minReceive
+    ) public {
+        if (_type == 1) {
+            _mint(msg.sender, _minReceive);
+            IERC20(_token).transferFrom(msg.sender, address(this), _transfer);
+        } else revert("Wrong type");
+    }
 }

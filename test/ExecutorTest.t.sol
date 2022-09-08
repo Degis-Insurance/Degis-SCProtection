@@ -27,9 +27,9 @@ contract ExecutorTest is
     address internal BOB = mkaddr("Bob");
     address internal CHARLIE = mkaddr("Charlie");
 
-    uint256 internal constant CAPACITY_1 = 40;
-    uint256 internal constant CAPACITY_2 = 30;
-    uint256 internal constant CAPACITY_3 = 40;
+    uint256 internal constant CAPACITY_1 = 4000;
+    uint256 internal constant CAPACITY_2 = 3000;
+    uint256 internal constant CAPACITY_3 = 4000;
 
     uint256 internal constant PREMIUMRATIO_1 = 200;
     uint256 internal constant PREMIUMRATIO_2 = 250;
@@ -83,16 +83,6 @@ contract ExecutorTest is
 
         joeLPAddress = joePool.currentLPAddress();
 
-        // Mint shield to provide liquidity
-        shield.mint(CHARLIE, 1000 ether);
-
-        vm.prank(CHARLIE);
-        shield.approve(address(policyCenter), LIQUIDITY);
-
-        // Provide Liquidity by one user
-        vm.prank(CHARLIE);
-        policyCenter.provideLiquidity(LIQUIDITY);
-
         // Propose a new priority pool
         deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
@@ -114,6 +104,25 @@ contract ExecutorTest is
             CAPACITY_3,
             PREMIUMRATIO_3
         );
+
+        vm.warp(PROPOSE_TIME + 2);
+        shield.mint(address(this), 10000 ether);
+        shield.approve(address(policyCenter), type(uint256).max);
+        policyCenter.provideLiquidity(1000 ether);
+
+        shield.transfer(address(treasury), 1000 ether);
+
+        joe.mint(address(this), 1000 ether);
+        joe.approve(address(policyCenter), type(uint256).max);
+        policyCenter.buyCover(1, 1000e6, 1, type(uint256).max);
+
+        // ptp.mint(address(this), 1000 ether);
+        // ptp.approve(address(policyCenter), type(uint256).max);
+        // policyCenter.buyCover(2, 1000e6, 1, type(uint256).max);
+
+        // gmx.mint(address(this), 1000 ether);
+        // gmx.approve(address(policyCenter), type(uint256).max);
+        // policyCenter.buyCover(3, 1000e6, 1, type(uint256).max);
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
         vm.warp(REPORT_TIME);

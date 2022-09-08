@@ -29,6 +29,8 @@ import "./PriorityPoolToken.sol";
 import "../../libraries/DateTime.sol";
 import "../../libraries/StringUtils.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Insurance Pool (for single project)
  *
@@ -221,6 +223,7 @@ contract PriorityPool is
 
         // Length in second
         length = endTimestamp - block.timestamp;
+
         // Price depends on the real timestamp length
         price = (dynamicRatio * _amount * length) / (SECONDS_PER_YEAR * 10000);
     }

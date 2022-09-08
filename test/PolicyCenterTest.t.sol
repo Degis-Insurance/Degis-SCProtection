@@ -61,8 +61,6 @@ contract PolicyCenterTest is
     function setUp() public {
         setUpContracts();
 
-        usdc.mint(address(exchange), type(uint256).max);
-
         vm.warp(ZERO_TIME);
 
         // Deploy three protocol tokens

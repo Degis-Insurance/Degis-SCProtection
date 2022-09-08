@@ -164,23 +164,26 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         IIncidentReport incident = IIncidentReport(incidentReport);
 
         uint256 reportAmount = incident.getPoolReportsAmount(POOL_ID);
-        uint256 latestReportId = incident.poolReports(
-            POOL_ID,
-            reportAmount - 1
-        );
 
-        (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
-            latestReportId
-        );
+        if (reportAmount > 0) {
+            uint256 latestReportId = incident.poolReports(
+                POOL_ID,
+                reportAmount - 1
+            );
 
-        // Check those bought within 2 days
-        for (uint256 i; i < EXCLUDE_DAYS; ) {
-            uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+            (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
+                latestReportId
+            );
 
-            exclusion += coverStartFrom[_user][date];
+            // Check those bought within 2 days
+            for (uint256 i; i < EXCLUDE_DAYS; ) {
+                uint256 date = _getEOD(voteTimestamp - (i * 1 days));
 
-            unchecked {
-                ++i;
+                exclusion += coverStartFrom[_user][date];
+
+                unchecked {
+                    ++i;
+                }
             }
         }
     }

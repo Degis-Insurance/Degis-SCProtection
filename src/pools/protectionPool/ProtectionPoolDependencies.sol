@@ -6,6 +6,7 @@ import "../../interfaces/CommonDependencies.sol";
 
 import "../interfaces/SimpleInterface.sol";
 
+
 abstract contract ProtectionPoolDependencies is CommonDependencies {
     uint256 constant UINT256_MAX = type(uint256).max;
 
