@@ -115,6 +115,7 @@ contract IncidentReport is
         uint256 choice; // 1: vote for, 2: vote against
         uint256 amount; // total veDEG amount for voting
         bool claimed; // whether has claimed the reward
+        bool paid; // whether has paid the debt   // @audit Add paid status
     }
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
@@ -350,6 +351,8 @@ contract IncidentReport is
         if (finalResult == 0) revert IncidentReport__NotSettled();
         if (userVote.choice == finalResult)
             revert IncidentReport__NotWrongChoice();
+         // @audit Add paid status
+        if(userVote.paid) revert IncidentReport__AlreadyPaid();
 
         uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
 
@@ -358,6 +361,9 @@ contract IncidentReport is
 
         // Unlock the user's veDEG
         veDeg.unlockVeDEG(_user, userVote.amount);
+
+        // @audit Add paid status
+        votes[_user][_id].paid = true;
 
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
