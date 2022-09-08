@@ -250,6 +250,13 @@ contract IncidentReport is
 
         currentReport.status = CLOSE_STATUS;
 
+        (, address pool, , , ) = priorityPoolFactory.pools(
+            currentReport.poolId
+        );
+        reported[pool] = false;
+
+        _unpausePools(currentReport.poolId);
+
         emit ReportClosed(_id, block.timestamp);
     }
 
@@ -750,7 +757,6 @@ contract IncidentReport is
             _poolId,
             true
         );
- 
     }
 
     /**
