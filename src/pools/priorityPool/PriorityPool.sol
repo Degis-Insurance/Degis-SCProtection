@@ -174,7 +174,6 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     modifier onlyExecutor() {
-
         if (msg.sender != IFactory(priorityPoolFactory).executor())
             revert PriorityPool__OnlyExecutor();
 
@@ -557,17 +556,21 @@ contract PriorityPool is
             .timestamp
             .timestampToDate();
 
-        for (uint256 i; i < _length; ) {
-            coverInMonth[currentYear][currentMonth] += _amount;
+        uint256 endMonth = currentMonth + _length;
 
-            unchecked {
-                if (++currentMonth > 12) {
-                    ++currentYear;
-                    currentMonth = 1;
-                }
-                ++i;
-            }
-        }
+        // ! Remove redundant counts
+        // ! Previously it is counted in multiple months
+        // for (uint256 i; i < _length; ) {
+        coverInMonth[currentYear][endMonth] += _amount;
+
+        //     unchecked {
+        //         if (++currentMonth > 12) {
+        //             ++currentYear;
+        //             currentMonth = 1;
+        //         }
+        //         ++i;
+        //     }
+        // }
     }
 
     /**
