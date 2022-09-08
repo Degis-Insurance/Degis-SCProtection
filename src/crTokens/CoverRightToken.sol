@@ -32,8 +32,11 @@ import "../libraries/DateTime.sol";
  *
  */
 contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
-    address public incidentReport;
     address public policyCenter;
+    address public incidentReport;
+
+    // @audit Add payout pool
+    address public payoutPool;
 
     uint256 public immutable generation;
 
@@ -60,15 +63,18 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _expiry,
         uint256 _generation,
         address _policyCenter,
-        address _incidentReport
+        address _incidentReport,
+        address _payoutPool
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
         POOL_ID = _poolId;
         generation = _generation;
+
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
+        payoutPool = _payoutPool;
     }
 
     modifier onlyPolicyCenter() {
@@ -160,24 +166,29 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
 
         // Get the latest report for this pool
         uint256 reportAmount = incident.getPoolReportsAmount(POOL_ID);
-        uint256 latestReportId = incident.poolReports(
-            POOL_ID,
-            reportAmount - 1
-        );
 
-        (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
-            latestReportId
-        );
+        if (reportAmount > 0) {
+            uint256 latestReportId = incident.poolReports(
+                POOL_ID,
+                reportAmount - 1
+            );
 
-        // Check those bought within 2 days
-        for (uint256 i; i < EXCLUDE_DAYS; ) {
-            if (voteTimestamp > i * 1 days) {
-                uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+            (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
+                latestReportId
+            );
 
-                exclusion += coverStartFrom[_user][date];
-            }
-            unchecked {
-                ++i;
+            // Check those bought within 2 days
+            for (uint256 i; i < EXCLUDE_DAYS; ) {
+                if (voteTimestamp > i * 1 days) {
+                    // * For local test EXCLUDE_DAYS can be set as 0 to avoid underflow
+                    // * For mainnet or testnet, will never underflow
+                    uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+
+                    exclusion += coverStartFrom[_user][date];
+                }
+                unchecked {
+                    ++i;
+                }
             }
         }
     }

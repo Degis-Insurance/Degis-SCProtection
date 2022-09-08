@@ -21,6 +21,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     address public policyCenter;
     address public incidentReport;
+    address public payoutPool;
 
     event NewCRTokenDeployed(
         uint256 poolId,
@@ -30,11 +31,14 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
-    constructor(address _policyCenter, address _incidentReport)
-        OwnableWithoutContext(msg.sender)
-    {
+    constructor(
+        address _policyCenter,
+        address _incidentReport,
+        address _payoutPool
+    ) OwnableWithoutContext(msg.sender) {
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
+        payoutPool = _payoutPool;
     }
 
     function setPolicyCenter(address _policyCenter) public onlyOwner {
@@ -117,7 +121,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
                 _expiry,
                 _generation,
                 policyCenter,
-                incidentReport
+                incidentReport,
+                payoutPool
             )
         );
     }
