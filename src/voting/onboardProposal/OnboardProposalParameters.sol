@@ -14,7 +14,7 @@ abstract contract OnboardProposalParameters is VotingParameters {
     // DEG threshold for starting a report
     uint256 constant PROPOSE_THRESHOLD = 10000 ether;
 
-    // 100 = 100%
-    uint256 constant MAX_CAPACITY_RATIO = 100;
+    // 10000 = 100%
+    uint256 constant MAX_CAPACITY_RATIO = 10000;
 
 }
