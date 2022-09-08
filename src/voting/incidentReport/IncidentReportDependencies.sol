@@ -10,11 +10,5 @@ interface ISimplePriorityPool {
 
 abstract contract IncidentReportDependencies {
     IPriorityPoolFactory public priorityPoolFactory;
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
-    }
+    address public executor;
 }

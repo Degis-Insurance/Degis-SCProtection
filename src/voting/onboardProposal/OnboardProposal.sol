@@ -236,6 +236,13 @@ contract OnboardProposal is
                 proposal.numAgainst
             );
 
+            // If this proposal not passed, allow new proposals for the same project
+            // If it passed, not allow the same proposals
+            if (res != PASS_RESULT) {
+                // Allow for new proposals to be proposed for this protocol
+                proposed[proposal.protocolToken] = false;
+            }
+
             proposal.result = res;
             proposal.status = SETTLED_STATUS;
 
@@ -246,11 +253,11 @@ contract OnboardProposal is
             proposal.result = FAILED_RESULT;
             proposal.status = SETTLED_STATUS;
 
+            // Allow for new proposals to be proposed for this protocol
+            proposed[proposal.protocolToken] = false;
+
             emit ProposalFailed(_id);
         }
-
-        // Allow for new proposals to be proposed for this protocol
-        proposed[proposal.protocolToken] = false;
     }
 
     /**

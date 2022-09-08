@@ -98,6 +98,9 @@ contract Executor is
             revert Executor__ReportNotSettled();
         if (report.result != 1) revert Executor__ReportNotPassed();
 
+        // Executed callback function
+        IIncidentReport(incidentReport).executed(_reportId);
+
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
 

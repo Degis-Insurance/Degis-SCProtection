@@ -8,6 +8,7 @@ import "../../interfaces/IOnboardProposal.sol";
 import "../../interfaces/IIncidentReport.sol";
 import "../../interfaces/ITreasury.sol";
 
+
 abstract contract ExecutorDependencies {
     address public priorityPoolFactory;
     address public incidentReport;

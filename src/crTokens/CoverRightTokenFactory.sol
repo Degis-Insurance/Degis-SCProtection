@@ -31,22 +31,23 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
-    constructor(
-        address _policyCenter,
-        address _incidentReport,
-        address _payoutPool
-    ) OwnableWithoutContext(msg.sender) {
+    constructor(address _policyCenter, address _incidentReport)
+        OwnableWithoutContext(msg.sender)
+    {
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
+    }
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
+        policyCenter = _policyCenter;
+    }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        incidentReport = _incidentReport;
+    }
+
+    function setPayoutPool(address _payoutPool) external onlyOwner {
         payoutPool = _payoutPool;
-    }
-
-    function setPolicyCenter(address _policyCenter) public onlyOwner {
-        policyCenter = _policyCenter;
-    }
-
-    function setIncidentReport(address _incidentReport) public onlyOwner {
-        incidentReport = _incidentReport;
     }
 
     /**

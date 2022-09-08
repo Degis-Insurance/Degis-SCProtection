@@ -399,6 +399,7 @@ task("setCRFactory", "Set cover right token factory").setAction(
 
     const policyCenterAddress = addressList[network.name].PolicyCenter;
     const incidentReportAddress = addressList[network.name].IncidentReport;
+    const payoutPoolAddress = addressList[network.name].PayoutPool;
 
     const crFactory: CoverRightTokenFactory =
       new CoverRightTokenFactory__factory(dev_account).attach(
@@ -414,6 +415,11 @@ task("setCRFactory", "Set cover right token factory").setAction(
       const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
       console.log("Tx details: ", await tx_2.wait());
     }
+
+    // if ((await crFactory.payoutPool()) != payoutPoolAddress) {
+    //   const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
+    //   console.log("Tx details: ", await tx_3.wait());
+    // }
 
     console.log(
       "\nFinish setting contract addresses in cover right token factory\n"

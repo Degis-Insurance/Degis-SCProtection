@@ -183,7 +183,11 @@ contract IncidentReport is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -304,14 +308,18 @@ contract IncidentReport is
         if (res > 0) {
             currentReport.status = SETTLED_STATUS;
             if (_checkQuorum(currentReport.numFor + currentReport.numAgainst)) {
-                currentReport.result = res;
-                _settleVotingReward(_id);
-                emit ReportSettled(_id, res);
-
                 // REJECT or TIED: unlock the priority pool & protection pool immediately
+                //                 mark the report as not reported
                 if (res != PASS_RESULT) {
-                    _unpausePools(currentReport.poolId);
+                    uint256 poolId = currentReport.poolId;
+                    _unpausePools(poolId);
+                    reported[poolId] = false;
                 }
+
+                currentReport.result = res;
+
+                _settleVotingReward(_id, res);
+                emit ReportSettled(_id, res);
             } else {
                 currentReport.result = FAILED_RESULT;
                 // FAILED: unlock the priority pool & protection pool immediately
@@ -340,6 +348,8 @@ contract IncidentReport is
      *
      *         For those who made a wrong voting choice
      *         The paid DEG will be burned and the veDEG will be unlocked
+     *         
+     *         Can not call this function when result is TIED or choose the correct side
      *
      * @param _id   Report id
      * @param _user User address (can pay debt for another user)
@@ -349,10 +359,10 @@ contract IncidentReport is
         uint256 finalResult = reports[_id].result;
 
         if (finalResult == 0) revert IncidentReport__NotSettled();
-        if (userVote.choice == finalResult)
+        if (userVote.choice == finalResult || finalResult == TIED_RESULT)
             revert IncidentReport__NotWrongChoice();
-         // @audit Add paid status
-        if(userVote.paid) revert IncidentReport__AlreadyPaid();
+        // @audit Add paid status
+        if (userVote.paid) revert IncidentReport__AlreadyPaid();
 
         uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
 
@@ -370,6 +380,20 @@ contract IncidentReport is
 
     function unpausePools(uint256 _poolId) external onlyOwner {
         _unpausePools(_poolId);
+    }
+
+    /**
+     * @notice Executed by executor
+     *
+     * @param _reportId Report id
+     */
+    function executed(uint256 _reportId) external {
+        require(msg.sender == executor);
+
+        uint256 poolId = reports[_reportId].poolId;
+        reported[poolId] = false;
+
+        _unpausePools(poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -490,6 +514,8 @@ contract IncidentReport is
 
     /**
      * @notice Claim the voting reward
+     *         If the result is TIED, unlock veDEG
+     *         If the result is the same as your choice, get the reward
      *
      * @param _id       Report id
      * @param _user     User address to claim rewards from
@@ -521,18 +547,18 @@ contract IncidentReport is
     /**
      * @notice Settle voting reward depending on the result
      *
-     * @param _id Report id
+     * @param _id     Report id
+     * @param _result Settle result
      */
-    function _settleVotingReward(uint256 _id) internal {
+    function _settleVotingReward(uint256 _id, uint256 _result) internal {
         Report storage currentReport = reports[_id];
 
         uint256 numFor = currentReport.numFor;
         uint256 numAgainst = currentReport.numAgainst;
-        uint256 result = currentReport.result;
 
         uint256 totalRewardToVoters;
 
-        if (result == PASS_RESULT) {
+        if (_result == PASS_RESULT) {
             // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
             deg.mintDegis(
                 currentReport.reporter,
@@ -544,7 +570,7 @@ contract IncidentReport is
 
             // Update deg reward for those who vote for
             currentReport.votingReward = (totalRewardToVoters * SCALE) / numFor;
-        } else if (result == REJECT_RESULT) {
+        } else if (_result == REJECT_RESULT) {
             // Total deg reward = reporter's DEG + those who vote for
             totalRewardToVoters =
                 REPORT_THRESHOLD +
