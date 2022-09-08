@@ -32,8 +32,10 @@ import "../libraries/DateTime.sol";
  *
  */
 contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
-    address public incidentReport;
     address public policyCenter;
+    address public incidentReport;
+
+    address public payoutPool;
 
     uint256 public immutable generation;
 
@@ -58,14 +60,19 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         string memory _name,
         uint256 _expiry,
         uint256 _generation,
-        address _policyCenter
+        address _policyCenter,
+        address _incidentReport,
+        address _payoutPool
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
         POOL_NAME = _poolName;
         POOL_ID = _poolId;
+
         generation = _generation;
         policyCenter = _policyCenter;
+        incidentReport = _incidentReport;
+        payoutPool = _payoutPool;
     }
 
     /**
@@ -73,7 +80,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      *         When first deployed, policy center is not initialized, so add a check
      *         TODO: if this has potential risks?
      */
-     
+
     modifier onlyPolicyCenter() {
         if (policyCenter != address(0)) {
             require(msg.sender == policyCenter, "Only policy center");

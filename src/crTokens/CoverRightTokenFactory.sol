@@ -19,6 +19,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     mapping(bytes32 => uint256) public generation;
 
     address public policyCenter;
+    address public incidentReport;
+    address public payoutPool;
 
     event NewCRTokenDeployed(
         uint256 poolId,
@@ -28,8 +30,14 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
-    constructor(address _policyCenter) OwnableWithoutContext(msg.sender) {
+    constructor(
+        address _policyCenter,
+        address _incidentReport,
+        address _payoutPool
+    ) OwnableWithoutContext(msg.sender) {
         policyCenter = _policyCenter;
+        incidentReport = _incidentReport;
+        payoutPool = _payoutPool;
     }
 
     function setPolicyCenter(address _policyCenter) public onlyOwner {
@@ -37,14 +45,14 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     }
 
     /**
-    * @notice Deploy Cover Right Token for a given pool
-    *
-    * @param _poolName          Name of Priority Pool
-    * @param _poolId         	Pool Id
-    * @param _tokenName         Name of insured token (e.g. DEG)
-    * @param _expiry         	Expiry date of cover right token
-    * @param _generation        Generation of priority pool (1 if no liquidations occurred)
-    */
+     * @notice Deploy Cover Right Token for a given pool
+     *
+     * @param _poolName          Name of Priority Pool
+     * @param _poolId         	Pool Id
+     * @param _tokenName         Name of insured token (e.g. DEG)
+     * @param _expiry         	Expiry date of cover right token
+     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+     */
     function deployCRToken(
         string calldata _poolName,
         uint256 _poolId,
@@ -66,8 +74,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
             _poolId,
             _tokenName,
             _expiry,
-            _generation,
-            policyCenter
+            _generation
         );
 
         newCRToken = _deploy(bytecode, salt);
@@ -83,27 +90,35 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     }
 
     /**
-    * @notice Given several parameters, returns the bytecode for deploying a crToken
-    *
-    * @param _poolName          Name of Priority Pool
-    * @param _poolId         	Pool Id
-    * @param _tokenName         Name of insured token (e.g. DEG)
-    * @param _expiry         	Expiry date of cover right token
-    * @param _generation        Generation of priority pool (1 if no liquidations occurred)
-    */
+     * @notice Given several parameters, returns the bytecode for deploying a crToken
+     *
+     * @param _poolName          Name of Priority Pool
+     * @param _poolId         	Pool Id
+     * @param _tokenName         Name of insured token (e.g. DEG)
+     * @param _expiry         	Expiry date of cover right token
+     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
+     */
     function _getCRTokenBytecode(
         string memory _poolName,
         uint256 _poolId,
         string memory _tokenName,
         uint256 _expiry,
-        uint256 _generation,
-        address _policyCenter
-    ) internal pure returns (bytes memory code) {
+        uint256 _generation
+    ) internal view returns (bytes memory code) {
         bytes memory bytecode = type(CoverRightToken).creationCode;
 
         code = abi.encodePacked(
             bytecode,
-            abi.encode(_tokenName, _poolId, _poolName, _expiry, _generation, _policyCenter)
+            abi.encode(
+                _tokenName,
+                _poolId,
+                _poolName,
+                _expiry,
+                _generation,
+                policyCenter,
+                incidentReport,
+                payoutPool
+            )
         );
     }
 
