@@ -6,6 +6,13 @@
 			"name": "Project1",
 			"token": "0xcb1d663D727fe5eDb9306E5834510B935c67a408",
 			"premium": "200"
+		},
+		"2": {
+			"id": "2",
+			"poolAddress": "0xff263503eEF6b6a5D3F1203669efD049f84F5e9F",
+			"name": "Project2",
+			"token": "0xB8cC08f4157d406670fBDB4C53C525a9B2e5Dcf5",
+			"premium": "200"
 		}
 	},
 	"fujiInternal": {
