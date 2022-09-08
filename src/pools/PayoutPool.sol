@@ -130,13 +130,13 @@ contract PayoutPool {
         uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
             _user
         );
-        uint256 claimable = (claimableBalance * payout.ratio) / 10000;
+        uint256 claimable = (claimableBalance * payout.ratio) / SCALE;
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 
-        claimed = (claimable * coverIndex) / SCALE;
+        claimed = (claimable * coverIndex) / 10000;
 
         ICoverRightToken(_crToken).burn(
             _poolId,
