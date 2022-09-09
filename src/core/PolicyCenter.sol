@@ -67,7 +67,6 @@ contract PolicyCenter is
     // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -492,23 +491,25 @@ contract PolicyCenter is
 
         emit PayoutClaimed(msg.sender, claimed);
 
-        uint256 expiry = ICoverRightToken(_crToken).expiry();
-
         // Check if the new generation crToken has been deployed
         // If so, get the address
         // If not, deploy the new generation cr token
-        address newCRToken = _checkNewCRToken(
-            _poolId,
-            poolName,
-            expiry,
-            _generation++
-        );
+        if (newGenerationCRAmount > 0) {
+            uint256 expiry = ICoverRightToken(_crToken).expiry();
 
-        ICoverRightToken(newCRToken).mint(
-            _poolId,
-            msg.sender,
-            newGenerationCRAmount
-        );
+            address newCRToken = _checkNewCRToken(
+                _poolId,
+                poolName,
+                expiry,
+                _generation++
+            );
+
+            ICoverRightToken(newCRToken).mint(
+                _poolId,
+                msg.sender,
+                newGenerationCRAmount
+            );
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //
