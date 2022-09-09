@@ -14,6 +14,8 @@ import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalParameters.sol";
 import "src/reward/WeightedFarmingPoolEventError.sol";
 
+import "forge-std/console.sol";
+
 contract PolicyCenterTest is
     PolicyCenterEventError,
     ProtectionPoolEventError,
@@ -40,7 +42,7 @@ contract PolicyCenterTest is
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
     uint256 internal constant COVER_AMOUNT = 100e12;
-    uint256 internal constant PAYOUT = 50;
+    uint256 internal constant PAYOUT = 1000e6;
     uint256 internal constant LIQUIDITY_UNIT = 100e6;
     uint256 internal constant MIN_COVER_AMOUNT = 100e6;
     uint256 internal constant SCALE = 1e12;
@@ -88,6 +90,7 @@ contract PolicyCenterTest is
     error PayoutPool__NotMatchingPoolIdGeneration();
     error PayoutPool__NoPayout();
     error Executor__ReportNotPassed();
+    error CoverRightToken__NoReport();
 
     function setUp() public {
         setUpContracts();
@@ -311,6 +314,7 @@ contract PolicyCenterTest is
         vm.prank(CHARLIE);
         vm.expectEmit(true, false, false, true);
         emit LiquidityProvided(CHARLIE, LIQUIDITY);
+        policyCenter.provideLiquidity(LIQUIDITY);
 
         console.log(unicode"✅ Provide liquidity after a truthful report");
     }
@@ -563,7 +567,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        emit LiquidityStaked(CHARLIE, JOE_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
 
         console.log(unicode"✅ Stake provided liquidity");
@@ -577,12 +581,12 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        emit LiquidityStaked(CHARLIE, JOE_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
 
         vm.prank(CHARLIE);
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        emit LiquidityStaked(CHARLIE, JOE_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
         console.log(unicode"✅ Stake to multiple pools with a single liquidity");
@@ -596,12 +600,12 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY / 2, CHARLIE);
+        emit LiquidityStaked(CHARLIE, JOE_ID, LIQUIDITY / 2);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY / 2);
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY / 2, CHARLIE);
+        emit LiquidityStaked(CHARLIE, PTP_ID, LIQUIDITY / 2);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY / 2);
 
         console.log(unicode"✅ Stake to multiple pools");
@@ -621,7 +625,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        emit LiquidityStaked(CHARLIE, PTP_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
         console.log(
@@ -665,7 +669,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit StakedLiquidity(LIQUIDITY, CHARLIE);
+        emit LiquidityStaked(CHARLIE, PTP_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
         console.log(
@@ -969,7 +973,7 @@ contract PolicyCenterTest is
         
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
-        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, price);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover");
@@ -1019,7 +1023,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
-        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment * 10 / 11 + 1);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover after truthful incident report");
@@ -1043,7 +1047,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
-        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, maxPayment);
+        emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, price2);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
         console.log(unicode"✅ Buy cover after false incident report");
@@ -1071,18 +1075,18 @@ contract PolicyCenterTest is
         crPtpAddress = policyCenter.buyCover(PTP_ID, COVER_AMOUNT, 3, maxPayment);
     }
 
-    function _truthfulReport() internal {
-        vm.warp(ZERO_TIME);
+    function _truthfulReport(uint256 time) internal {
+        vm.warp(time + ZERO_TIME);
         vm.prank(CHARLIE);
         incidentReport.report(JOE_ID, PAYOUT);
-        vm.warp(INCIDENT_VOTE_TIME);
+        vm.warp(time + INCIDENT_VOTE_TIME);
         vm.prank(CHARLIE);
         incidentReport.startVoting(1);
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
-        vm.warp(INCIDENT_SETTLE_TIME);
+        vm.warp(time + INCIDENT_SETTLE_TIME);
         incidentReport.settle(1);
         executor.executeReport(1);
 
@@ -1097,17 +1101,16 @@ contract PolicyCenterTest is
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 
-        _truthfulReport();
-
         // # --------------------------------------------------------------------//
-        // # Should not be to claim payout prior to liquidation # //
+        // # Should not be able to claim payout prior to liquidation # //
         // # --------------------------------------------------------------------//
-        vm.warp(INCIDENT_SETTLE_TIME + 1 days);
         vm.prank(ALICE);
         vm.expectRevert(PayoutPool__NoPayout.selector);
         policyCenter.claimPayout(1, crJoeAddress, 1);
 
         console.log(unicode"✅ Not claim payout prior to liquidation");
+
+        _truthfulReport(2 days);
 
         // # --------------------------------------------------------------------//
         // # Should not be able to claim with wrong cover right address # //
@@ -1120,7 +1123,7 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Not claim with wrong address");
 
         // # --------------------------------------------------------------------//
-        // # Should not be to claim wrong pool id # //
+        // # Should not be able to claim wrong pool id # //
         // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
@@ -1130,7 +1133,7 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Not claim with wrong pool id");
 
         // # --------------------------------------------------------------------//
-        // # Should not be to claim wrong generation # //
+        // # Should not be able to claim wrong generation # //
         // # --------------------------------------------------------------------//
 
         vm.prank(ALICE);
@@ -1140,6 +1143,16 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Not claim with non existent generation");
 
         // # --------------------------------------------------------------------//
+        // # Should not be able to claim if did not buy protection # //
+        // # --------------------------------------------------------------------//
+
+        vm.prank(BOB);
+        vm.expectRevert(PayoutPool__NoPayout.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+
+        console.log(unicode"✅ not claim if did not buy protection");
+
+        // # --------------------------------------------------------------------//
         // # Should be able to claim payout # //
         // # --------------------------------------------------------------------//
 
@@ -1147,7 +1160,7 @@ contract PolicyCenterTest is
         vm.warp(30 days);
 
         vm.prank(ALICE);
-        vm.expectEmit(false, false, false, true);
+        vm.expectEmit(true, false, false, true);
         emit PayoutClaimed(ALICE, COVER_AMOUNT);
         policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
 
@@ -1168,20 +1181,23 @@ contract PolicyCenterTest is
         veDEG.mint(ALICE, 100 ether);
         veDEG.mint(BOB, 100 ether);
 
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
         // Report Joe Pool once again
+        vm.prank(CHARLIE);
         incidentReport.report(1, PAYOUT);
         vm.warp(timestamp + INCIDENT_VOTE_TIME);
+        incidentReport.startVoting(2);
         vm.prank(ALICE);
         incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
-        vm.prank(ALICE);
+        vm.prank(BOB);
         incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(timestamp + INCIDENT_SETTLE_TIME);
         incidentReport.settle(2);
         executor.executeReport(2);
 
         vm.prank(ALICE);
-        vm.expectEmit(false, false, false, true);
-        emit PayoutClaimed(ALICE, COVER_AMOUNT / 2);
+        vm.expectEmit(true, false, false, true);
+        emit PayoutClaimed(ALICE, COVER_AMOUNT);
         policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
 
         console.log(unicode"✅ Claim Payout from previous generation");

@@ -11,6 +11,7 @@ import "./SimpleIERC20.sol";
 
 import "forge-std/console.sol";
 
+
 /**
  * @notice Payout Pool
  *
@@ -133,16 +134,18 @@ contract PayoutPool {
             _user
         );
 
-        console.log("claimableBalance", claimableBalance);
-        console.log("payout.ratio", payout.ratio);
-        uint256 claimable = (claimableBalance * payout.ratio) / 10000;
+        console.log("PayoutPool.claim: claimableBalance", claimableBalance);
+        console.log("PayoutPool.claim: payout.ratio", payout.ratio);
 
+        uint256 claimable = (claimableBalance * payout.ratio) / SCALE;
+        console.log("PayoutPool.claim: balance", SimpleIERC20(shield).balanceOf(address(this)));
+        console.log("PayoutPool.claim: claimable", claimable);
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 
-        claimed = (claimable * coverIndex) / SCALE;
+        claimed = (claimable * coverIndex) / 10000;
 
         ICoverRightToken(_crToken).burn(
             _poolId,

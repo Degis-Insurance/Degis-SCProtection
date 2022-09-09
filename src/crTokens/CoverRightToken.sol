@@ -34,6 +34,7 @@ import "../libraries/DateTime.sol";
 contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     address public incidentReport;
     address public policyCenter;
+    address public payoutPool;
 
     uint256 public immutable generation;
 
@@ -52,6 +53,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     // User address => start timestamp => cover amount
     mapping(address => mapping(uint256 => uint256)) public coverStartFrom;
 
+    error CoverRightToken__NoReport();
+
     constructor(
         string memory _poolName,
         uint256 _poolId,
@@ -59,7 +62,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _expiry,
         uint256 _generation,
         address _policyCenter,
-        address _incidentReport
+        address _incidentReport,
+        address _payoutPool
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
@@ -68,6 +72,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         generation = _generation;
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
+        payoutPool = _payoutPool;
     }
 
     modifier onlyPolicyCenter() {
@@ -117,7 +122,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _poolId,
         address _user,
         uint256 _amount
-    ) external onlyPolicyCenter nonReentrant {
+    ) external nonReentrant {
+        require(msg.sender == payoutPool, "Only payout pool");
         require(_amount > 0, "Zero Amount");
         require(_poolId == POOL_ID, "Wrong pool id");
 
@@ -154,24 +160,26 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         IIncidentReport incident = IIncidentReport(incidentReport);
 
         uint256 reportAmount = incident.getPoolReportsAmount(POOL_ID);
-        uint256 latestReportId = incident.poolReports(
-            POOL_ID,
-            reportAmount - 1
-        );
+        if (reportAmount > 0) {
+            uint256 latestReportId = incident.poolReports(
+                POOL_ID,
+                reportAmount - 1
+            );
 
-        (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
-            latestReportId
-        );
+            (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
+                latestReportId
+            );
 
-        // Check those bought within 2 days
-        for (uint256 i; i < EXCLUDE_DAYS; ) {
-            if (voteTimestamp > i * 1 days) {
-                uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+            // Check those bought within 2 days
+            for (uint256 i; i < EXCLUDE_DAYS; ) {
+                if (voteTimestamp > i * 1 days) {
+                    uint256 date = _getEOD(voteTimestamp - (i * 1 days));
 
-                exclusion += coverStartFrom[_user][date];
-            }
-            unchecked {
-                ++i;
+                    exclusion += coverStartFrom[_user][date];
+                }
+                unchecked {
+                    ++i;
+                }
             }
         }
     }

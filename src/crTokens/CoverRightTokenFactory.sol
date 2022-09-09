@@ -5,7 +5,6 @@ pragma solidity ^0.8.13;
 import "./CoverRightToken.sol";
 import "../util/OwnableWithoutContext.sol";
 
-import "forge-std/console.sol";
 
 /**
  * @notice Factory for deploying crTokens
@@ -19,6 +18,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     address public policyCenter;
     address public incidentReport;
+    address public payoutPool;
 
     event NewCRTokenDeployed(
         uint256 poolId,
@@ -37,6 +37,10 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
 
     function setPolicyCenter(address _policyCenter) public onlyOwner {
         policyCenter = _policyCenter;
+    }
+
+    function setPayoutPool(address _payoutPool) public onlyOwner {
+        payoutPool = _payoutPool;
     }
 
     /**
@@ -111,7 +115,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
                 _expiry,
                 _generation,
                 policyCenter,
-                incidentReport
+                incidentReport,
+                payoutPool
             )
         );
     }

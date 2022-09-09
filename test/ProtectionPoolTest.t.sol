@@ -9,6 +9,8 @@ import "src/interfaces/IProtectionPool.sol";
 import { ProtectionPool } from "src/pools/protectionPool/ProtectionPool.sol";
 import "src/pools/protectionPool/ProtectionPoolEventError.sol";
 
+import "forge-std/console.sol";
+
 contract ProtectionPoolTest is ContractSetupBaseTest, ProtectionPoolEventError {
     address internal ALICE = mkaddr("Alice");
     address internal BOB = mkaddr("Bob");

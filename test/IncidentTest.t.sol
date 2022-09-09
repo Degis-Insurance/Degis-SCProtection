@@ -9,6 +9,8 @@ import "src/interfaces/IPriorityPool.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/incidentReport/IncidentReportEventError.sol";
 
+import "forge-std/console.sol";
+
 contract IncidentTest is
     ContractSetupBaseTest,
     IncidentReportParameters,

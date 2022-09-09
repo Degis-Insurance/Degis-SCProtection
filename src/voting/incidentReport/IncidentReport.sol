@@ -28,8 +28,6 @@ import "./IncidentReportEventError.sol";
 
 import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @notice Incident Report Contract
  *
@@ -229,6 +227,12 @@ contract IncidentReport is
         // _pausePools(currentReport.poolId);
 
         emit ReportVotingStart(_id, block.timestamp);
+    }
+
+    function setReported(uint256 _poolId, bool _reported) external {
+        // require(msg.sender == executor, "Not executor");
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
+        reported[pool] = _reported;
     }
 
     /**

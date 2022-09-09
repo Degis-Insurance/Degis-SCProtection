@@ -108,6 +108,8 @@ contract Executor is
         // Unpause the priority pool and protection pool
         factory.pausePriorityPool(report.poolId, false);
 
+        IIncidentReport(incidentReport).setReported(report.poolId, false);
+
         // Liquidate the pool
         (, address poolAddress, , , ) = factory.pools(report.poolId);
         IPriorityPool(poolAddress).liquidatePool(report.payout);

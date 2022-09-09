@@ -32,8 +32,6 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @title Policy Center
  *
@@ -690,10 +688,6 @@ contract PolicyCenter is
         // Check the real decimal diff
         uint256 decimalDiff = IERC20Decimals(_token).decimals();
         premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
-        console.log("premiumInNativeToken", premiumInNativeToken);
-        console.log("price", price);
-        console.log("decimalDiff", decimalDiff);
-        console.log("premium", _premium);
 
 
         // Pay native tokens

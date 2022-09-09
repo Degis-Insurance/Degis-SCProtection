@@ -9,6 +9,8 @@ import "src/interfaces/IOnboardProposal.sol";
 import "src/voting/onboardProposal/OnboardProposalParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalEventError.sol";
 
+import "forge-std/console.sol";
+
 contract OnboardProposalTest is
     ContractSetupBaseTest,
     OnboardProposalParameters,

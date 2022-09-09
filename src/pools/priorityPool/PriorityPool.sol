@@ -256,6 +256,22 @@ contract PriorityPool is
     }
 
     /**
+     * @notice Get the current month cover amount
+     *        Active cover amount = sum of the nearest 3 months' covers
+     *
+     * @return covered Current month active cover amount
+     */
+    function currentMonthCovered() public view returns (uint256 covered) {
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
+
+        covered = coverInMonth[currentYear][currentMonth];
+
+        covered = (covered * coverIndex) / 10000;
+    }
+
+    /**
      * @notice Current minimum asset requirement for Protection Pool
      *         Min requirement * capacity ratio = active covered
      *
@@ -669,10 +685,10 @@ contract PriorityPool is
 
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
-        //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
+        //      You can only use 100% (1e10 / SCALE) of your crTokens for claiming
         uint256 payoutRatio;
-        activeCovered() > 0
-            ? payoutRatio = (_amount * SCALE) / activeCovered()
+        currentMonthCovered() > 0
+            ? payoutRatio = (_amount * SCALE) / currentMonthCovered()
             : payoutRatio = 0;
 
         IPayoutPool(payoutPool).newPayout(

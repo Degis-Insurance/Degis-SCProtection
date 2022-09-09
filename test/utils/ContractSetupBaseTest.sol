@@ -173,6 +173,9 @@ contract ContractSetupBaseTest is BaseTest {
         // Set weighted farming pool
         farmingPool.setPolicyCenter(address(policyCenter));
 
+        // Set cover right factory
+        crFactory.setPayoutPool(address(payoutPool));
+
         // Set protection pool
         protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
         protectionPool.setPolicyCenter(address(policyCenter));

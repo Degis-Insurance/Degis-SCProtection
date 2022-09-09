@@ -13,6 +13,8 @@ import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/incidentReport/IncidentReportEventError.sol";
 import "src/core/interfaces/ExecutorEventError.sol";
 
+import "forge-std/console.sol";
+
 contract ExecutorTest is
     ExecutorEventError,
     ContractSetupBaseTest,

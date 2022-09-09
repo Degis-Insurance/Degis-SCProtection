@@ -35,6 +35,8 @@ interface IIncidentReport {
 
     function closeReport(uint256 _reportId) external;
 
+    function setReported(uint256 _poolId, bool _isreported) external;
+
     function deg() external view returns (address);
 
     function executor() external view returns (address);

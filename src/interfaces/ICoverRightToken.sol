@@ -19,4 +19,6 @@ interface ICoverRightToken {
     ) external;
 
     function generation() external view returns (uint256);
+
+    function policyCenter() external view returns (address);
 }
