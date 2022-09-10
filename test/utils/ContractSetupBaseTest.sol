@@ -58,7 +58,6 @@ contract ContractSetupBaseTest is BaseTest {
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
         shield = new MockSHIELD(0, "Shield", 6, "SHD");
-
         usdc = new MockUSDC("MockUSDC", "MockUSDC", 6);
 
         priceGetter = new MockPriceGetter();
@@ -69,7 +68,6 @@ contract ContractSetupBaseTest is BaseTest {
 
         _setupPolicyCenter();
         _setupExecutor();
-
 
         _setupTreasury();
 
@@ -131,13 +129,15 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
-
     function _setupTreasury() internal {
         treasury = new Treasury(address(shield), address(executor));
     }
 
     function _setupFarmingPool() internal {
-        farmingPool = new WeightedFarmingPool(address(premiumPool));
+        farmingPool = new WeightedFarmingPool(
+            address(policyCenter),
+            address(priorityPoolFactory)
+        );
     }
 
     function _setupIncidentReport() internal {
