@@ -35,7 +35,11 @@ contract Treasury {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event ReporterRewarded(address reporter, uint256 amount);
+    event ReporterRewarded(address indexed reporter, uint256 amount);
+
+    event NewIncomeToTreasury(uint256 indexed poolId, uint256 amount);
+
+    event ClaimedByOwner(uint256 amount);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -89,6 +93,8 @@ contract Treasury {
         require(msg.sender == policyCenter, "Only policy center");
 
         poolIncome[_poolId] += _amount;
+
+        emit NewIncomeToTreasury(_poolId, _amount);
     }
 
     /**
@@ -100,5 +106,7 @@ contract Treasury {
         require(msg.sender == owner, "Only owner");
 
         SimpleIERC20(shield).transfer(owner, _amount);
+
+        emit ClaimedByOwner(_amount);
     }
 }
