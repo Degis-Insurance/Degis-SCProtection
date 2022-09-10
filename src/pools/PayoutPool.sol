@@ -104,10 +104,14 @@ contract PayoutPool {
 
     /**
      * @notice Claim payout for a user
-     * @param _user             User address
-     * @param _crToken         	Cover right token address
-     * @param _poolId           Pool Id
-     * @param _generation       Generation of priority pool (1 if no liquidations occurred)
+     *
+     * @param _user       User address
+     * @param _crToken    Cover right token address
+     * @param _poolId     Pool Id
+     * @param _generation Generation of priority pool (1 if no liquidations occurred)
+     *
+     * @return claimed               The actual amount transferred to the user
+     * @return newGenerationCRAmount New generation crToken minted to the user
      */
     function claim(
         address _user,

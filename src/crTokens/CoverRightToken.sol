@@ -41,7 +41,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     uint256 public immutable generation;
 
     // Expiry date
-    uint256 public expiry;
+    uint256 public immutable expiry;
 
     // Pool name for this crToken
     string public POOL_NAME;
@@ -84,10 +84,17 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         _;
     }
 
+    // TODO: remove this when mainnet
     function setPolicyCenter(address _policyCenter) public onlyOwner {
         policyCenter = _policyCenter;
     }
 
+    /**
+     * @notice Override the decimals funciton
+     *
+     *         Cover right token is minted with reference to the cover amount he bought
+     *         So keep the decimals the same with Shield
+     */
     function decimals() public pure override returns (uint8) {
         return 6;
     }
@@ -153,6 +160,11 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      * @notice Get the excluded amount of a user
      *         Excluded means "without those are bought within a short time before voteTimestamp"
      *
+     *         Only count the corresponding one report (voteTimestamp)
+     *         Each crToken & priorityPool has a generation
+     *         And should get the correct report with this "Generation"
+     *             - poolReports(poolId, generation)
+     *
      * @param _user User address
      *
      * @return exclusion Amount not able to claim because cover period has ended
@@ -176,6 +188,9 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
             (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
                 latestReportId
             );
+
+            // // If the result is not PASS, the voteTimestamp should not be counted
+            // if (result == 1 || result ==)
 
             // Check those bought within 2 days
             for (uint256 i; i < EXCLUDE_DAYS; ) {
