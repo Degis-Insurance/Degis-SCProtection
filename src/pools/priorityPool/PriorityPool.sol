@@ -98,7 +98,7 @@ contract PriorityPool is
     // Pool name
     string public poolName;
 
-    // Current generation of this priority pool
+    // Current generation of this priority pool (start from 1)
     // Every time there is a report and liquidation, generation += 1
     uint256 public generation;
 

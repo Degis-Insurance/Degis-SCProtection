@@ -85,6 +85,9 @@ contract IncidentReport is
     // Total number of reports
     uint256 public reportCounter;
 
+    // Report quorum ratio
+    uint256 public quorumRatio;
+
     struct Report {
         uint256 poolId; // Project pool id
         uint256 reportTimestamp; // Time of starting report
@@ -133,7 +136,10 @@ contract IncidentReport is
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
-    {}
+    {
+        // Initial quorum 50%
+        quorumRatio = 50;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
@@ -348,7 +354,7 @@ contract IncidentReport is
      *
      *         For those who made a wrong voting choice
      *         The paid DEG will be burned and the veDEG will be unlocked
-     *         
+     *
      *         Can not call this function when result is TIED or choose the correct side
      *
      * @param _id   Report id
@@ -595,7 +601,7 @@ contract IncidentReport is
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
             _totalVotes >=
-            (SimpleIERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
+            (SimpleIERC20(veDeg).totalSupply() * quorumRatio) / 100;
     }
 
     /**

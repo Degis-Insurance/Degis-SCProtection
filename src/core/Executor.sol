@@ -41,7 +41,10 @@ contract Executor is
     OwnableWithoutContext,
     ExecutorDependencies
 {
+    // Whether report already executed
     mapping(uint256 => bool) public reportExecuted;
+
+    // Whether proposal already executed
     mapping(uint256 => bool) public proposalExecuted;
 
     constructor() OwnableWithoutContext(msg.sender) {}

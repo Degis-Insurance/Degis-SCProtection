@@ -34,7 +34,6 @@ interface IPolicyCenter {
     ) external;
 }
 
-
 interface IPayoutPool {
     function newPayout(
         uint256 _poolId,
@@ -69,9 +68,17 @@ interface IWeightedFarmingPool {
 }
 
 abstract contract PriorityPoolDependencies {
-    uint256 constant SCALE = 1e12;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
-    uint256 constant SECONDS_PER_YEAR = 86400 * 365;
+    uint256 internal constant SCALE = 1e12;
+    uint256 internal constant SECONDS_PER_YEAR = 86400 * 365;
+    uint256 internal constant DYNAMIC_TIME = 7 days;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     address internal policyCenter;
     address internal priorityPoolFactory;
