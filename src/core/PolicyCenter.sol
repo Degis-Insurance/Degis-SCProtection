@@ -295,6 +295,7 @@ contract PolicyCenter is
             _coverDuration,
             timestampDuration
         );
+        
         ITreasury(treasury).premiumIncome(_poolId, premiumToTreasury);
 
         emit CoverBought(

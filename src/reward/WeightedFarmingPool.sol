@@ -420,7 +420,11 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
      *
      * @param _id Pool id
      */
-    function _updateReward(uint256 _id) internal returns (uint256 totalReward) {
+    function _updateReward(uint256 _id)
+        internal
+        view
+        returns (uint256 totalReward)
+    {
         PoolInfo storage pool = pools[_id];
 
         uint256 currentTime = block.timestamp;
@@ -482,12 +486,6 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
                 }
             }
         }
-
-        // Distribute reward to Priority Pool
-        IPremiumRewardPool(premiumRewardPool).distributeToken(
-            pool.rewardToken,
-            totalReward
-        );
     }
 
     /**
