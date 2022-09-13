@@ -65,7 +65,6 @@ contract PolicyCenter is
     // bps distribution of premiums 0: insurance pool, 1: protection pool
     uint256[2] public premiumSplits;
 
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -352,7 +351,7 @@ contract PolicyCenter is
             address(this)
         );
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
-
+        
         IWeightedFarmingPool(weightedFarmingPool).depositFromPolicyCenter(
             _poolId,
             lpToken,
@@ -495,18 +494,20 @@ contract PolicyCenter is
         // Check if the new generation crToken has been deployed
         // If so, get the address
         // If not, deploy the new generation cr token
-        address newCRToken = _checkNewCRToken(
-            _poolId,
-            poolName,
-            expiry,
-            _generation++
-        );
+        if (newGenerationCRAmount > 0) {
+            address newCRToken = _checkNewCRToken(
+                _poolId,
+                poolName,
+                expiry,
+                _generation++
+            );
 
-        ICoverRightToken(newCRToken).mint(
-            _poolId,
-            msg.sender,
-            newGenerationCRAmount
-        );
+            ICoverRightToken(newCRToken).mint(
+                _poolId,
+                msg.sender,
+                newGenerationCRAmount
+            );
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -688,7 +689,6 @@ contract PolicyCenter is
         // Check the real decimal diff
         uint256 decimalDiff = IERC20Decimals(_token).decimals();
         premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
-
 
         // Pay native tokens
         IERC20(_token).safeTransferFrom(

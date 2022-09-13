@@ -351,7 +351,7 @@ contract PriorityPoolFactory is
         internal
         returns (address addr)
     {
-        assembly {
+        assembly ("memory-safe") {
             addr := create2(0, add(_code, 0x20), mload(_code), _salt)
             if iszero(extcodesize(addr)) {
                 revert(0, 0)

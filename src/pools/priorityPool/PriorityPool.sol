@@ -636,6 +636,8 @@ contract PriorityPool is
             }
         }
 
+        console.log("updateWeightedFarmingSpeed", _newSpeed);
+
         IWeightedFarmingPool(weightedFarmingPool).updateRewardSpeed(
             poolId,
             _newSpeed,

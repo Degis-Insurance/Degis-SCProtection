@@ -133,7 +133,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         internal
         returns (address addr)
     {
-        assembly {
+        assembly ("memory-safe") {
             addr := create2(0, add(code, 0x20), mload(code), salt)
             if iszero(extcodesize(addr)) {
                 revert(0, 0)

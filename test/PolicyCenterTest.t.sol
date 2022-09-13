@@ -41,8 +41,8 @@ contract PolicyCenterTest is
     uint256 internal constant PREMIUMRATIO_2 = 250;
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
-    uint256 internal constant COVER_AMOUNT = 100e12;
-    uint256 internal constant PAYOUT = 1000e6;
+    uint256 internal constant COVER_AMOUNT = 1e13;
+    uint256 internal constant PAYOUT = 1e13;
     uint256 internal constant LIQUIDITY_UNIT = 100e6;
     uint256 internal constant MIN_COVER_AMOUNT = 100e6;
     uint256 internal constant SCALE = 1e12;
@@ -651,7 +651,7 @@ contract PolicyCenterTest is
         console.log(unicode"✅ Not stake during incident report");
 
         // # --------------------------------------------------------------------//
-        // # Should be able to stake after incident settles # //
+        // # Should be able to stake after report is executed # //
         // # --------------------------------------------------------------------//
 
         vm.revertTo(snapshot_5);
@@ -711,6 +711,7 @@ contract PolicyCenterTest is
         _stake(BOB);
         _stake(CHARLIE);
 
+
         // staking requires a minimum amount of time passed since priority pool creation
         vm.warp(ZERO_TIME);
 
@@ -730,6 +731,7 @@ contract PolicyCenterTest is
 
         vm.prank(CHARLIE);
         protectionPool.increaseAllowance(address(policyCenter), LIQUIDITY * 2);
+        
         vm.prank(CHARLIE);
         vm.expectRevert(WeightedFarmingPool__ExceedsStakedAmount.selector);
         policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY * 2);
@@ -771,8 +773,9 @@ contract PolicyCenterTest is
         // mint tokens so Charlie can report pool
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
         vm.prank(CHARLIE);
-        // report unrelated priority pool
         incidentReport.report(JOE_ID, PAYOUT);
+
+        
 
         // # --------------------------------------------------------------------//
         // # Should not be able to unstake liquidity during incident report # //
@@ -793,22 +796,50 @@ contract PolicyCenterTest is
         emit UnstakedLiquidity(LIQUIDITY, ALICE);
         policyCenter.unstakeLiquidity(PTP_ID, ptpLPAddress, LIQUIDITY);
 
-        vm.revertTo(snapshot_3);
+        
 
         console.log(
             unicode"✅ Unstake liquidity during unrelated incident report"
         );
 
+        vm.revertTo(snapshot_3);
+        uint256 snapshot_4 = vm.snapshot();
+
+        // # --------------------------------------------------------------------//
+        // # Should be able to unstake after truthful incident report but no reward # //
+        // # --------------------------------------------------------------------// 
+
+        // BOB buys cover
+        _buyJoeCover(BOB);
+        _truthfulReport(1 days, JOE_ID);
+
+
+        vm.prank(CHARLIE);
+        vm.expectEmit(false, false, false, true);
+        emit UnstakedLiquidity(LIQUIDITY, CHARLIE);
+        // entire pool should be claimed
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
+
+        console.log(
+            unicode"✅ Unstake liquidity but no ProLP tokens received"
+        );
+
+        vm.revertTo(snapshot_4);
+
         // # --------------------------------------------------------------------//
         // # Should be able to unstake after truthful incident report # //
-        // # --------------------------------------------------------------------//
+        // # --------------------------------------------------------------------//        
+        
+        
+
         vm.prank(CHARLIE);
         // mint tokens so Charlie can report pool
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
         vm.prank(CHARLIE);
         incidentReport.report(JOE_ID, PAYOUT);
 
-        uint256 snapshot_4 = vm.snapshot();
+        uint256 snapshot_5 = vm.snapshot();
+
 
         vm.warp(INCIDENT_VOTE_TIME);
         incidentReport.startVoting(1);
@@ -830,7 +861,7 @@ contract PolicyCenterTest is
             unicode"✅ Unstake liquidity after truthful incident report"
         );
 
-        vm.revertTo(snapshot_4);
+        vm.revertTo(snapshot_5);
 
         // # --------------------------------------------------------------------//
         // # Should be able to unstake after false incident report # //
@@ -854,6 +885,7 @@ contract PolicyCenterTest is
         policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
 
         console.log(unicode"✅ Unstake liquidity after false incident report");
+
     }
 
     function testBuyCover() public {
@@ -1064,38 +1096,35 @@ contract PolicyCenterTest is
         crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
     }
 
-    function _buyPtpCover(address _user) internal {
-        (uint256 price, uint256 length) = ptpPool.coverPrice(COVER_AMOUNT, 3);
-        uint256 maxPayment = price * 11 / 10;
-        vm.prank(_user);
-        ptp.approve(address(policyCenter), type(uint256).max);
-        ptp.mint(_user, COVER_AMOUNT * ptp.decimals());
-        vm.prank(_user);
-        // Get Joe cover right address and buy cover
-        crPtpAddress = policyCenter.buyCover(PTP_ID, COVER_AMOUNT, 3, maxPayment);
-    }
 
-    function _truthfulReport(uint256 time) internal {
+    function _truthfulReport(uint256 time, uint256 reportId) internal {
+        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
         vm.warp(time + ZERO_TIME);
         vm.prank(CHARLIE);
         incidentReport.report(JOE_ID, PAYOUT);
         vm.warp(time + INCIDENT_VOTE_TIME);
         vm.prank(CHARLIE);
-        incidentReport.startVoting(1);
+        incidentReport.startVoting(reportId);
         vm.prank(ALICE);
-        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        incidentReport.vote(reportId, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
-        incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
+        incidentReport.vote(reportId, VOTE_FOR, VOTE_AMOUNT);
         vm.warp(time + INCIDENT_SETTLE_TIME);
-        incidentReport.settle(1);
-        executor.executeReport(1);
+        incidentReport.settle(reportId);
+        executor.executeReport(reportId);
 
     }
 
     function testClaimPayout() public {
         _provideLiquidity(CHARLIE);
         _buyJoeCover(ALICE);
-        _buyPtpCover(ALICE);
+         (uint256 price, uint256 length) = ptpPool.coverPrice(COVER_AMOUNT, 3);
+        vm.prank(ALICE);
+        ptp.approve(address(policyCenter), type(uint256).max);
+        ptp.mint(ALICE, COVER_AMOUNT * ptp.decimals());
+        vm.prank(ALICE);
+        // Get Joe cover right address and buy cover
+        crPtpAddress = policyCenter.buyCover(PTP_ID, COVER_AMOUNT, 3, price * 11 / 10);
 
         MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
 
@@ -1110,7 +1139,7 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Not claim payout prior to liquidation");
 
-        _truthfulReport(2 days);
+        _truthfulReport(2 days, JOE_ID);
 
         // # --------------------------------------------------------------------//
         // # Should not be able to claim with wrong cover right address # //
@@ -1142,15 +1171,6 @@ contract PolicyCenterTest is
 
         console.log(unicode"✅ Not claim with non existent generation");
 
-        // # --------------------------------------------------------------------//
-        // # Should not be able to claim if did not buy protection # //
-        // # --------------------------------------------------------------------//
-
-        vm.prank(BOB);
-        vm.expectRevert(PayoutPool__NoPayout.selector);
-        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
-
-        console.log(unicode"✅ not claim if did not buy protection");
 
         // # --------------------------------------------------------------------//
         // # Should be able to claim payout # //
@@ -1170,30 +1190,23 @@ contract PolicyCenterTest is
         // # Should be able to claim payout from previous generation # //
         // # --------------------------------------------------------------------//
 
+
+        vm.prank(BOB);
+        vm.expectRevert(PayoutPool__NoPayout.selector);
+        policyCenter.claimPayout(JOE_ID, crJoeAddress, 1);
+
+        console.log(unicode"✅ not claim if did not buy protection");
+
         // Revert to snapshot
         vm.revertTo(snapshot_1);
 
         vm.prank(ALICE);
         policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, COVER_AMOUNT);
 
-        uint256 timestamp = block.timestamp;
-
         veDEG.mint(ALICE, 100 ether);
         veDEG.mint(BOB, 100 ether);
 
-        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
-        // Report Joe Pool once again
-        vm.prank(CHARLIE);
-        incidentReport.report(1, PAYOUT);
-        vm.warp(timestamp + INCIDENT_VOTE_TIME);
-        incidentReport.startVoting(2);
-        vm.prank(ALICE);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
-        vm.prank(BOB);
-        incidentReport.vote(2, VOTE_FOR, VOTE_AMOUNT);
-        vm.warp(timestamp + INCIDENT_SETTLE_TIME);
-        incidentReport.settle(2);
-        executor.executeReport(2);
+        _truthfulReport(30 days, 2);
 
         vm.prank(ALICE);
         vm.expectEmit(true, false, false, true);

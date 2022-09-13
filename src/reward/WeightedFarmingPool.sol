@@ -11,6 +11,8 @@ import "../libraries/DateTime.sol";
 
 import "./WeightedFarmingPoolEventError.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @notice Weighted Farming Pool
  *
@@ -93,6 +95,10 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         return (pool.tokens, pool.amount, pool.weight);
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
     }
@@ -115,6 +121,10 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
             SCALE -
             user.rewardDebt;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Registers PRI-LP token in Weighted Farming Pool
@@ -193,6 +203,15 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         emit WeightChanged(_id);
     }
 
+
+    /** 
+     * @notice Sets the speed for a given array of years and months in a given pool
+     * 
+     * @param _id            Pool Id
+     * @param _newSpeed     New speed of the token in the pool
+     * @param _years        Array of years
+     * @param _months       Array of months
+     */
     function updateRewardSpeed(
         uint256 _id,
         uint256 _newSpeed,
@@ -224,7 +243,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     ) external {
         if (msg.sender != policyCenter)
             revert WeightedFarmingPool__OnlyPolicyCenter();
-
+        console.log("depositFromPolicyCenter", _amount);
         _deposit(_id, _token, _amount, _user);
     }
 
@@ -358,6 +377,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
         if (pool.shares > 0) {
             uint256 newReward = _updateReward(_id);
+            console.log("newReward", newReward);
 
             pool.accRewardPerShare += newReward / pool.shares;
 
@@ -371,6 +391,8 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     }
 
     function harvest(uint256 _id, address _to) external {
+        if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+        
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
