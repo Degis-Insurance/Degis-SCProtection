@@ -16,9 +16,11 @@ dotenv.config();
 
 import "./tasks/setAddress";
 import "./tasks/voting/onboard";
+import "./tasks/voting/report";
 import "./tasks/executor/executor";
 import "./tasks/pools/pool";
 import "./tasks/weightedFarming";
+import "./tasks/tokens/token";
 
 function getRemappings() {
   return fs
@@ -51,7 +53,9 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
-    localhost: {},
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
     fuji: {
       url: process.env.FUJI_URL || "",
       accounts: {

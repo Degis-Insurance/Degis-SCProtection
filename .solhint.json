@@ -9,6 +9,7 @@
     "avoid-sha3": "warn",
     "func-visibility": ["warn", { "ignoreConstructors": true }],
     "reason-string": ["warn", { "maxLength": 60 }],
-    "not-rely-on-time": "off"
+    "not-rely-on-time": "off",
+    "no-inline-assembly": "off"
   }
 }

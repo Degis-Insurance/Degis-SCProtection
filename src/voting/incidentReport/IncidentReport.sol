@@ -85,6 +85,9 @@ contract IncidentReport is
     // Total number of reports
     uint256 public reportCounter;
 
+    // Report quorum ratio
+    uint256 public quorumRatio;
+
     struct Report {
         uint256 poolId; // Project pool id
         uint256 reportTimestamp; // Time of starting report
@@ -115,12 +118,13 @@ contract IncidentReport is
         uint256 choice; // 1: vote for, 2: vote against
         uint256 amount; // total veDEG amount for voting
         bool claimed; // whether has claimed the reward
+        bool paid; // whether has paid the debt   // @audit Add paid status
     }
     // User address => report id => user's voting info
     mapping(address => mapping(uint256 => UserVote)) public votes;
 
-    // Pool address => whether the pool is being reported
-    mapping(address => bool) public reported;
+    // Pool id => whether the pool is being reported
+    mapping(uint256 => bool) public reported;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -132,7 +136,10 @@ contract IncidentReport is
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
-    {}
+    {
+        // Initial quorum 50%
+        quorumRatio = 50;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
@@ -182,7 +189,11 @@ contract IncidentReport is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    function setExecutor(address _executor) external onlyOwner {
+        executor = _executor;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -250,6 +261,9 @@ contract IncidentReport is
             revert IncidentReport__WrongPeriod();
 
         currentReport.status = CLOSE_STATUS;
+        reported[_id] = false;
+
+        _unpausePools(currentReport.poolId);
 
         emit ReportClosed(_id, block.timestamp);
     }
@@ -300,14 +314,18 @@ contract IncidentReport is
         if (res > 0) {
             currentReport.status = SETTLED_STATUS;
             if (_checkQuorum(currentReport.numFor + currentReport.numAgainst)) {
-                currentReport.result = res;
-                _settleVotingReward(_id);
-                emit ReportSettled(_id, res);
-
                 // REJECT or TIED: unlock the priority pool & protection pool immediately
+                //                 mark the report as not reported
                 if (res != PASS_RESULT) {
-                    _unpausePools(currentReport.poolId);
+                    uint256 poolId = currentReport.poolId;
+                    _unpausePools(poolId);
+                    reported[poolId] = false;
                 }
+
+                currentReport.result = res;
+
+                _settleVotingReward(_id, res);
+                emit ReportSettled(_id, res);
             } else {
                 currentReport.result = FAILED_RESULT;
                 // FAILED: unlock the priority pool & protection pool immediately
@@ -337,6 +355,8 @@ contract IncidentReport is
      *         For those who made a wrong voting choice
      *         The paid DEG will be burned and the veDEG will be unlocked
      *
+     *         Can not call this function when result is TIED or choose the correct side
+     *
      * @param _id   Report id
      * @param _user User address (can pay debt for another user)
      */
@@ -345,8 +365,10 @@ contract IncidentReport is
         uint256 finalResult = reports[_id].result;
 
         if (finalResult == 0) revert IncidentReport__NotSettled();
-        if (userVote.choice == finalResult)
+        if (userVote.choice == finalResult || finalResult == TIED_RESULT)
             revert IncidentReport__NotWrongChoice();
+        // @audit Add paid status
+        if (userVote.paid) revert IncidentReport__AlreadyPaid();
 
         uint256 debt = (userVote.amount * DEBT_RATIO) / 10000;
 
@@ -356,11 +378,28 @@ contract IncidentReport is
         // Unlock the user's veDEG
         veDeg.unlockVeDEG(_user, userVote.amount);
 
+        // @audit Add paid status
+        votes[_user][_id].paid = true;
+
         emit DebtPaid(msg.sender, _user, debt, userVote.amount);
     }
 
     function unpausePools(uint256 _poolId) external onlyOwner {
         _unpausePools(_poolId);
+    }
+
+    /**
+     * @notice Executed by executor
+     *
+     * @param _reportId Report id
+     */
+    function executed(uint256 _reportId) external {
+        require(msg.sender == executor);
+
+        uint256 poolId = reports[_reportId].poolId;
+        reported[poolId] = false;
+
+        _unpausePools(poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -383,11 +422,11 @@ contract IncidentReport is
         uint256 _payout,
         address _user
     ) internal {
-        // Check pool can be reported
-        address pool = _checkPoolStatus(_poolId);
+        // Check whether the pool can be reported
+        _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
-        reported[pool] = true;
+        reported[_poolId] = true;
 
         uint256 currentId = ++reportCounter;
         // Record the new report
@@ -481,6 +520,8 @@ contract IncidentReport is
 
     /**
      * @notice Claim the voting reward
+     *         If the result is TIED, unlock veDEG
+     *         If the result is the same as your choice, get the reward
      *
      * @param _id       Report id
      * @param _user     User address to claim rewards from
@@ -512,18 +553,18 @@ contract IncidentReport is
     /**
      * @notice Settle voting reward depending on the result
      *
-     * @param _id Report id
+     * @param _id     Report id
+     * @param _result Settle result
      */
-    function _settleVotingReward(uint256 _id) internal {
+    function _settleVotingReward(uint256 _id, uint256 _result) internal {
         Report storage currentReport = reports[_id];
 
         uint256 numFor = currentReport.numFor;
         uint256 numAgainst = currentReport.numAgainst;
-        uint256 result = currentReport.result;
 
         uint256 totalRewardToVoters;
 
-        if (result == PASS_RESULT) {
+        if (_result == PASS_RESULT) {
             // Get back REPORT_THRESHOLD and get extra REPORTER_REWARD deg tokens
             deg.mintDegis(
                 currentReport.reporter,
@@ -535,7 +576,7 @@ contract IncidentReport is
 
             // Update deg reward for those who vote for
             currentReport.votingReward = (totalRewardToVoters * SCALE) / numFor;
-        } else if (result == REJECT_RESULT) {
+        } else if (_result == REJECT_RESULT) {
             // Total deg reward = reporter's DEG + those who vote for
             totalRewardToVoters =
                 REPORT_THRESHOLD +
@@ -560,7 +601,7 @@ contract IncidentReport is
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
         return
             _totalVotes >=
-            (SimpleIERC20(veDeg).totalSupply() * INCIDENT_QUORUM_RATIO) / 100;
+            (SimpleIERC20(veDeg).totalSupply() * quorumRatio) / 100;
     }
 
     /**
@@ -709,7 +750,7 @@ contract IncidentReport is
      * @param _numFor     Votes for
      * @param _numAgainst Votes against
      *
-     * @return result PASS(1), REJECT(2) or TIED(3)
+     * @return result PASS(1), REJECT(2) or TIED(3)reported
      */
     function _getVotingResult(uint256 _numFor, uint256 _numAgainst)
         internal
@@ -725,21 +766,21 @@ contract IncidentReport is
      * @notice Check pool status and return address
      *         Ensure the pool:
      *             1) Exists
-     *             2) Has not been reported
+     *             2) Has not been reported'
+     *             3) The payout is less than the active covered amount
      *
      * @param _poolId Pool id
+     * @param _payout Payout amount
      *
-     * @return pool Pool address
      */
-    function _checkPoolStatus(uint256 _poolId)
-        internal
-        view
-        returns (address pool)
-    {
-        (, pool, , , ) = priorityPoolFactory.pools(_poolId);
+    function _checkPoolStatus(uint256 _poolId, uint256 _payout) internal view {
+        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
 
         if (pool == address(0)) revert IncidentReport__PoolNotExist();
-        if (reported[pool]) revert IncidentReport__AlreadyReported();
+        if (reported[_poolId]) revert IncidentReport__AlreadyReported();
+
+        if (_payout > ISimplePriorityPool(pool).activeCovered())
+            revert IncidentReport__PayoutExceedCovered();
     }
 
     /**

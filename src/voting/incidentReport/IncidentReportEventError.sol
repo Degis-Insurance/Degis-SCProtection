@@ -58,4 +58,6 @@ interface IncidentReportEventError {
     error IncidentReport__AlreadyReported();
     error IncidentReport__ZeroAmount();
     error IncidentReport__NoReward();
+    error IncidentReport__PayoutExceedCovered();
+    error IncidentReport__AlreadyPaid();
 }

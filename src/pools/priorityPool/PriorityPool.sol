@@ -70,12 +70,13 @@ contract PriorityPool is
     // ---------------------------------------------------------------------------------------- //
 
     // Mininum cover amount 10U
+    // Avoid accuracy issues
     uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
-    // Max time length in months of granted protection
+    // Max time length in months
     uint256 internal immutable maxLength;
 
-    // Min time length in days
+    // Min time length in month
     uint256 internal immutable minLength;
 
     address internal immutable owner;
@@ -86,6 +87,12 @@ contract PriorityPool is
     // Pool id set when deployed
     uint256 public immutable poolId;
 
+    // Timestamp of pool creation
+    uint256 public immutable startTime;
+
+    // Address of insured token (used for premium payment)
+    address public immutable insuredToken;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -93,30 +100,22 @@ contract PriorityPool is
     // Pool name
     string public poolName;
 
+    // Current generation of this priority pool (start from 1)
     // Every time there is a report and liquidation, generation += 1
     uint256 public generation;
 
-    // Address of insured token
-    address public insuredToken;
-
-    // Max amount of bought protection in shield
+    // Max capacity of cover amount to be bought (ratio of total liquidity)
+    // 10000 = 100%
     uint256 public maxCapacity;
-
-    // Timestamp of pool creation
-    uint256 public startTime;
 
     // Index for cover amount
     uint256 public coverIndex;
 
-    mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
-
-    mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
-
     // Has already passed the base premium ratio period
     bool internal passedBasePeriod;
 
-    // Generation => crToken address
-    mapping(uint256 => address) public crTokenAddress;
+    // Year => Month => Amount of cover ends in that month
+    mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
 
     // Generation => lp token address
     mapping(uint256 => address) public lpTokenAddress;
@@ -215,7 +214,6 @@ contract PriorityPool is
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
 
-        //@audit Rerurn value order change
         (uint256 endTimestamp, , ) = DateTimeLibrary._getExpiry(
             block.timestamp,
             _coverDuration
@@ -262,7 +260,7 @@ contract PriorityPool is
      *         Total assets in protection pool should be larger than any of the "minAssetRequirement"
      *         Or the cover index would be cut
      */
-    function minAssetRequirement() public view returns (uint256) {
+    function minAssetRequirement() external view returns (uint256) {
         return (activeCovered() * 10000) / maxCapacity;
     }
 
@@ -326,12 +324,13 @@ contract PriorityPool is
     /**
      * @notice Set the max capacity of this priority pool manually
      *         Only owner set this function on a monthly / quaterly base
+     *         (For those unpopular pools to decrease, and those popular ones to increase)
      *
      * @param _isUp        Whether it should increase the capacity
      * @param _maxCapacity New max capacity of this pool
      */
     function setMaxCapacity(bool _isUp, uint256 _maxCapacity) external {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Only owner");
 
         maxCapacity = _maxCapacity;
 
@@ -342,6 +341,7 @@ contract PriorityPool is
             diff = maxCapacity - _maxCapacity;
         }
 
+        // Store the max capacity change
         IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
             _isUp,
             diff
@@ -350,7 +350,12 @@ contract PriorityPool is
 
     /**
      * @notice Set the cover index of this priority pool
+     *
      *         Only called from protection pool
+     *
+     *         When a payout happened in another priority pool,
+     *         and this priority pool's minAssetRequirement is less than proteciton pool's asset,
+     *         the cover index of this pool will be cut by a ratio
      *
      * @param _newIndex New cover index
      */
@@ -578,17 +583,11 @@ contract PriorityPool is
             .timestamp
             .timestampToDate();
 
-        for (uint256 i; i < _length; ) {
-            coverInMonth[currentYear][currentMonth] += _amount;
+        uint256 endMonth = currentMonth + _length;
 
-            unchecked {
-                if (++currentMonth > 12) {
-                    ++currentYear;
-                    currentMonth = 1;
-                }
-                ++i;
-            }
-        }
+        // ! Remove redundant counts
+        // ! Previously it is counted in multiple months
+        coverInMonth[currentYear][endMonth] += _amount;
     }
 
     /**

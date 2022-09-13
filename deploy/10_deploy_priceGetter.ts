@@ -19,24 +19,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const name = "TestToken3";
-  const symbol = "TT";
-  const decimal = 18;
+  if (network.name == "avax") {
+    // PriceGetter contract artifact
+    const priceGetter = await deploy("PriceGetter", {
+      contract: "PriceGetter",
+      from: deployer,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].PriceGetter = priceGetter.address;
 
-  // PriceGetter contract artifact
-  const mockERC20 = await deploy("MockERC20", {
-    contract: "MockERC20",
-    from: deployer,
-    args: [name, symbol, decimal],
-    log: true,
-  });
-  addressList[network.name].MockERC20 = mockERC20.address;
+    console.log("PriceGetter deployed to address: ", priceGetter.address, "\n");
 
-  console.log("A mock erc20 deployed to address: ", mockERC20.address, "\n");
-
-  // Store the address list after deployment
-  storeAddressList(addressList);
+    // Store the address list after deployment
+    storeAddressList(addressList);
+  }
 };
 
-func.tags = ["MockERC20"];
+func.tags = ["PriceGetter"];
 export default func;

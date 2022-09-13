@@ -8,7 +8,6 @@ abstract contract PriorityPoolFactoryDependencies {
     address internal policyCenter;
     address internal protectionPool;
     address internal incidentReport;
-    address internal premiumRewardPool;
     address internal weightedFarmingPool;
     address internal payoutPool;
     

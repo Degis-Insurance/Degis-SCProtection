@@ -45,6 +45,9 @@ contract OnboardProposal is
     // Total number of reports
     uint256 public proposalCounter;
 
+    // Proposal quorum ratio
+    uint256 public quorumRatio;
+
     struct Proposal {
         string name; // Pool name ("JOE", "GMX")
         address protocolToken; // Protocol native token address
@@ -85,7 +88,10 @@ contract OnboardProposal is
     )
         ExternalTokenDependencies(_deg, _veDeg, _shield)
         OwnableWithoutContext(msg.sender)
-    {}
+    {
+        // Initial quorum 30% 
+        quorumRatio = 30;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
@@ -134,6 +140,10 @@ contract OnboardProposal is
         onlyOwner
     {
         _setPriorityPoolFactory(_priorityPoolFactory);
+    }
+
+    function setQuorumRatio(uint256 _quorumRatio) external onlyOwner {
+        quorumRatio = _quorumRatio;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -236,6 +246,13 @@ contract OnboardProposal is
                 proposal.numAgainst
             );
 
+            // If this proposal not passed, allow new proposals for the same project
+            // If it passed, not allow the same proposals
+            if (res != PASS_RESULT) {
+                // Allow for new proposals to be proposed for this protocol
+                proposed[proposal.protocolToken] = false;
+            }
+
             proposal.result = res;
             proposal.status = SETTLED_STATUS;
 
@@ -246,11 +263,11 @@ contract OnboardProposal is
             proposal.result = FAILED_RESULT;
             proposal.status = SETTLED_STATUS;
 
+            // Allow for new proposals to be proposed for this protocol
+            proposed[proposal.protocolToken] = false;
+
             emit ProposalFailed(_id);
         }
-
-        // Allow for new proposals to be proposed for this protocol
-        proposed[proposal.protocolToken] = false;
     }
 
     /**
@@ -371,6 +388,11 @@ contract OnboardProposal is
             revert OnboardProposal__WrongStatus();
 
         UserVote storage userVote = votes[_user][_id];
+
+        // @audit Add claimed check
+        // ! Critical
+        if (userVote.claimed) revert OnboardProposal__AlreadyClaimed();
+
         // Unlock the veDEG used for voting
         // No reward / punishment
         veDeg.unlockVeDEG(_user, userVote.amount);
@@ -421,8 +443,7 @@ contract OnboardProposal is
      * @param _totalVotes Total vote numbers
      */
     function _checkQuorum(uint256 _totalVotes) internal view returns (bool) {
-        return
-            _totalVotes >= (veDeg.totalSupply() * PROPOSAL_QUORUM_RATIO) / 100;
+        return _totalVotes >= (veDeg.totalSupply() * quorumRatio) / 100;
     }
 
     /**

@@ -7,6 +7,16 @@ verbosity = 2 # Show logs by default
 gas_reports = ["*"]
 viaIR = true
 optimizer = true
-optimizer_runs = 20
+optimizer_runs = 100
+
+
+[profile.default.optimizer_details]
+constantOptimizer = true
+yul = true
+
+
+[profile.default.optimizer_details.yulDetails]
+stackAllocation = true
+optimizerSteps = ""
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

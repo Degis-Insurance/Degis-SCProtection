@@ -41,7 +41,10 @@ contract Executor is
     OwnableWithoutContext,
     ExecutorDependencies
 {
+    // Whether report already executed
     mapping(uint256 => bool) public reportExecuted;
+
+    // Whether proposal already executed
     mapping(uint256 => bool) public proposalExecuted;
 
     constructor() OwnableWithoutContext(msg.sender) {}
@@ -97,6 +100,9 @@ contract Executor is
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
         if (report.result != 1) revert Executor__ReportNotPassed();
+
+        // Executed callback function
+        IIncidentReport(incidentReport).executed(_reportId);
 
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(report.poolId, report.reporter);

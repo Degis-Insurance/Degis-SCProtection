@@ -9,16 +9,38 @@ import "forge-std/console.sol";
 
 /**
  * @notice Factory for deploying crTokens
+ *
+ *         Salt as index for cover right tokens:
+ *             salt = keccak256(poolId, expiry, genration)
+ *
+ *         Factory will record whether a crToken has been deployed
+ *         Also record the generation of a specific crToken
+ *         And find the address of the crToken with its salt
+ *
  */
 contract CoverRightTokenFactory is OwnableWithoutContext {
-    mapping(bytes32 => bool) public deployed;
-
-    mapping(bytes32 => address) public saltToAddress;
-
-    mapping(bytes32 => uint256) public generation;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     address public policyCenter;
+
     address public incidentReport;
+
+    address public payoutPool;
+
+    // Salt => Already deployed
+    mapping(bytes32 => bool) public deployed;
+
+    // Salt => CR token address
+    mapping(bytes32 => address) public saltToAddress;
+
+    // Salt => Generation
+    mapping(bytes32 => uint256) public generation;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event NewCRTokenDeployed(
         uint256 poolId,
@@ -28,6 +50,10 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         address tokenAddress
     );
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor(address _policyCenter, address _incidentReport)
         OwnableWithoutContext(msg.sender)
     {
@@ -35,9 +61,25 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         incidentReport = _incidentReport;
     }
 
-    function setPolicyCenter(address _policyCenter) public onlyOwner {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    function setPolicyCenter(address _policyCenter) external onlyOwner {
         policyCenter = _policyCenter;
     }
+
+    function setIncidentReport(address _incidentReport) external onlyOwner {
+        incidentReport = _incidentReport;
+    }
+
+    function setPayoutPool(address _payoutPool) external onlyOwner {
+        payoutPool = _payoutPool;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Deploy Cover Right Token for a given pool
@@ -55,6 +97,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         uint256 _expiry,
         uint256 _generation
     ) external returns (address newCRToken) {
+        require(msg.sender == policyCenter, "Only policy center");
         require(_expiry > 0, "Zero expiry date");
 
         bytes32 salt = keccak256(
@@ -85,7 +128,7 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     }
 
     /**
-     * @notice Given several parameters, returns the bytecode for deploying a crToken
+     * @notice Get cover right token deployment bytecode (with parameters)
      *
      * @param _poolName   Name of Priority Pool
      * @param _poolId     Pool Id
@@ -111,7 +154,8 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
                 _expiry,
                 _generation,
                 policyCenter,
-                incidentReport
+                incidentReport,
+                payoutPool
             )
         );
     }
