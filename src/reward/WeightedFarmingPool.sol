@@ -45,7 +45,7 @@ contract WeightedFarmingPool {
     }
     mapping(uint256 => PoolInfo) public pools;
 
-    // pool id => year => month => daily amount
+    // pool id => year => month => speed
     mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
         public speed;
 
@@ -61,6 +61,10 @@ contract WeightedFarmingPool {
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event PoolAdded(uint256 poolId, address token);
     event NewTokenAdded(uint256 poolId, address token, uint256 weight);
     event PoolUpdated(uint256 poolId, uint256 accRewardPerShare);
@@ -71,6 +75,10 @@ contract WeightedFarmingPool {
         address receiver,
         uint256 reward
     );
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     error WeightedFarmingPool__AlreadySupported();
     error WeightedFarmingPool__WrongWeightLength();

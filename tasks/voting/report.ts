@@ -112,7 +112,7 @@ task("getReportInfo", "Get a report info")
     const reportInfo = await incidentReport.reports(taskArgs.id);
     console.log("Report status: ", reportInfo.status.toString());
   });
-task("unpausePools", "Close a report voting")
+task("unpausePools", "Unpause pools for a report")
   .addParam("id", "Report id", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;

@@ -201,6 +201,9 @@ contract PriorityPool is
      *
      * @param _amount        Amount being covered (Shield)
      * @param _coverDuration Cover length in month
+     *
+     * @return price  Cover price in shield
+     * @return length Real length in timestamp
      */
     function coverPrice(uint256 _amount, uint256 _coverDuration)
         external
