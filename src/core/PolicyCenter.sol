@@ -521,6 +521,8 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
+     *
+     * @return received Actual shield amount received
      */
     function _swapTokens(address _fromToken, uint256 _amount)
         internal
@@ -549,6 +551,8 @@ contract PolicyCenter is
      * @notice Check the cover length
      *
      * @param _length Length to check (in month)
+     *
+     * @return withinLength Whether the cover is within the length
      */
     function _withinLength(uint256 _length) internal pure returns (bool) {
         return _length > 0 && _length <= MAX_COVER_LENGTH;
@@ -560,6 +564,8 @@ contract PolicyCenter is
      *
      * @param _poolId        Pool id
      * @param _coverDuration Cover length in month
+     *
+     * @return crToken Cover right token address
      */
     function _checkCRToken(uint256 _poolId, uint256 _coverDuration)
         internal
@@ -611,6 +617,8 @@ contract PolicyCenter is
      * @param _poolName      Pool name
      * @param _expiry        Expiry timestamp of the cr token
      * @param _newGeneration New generation of the cr token
+     *
+     * @return newCRToken New cover right token address
      */
     function _checkNewCRToken(
         uint256 _poolId,
@@ -679,6 +687,8 @@ contract PolicyCenter is
      *
      * @param _premium Premium in USD
      * @param _token   Native token address
+     *
+     * @return premiumInNativeToken Premium calculated in native token
      */
     function _getNativeTokenAmount(uint256 _premium, address _token)
         internal
