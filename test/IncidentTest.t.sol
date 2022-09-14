@@ -20,10 +20,10 @@ contract IncidentTest is
 
     uint256 internal constant SCALE = 1e12;
 
-    // Max capacities for pools (100 = 100%)
-    uint256 internal constant CAPACITY_1 = 40;
-    uint256 internal constant CAPACITY_2 = 30;
-    uint256 internal constant CAPACITY_3 = 40;
+    // Max capacities for pools (10000 = 100%)
+    uint256 internal constant CAPACITY_1 = 4000;
+    uint256 internal constant CAPACITY_2 = 3000;
+    uint256 internal constant CAPACITY_3 = 4000;
 
     // Base premium ratio for pools (10000 = 100%)
     uint256 internal constant PREMIUMRATIO_1 = 200;
@@ -32,8 +32,6 @@ contract IncidentTest is
 
     uint256 internal constant PAYOUT = 1000e6;
 
-    uint256 internal constant VOTE_FOR = 1;
-    uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant REPORT_TIME = 0;
@@ -542,7 +540,6 @@ contract IncidentTest is
         // Start a report and start voting
         _report();
         _startVoting();
-
 
         // Preparations
         veDEG.mint(ALICE, VOTE_AMOUNT * 2);

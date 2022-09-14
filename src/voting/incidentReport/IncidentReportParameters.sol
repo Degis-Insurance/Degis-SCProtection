@@ -34,4 +34,7 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant REWARD_RATIO = 40; // 40% go to winners, 40% reserve
     uint256 constant RESERVE_RATIO = 40;
     uint256 constant DEBT_RATIO = 80; // 80% as the debt to unlock veDEG
+
+    // 2 extra rounds at most
+    uint256 constant MAX_EXTEND_ROUND = 2;
 }

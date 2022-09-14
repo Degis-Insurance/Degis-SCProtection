@@ -45,8 +45,6 @@ contract PolicyCenterTest is
     uint256 internal constant ZERO_TIME = 0;
     uint256 internal constant LIQUIDITY = 1000 ether;
 
-    uint256 internal constant VOTE_FOR = 1;
-    uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant PROPOSAL_VOTE_TIME = 0;
@@ -838,7 +836,6 @@ contract PolicyCenterTest is
         vm.prank(CHARLIE);
         joe.approve(address(policyCenter), type(uint256).max);
 
-
         // # --------------------------------------------------------------------//
         // # Should not be able to buy cover without provided liquidity # //
         // # --------------------------------------------------------------------//
@@ -1053,7 +1050,6 @@ contract PolicyCenterTest is
     function testClaimPayout() public {
         _provideLiquidity(CHARLIE);
         _buyJoeCover(ALICE);
-
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 
