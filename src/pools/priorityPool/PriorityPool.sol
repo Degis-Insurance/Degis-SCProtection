@@ -584,11 +584,17 @@ contract PriorityPool is
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, ) = block
+        (uint256 currentYear, uint256 currentMonth, uint256 currentDay ) = block
             .timestamp
             .timestampToDate();
 
-        uint256 endMonth = currentMonth + _length;
+        uint256 monthsToAdd = _length - 1;
+
+        if (currentDay >= 25) {
+            monthsToAdd++;
+        }
+
+        uint256 endMonth = currentMonth + monthsToAdd;
 
         // ! Remove redundant counts
         // ! Previously it is counted in multiple months

@@ -244,4 +244,13 @@ task("activeCovered", "Get priority pool active covered")
     );
     const covered = await pool.activeCovered();
     console.log("Active covered: ", formatUnits(covered, 6));
+
+    const ratio = await pool.dynamicPremiumRatio(parseUnits("1000000", 6));
+    console.log("Dynamic premium ratio: ", ratio.toString());
+
+    const protectionPool: ProtectionPool = new ProtectionPool__factory(
+      dev_account
+    ).attach(addressList[network.name].ProtectionPool);
+    const totalCovered = await protectionPool.getTotalCovered();
+    console.log("Total covered: ", totalCovered.toString());
   });
