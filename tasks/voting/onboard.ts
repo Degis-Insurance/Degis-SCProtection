@@ -8,7 +8,7 @@ import {
   OnboardProposal,
   OnboardProposal__factory,
 } from "../../typechain-types";
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
 
 task("proposeNewPool", "Proposa a new pool in onboard proposal")
   .addParam("name", "Protocol name", null, types.string)
@@ -77,7 +77,14 @@ task("settle", "Settle a voting")
     console.log("Tx details:", await tx.wait());
 
     const p = await onboardProposal.proposals(1);
-    console.log(p.result);
+    console.log(p.result.toString());
+
+    const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
+      addressList[network.name].MockVeDEG
+    );
+
+    const totalSupply = await veDEG.totalSupply();
+    console.log(formatEther(totalSupply));
   });
 
 task("getProposal", "Get proposal info")

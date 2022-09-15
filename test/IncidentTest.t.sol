@@ -33,6 +33,7 @@ contract IncidentTest is
     uint256 internal constant PREMIUMRATIO_3 = 400;
 
     uint256 internal constant PAYOUT = 1000e6;
+    uint256 internal constant LIQUIDITY = 1000 ether;
 
     uint256 internal constant VOTE_FOR = 1;
     uint256 internal constant VOTE_AGAINST = 2;
@@ -50,6 +51,8 @@ contract IncidentTest is
     MockERC20 internal joe;
     MockERC20 internal ptp;
     MockERC20 internal gmx;
+
+    address internal crJoeAddress;
 
     function setUp() public {
         // Set up contracts
@@ -87,7 +90,39 @@ contract IncidentTest is
                 PREMIUMRATIO_3
             )
         );
+
+        // Fund exchange
+        deg.mintDegis(address(exchange), 1000 ether);
+        shield.mint(address(exchange), 1000 ether);
+        MockERC20(policyCenter.USDC()).mint(address(exchange), 1000 ether * SCALE);
+        joe.mint(address(exchange), 1000 ether * SCALE);
+        ptp.mint(address(exchange), 1000 ether * SCALE);
+        gmx.mint(address(exchange), 1000 ether * SCALE);
+
+        shield.mint(ALICE, LIQUIDITY);
+
+        vm.prank(ALICE);
+        shield.approve(address(policyCenter), LIQUIDITY);
+
+        vm.prank(ALICE);
+        policyCenter.provideLiquidity(LIQUIDITY);
+
+       (uint256 price, uint256 length) = joePool.coverPrice(PAYOUT, 3);
+        vm.prank(CHARLIE);
+        joe.approve(address(policyCenter), type(uint256).max);
+        joe.mint(CHARLIE, price * SCALE);
+        vm.prank(CHARLIE);
+        crJoeAddress = policyCenter.buyCover(
+            1,
+            PAYOUT,
+            3,
+            (price * 11) / 10
+        );
+        console.log("active covered", IPriorityPool(joePool).activeCovered());
+
+        
     }
+
 
     function testReport() public {
         // # --------------------------------------------------------------------//

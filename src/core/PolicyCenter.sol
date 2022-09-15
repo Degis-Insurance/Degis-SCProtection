@@ -32,6 +32,8 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Policy Center
  *
@@ -283,6 +285,9 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool,
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
+        console.log("premiumToProtectionPool", premiumToProtectionPool);
+        console.log("premiumToPriorityPool", premiumToPriorityPool);
+        console.log("premiumToTreasury", premiumToTreasury);
 
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
@@ -490,12 +495,12 @@ contract PolicyCenter is
 
         emit PayoutClaimed(msg.sender, claimed);
 
-        uint256 expiry = ICoverRightToken(_crToken).expiry();
-
         // Check if the new generation crToken has been deployed
         // If so, get the address
         // If not, deploy the new generation cr token
         if (newGenerationCRAmount > 0) {
+            uint256 expiry = ICoverRightToken(_crToken).expiry();
+
             address newCRToken = _checkNewCRToken(
                 _poolId,
                 poolName,
@@ -688,8 +693,8 @@ contract PolicyCenter is
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
-        uint256 decimalDiff = IERC20Decimals(_token).decimals();
-        premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
+        uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
+        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
 
         // Pay native tokens
         IERC20(_token).safeTransferFrom(
@@ -792,6 +797,7 @@ contract PolicyCenter is
         uint256 maxCapacityAmount = (IShield(shield).balanceOf(
             address(protectionPool)
         ) * pool.maxCapacity()) / 10000;
+        console.log(maxCapacityAmount);
 
         if (maxCapacityAmount < _coverAmount + pool.activeCovered())
             revert PolicyCenter__InsufficientCapacity();

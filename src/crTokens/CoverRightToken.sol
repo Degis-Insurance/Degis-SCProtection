@@ -32,28 +32,44 @@ import "../libraries/DateTime.sol";
  *
  */
 contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
-    address public incidentReport;
-    address public policyCenter;
-    address public payoutPool;
 
+    // Generation of crToken
+    // Same as the generation of the priority pool (when this token was deployed)
     uint256 public immutable generation;
 
-    // Expiry date
-    uint256 public expiry;
-
-    // Pool name for this crToken
-    string public POOL_NAME;
+    // Expiry date (always the last timestamp of a month)
+    uint256 public immutable expiry;
 
     // Pool id for this crToken
-    uint256 public immutable POOL_ID;
+    uint256 public immutable poolId;
 
     // Those covers bought within 2 days will be excluded
-    uint256 public constant EXCLUDE_DAYS = 2;
+    // TODO: test will set it as 0
+    uint256 public constant EXCLUDE_DAYS = 0;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // Policy center address
+    address public policyCenter;
+
+    // Incident report address
+    address public incidentReport;
+
+    // Payout pool address
+    address public payoutPool;
+
+    // Pool name for this crToken
+    string public poolName;
 
     // User address => start timestamp => cover amount
     mapping(address => mapping(uint256 => uint256)) public coverStartFrom;
 
     error CoverRightToken__NoReport();
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     constructor(
         string memory _poolName,
@@ -67,13 +83,18 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
         expiry = _expiry;
 
-        POOL_NAME = _poolName;
-        POOL_ID = _poolId;
+        poolName = _poolName;
+        poolId = _poolId;
         generation = _generation;
+
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
         payoutPool = _payoutPool;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     modifier onlyPolicyCenter() {
         if (policyCenter != address(0)) {
@@ -82,9 +103,24 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         _;
     }
 
+    // TODO: remove this when mainnet
     function setPolicyCenter(address _policyCenter) public onlyOwner {
         policyCenter = _policyCenter;
     }
+
+    /**
+     * @notice Override the decimals funciton
+     *
+     *         Cover right token is minted with reference to the cover amount he bought
+     *         So keep the decimals the same with Shield
+     */
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Mint new crTokens when buying covers
@@ -99,7 +135,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _amount
     ) external onlyPolicyCenter nonReentrant {
         require(_amount > 0, "Zero Amount");
-        require(_poolId == POOL_ID, "Wrong pool id");
+        require(_poolId == poolId, "Wrong pool id");
 
         uint256 effectiveFrom = _getEOD(
             block.timestamp + EXCLUDE_DAYS * 1 days
@@ -125,7 +161,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     ) external nonReentrant {
         require(msg.sender == payoutPool, "Only payout pool");
         require(_amount > 0, "Zero Amount");
-        require(_poolId == POOL_ID, "Wrong pool id");
+        require(_poolId == poolId, "Wrong pool id");
 
         _burn(_user, _amount);
     }
@@ -135,6 +171,8 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      *         Claimable means "without those has passed the expiry date"
      *
      * @param _user User address
+     *
+     * @return claimable Claimable balance
      */
     function getClaimableOf(address _user) external view returns (uint256) {
         uint256 exclusion = getExcludedCoverageOf(_user);
@@ -148,6 +186,11 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
      * @notice Get the excluded amount of a user
      *         Excluded means "without those are bought within a short time before voteTimestamp"
      *
+     *         Only count the corresponding one report (voteTimestamp)
+     *         Each crToken & priorityPool has a generation
+     *         And should get the correct report with this "Generation"
+     *             - poolReports(poolId, generation)
+     *
      * @param _user User address
      *
      * @return exclusion Amount not able to claim because cover period has ended
@@ -159,26 +202,37 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     {
         IIncidentReport incident = IIncidentReport(incidentReport);
 
-        uint256 reportAmount = incident.getPoolReportsAmount(POOL_ID);
+        // Get the report amount for this pool
+        // If report amount is 0, generation should be 1 and no excluded amount
+        // If report amount > 0, the effective report should be amount - 1
+        uint256 reportAmount = incident.getPoolReportsAmount(poolId);
+
         if (reportAmount > 0) {
-            uint256 latestReportId = incident.poolReports(
-                POOL_ID,
-                reportAmount - 1
+            // Only count for the valid report
+            // E.g. Current report amount is 3, then for generation 1 crToken,
+            //      its corresponding report index (in the array) is 0
+            uint256 validReportId = incident.poolReports(
+                poolId,
+                generation - 1
             );
 
-            (, , , uint256 voteTimestamp, , , , , , , ) = incident.reports(
-                latestReportId
-            );
+            (, , , uint256 voteTimestamp, , , , , uint256 result, , ) = incident
+                .reports(validReportId);
 
-            // Check those bought within 2 days
-            for (uint256 i; i < EXCLUDE_DAYS; ) {
-                if (voteTimestamp > i * 1 days) {
-                    uint256 date = _getEOD(voteTimestamp - (i * 1 days));
+            // If the result is not PASS, the voteTimestamp should not be counted
+            if (result == 1) {
+                // Check those bought within 2 days
+                for (uint256 i; i < EXCLUDE_DAYS; ) {
+                    if (voteTimestamp > i * 1 days) {
+                        // * For local test EXCLUDE_DAYS can be set as 0 to avoid underflow
+                        // * For mainnet or testnet, will never underflow
+                        uint256 date = _getEOD(voteTimestamp - (i * 1 days));
 
-                    exclusion += coverStartFrom[_user][date];
-                }
-                unchecked {
-                    ++i;
+                        exclusion += coverStartFrom[_user][date];
+                    }
+                    unchecked {
+                        ++i;
+                    }
                 }
             }
         }

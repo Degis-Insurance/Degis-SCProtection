@@ -5,9 +5,8 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/IPremiumRewardPool.sol";
-
 import "../libraries/DateTime.sol";
+import "../interfaces/IPriorityPoolFactory.sol";
 
 import "./WeightedFarmingPoolEventError.sol";
 
@@ -31,11 +30,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
     uint256 public constant SCALE = 1e12;
 
-    // 4 decimals precision for weight
-    uint256 public constant BASE_WEIGHT = 10000;
-
-    address public premiumRewardPool;
     address public policyCenter;
+
+    address public priorityPoolFactory;
 
     uint256 public counter;
 
@@ -51,7 +48,8 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     mapping(uint256 => PoolInfo) public pools;
 
     // pool id => year => month => daily amount
-    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256))) speed;
+    mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
+        public speed;
 
     struct UserInfo {
         uint256[] amount;
@@ -65,8 +63,20 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
-    constructor(address _premiumRewardPool) {
-        premiumRewardPool = _premiumRewardPool;
+
+    constructor(address _policyCenter, address _priorityPoolFactory) {
+        policyCenter = _policyCenter;
+        priorityPoolFactory = _priorityPoolFactory;
+    }
+
+    modifier isPriorityPool() {
+        require(
+            IPriorityPoolFactory(priorityPoolFactory).poolRegistered(
+                msg.sender
+            ),
+            "Only Priority Pool"
+        );
+        _;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -95,12 +105,14 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         return (pool.tokens, pool.amount, pool.weight);
     }
 
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************ Set Functions ************************************* //
-    // ---------------------------------------------------------------------------------------- //
-
+    // TODO: add owner or remove this
     function setPolicyCenter(address _policyCenter) public {
         policyCenter = _policyCenter;
+    }
+
+    // TODO: add owner or remove this
+    function setPriorityPoolFactory(address _priorityPoolFactory) external {
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     /**
@@ -127,8 +139,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Registers PRI-LP token in Weighted Farming Pool
-     * @param _rewardToken       Reward token address to be given to users
+     * @notice Register a new famring pool for priority pool
+     *
+     * @param _rewardToken Reward token address (protocol native token)
      */
     function addPool(address _rewardToken) external {
         uint256 currentId = ++counter;
@@ -140,10 +153,10 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     }
 
     /**
-     * @notice Registers Cover Right Token to a given pool
+     * @notice Register Pri-LP token
      *
      * @param _id     Pool Id
-     * @param _token  Cover Right Token address
+     * @param _token  Priority pool lp token address
      * @param _weight Weight of the token in the pool
      */
     function addToken(
@@ -154,7 +167,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
+        // Record as supported
         supported[key] = true;
+
         pools[_id].tokens.push(_token);
         pools[_id].weight.push(_weight);
 
@@ -320,12 +335,23 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         uint256 index = _getIndex(_id, _token);
 
         // check if current index exists for user
-        if (user.amount.length == 0) {
-            user.amount.push(index);
+        // index is 0, push
+        // length <= index
+        if (user.amount.length < index + 1) {
+            user.amount.push(0);
         }
 
+        if (pool.amount.length < index + 1) {
+            pool.amount.push(0);
+        }
+
+        // Update user amount for this gen lp token
         user.amount[index] += _amount;
         user.share += _amount * pool.weight[index];
+
+        // Update pool amount for this gen lp token
+        pool.amount[index] += _amount;
+        pool.shares += _amount * pool.weight[index];
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
@@ -366,6 +392,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         user.amount[index] -= _amount;
         user.share -= _amount * pool.weight[index];
 
+        pool.amount[index] -= _amount;
+        pool.shares -= _amount * pool.weight[index];
+
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
     }
 
@@ -379,7 +408,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
             uint256 newReward = _updateReward(_id);
             console.log("newReward", newReward);
 
-            pool.accRewardPerShare += newReward / pool.shares;
+            pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -399,10 +428,11 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         UserInfo storage user = users[_id][msg.sender];
 
         uint256 pending = (user.share * pool.accRewardPerShare) /
-            SCALE -
+            (SCALE * SCALE) -
             user.rewardDebt;
 
-        if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
+        // TODO: whether should be an error
+        // if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
@@ -548,19 +578,22 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     function _getIndex(uint256 _id, address _token)
         internal
         view
-        returns (uint256)
+        returns (uint256 index)
     {
         address[] memory allTokens = pools[_id].tokens;
         uint256 length = allTokens.length;
 
         for (uint256 i; i < length; ) {
-            if (allTokens[i] == _token) return i;
-
-            unchecked {
-                ++i;
+            if (allTokens[i] == _token) {
+                index = i;
+                break;
+            } else {
+                unchecked {
+                    ++i;
+                }
             }
         }
 
-        revert WeightedFarmingPool__NotInPool();
+        // revert WeightedFarmingPool__NotInPool();
     }
 }

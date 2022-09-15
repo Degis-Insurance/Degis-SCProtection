@@ -19,7 +19,7 @@ contract MockDEG is ERC20 {
         string memory _tokenSymbol
     ) ERC20(_tokenName, _tokenSymbol) {
         require(_decimalUnits == 18);
-        
+
         _mint(msg.sender, _initialAmount);
 
         owner = msg.sender;
@@ -27,12 +27,18 @@ contract MockDEG is ERC20 {
         _decimals = _decimalUnits; // Amount of decimals for display purposes
     }
 
+    /**
+     * @notice Free mint
+     */
     function mintDegis(address _account, uint256 _amount) external {
 
         alreadyMinted[_account] = true;
         _mint(_account, _amount);
     }
 
+    /**
+     * @notice This is for frontend mint
+     */
     function mint(address _account, uint256 _amount) external {
         alreadyMinted[_account] = true;
         _mint(_account, _amount);

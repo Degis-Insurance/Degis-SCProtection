@@ -13,7 +13,6 @@ import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
 import "src/pools/PayoutPool.sol";
 import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/PremiumRewardPool.sol";
 import "src/pools/Treasury.sol";
 
 import "src/voting/incidentReport/IncidentReport.sol";
@@ -28,6 +27,7 @@ import "src/mock/MockVeDEG.sol";
 import "src/mock/MockSHIELD.sol";
 import { MockExchange } from "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
+import "src/mock/MockUSDC.sol";
 
 contract ContractSetupBaseTest is BaseTest {
     PolicyCenter internal policyCenter;
@@ -39,7 +39,6 @@ contract ContractSetupBaseTest is BaseTest {
     Treasury internal treasury;
     PayoutPool internal payoutPool;
     WeightedFarmingPool internal farmingPool;
-    PremiumRewardPool internal premiumPool;
 
     IncidentReport internal incidentReport;
     OnboardProposal internal onboardProposal;
@@ -69,7 +68,6 @@ contract ContractSetupBaseTest is BaseTest {
         _setupPolicyCenter();
         _setupExecutor();
 
-        _setupPremiumRewardPool();
         _setupTreasury();
 
         _setupFarmingPool();
@@ -131,20 +129,15 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
-    function _setupPremiumRewardPool() internal {
-        premiumPool = new PremiumRewardPool(
-            address(shield),
-            address(priorityPoolFactory),
-            address(protectionPool)
-        );
-    }
-
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor));
+        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
     }
 
     function _setupFarmingPool() internal {
-        farmingPool = new WeightedFarmingPool(address(premiumPool));
+        farmingPool = new WeightedFarmingPool(
+            address(policyCenter),
+            address(priorityPoolFactory)
+        );
     }
 
     function _setupIncidentReport() internal {
@@ -200,7 +193,6 @@ contract ContractSetupBaseTest is BaseTest {
         // Set factory
         priorityPoolFactory.setPolicyCenter(address(policyCenter));
         priorityPoolFactory.setExecutor(address(executor));
-        priorityPoolFactory.setPremiumRewardPool(address(premiumPool));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));

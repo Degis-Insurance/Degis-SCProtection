@@ -19,9 +19,9 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 constant EXTEND_PERIOD = 1 days;
     uint256 constant SAMPLE_PERIOD = 1 days;
 
-    // Quorum parameter
-    // TODO: 10% for test
-    uint256 constant INCIDENT_QUORUM_RATIO = 10;
+    // // Quorum parameter
+    // // TODO: 10% for test
+    // uint256 constant INCIDENT_QUORUM_RATIO = 10;
 
     // DEG threshold for starting a report
     uint256 constant REPORT_THRESHOLD = 10000 ether;

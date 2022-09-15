@@ -62,3 +62,26 @@ forge install rari-capital/solmate # Already in this repo, just an example
 ### Notes
 
 Whenever you install new libraries using Foundry, make sure to update your `remappings.txt` file by running `forge remappings > remappings.txt`. This is required because we use `hardhat-preprocessor` and the `remappings.txt` file to allow Hardhat to resolve libraries you install with Foundry.
+
+### Pre-settings to run the protocol protection
+
+- Deploy all contracts
+
+```
+yarn deploy --network {network_name}
+```
+
+- Set all address dependencies
+
+```
+npx hardhat setAllAddress --network {network_name}
+```
+
+- Approve protocol tokens in policyCenter
+
+```
+npx hardhat approvePolicyCenter --network {network_name}
+``
+```
+
+- Mint MockUSDC to MockExchange

@@ -12,7 +12,6 @@ import "src/pools/priorityPool/PriorityPoolEventError.sol";
 import "src/core/interfaces/PolicyCenterDependencies.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalParameters.sol";
-import "src/reward/WeightedFarmingPoolEventError.sol";
 
 import "forge-std/console.sol";
 

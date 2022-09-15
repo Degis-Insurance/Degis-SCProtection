@@ -23,9 +23,17 @@ import "forge-std/console.sol";
  *         - ratio        Max ratio of a user's crToken
  */
 contract PayoutPool {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     uint256 public constant SCALE = 1e12;
 
     uint256 public constant CLAIM_PERIOD = 30 days;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     address public shield;
 
@@ -45,17 +53,29 @@ contract PayoutPool {
     // Pool id => Generation => Payout
     mapping(uint256 => mapping(uint256 => Payout)) public payouts;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event NewPayout(
-        uint256 _poolId,
+        uint256 indexed _poolId,
         uint256 _generation,
         uint256 _amount,
         uint256 _ratio
     );
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     error PayoutPool__OnlyPriorityPool();
     error PayoutPool__NotPolicyCenter();
     error PayoutPool__NotMatchingPoolIdGeneration();
     error PayoutPool__NoPayout();
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     constructor(
         address _shield,
@@ -64,13 +84,14 @@ contract PayoutPool {
         address _priorityPoolFactory
     ) {
         shield = _shield;
-
         policyCenter = _policyCenter;
-
         crFactory = _crFactory;
-
         priorityPoolFactory = _priorityPoolFactory;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     modifier onlyPriorityPool(uint256 _poolId) {
         (, address poolAddress, , , ) = IPriorityPoolFactory(
@@ -80,13 +101,29 @@ contract PayoutPool {
         _;
     }
 
+    modifier onlyPolicyCenter() {
+        if (msg.sender != policyCenter) revert PayoutPool__NotPolicyCenter();
+        _;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
-     * @notice Registers new Payout in Payout Pool
-     * @param _poolId            Pool Id
-     * @param _generation        Generation of priority pool (1 if no liquidations occurred)
-     * @param _amount         	Amount of tokens to be registered
-     * @param _ratio         	Current ratio payout has been registered at
-     * @param _poolAddress       Address of priority pool
+     * @notice New payout comes in
+     *
+     *         Only callable from one of the priority pools
+     *
+     *         After the pool's report is passed and executed,
+     *         part of the assets will be moved to this pool.
+     *
+     *
+     * @param _poolId       Pool Id
+     * @param _generation   Generation of priority pool (start at 1)
+     * @param _amount       Total amount to be claimed
+     * @param _ratio        Payout ratio of this payout (users can only use part of their crTokens to claim)
+     * @param _poolAddress  Address of priority pool
      */
     function newPayout(
         uint256 _poolId,
@@ -97,6 +134,7 @@ contract PayoutPool {
     ) external onlyPriorityPool(_poolId) {
         Payout storage payout = payouts[_poolId][_generation];
 
+        // Store the information
         payout.amount = _amount;
         payout.endTiemstamp = block.timestamp + CLAIM_PERIOD;
         payout.ratio = _ratio;
@@ -107,44 +145,51 @@ contract PayoutPool {
 
     /**
      * @notice Claim payout for a user
-     * @param _user             User address
-     * @param _crToken         	Cover right token address
-     * @param _poolId           Pool Id
-     * @param _generation       Generation of priority pool (1 if no liquidations occurred)
+     *
+     *         Only callable from policy center
+     *         Need provide certain crToken address and generation
+     *
+     * @param _user       User address
+     * @param _crToken    Cover right token address
+     * @param _poolId     Pool Id
+     * @param _generation Generation of priority pool (started at 1)
+     *
+     * @return claimed               The actual amount transferred to the user
+     * @return newGenerationCRAmount New generation crToken minted to the user
      */
     function claim(
         address _user,
         address _crToken,
         uint256 _poolId,
         uint256 _generation
-    ) external returns (uint256 claimed, uint256 newGenerationCRAmount) {
-        if (msg.sender != policyCenter) revert PayoutPool__NotPolicyCenter();
-
+    )
+        external
+        onlyPolicyCenter
+        returns (uint256 claimed, uint256 newGenerationCRAmount)
+    {
         Payout storage payout = payouts[_poolId][_generation];
 
         uint256 expiry = ICoverRightToken(_crToken).expiry();
 
+        // Check the crToken address and generation matched
         bytes32 salt = keccak256(
             abi.encodePacked(_poolId, expiry, _generation)
         );
         if (ICoverRightTokenFactory(crFactory).saltToAddress(salt) != _crToken)
             revert PayoutPool__NotMatchingPoolIdGeneration();
 
+        // Get claimable amount of crToken
         uint256 claimableBalance = ICoverRightToken(_crToken).getClaimableOf(
             _user
         );
-
-        console.log("PayoutPool.claim: claimableBalance", claimableBalance);
-        console.log("PayoutPool.claim: payout.ratio", payout.ratio);
-
+        // Only part of the crToken can be used for claim
         uint256 claimable = (claimableBalance * payout.ratio) / SCALE;
-        console.log("PayoutPool.claim: balance", SimpleIERC20(shield).balanceOf(address(this)));
-        console.log("PayoutPool.claim: claimable", claimable);
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 
         uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 
+        // Actual amount given to the user
         claimed = (claimable * coverIndex) / 10000;
 
         ICoverRightToken(_crToken).burn(

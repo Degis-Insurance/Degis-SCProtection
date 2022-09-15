@@ -11,10 +11,10 @@ interface IIncidentReport {
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
-        uint256 status;
+        uint256 status; // PENDING, VOTING, SETTLED, CLOSED
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
-        uint256 votingReward; // Voting reward per veDEG if the report passed
-        uint256 payout;
+        uint256 votingReward; // Voting reward per veDEG
+        uint256 payout; // Payout amount of this report (partial payout)
     }
     struct TempResult {
         uint256 a;
@@ -27,12 +27,28 @@ interface IIncidentReport {
         bool claimed;
     }
 
+    /**
+     * @notice Cool down period when you submit a wrong report
+     *         Wrong Report: Closed by the Admin team
+     *
+     * @return COOLDOWN_WRONG_REPORT Cooldown time in second (before you can submit another report)
+     */
     function COOLDOWN_WRONG_REPORT() external view returns (uint256);
 
+    /**
+     * @notice Claim reward
+     *         Users can claim reward when they vote correctly
+     *
+     * @param _reportId Report id
+     */
     function claimReward(uint256 _reportId) external;
 
-    function claimReward(uint256 _reportId, address _user) external;
-
+    /**
+     * @notice Close a report
+     *         Only callable by the owner
+     *
+     * @param _reportId Report id
+     */
     function closeReport(uint256 _reportId) external;
 
     function setReported(uint256 _poolId, bool _isreported) external;
@@ -156,4 +172,6 @@ interface IIncidentReport {
         external
         view
         returns (uint256);
+
+    function executed(uint256 _reportId) external;
 }

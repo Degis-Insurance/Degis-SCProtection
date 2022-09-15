@@ -19,26 +19,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const premiumRewardPoolAddress = addressList[network.name].PremiumRewardPool;
+  const name = "TestToken1";
+  const symbol = "TT";
+  const decimal = 18;
 
-  // WeightedFarmingPool contract artifact
-  const weightedFarmingPool = await deploy("WeightedFarmingPool", {
-    contract: "WeightedFarmingPool",
+  // PriceGetter contract artifact
+  const mockERC20 = await deploy("MockERC20", {
+    contract: "MockERC20",
     from: deployer,
-    args: [premiumRewardPoolAddress],
+    args: [name, symbol, decimal],
     log: true,
   });
-  addressList[network.name].WeightedFarmingPool = weightedFarmingPool.address;
+  addressList[network.name].MockERC20 = mockERC20.address;
 
-  console.log(
-    "WeightedFarmingPool deployed to address: ",
-    weightedFarmingPool.address,
-    "\n"
-  );
+  console.log("A mock erc20 deployed to address: ", mockERC20.address, "\n");
 
   // Store the address list after deployment
   storeAddressList(addressList);
 };
 
-func.tags = ["WeightedFarmingPool"];
+func.tags = ["MockERC20"];
 export default func;

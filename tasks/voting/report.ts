@@ -31,8 +31,8 @@ task("newReport", "Start a new report for a pool")
     console.log("tx details", await tx.wait());
   });
 
-task("startVoting", "Start voting process of a proposal")
-  .addParam("id", "Proposal id", null, types.string)
+task("startReportVoting", "Start voting process of a report")
+  .addParam("id", "Report id", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
@@ -42,11 +42,94 @@ task("startVoting", "Start voting process of a proposal")
 
     const addressList = readAddressList();
 
-    const onboardProposal: OnboardProposal = new OnboardProposal__factory(
+    const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
-    ).attach(addressList[network.name].OnboardProposal);
+    ).attach(addressList[network.name].IncidentReport);
 
-    const tx = await onboardProposal.startVoting(taskArgs.id);
-
+    const tx = await incidentReport.startVoting(taskArgs.id);
     console.log("Tx details:", await tx.wait());
+  });
+
+task("settleReport", "Settle a report voting")
+  .addParam("id", "Report id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const incidentReport: IncidentReport = new IncidentReport__factory(
+      dev_account
+    ).attach(addressList[network.name].IncidentReport);
+
+    const tx = await incidentReport.settle(taskArgs.id);
+    console.log("Tx details:", await tx.wait());
+
+    const p = await incidentReport.reports(1);
+    console.log(p.result.toString());
+  });
+
+task("closeReport", "Close a report voting")
+  .addParam("id", "Report id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const incidentReport: IncidentReport = new IncidentReport__factory(
+      dev_account
+    ).attach(addressList[network.name].IncidentReport);
+
+    const tx = await incidentReport.closeReport(taskArgs.id);
+    console.log("Tx details:", await tx.wait());
+
+    const p = await incidentReport.reports(1);
+    console.log(p.status.toString());
+  });
+
+task("getReportInfo", "Get a report info")
+  .addParam("id", "Report id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const incidentReport: IncidentReport = new IncidentReport__factory(
+      dev_account
+    ).attach(addressList[network.name].IncidentReport);
+
+    const reportInfo = await incidentReport.reports(taskArgs.id);
+    console.log("Report status: ", reportInfo.status.toString());
+  });
+task("unpausePools", "Close a report voting")
+  .addParam("id", "Report id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const incidentReport: IncidentReport = new IncidentReport__factory(
+      dev_account
+    ).attach(addressList[network.name].IncidentReport);
+
+    const tx = await incidentReport.unpausePools(taskArgs.id);
+    console.log("Tx details:", await tx.wait());
+
+    const p = await incidentReport.reports(1);
+    console.log(p.status.toString());
   });

@@ -63,6 +63,8 @@ contract ExecutorTest is
     MockERC20 internal ptp;
     MockERC20 internal gmx;
 
+    address internal crJoeAddress;
+
     address internal joeLPAddress;
 
     function setUp() public {
@@ -115,6 +117,32 @@ contract ExecutorTest is
             address(gmx),
             CAPACITY_3,
             PREMIUMRATIO_3
+        );
+
+        // Fund exchange
+        deg.mintDegis(address(exchange), 1000 ether);
+        shield.mint(address(exchange), 1000 ether);
+        MockERC20(policyCenter.USDC()).mint(address(exchange), 1000 ether * SCALE);
+        joe.mint(address(exchange), 1000 ether * SCALE);
+        ptp.mint(address(exchange), 1000 ether * SCALE);
+        gmx.mint(address(exchange), 1000 ether * SCALE);
+
+        shield.mint(ALICE, LIQUIDITY);
+        vm.prank(ALICE);
+        shield.approve(address(policyCenter), LIQUIDITY);
+        vm.prank(ALICE);
+        policyCenter.provideLiquidity(LIQUIDITY);
+
+       (uint256 price, uint256 length) = joePool.coverPrice(PAYOUT, 3);
+        vm.prank(CHARLIE);
+        joe.approve(address(policyCenter), type(uint256).max);
+        joe.mint(CHARLIE, price * SCALE);
+        vm.prank(CHARLIE);
+        crJoeAddress = policyCenter.buyCover(
+            1,
+            PAYOUT,
+            3,
+            (price * 11) / 10
         );
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);

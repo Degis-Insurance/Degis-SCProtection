@@ -69,7 +69,6 @@ contract PolicyCenterTest is
     MockERC20 internal joe;
     MockERC20 internal ptp;
     MockERC20 internal gmx;
-    MockERC20 internal usdc;
 
     address internal joeLPAddress;
     address internal ptpLPAddress;
@@ -94,13 +93,6 @@ contract PolicyCenterTest is
 
     function setUp() public {
         setUpContracts();
-
-        // Deploy usdc
-        usdc = new MockERC20("USDC", "USDC", 18);
-
-        // Set USDC address to current mainnet address
-        bytes memory bytecode = address(usdc).code;
-        vm.etch(policyCenter.USDC(), bytecode);
 
         vm.warp(ZERO_TIME);
 
@@ -152,6 +144,28 @@ contract PolicyCenterTest is
         joe.mint(address(exchange), 1000 ether * SCALE);
         ptp.mint(address(exchange), 1000 ether * SCALE);
         gmx.mint(address(exchange), 1000 ether * SCALE);
+
+        shield.mint(ALICE, LIQUIDITY);
+
+        vm.prank(ALICE);
+        shield.approve(address(policyCenter), LIQUIDITY);
+
+        vm.prank(ALICE);
+        policyCenter.provideLiquidity(LIQUIDITY);
+
+       (uint256 price, uint256 length) = joePool.coverPrice(PAYOUT, 3);
+        vm.prank(CHARLIE);
+        joe.approve(address(policyCenter), type(uint256).max);
+        joe.mint(CHARLIE, price * SCALE);
+        vm.prank(CHARLIE);
+        crJoeAddress = policyCenter.buyCover(
+            1,
+            PAYOUT,
+            3,
+            (price * 11) / 10
+        );
+        console.log("active covered", IPriorityPool(joePool).activeCovered());
+
     }
 
     function testProvideLiquidity() public {
@@ -295,7 +309,7 @@ contract PolicyCenterTest is
 
         // Revert to snapshot
         vm.revertTo(snapshot_3);
-        
+
         vm.prank(ALICE);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
         vm.prank(BOB);
@@ -424,7 +438,9 @@ contract PolicyCenterTest is
         emit LiquidityRemoved(CHARLIE, LIQUIDITY * 2);
         policyCenter.removeLiquidity(LIQUIDITY * 2);
 
-        console.log(unicode"✅ Remove liquidity provided in multiple instances");
+        console.log(
+            unicode"✅ Remove liquidity provided in multiple instances"
+        );
 
         vm.revertTo(snapshot_2);
 
@@ -672,9 +688,7 @@ contract PolicyCenterTest is
         emit LiquidityStaked(CHARLIE, PTP_ID, LIQUIDITY);
         policyCenter.stakeLiquidity(PTP_ID, LIQUIDITY);
 
-        console.log(
-            unicode"✅ Stake after incident settles"
-        );
+        console.log(unicode"✅ Stake after incident settles");
     }
 
     function _stake(address _user) private {
@@ -895,12 +909,12 @@ contract PolicyCenterTest is
             3
         );
 
-        uint256 maxPayment = price * 11 / 10;
+        uint256 maxPayment = (price * 11) / 10;
 
         // approve JOE
         vm.prank(CHARLIE);
         joe.approve(address(policyCenter), type(uint256).max);
-        MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
+
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy cover without provided liquidity # //
@@ -1050,8 +1064,8 @@ contract PolicyCenterTest is
             COVER_AMOUNT,
             3
         );
-    
-        maxPayment = price2 * 11 / 10;
+
+        maxPayment = (price2 * 11) / 10;
 
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
@@ -1076,7 +1090,6 @@ contract PolicyCenterTest is
         vm.warp(INCIDENT_SETTLE_TIME + 2 days);
         incidentReport.settle(1);
 
-
         vm.prank(CHARLIE);
         vm.expectEmit(true, true, false, true);
         emit CoverBought(CHARLIE, JOE_ID, 3, COVER_AMOUNT, price2);
@@ -1087,13 +1100,18 @@ contract PolicyCenterTest is
 
     function _buyJoeCover(address _user) internal {
         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
-        uint256 maxPayment = price * 11 / 10;
+        uint256 maxPayment = (price * 11) / 10;
         vm.prank(_user);
         joe.approve(address(policyCenter), type(uint256).max);
         joe.mint(_user, COVER_AMOUNT * joe.decimals());
         vm.prank(_user);
         // Get Joe cover right address and buy cover
-        crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
+        crJoeAddress = policyCenter.buyCover(
+            JOE_ID,
+            COVER_AMOUNT,
+            3,
+            maxPayment
+        );
     }
 
 
@@ -1126,7 +1144,6 @@ contract PolicyCenterTest is
         // Get Joe cover right address and buy cover
         crPtpAddress = policyCenter.buyCover(PTP_ID, COVER_AMOUNT, 3, price * 11 / 10);
 
-        MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
 
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 
