@@ -13,20 +13,15 @@ import "../../interfaces/ITreasury.sol";
 import "../../interfaces/IExchange.sol";
 import "../../interfaces/IERC20Decimals.sol";
 
-
-
 abstract contract PolicyCenterDependencies {
-    uint256 constant MAX_COVER_LENGTH = 3;
-    uint256 constant MIN_COVER_AMOUNT = 100e6;
+    uint256 internal constant MAX_COVER_LENGTH = 3;
+    uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
-    uint256 constant PREMIUM_TO_PRIORITY = 4500;
-    uint256 constant PREMIUM_TO_PROTECTION = 5000;
-    uint256 constant PREMIUM_TO_TREASURY = 500;
+    uint256 internal constant PREMIUM_TO_PRIORITY = 4500;
+    uint256 internal constant PREMIUM_TO_PROTECTION = 5000;
+    uint256 internal constant PREMIUM_TO_TREASURY = 500;
 
-    // // TODO: USDC address
-    // address public immutable USDC;
-
-    uint256 constant SLIPPAGE = 10;
+    uint256 internal constant SLIPPAGE = 10;
 
     address public protectionPool;
     address public priceGetter;

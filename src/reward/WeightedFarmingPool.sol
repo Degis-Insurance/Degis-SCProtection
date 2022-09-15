@@ -332,7 +332,7 @@ contract WeightedFarmingPool {
 
         if (user.share > 0) {
             uint256 pending = (user.share * pool.accRewardPerShare) /
-                SCALE -
+                (SCALE * SCALE) -
                 user.rewardDebt;
 
             uint256 actualReward = _safeRewardTransfer(
@@ -383,7 +383,7 @@ contract WeightedFarmingPool {
 
         if (user.share > 0) {
             uint256 pending = (user.share * pool.accRewardPerShare) /
-                SCALE -
+                (SCALE * SCALE) -
                 user.rewardDebt;
 
             uint256 actualReward = _safeRewardTransfer(
