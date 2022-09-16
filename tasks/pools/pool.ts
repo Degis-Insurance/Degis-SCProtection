@@ -245,20 +245,23 @@ task("activeCovered", "Get priority pool active covered")
 
     const poolAddress = (await factory.pools(taskArgs.id)).poolAddress;
 
-    const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
-      poolAddress
-    );
-    const covered = await pool.activeCovered();
-    console.log("Active covered: ", formatUnits(covered, 6));
+    // const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+    //   poolAddress
+    // );
+    // const covered = await pool.activeCovered();
+    // console.log("Active covered: ", formatUnits(covered, 6));
 
-    const ratio = await pool.dynamicPremiumRatio(parseUnits("1000000", 6));
-    console.log("Dynamic premium ratio: ", ratio.toString());
+    // const ratio = await pool.dynamicPremiumRatio(parseUnits("1000000", 6));
+    // console.log("Dynamic premium ratio: ", ratio.toString());
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
     ).attach(addressList[network.name].ProtectionPool);
     const totalCovered = await protectionPool.getTotalCovered();
     console.log("Total covered: ", totalCovered.toString());
+
+    const totalActiveCovered = await protectionPool.getTotalActiveCovered();
+    console.log("Total covered: ", totalActiveCovered.toString());
   });
 
 task("dynamicPremium", "Get priority pool active covered")

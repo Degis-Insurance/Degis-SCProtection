@@ -2,38 +2,38 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0xF2C11EA34744305048B84F3bC52C67E6bd3735BD",
+			"poolAddress": "0x99407Bab9C6F7D63A615Da95a126AD92d158F50E",
 			"name": "TraderJoe",
 			"token": "0x8A59C56Abb435A1b668Ad328907FE77de7938f72",
 			"premium": "200"
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0x3B791fA366e426f4c5b193d4C9b3BB951Ea3bDd8",
+			"poolAddress": "0x35259E92a518080590BB3f4742324e9D3b5f8Ff9",
 			"name": "GMX",
 			"token": "0xded9296E272C953189AD67155c2D90fa061f7132",
 			"premium": "200"
 		},
 		"3": {
 			"id": "3",
-			"poolAddress": "0xa5F24EEF8F383C9d5cf7509cDDE35515b077120A",
+			"poolAddress": "0x02830CCD3bD73f3622A1681CD43174BC5b7a18EC",
 			"name": "PTP",
 			"token": "0x94BBd5A34Bb244065284DCD919B8e96459f0999d",
-			"premium": "200"
+			"premium": "250"
 		},
 		"4": {
 			"id": "4",
-			"poolAddress": "0x9230940da8E5118cD92e21464cD632839605Fa4d",
+			"poolAddress": "0x3CA74664b682d5dDde07B186615CDE41E26C012F",
 			"name": "IME",
 			"token": "0xbD2cFF4e54a1730a462Fd25527A4b2D1f680228C",
 			"premium": "250"
 		},
 		"5": {
 			"id": "5",
-			"poolAddress": "0x4bce9b91bb675Fb80dC921Dd02156c5E7Cd9A851",
+			"poolAddress": "0x3373f10bd236816B5F43De41b7F408C98ab165CB",
 			"name": "XAVA",
 			"token": "0xF832B3Bd9ECef5eE5C8F1Dcad64DF3BC72639A3B",
-			"premium": "250"
+			"premium": "200"
 		}
 	},
 	"fujiInternal": {
