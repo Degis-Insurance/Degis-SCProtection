@@ -288,7 +288,8 @@ contract PriorityPool is
 
         // First 7 days use base ratio
         // Then use dynamic ratio
-        if (fromStart > 7 days) {
+        // TODO: test use 30 minutes
+        if (fromStart > 30 minutes) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
                 (IProtectionPool(protectionPool).getTotalCovered() +
