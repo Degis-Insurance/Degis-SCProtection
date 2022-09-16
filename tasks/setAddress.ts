@@ -416,10 +416,10 @@ task("setCRFactory", "Set cover right token factory").setAction(
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    // if ((await crFactory.payoutPool()) != payoutPoolAddress) {
-    //   const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
-    //   console.log("Tx details: ", await tx_3.wait());
-    // }
+    if ((await crFactory.payoutPool()) != payoutPoolAddress) {
+      const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
+      console.log("Tx details: ", await tx_3.wait());
+    }
 
     console.log(
       "\nFinish setting contract addresses in cover right token factory\n"

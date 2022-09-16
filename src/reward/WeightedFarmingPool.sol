@@ -21,6 +21,13 @@ import "forge-std/console.sol";
  *         The distribution is in the way of "farming" but with multiple tokens
  *
  *         Different generations of PRI-LP-1-JOE-G1
+ *
+ *         About the scales of variables:
+ *         - weight            SCALE
+ *         - share             SCALE
+ *         - accRewardPerShare SCALE * SCALE / SCALE = SCALE
+ *         - rewardDebt        SCALE * SCALE / SCALE = SCALE
+ *         So pendingReward = ((share * acc) / SCALE - debt) / SCALE
  */
 contract WeightedFarmingPool {
     using DateTimeLibrary for uint256;
@@ -154,9 +161,8 @@ contract WeightedFarmingPool {
         UserInfo memory user = users[_id][_user];
 
         pending =
-            (user.share * pool.accRewardPerShare) /
-            SCALE -
-            user.rewardDebt;
+            ((user.share * pool.accRewardPerShare) / SCALE - user.rewardDebt) /
+            SCALE;
     }
 
     /**
@@ -331,9 +337,9 @@ contract WeightedFarmingPool {
         UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
-                (SCALE * SCALE) -
-                user.rewardDebt;
+            uint256 pending = ((user.share * pool.accRewardPerShare) /
+                SCALE -
+                user.rewardDebt) / SCALE;
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -382,9 +388,9 @@ contract WeightedFarmingPool {
         UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
-                (SCALE * SCALE) -
-                user.rewardDebt;
+            uint256 pending = ((user.share * pool.accRewardPerShare) /
+                SCALE -
+                user.rewardDebt) / SCALE;
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -417,6 +423,7 @@ contract WeightedFarmingPool {
         if (pool.shares > 0) {
             uint256 newReward = _updateReward(_id);
 
+            // accRewardPerShare has 1 * SCALE
             pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
@@ -434,12 +441,9 @@ contract WeightedFarmingPool {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = (user.share * pool.accRewardPerShare) /
-            (SCALE * SCALE) -
-            user.rewardDebt;
-
-        // TODO: whether should be an error
-        // if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
+        uint256 pending = ((user.share * pool.accRewardPerShare) /
+            SCALE -
+            user.rewardDebt) / SCALE;
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
