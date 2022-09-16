@@ -432,7 +432,7 @@ contract WeightedFarmingPool {
             uint256 newReward = _updateReward(_id);
 
             // accRewardPerShare has 1 * SCALE
-            pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
+            pool.accRewardPerShare += (newReward * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -489,9 +489,8 @@ contract WeightedFarmingPool {
         // In the same month, use current month speed
         if (monthPassed == 0) {
             totalReward +=
-                ((currentTime - lastRewardTime) *
-                    speed[_id][currentY][currentM]) /
-                SCALE;
+                (currentTime - lastRewardTime) *
+                speed[_id][currentY][currentM];
         }
         // Across months, use different months' speed
         else {
@@ -502,9 +501,8 @@ contract WeightedFarmingPool {
                     uint256 endTimestamp = DateTimeLibrary
                         .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);
                     totalReward +=
-                        ((endTimestamp - lastRewardTime) *
-                            speed[_id][lastY][lastM]) /
-                        SCALE;
+                        (endTimestamp - lastRewardTime) *
+                        speed[_id][lastY][lastM];
                 }
                 // Last month reward
                 else if (i == monthPassed) {
@@ -512,9 +510,8 @@ contract WeightedFarmingPool {
                         .timestampFromDateTime(lastY, lastM, 1, 0, 0, 0);
 
                     totalReward +=
-                        ((currentTime - startTimestamp) *
-                            speed[_id][lastY][lastM]) /
-                        SCALE;
+                        (currentTime - startTimestamp) *
+                        speed[_id][lastY][lastM];
                 }
                 // Middle month reward
                 else {
@@ -524,9 +521,8 @@ contract WeightedFarmingPool {
                     );
 
                     totalReward +=
-                        ((DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                            speed[_id][lastY][lastM]) /
-                        SCALE;
+                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
+                            speed[_id][lastY][lastM];
                 }
 
                 unchecked {
