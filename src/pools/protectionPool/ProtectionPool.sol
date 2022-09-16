@@ -106,9 +106,13 @@ contract ProtectionPool is
      * @notice Get total active cover amount of all pools
      *         Only calculate those "already dynamic" pools
      *
-     * @return covered Covered amount
+     * @return activeCovered Covered amount
      */
-    function getTotalCovered() public view returns (uint256 covered) {
+    function getTotalActiveCovered()
+        public
+        view
+        returns (uint256 activeCovered)
+    {
         IPriorityPoolFactory factory = IPriorityPoolFactory(
             priorityPoolFactory
         );
@@ -119,8 +123,26 @@ contract ProtectionPool is
             (, address poolAddress, , , ) = factory.pools(i);
 
             if (factory.dynamic(poolAddress)) {
-                covered += IPriorityPool(poolAddress).activeCovered();
+                activeCovered += IPriorityPool(poolAddress).activeCovered();
             }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function getTotalCovered() public view returns (uint256 totalCovered) {
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
+        );
+
+        uint256 poolAmount = factory.poolCounter();
+
+        for (uint256 i; i < poolAmount; ) {
+            (, address poolAddress, , , ) = factory.pools(i);
+
+            totalCovered += IPriorityPool(poolAddress).activeCovered();
 
             unchecked {
                 ++i;

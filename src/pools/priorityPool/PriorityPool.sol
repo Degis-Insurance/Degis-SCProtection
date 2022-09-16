@@ -289,10 +289,10 @@ contract PriorityPool is
         // First 7 days use base ratio
         // Then use dynamic ratio
         // TODO: test use 5 hours
-        if (fromStart > 5 hours) {
+        if (fromStart > DYNAMIC_TIME) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                (IProtectionPool(protectionPool).getTotalCovered() +
+                (IProtectionPool(protectionPool).getTotalActiveCovered() +
                     _coverAmount);
 
             address lp = currentLPAddress();
@@ -447,7 +447,8 @@ contract PriorityPool is
         _updateCoverInfo(_amount, _length);
 
         // Update the weighted farming pool speed for this priority pool
-        _updateWeightedFarmingSpeed(_length, _premium / _timestampLength);
+        uint256 newSpeed = (_premium * SCALE) / _timestampLength;
+        _updateWeightedFarmingSpeed(_length, newSpeed);
     }
 
     /**
@@ -494,7 +495,7 @@ contract PriorityPool is
      */
     function _updateDynamic() internal {
         // Put the cheaper check in the first place
-        if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
+        if (!passedBasePeriod && (block.timestamp - startTime > DYNAMIC_TIME)) {
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
@@ -597,8 +598,6 @@ contract PriorityPool is
 
         uint256 endMonth = currentMonth + monthsToAdd;
 
-        // ! Remove redundant counts
-        // ! Previously it is counted in multiple months
         coverInMonth[currentYear][endMonth] += _amount;
     }
 
@@ -606,7 +605,7 @@ contract PriorityPool is
      * @notice Update the farming speed in WeightedFarmingPool
      *
      * @param _length   Length in month
-     * @param _newSpeed Speed to be added
+     * @param _newSpeed Speed to be added (SCALED)
      */
     function _updateWeightedFarmingSpeed(uint256 _length, uint256 _newSpeed)
         internal

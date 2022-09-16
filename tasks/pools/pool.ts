@@ -254,3 +254,30 @@ task("activeCovered", "Get priority pool active covered")
     const totalCovered = await protectionPool.getTotalCovered();
     console.log("Total covered: ", totalCovered.toString());
   });
+
+task("dynamicPremium", "Get priority pool active covered")
+  .addParam("id", "Pool id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const poolAddress = (await factory.pools(taskArgs.id)).poolAddress;
+
+    const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      poolAddress
+    );
+    const ratio = await pool.dynamicPremiumRatio(parseUnits("10", 6));
+    console.log(ratio.toString());
+
+    const dynamicCounter = await factory.dynamicPoolCounter();
+    console.log(dynamicCounter.toString());
+  });

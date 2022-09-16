@@ -245,6 +245,14 @@ contract WeightedFarmingPool {
         emit WeightChanged(_id);
     }
 
+    /**
+     * @notice Update reward speed when new premium income
+     *
+     * @param _id       Pool id
+     * @param _newSpeed New speed (SCALED)
+     * @param _years    Years to be updated
+     * @param _months   Months to be updated
+     */
     function updateRewardSpeed(
         uint256 _id,
         uint256 _newSpeed,
@@ -481,8 +489,9 @@ contract WeightedFarmingPool {
         // In the same month, use current month speed
         if (monthPassed == 0) {
             totalReward +=
-                (currentTime - lastRewardTime) *
-                speed[_id][currentY][currentM];
+                ((currentTime - lastRewardTime) *
+                    speed[_id][currentY][currentM]) /
+                SCALE;
         }
         // Across months, use different months' speed
         else {
@@ -493,8 +502,9 @@ contract WeightedFarmingPool {
                     uint256 endTimestamp = DateTimeLibrary
                         .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);
                     totalReward +=
-                        (endTimestamp - lastRewardTime) *
-                        speed[_id][lastY][lastM];
+                        ((endTimestamp - lastRewardTime) *
+                            speed[_id][lastY][lastM]) /
+                        SCALE;
                 }
                 // Last month reward
                 else if (i == monthPassed) {
@@ -502,8 +512,9 @@ contract WeightedFarmingPool {
                         .timestampFromDateTime(lastY, lastM, 1, 0, 0, 0);
 
                     totalReward +=
-                        (currentTime - startTimestamp) *
-                        speed[_id][lastY][lastM];
+                        ((currentTime - startTimestamp) *
+                            speed[_id][lastY][lastM]) /
+                        SCALE;
                 }
                 // Middle month reward
                 else {
@@ -513,8 +524,9 @@ contract WeightedFarmingPool {
                     );
 
                     totalReward +=
-                        (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                        speed[_id][lastY][lastM];
+                        ((DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
+                            speed[_id][lastY][lastM]) /
+                        SCALE;
                 }
 
                 unchecked {
@@ -530,40 +542,11 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Update reward speed
-     *
-     * @param _id       Pool id
-     * @param _months   Cover length in months
-     * @param _newSpeed New speed to be added
-     */
-    function _updateRewardSpeed(
-        uint256 _id,
-        uint256 _months,
-        uint256 _newSpeed
-    ) internal {
-        (uint256 currentY, uint256 currentM, ) = block
-            .timestamp
-            .timestampToDate();
-
-        for (uint256 i; i < _months; ) {
-            speed[_id][currentY][currentM] += _newSpeed;
-
-            unchecked {
-                if (++currentM > 12) {
-                    ++currentY;
-                    currentM = 1;
-                }
-
-                ++i;
-            }
-        }
-    }
-
-    /**
      * @notice Safely transfers reward to a user address
-     * @param _token         Reward token address
-     * @param _to         	Address to send reward to
-     * @param _amount      	Amount to send
+     *
+     * @param _token  Reward token address
+     * @param _to     Address to send reward to
+     * @param _amount Amount to send
      */
     function _safeRewardTransfer(
         address _token,
