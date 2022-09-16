@@ -120,7 +120,7 @@ contract ProtectionPool is
         uint256 poolAmount = factory.poolCounter();
 
         for (uint256 i; i < poolAmount; ) {
-            (, address poolAddress, , , ) = factory.pools(i);
+            (, address poolAddress, , , ) = factory.pools(i + 1);
 
             if (factory.dynamic(poolAddress)) {
                 activeCovered += IPriorityPool(poolAddress).activeCovered();
@@ -140,7 +140,7 @@ contract ProtectionPool is
         uint256 poolAmount = factory.poolCounter();
 
         for (uint256 i; i < poolAmount; ) {
-            (, address poolAddress, , , ) = factory.pools(i);
+            (, address poolAddress, , , ) = factory.pools(i + 1);
 
             totalCovered += IPriorityPool(poolAddress).activeCovered();
 
