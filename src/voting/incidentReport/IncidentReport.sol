@@ -241,12 +241,6 @@ contract IncidentReport is
         emit ReportVotingStart(_id, block.timestamp);
     }
 
-    function setReported(uint256 _poolId, bool _reported) external {
-        // require(msg.sender == executor, "Not executor");
-        (, address pool, , , ) = priorityPoolFactory.pools(_poolId);
-        reported[_poolId] = _reported;
-    }
-
     /**
      * @notice Close a pending report
      *
@@ -396,15 +390,12 @@ contract IncidentReport is
     /**
      * @notice Executed by executor
      *
-     * @param _reportId Report id
+     * @param _poolId Report id
      */
-    function executed(uint256 _reportId) external {
-        require(msg.sender == executor);
-
-        uint256 poolId = reports[_reportId].poolId;
-        reported[poolId] = false;
-
-        _unpausePools(poolId);
+    function executed(uint256 _poolId) external {
+        require(msg.sender == executor, "IncidentReport: Not executor");
+        reported[_poolId] = false;
+        _unpausePools(_poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //

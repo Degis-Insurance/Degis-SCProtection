@@ -912,25 +912,26 @@ contract PolicyCenterTest is
         uint256 maxPayment = (price * 11) / 10;
 
         // approve JOE
-        vm.prank(CHARLIE);
+        vm.prank(ALICE);
         joe.approve(address(policyCenter), type(uint256).max);
+        joe.mint(ALICE, maxPayment * SCALE * SCALE);
 
+        // Not the case: liquidity has to be provided prior to pool being deployed.
+        // // # --------------------------------------------------------------------//
+        // // # Should not be able to buy cover without provided liquidity # //
+        // // # --------------------------------------------------------------------//
+        
+        // vm.prank(ALICE);
+        // shield.approve(address(policyCenter), type(uint256).max);
 
-        // # --------------------------------------------------------------------//
-        // # Should not be able to buy cover without provided liquidity # //
-        // # --------------------------------------------------------------------//
+        // vm.prank(ALICE);
+        // vm.expectRevert(PolicyCenter__InsufficientCapacity.selector);
+        // policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
 
-        vm.prank(CHARLIE);
-        shield.approve(address(policyCenter), type(uint256).max);
+        // console.log(unicode"✅ Not buy cover without provided liquidity");
 
-        vm.prank(CHARLIE);
-        vm.expectRevert(PolicyCenter__InsufficientCapacity.selector);
-        policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, maxPayment);
-
-        console.log(unicode"✅ Not buy cover without provided liquidity");
-
-        // Provide liquidity and increase max capacity
-        _provideLiquidity(CHARLIE);
+        // // Provide liquidity and increase max capacity
+        // _provideLiquidity(CHARLIE);
 
         // # --------------------------------------------------------------------//
         // # Should not be able to buy cover without native tokens # //

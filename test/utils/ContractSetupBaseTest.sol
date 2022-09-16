@@ -159,6 +159,7 @@ contract ContractSetupBaseTest is BaseTest {
     function _setAddresses() internal {
         // Set incident report
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
+        incidentReport.setExecutor(address(executor));
 
         // Set onboard proposal
         onboardProposal.setPriorityPoolFactory(address(priorityPoolFactory));

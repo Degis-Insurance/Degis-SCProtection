@@ -121,17 +121,15 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
      * @param _user         User's address to claim the reward
      */
     function pendingReward(uint256 _id, address _user)
-        external
+        public
         view
         returns (uint256 pending)
     {
         PoolInfo memory pool = pools[_id];
         UserInfo memory user = users[_id][_user];
 
-        pending =
-            (user.share * pool.accRewardPerShare) /
-            SCALE -
-            user.rewardDebt;
+        pending = (user.share * pool.accRewardPerShare / SCALE
+                 - user.rewardDebt) / SCALE;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -188,6 +186,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         uint256 _newWeight
     ) external {
         updatePool(_id);
+        console.log("newWeight", _newWeight);
 
         uint256 index = _getIndex(_id, _token);
 
@@ -208,6 +207,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
             revert WeightedFarmingPool__WrongWeightLength();
 
         for (uint256 i; i < weightLength; ) {
+            console.log(i, _weights[i]);
             pool.weight[i] = _weights[i];
 
             unchecked {
@@ -317,11 +317,11 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
-
+        console.log("share",user.share);
+        console.log("acc",pool.accRewardPerShare);
+        console.log("debt",user.rewardDebt);
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
-                SCALE -
-                user.rewardDebt;
+            uint256 pending = pendingReward(_id, _user);
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -351,6 +351,8 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
         // Update pool amount for this gen lp token
         pool.amount[index] += _amount;
+        console.log("_amount", _amount);
+        console.log("pool.amount[index]", pool.amount[index]);
         pool.shares += _amount * pool.weight[index];
 
         user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
@@ -370,10 +372,11 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
+        console.log("share",user.share);
+        console.log("acc",pool.accRewardPerShare);
+        console.log("debt",user.rewardDebt);
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
-                SCALE -
-                user.rewardDebt;
+            uint256 pending = pendingReward(_id, _user);
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -407,8 +410,8 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         if (pool.shares > 0) {
             uint256 newReward = _updateReward(_id);
             console.log("newReward", newReward);
-
-            pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
+            console.log("pool.shares", pool.shares);
+            pool.accRewardPerShare += (newReward * SCALE * SCALE * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -427,12 +430,10 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = (user.share * pool.accRewardPerShare) /
-            (SCALE * SCALE) -
-            user.rewardDebt;
+        uint256 pending = pendingReward(_id, msg.sender);
 
         // TODO: whether should be an error
-        // if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
+        if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,

@@ -255,22 +255,6 @@ contract PriorityPool is
     }
 
     /**
-     * @notice Get the current month cover amount
-     *        Active cover amount = sum of the nearest 3 months' covers
-     *
-     * @return covered Current month active cover amount
-     */
-    function currentMonthCovered() public view returns (uint256 covered) {
-        (uint256 currentYear, uint256 currentMonth, ) = block
-            .timestamp
-            .timestampToDate();
-
-        covered = coverInMonth[currentYear][currentMonth];
-
-        covered = (covered * coverIndex) / 10000;
-    }
-
-    /**
      * @notice Current minimum asset requirement for Protection Pool
      *         Min requirement * capacity ratio = active covered
      *
@@ -599,12 +583,17 @@ contract PriorityPool is
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, ) = block
+        (uint256 currentYear, uint256 currentMonth, uint256 currentDay ) = block
             .timestamp
             .timestampToDate();
 
-        uint256 endMonth = currentMonth + _length - 1;
+        uint256 monthsToAdd = _length - 1;
         console.log("updateCoverInfo amount", _amount);
+        if (currentDay >= 25) {
+            monthsToAdd++;
+        }
+
+        uint256 endMonth = currentMonth + monthsToAdd;
 
         // ! Remove redundant counts
         // ! Previously it is counted in multiple months
@@ -693,10 +682,10 @@ contract PriorityPool is
         // E.g. ratio is 1e11
         //      You can only use 100% (1e10 / SCALE) of your crTokens for claiming
         uint256 payoutRatio;
-        currentMonthCovered() > 0
-            ? payoutRatio = (_amount * SCALE) / currentMonthCovered()
+        activeCovered() > 0
+            ? payoutRatio = (_amount * SCALE) / activeCovered()
             : payoutRatio = 0;
-
+        console.log(payoutRatio);
         IPayoutPool(payoutPool).newPayout(
             poolId,
             generation,

@@ -69,7 +69,7 @@ contract ExecutorTest is
 
     function setUp() public {
         setUpContracts();
-
+        vm.warp(0);
         // Deploy one protocol token
         joe = new MockERC20("JoeToken", "JOE", 18);
         ptp = new MockERC20("PTPToken", "PTP", 18);
@@ -132,7 +132,7 @@ contract ExecutorTest is
         shield.approve(address(policyCenter), LIQUIDITY);
         vm.prank(ALICE);
         policyCenter.provideLiquidity(LIQUIDITY);
-
+        
        (uint256 price, uint256 length) = joePool.coverPrice(PAYOUT, 3);
         vm.prank(CHARLIE);
         joe.approve(address(policyCenter), type(uint256).max);

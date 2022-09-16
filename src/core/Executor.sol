@@ -102,7 +102,7 @@ contract Executor is
         if (report.result != 1) revert Executor__ReportNotPassed();
 
         // Executed callback function
-        IIncidentReport(incidentReport).executed(_reportId);
+        IIncidentReport(incidentReport).executed(report.poolId);
 
         // Give 10% of treasury to the reporter
         ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
@@ -111,10 +111,10 @@ contract Executor is
             priorityPoolFactory
         );
 
-        // Unpause the priority pool and protection pool
-        factory.pausePriorityPool(report.poolId, false);
+        // // Unpause the priority pool and protection pool
+        // factory.pausePriorityPool(report.poolId, false);
 
-        IIncidentReport(incidentReport).setReported(report.poolId, false);
+        // IIncidentReport(incidentReport).setReported(report.poolId, false);
 
         // Liquidate the pool
         (, address poolAddress, , , ) = factory.pools(report.poolId);

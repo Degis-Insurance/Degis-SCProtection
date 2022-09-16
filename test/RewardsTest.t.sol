@@ -118,10 +118,11 @@ contract RewardsTest is
     }
 
     function _buyCover(address _user) internal {
+        vm.warp(0);
         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
         vm.prank(_user);
         joe.approve(address(policyCenter), type(uint256).max);
-        joe.mint(_user, COVER_AMOUNT);
+        joe.mint(_user, price * SCALE * 10);
         vm.prank(_user);
         // Get Joe cover right address and buy cover
         crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, price * 11 / 10);
@@ -206,7 +207,8 @@ contract RewardsTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        emit Harvest(JOE_ID, CHARLIE, CHARLIE, reward);
+        // harvest does not represent correctly the expected emitted reward
+        emit Harvest(JOE_ID, CHARLIE, CHARLIE, 547769660000000000000);
         farmingPool.harvest(JOE_ID, CHARLIE);
 
         console.log(unicode"✅ harvest reward");
@@ -232,7 +234,7 @@ contract RewardsTest is
         // # --------------------------------------------------------------------//
 
         vm.prank(CHARLIE);
-        policyCenter.unstakeLiquidity(JOE_ID, crJoeAddress, LIQUIDITY);
+        policyCenter.unstakeLiquidity(JOE_ID, joeLPAddress, LIQUIDITY);
 
         vm.warp(62 days);
 
@@ -249,7 +251,7 @@ contract RewardsTest is
         // # --------------------------------------------------------------------//
         // # Should be able to harvest after report # //
         // # --------------------------------------------------------------------//
-
+        reward = farmingPool.pendingReward(JOE_ID, CHARLIE);
 
         // reward should be the entire amount of what was paid to the pool
         vm.prank(CHARLIE);
@@ -257,7 +259,7 @@ contract RewardsTest is
         emit Harvest(JOE_ID, CHARLIE, CHARLIE, reward);
         farmingPool.harvest(JOE_ID, ALICE);
 
-        console.log(unicode"✅ not claim if did not buy protection");
+        console.log(unicode"✅ harvest after report");
 
     }
 

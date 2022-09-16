@@ -285,9 +285,6 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool,
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
-        console.log("premiumToProtectionPool", premiumToProtectionPool);
-        console.log("premiumToPriorityPool", premiumToPriorityPool);
-        console.log("premiumToTreasury", premiumToTreasury);
 
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
