@@ -68,6 +68,9 @@ contract ProtectionPool is
     // PRO_LP token price
     uint256 public price;
 
+    // Total amount staked
+    uint256 public stakedSupply;
+
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
@@ -228,7 +231,6 @@ contract ProtectionPool is
         external
         onlyPolicyCenter
     {
-        _updateReward();
         _updatePrice();
 
         // Mint PRO_LP tokens to the user
@@ -259,7 +261,6 @@ contract ProtectionPool is
         if (_amount > totalSupply())
             revert ProtectionPool__ExceededTotalSupply();
 
-        _updateReward();
         _updatePrice();
 
         // Burn PRO_LP tokens to the user
@@ -305,20 +306,9 @@ contract ProtectionPool is
 
     /**
      * @notice Update when new cover is bought
-     *
-     * @param _premium         Premium of the cover to be distributed to Protection Pool
-     * @param _length          Length in month
-     * @param _timestampLength Length in seconds
      */
-    function updateWhenBuy(
-        uint256 _premium,
-        uint256 _length,
-        uint256 _timestampLength
-    ) external onlyPolicyCenter {
-        _updateReward();
+    function updateWhenBuy() external onlyPolicyCenter {
         _updatePrice();
-
-        _updateRewardSpeed(_premium, _length, _timestampLength);
     }
 
     /**
@@ -333,6 +323,15 @@ contract ProtectionPool is
             (msg.sender != priorityPoolFactory)
         ) revert ProtectionPool__NotAllowedToPause();
         _pause(_paused);
+    }
+
+    function updateStakedSupply(bool _isStake, uint256 _amount)
+        external
+        onlyPolicyCenter
+    {
+        if (_isStake) {
+            stakedSupply += _amount;
+        } else stakedSupply -= _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -352,106 +351,5 @@ contract ProtectionPool is
             totalSupply();
 
         emit PriceUpdated(price);
-    }
-
-    /**
-     * @notice Update reward status
-     */
-    function _updateReward() internal {
-        uint256 currentTime = block.timestamp;
-
-        // Last reward year & month & day
-        (uint256 lastY, uint256 lastM, uint256 lastD) = lastRewardTimestamp
-            .timestampToDate();
-
-        // Current year & month & day
-        (uint256 currentY, uint256 currentM, ) = currentTime.timestampToDate();
-
-        uint256 monthPassed = currentM - lastM;
-
-        uint256 totalReward;
-
-        if (monthPassed == 0) {
-            if (rewardSpeed[currentY][currentM] > 0) {
-                totalReward +=
-                    (currentTime - lastRewardTimestamp) *
-                    rewardSpeed[currentY][currentM];
-            }
-        } else {
-            for (uint256 i; i < monthPassed + 1; ) {
-                // First month reward
-                if (i == 0 && rewardSpeed[lastY][lastM] > 0) {
-                    // End timestamp of the first month
-                    uint256 endTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);
-
-                    totalReward +=
-                        (endTimestamp - lastRewardTimestamp) *
-                        rewardSpeed[lastY][lastM];
-                }
-                // Last month reward
-                else if (i == monthPassed && rewardSpeed[lastY][lastM] > 0) {
-                    uint256 startTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(lastY, lastM, 1, 0, 0, 0);
-
-                    totalReward +=
-                        (currentTime - startTimestamp) *
-                        rewardSpeed[lastY][lastM];
-                }
-                // Middle month reward
-                else {
-                    uint256 daysInMonth = lastY._getDaysInMonth(lastM);
-
-                    if (rewardSpeed[lastY][lastM] > 0) {
-                        totalReward +=
-                            (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                            rewardSpeed[lastY][lastM];
-                    }
-                }
-
-                unchecked {
-                    if (++lastM > 12) {
-                        ++lastY;
-                        lastM = 1;
-                    }
-
-                    ++i;
-                }
-            }
-        }
-
-        emit RewardUpdated(totalReward);
-    }
-
-    /**
-     * @notice Update reward speed
-     *
-     * @param _premium         New premium received
-     * @param _length          Cover length in months
-     * @param _timestampLength Cover length in seconds
-     */
-    function _updateRewardSpeed(
-        uint256 _premium,
-        uint256 _length,
-        uint256 _timestampLength
-    ) internal {
-        // How many premiums need to be distributed in each second
-        uint256 newSpeed = _premium / _timestampLength;
-
-        (uint256 currentYear, uint256 currentMonth, ) = DateTimeLibrary
-            .timestampToDate(block.timestamp);
-
-        for (uint256 i; i < _length; ) {
-            rewardSpeed[currentYear][currentMonth] += newSpeed;
-
-            unchecked {
-                if (++currentMonth > 12) {
-                    ++currentYear;
-                    currentMonth = 1;
-                }
-
-                ++i;
-            }
-        }
     }
 }

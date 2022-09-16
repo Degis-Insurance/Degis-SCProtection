@@ -281,16 +281,12 @@ contract PolicyCenter is
 
         // Split the premium income and update the pool status
         (
-            uint256 premiumToProtectionPool,
+            ,
             uint256 premiumToPriorityPool,
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
 
-        IProtectionPool(protectionPool).updateWhenBuy(
-            premiumToProtectionPool,
-            _coverDuration,
-            timestampDuration
-        );
+        IProtectionPool(protectionPool).updateWhenBuy();
         IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
             _coverAmount,
             premiumToPriorityPool,
@@ -353,6 +349,7 @@ contract PolicyCenter is
             address(this)
         );
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+        IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
         IWeightedFarmingPool(weightedFarmingPool).depositFromPolicyCenter(
             _poolId,
@@ -382,6 +379,7 @@ contract PolicyCenter is
         // Mint PRI-LP tokens to the user directly
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+        IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
         emit LiquidityStakedWithoutFarming(msg.sender, _poolId, _amount);
     }
@@ -420,6 +418,8 @@ contract PolicyCenter is
             msg.sender
         );
 
+        IProtectionPool(protectionPool).updateStakedSupply(false, _amount);
+
         emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
 
@@ -442,6 +442,8 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
+
+        IProtectionPool(protectionPool).updateStakedSupply(false, _amount);
 
         emit LiquidityUnstakedWithoutFarming(
             msg.sender,

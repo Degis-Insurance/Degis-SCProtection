@@ -304,9 +304,12 @@ contract PriorityPool is
 
                 address lp = currentLPAddress();
 
-                // LP Token ratio = LP token in this pool / Total lp token
+                //                         PRO-LP token in this pool
+                // LP Token ratio =  -------------------------------------------
+                //                    PRO-LP token staked in all priority pools
+                //
                 uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
-                    SimpleERC20(protectionPool).totalSupply();
+                    IProtectionPool(protectionPool).stakedSupply();
 
                 // Dynamic premium ratio
                 // ( N = total dynamic pools ≤ total pools )

@@ -24,6 +24,8 @@ interface IProtectionPool {
     function removedLiquidityWhenClaimed(uint256 _amount, address _to) external;
 
     function pauseProtectionPool(bool _paused) external;
+
+    function stakedSupply() external view returns (uint256);
 }
 
 interface IPolicyCenter {

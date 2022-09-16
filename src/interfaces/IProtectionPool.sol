@@ -15,13 +15,13 @@ interface IProtectionPool {
 
     function getTotalActiveCovered() external view returns (uint256);
 
-    function updateWhenBuy(
-        uint256 _premium,
-        uint256 _length,
-        uint256 _timestampLength
-    ) external;
+    function updateWhenBuy() external;
 
     function removedLiquidityWhenClaimed(uint256 _amount, address _to) external;
 
     function getLatestPrice() external returns (uint256);
+
+    function updateStakedSupply(bool isStake, uint256 amount) external;
+
+    function stakedSupply() external view returns (uint256);
 }
