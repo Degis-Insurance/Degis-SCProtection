@@ -2,17 +2,38 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0x271423abaD20AFF5811658289EA003D5e1c7f3E0",
+			"poolAddress": "0x4ffE03cDe9B4BF4c41b956D1ED004EcF9B2fc835",
 			"name": "Project1",
-			"token": "0xcb1d663D727fe5eDb9306E5834510B935c67a408",
+			"token": "0x6dcaf6c8515e17B4103943e80fF6812429f7B06b",
 			"premium": "200"
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0xff263503eEF6b6a5D3F1203669efD049f84F5e9F",
+			"poolAddress": "0xd9f70D748E44F2e127403f23c6006684C98CC8A3",
 			"name": "Project2",
-			"token": "0xB8cC08f4157d406670fBDB4C53C525a9B2e5Dcf5",
+			"token": "0x1309eD23a60BB8A3cf771A05B96B700d3195288b",
 			"premium": "200"
+		},
+		"3": {
+			"id": "3",
+			"poolAddress": "0xA71f40fEE9bC38fc1135ebAF76994FE29Ee61D64",
+			"name": "Project3",
+			"token": "0xC48050544a504eCC48f95234e724FFb8176d4E26",
+			"premium": "250"
+		},
+		"4": {
+			"id": "4",
+			"poolAddress": "0xFaEE1Bda5aB00258C3254d333e08840CF7C447aF",
+			"name": "Project4",
+			"token": "0x727aF265c388660ABCDeEA91802d56aDcD01FC32",
+			"premium": "250"
+		},
+		"5": {
+			"id": "5",
+			"poolAddress": "0x085Ce40B21CF88A646B85a40D7b9f945fd59614D",
+			"name": "Project5",
+			"token": "0x2EE4e296d85787c64444Fb4DaE27C109c41081AB",
+			"premium": "250"
 		}
 	},
 	"fujiInternal": {
