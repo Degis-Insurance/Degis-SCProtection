@@ -38,8 +38,6 @@ contract ExecutorTest is
     uint256 internal constant PAYOUT = 1000e6;
     uint256 internal constant LIQUIDITY = 1000 ether;
 
-    uint256 internal constant VOTE_FOR = 1;
-    uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant PROPOSE_TIME = 0;

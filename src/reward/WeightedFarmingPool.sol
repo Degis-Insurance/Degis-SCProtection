@@ -21,6 +21,13 @@ import "forge-std/console.sol";
  *         The distribution is in the way of "farming" but with multiple tokens
  *
  *         Different generations of PRI-LP-1-JOE-G1
+ *
+ *         About the scales of variables:
+ *         - weight            SCALE
+ *         - share             SCALE
+ *         - accRewardPerShare SCALE * SCALE / SCALE = SCALE
+ *         - rewardDebt        SCALE * SCALE / SCALE = SCALE
+ *         So pendingReward = ((share * acc) / SCALE - debt) / SCALE
  */
 contract WeightedFarmingPool {
     using DateTimeLibrary for uint256;
@@ -45,7 +52,7 @@ contract WeightedFarmingPool {
     }
     mapping(uint256 => PoolInfo) public pools;
 
-    // pool id => year => month => daily amount
+    // pool id => year => month => speed
     mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
         public speed;
 
@@ -61,6 +68,10 @@ contract WeightedFarmingPool {
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event PoolAdded(uint256 poolId, address token);
     event NewTokenAdded(uint256 poolId, address token, uint256 weight);
     event PoolUpdated(uint256 poolId, uint256 accRewardPerShare);
@@ -71,6 +82,10 @@ contract WeightedFarmingPool {
         address receiver,
         uint256 reward
     );
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     error WeightedFarmingPool__AlreadySupported();
     error WeightedFarmingPool__WrongWeightLength();
@@ -146,9 +161,8 @@ contract WeightedFarmingPool {
         UserInfo memory user = users[_id][_user];
 
         pending =
-            (user.share * pool.accRewardPerShare) /
-            SCALE -
-            user.rewardDebt;
+            ((user.share * pool.accRewardPerShare) / SCALE - user.rewardDebt) /
+            SCALE;
     }
 
     /**
@@ -231,6 +245,14 @@ contract WeightedFarmingPool {
         emit WeightChanged(_id);
     }
 
+    /**
+     * @notice Update reward speed when new premium income
+     *
+     * @param _id       Pool id
+     * @param _newSpeed New speed (SCALED)
+     * @param _years    Years to be updated
+     * @param _months   Months to be updated
+     */
     function updateRewardSpeed(
         uint256 _id,
         uint256 _newSpeed,
@@ -323,9 +345,9 @@ contract WeightedFarmingPool {
         UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
+            uint256 pending = ((user.share * pool.accRewardPerShare) /
                 SCALE -
-                user.rewardDebt;
+                user.rewardDebt) / SCALE;
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -374,9 +396,9 @@ contract WeightedFarmingPool {
         UserInfo storage user = users[_id][_user];
 
         if (user.share > 0) {
-            uint256 pending = (user.share * pool.accRewardPerShare) /
+            uint256 pending = ((user.share * pool.accRewardPerShare) /
                 SCALE -
-                user.rewardDebt;
+                user.rewardDebt) / SCALE;
 
             uint256 actualReward = _safeRewardTransfer(
                 pool.rewardToken,
@@ -409,7 +431,8 @@ contract WeightedFarmingPool {
         if (pool.shares > 0) {
             uint256 newReward = _updateReward(_id);
 
-            pool.accRewardPerShare += (newReward * SCALE * SCALE) / pool.shares;
+            // accRewardPerShare has 1 * SCALE
+            pool.accRewardPerShare += (newReward * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -421,17 +444,16 @@ contract WeightedFarmingPool {
     }
 
     function harvest(uint256 _id, address _to) external {
+        if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = (user.share * pool.accRewardPerShare) /
-            (SCALE * SCALE) -
-            user.rewardDebt;
-
-        // TODO: whether should be an error
-        // if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
+        uint256 pending = ((user.share * pool.accRewardPerShare) /
+            SCALE -
+            user.rewardDebt) / SCALE;
 
         uint256 actualReward = _safeRewardTransfer(
             pool.rewardToken,
@@ -518,40 +540,11 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Update reward speed
-     *
-     * @param _id       Pool id
-     * @param _months   Cover length in months
-     * @param _newSpeed New speed to be added
-     */
-    function _updateRewardSpeed(
-        uint256 _id,
-        uint256 _months,
-        uint256 _newSpeed
-    ) internal {
-        (uint256 currentY, uint256 currentM, ) = block
-            .timestamp
-            .timestampToDate();
-
-        for (uint256 i; i < _months; ) {
-            speed[_id][currentY][currentM] += _newSpeed;
-
-            unchecked {
-                if (++currentM > 12) {
-                    ++currentY;
-                    currentM = 1;
-                }
-
-                ++i;
-            }
-        }
-    }
-
-    /**
      * @notice Safely transfers reward to a user address
-     * @param _token         Reward token address
-     * @param _to         	Address to send reward to
-     * @param _amount      	Amount to send
+     *
+     * @param _token  Reward token address
+     * @param _to     Address to send reward to
+     * @param _amount Amount to send
      */
     function _safeRewardTransfer(
         address _token,

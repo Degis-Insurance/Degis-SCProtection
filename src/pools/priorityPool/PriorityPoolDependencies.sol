@@ -13,7 +13,7 @@ interface IPriorityPoolFactory {
 }
 
 interface IProtectionPool {
-    function getTotalCovered() external view returns (uint256);
+    function getTotalActiveCovered() external view returns (uint256);
 
     function getLatestPrice() external returns (uint256);
 
@@ -24,6 +24,8 @@ interface IProtectionPool {
     function removedLiquidityWhenClaimed(uint256 _amount, address _to) external;
 
     function pauseProtectionPool(bool _paused) external;
+
+    function stakedSupply() external view returns (uint256);
 }
 
 interface IPolicyCenter {
@@ -74,7 +76,7 @@ abstract contract PriorityPoolDependencies {
 
     uint256 internal constant SCALE = 1e12;
     uint256 internal constant SECONDS_PER_YEAR = 86400 * 365;
-    uint256 internal constant DYNAMIC_TIME = 7 days;
+    uint256 internal constant DYNAMIC_TIME = 10 minutes;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //

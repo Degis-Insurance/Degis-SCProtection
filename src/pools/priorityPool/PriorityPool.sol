@@ -32,29 +32,32 @@ import "../../libraries/StringUtils.sol";
 import "forge-std/console.sol";
 
 /**
- * @title Insurance Pool (for single project)
+ * @title Priority Pool (for single project)
  *
  * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
  *
  * @notice Priority pool is used for protecting a specific project
  *         Each priority pool has a maxCapacity (0 ~ 10,000 <=> 0 ~ 100%) that it can cover
+ *         (that ratio represents the part of total assets in Protection Pool)
  *
  *         When liquidity providers join a priority pool,
- *         they need to transfer their RP_LP token to this insurance pool.
+ *         they need to transfer their RP_LP token to this priority pool.
  *
  *         After that, they can share the 45% percent native token reward of this pool.
  *         At the same time, that also means these liquidity will be first liquidated,
  *         when there is an incident happened for this project.
  *
+ *         This reward is distributed in another contract (WeightedFarmingPool)
+ *         By default, policy center will help user to deposit into farming pool when staking liquidity
+ *
  *         For liquidation process, the pool will first redeem Shield from protectionPool with the staked RP_LP tokens.
- *         If that is enough, no more redeeming.
- *         If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
+ *         - If that is enough, no more redeeming.
+ *         - If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
  *
  *         Most of the functions need to be called through Policy Center:
  *             1) When buying new covers: updateWhenBuy
  *             2) When staking liquidity: stakedLiquidity
  *             3) When unstaking liquidity: unstakedLiquidity
- *             4)
  *
  */
 contract PriorityPool is
@@ -203,6 +206,9 @@ contract PriorityPool is
      *
      * @param _amount        Amount being covered (Shield)
      * @param _coverDuration Cover length in month
+     *
+     * @return price  Cover price in shield
+     * @return length Real length in timestamp
      */
     function coverPrice(uint256 _amount, uint256 _coverDuration)
         external
@@ -283,35 +289,45 @@ contract PriorityPool is
 
         // First 7 days use base ratio
         // Then use dynamic ratio
-        if (fromStart > 7 days) {
-            // Covered ratio = Covered amount of this pool / Total covered amount
-            uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                (IProtectionPool(protectionPool).getTotalCovered() +
-                    _coverAmount);
-
-            address lp = currentLPAddress();
-            // LP Token ratio = LP token in this pool / Total lp token
-            uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
-                SimpleERC20(protectionPool).totalSupply();
-
+        // TODO: test use 5 hours
+        if (fromStart > DYNAMIC_TIME) {
             // Total dynamic pools
-            uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
-                .dynamicPoolCounter();
+            uint256 numofDynamicPools = IPriorityPoolFactory(
+                priorityPoolFactory
+            ).dynamicPoolCounter();
 
-            // Dynamic premium ratio
-            // ( N = total dynamic pools ≤ total pools )
-            //
-            //                      Covered          1
-            //                   --------------- + -----
-            //                    TotalCovered       N
-            // dynamic ratio =  -------------------------- * base ratio
-            //                      LP Amount         1
-            //                  ----------------- + -----
-            //                   Total LP Amount      N
-            //
-            ratio =
-                (basePremiumRatio * (coveredRatio * numofPools + SCALE)) /
-                ((tokenRatio * numofPools) + SCALE);
+            if (numofDynamicPools > 0) {
+                // Covered ratio = Covered amount of this pool / Total covered amount
+                uint256 coveredRatio = ((activeCovered() + _coverAmount) *
+                    SCALE) /
+                    (IProtectionPool(protectionPool).getTotalActiveCovered() +
+                        _coverAmount);
+
+                address lp = currentLPAddress();
+
+                //                         PRO-LP token in this pool
+                // LP Token ratio =  -------------------------------------------
+                //                    PRO-LP token staked in all priority pools
+                //
+                uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
+                    IProtectionPool(protectionPool).stakedSupply();
+
+                // Dynamic premium ratio
+                // ( N = total dynamic pools ≤ total pools )
+                //
+                //                      Covered          1
+                //                   --------------- + -----
+                //                    TotalCovered       N
+                // dynamic ratio =  -------------------------- * base ratio
+                //                      LP Amount         1
+                //                  ----------------- + -----
+                //                   Total LP Amount      N
+                //
+                ratio =
+                    (basePremiumRatio *
+                        (coveredRatio * numofDynamicPools + SCALE)) /
+                    ((tokenRatio * numofDynamicPools) + SCALE);
+            } else ratio = basePremiumRatio;
         } else {
             ratio = basePremiumRatio;
         }
@@ -441,7 +457,8 @@ contract PriorityPool is
         _updateCoverInfo(_amount, _length);
 
         // Update the weighted farming pool speed for this priority pool
-        _updateWeightedFarmingSpeed(_length, _premium / _timestampLength);
+        uint256 newSpeed = (_premium * SCALE) / _timestampLength;
+        _updateWeightedFarmingSpeed(_length, newSpeed);
     }
 
     /**
@@ -488,7 +505,7 @@ contract PriorityPool is
      */
     function _updateDynamic() internal {
         // Put the cheaper check in the first place
-        if (!passedBasePeriod && (block.timestamp - startTime > 7 days)) {
+        if (!passedBasePeriod && (block.timestamp - startTime > DYNAMIC_TIME)) {
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
@@ -579,14 +596,18 @@ contract PriorityPool is
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, ) = block
+        (uint256 currentYear, uint256 currentMonth, uint256 currentDay) = block
             .timestamp
             .timestampToDate();
 
-        uint256 endMonth = currentMonth + _length;
+        uint256 monthsToAdd = _length - 1;
 
-        // ! Remove redundant counts
-        // ! Previously it is counted in multiple months
+        if (currentDay >= 25) {
+            monthsToAdd++;
+        }
+
+        uint256 endMonth = currentMonth + monthsToAdd;
+
         coverInMonth[currentYear][endMonth] += _amount;
     }
 
@@ -594,7 +615,7 @@ contract PriorityPool is
      * @notice Update the farming speed in WeightedFarmingPool
      *
      * @param _length   Length in month
-     * @param _newSpeed Speed to be added
+     * @param _newSpeed Speed to be added (SCALED)
      */
     function _updateWeightedFarmingSpeed(uint256 _length, uint256 _newSpeed)
         internal

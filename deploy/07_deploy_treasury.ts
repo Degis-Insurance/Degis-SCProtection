@@ -26,12 +26,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [, , shieldAddress] = getExternalTokenAddress(network.name);
 
   const executorAddress = addressList[network.name].Executor;
+  const policyCenterAddress = addressList[network.name].PolicyCenter;
 
   // Treasury contract artifact
   const treasury = await deploy("Treasury", {
     contract: "Treasury",
     from: deployer,
-    args: [shieldAddress, executorAddress],
+    args: [shieldAddress, executorAddress, policyCenterAddress],
     log: true,
   });
   addressList[network.name].Treasury = treasury.address;

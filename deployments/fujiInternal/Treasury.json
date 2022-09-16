@@ -1,5 +1,5 @@
 {
-  "address": "0x893700Efccc058F20570A8398B142C735eDe18df",
+  "address": "0xA0e55f2bafB6a9FF4c8767328D0Ac4B394752442",
   "abi": [
     {
       "inputs": [
@@ -12,6 +12,11 @@
           "internalType": "address",
           "name": "_executor",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_policyCenter",
+          "type": "address"
         }
       ],
       "stateMutability": "nonpayable",
@@ -22,6 +27,38 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "ClaimedByOwner",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewIncomeToTreasury",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "address",
           "name": "reporter",
           "type": "address"
@@ -78,6 +115,19 @@
     {
       "inputs": [],
       "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "policyCenter",
       "outputs": [
         {
           "internalType": "address",
@@ -157,31 +207,32 @@
       "type": "function"
     }
   ],
-  "transactionHash": "0x988425d10a5bba321bede625201f93666bcc8592c6af3ba4f19d305dbfaf147a",
+  "transactionHash": "0x58841e9576bb4608279160263c305fc9483cdc03509f712aa7b2a6ae14ca8d76",
   "receipt": {
     "to": null,
     "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
-    "contractAddress": "0x893700Efccc058F20570A8398B142C735eDe18df",
-    "transactionIndex": 1,
-    "gasUsed": "366559",
+    "contractAddress": "0xA0e55f2bafB6a9FF4c8767328D0Ac4B394752442",
+    "transactionIndex": 2,
+    "gasUsed": "431985",
     "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    "blockHash": "0xd29aaa99a6754efb793304b6db44d1d9a807976e7b3a942185bdfd6bffd7c1ff",
-    "transactionHash": "0x988425d10a5bba321bede625201f93666bcc8592c6af3ba4f19d305dbfaf147a",
+    "blockHash": "0xf66f8c651430a058a77e3c336936d34d974848f1bff89f4fa2b124044a3da8cb",
+    "transactionHash": "0x58841e9576bb4608279160263c305fc9483cdc03509f712aa7b2a6ae14ca8d76",
     "logs": [],
-    "blockNumber": 13254643,
-    "cumulativeGasUsed": "497832",
+    "blockNumber": 13560525,
+    "cumulativeGasUsed": "1020541",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x8A5D29839AC535c7323E0Deb6bf410b625760919",
-    "0xD34E96DE760116857B4ad4Eb16ad1B92Aa997156"
+    "0xF4e5d6516899aE2d38af527D711be539e3ACF588",
+    "0xcC18BE6995613623198691945dC1d2f211fA8BB8",
+    "0x0D1d726142BaA3b18b692b263072026Ce5F6ea27"
   ],
-  "numDeployments": 6,
-  "solcInputHash": "67550ce593e52f50043518f498b0f7a8",
-  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_shield\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_executor\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ReporterRewarded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"REPORTER_REWARD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"executor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"poolIncome\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"premiumIncome\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_reporter\",\"type\":\"address\"}],\"name\":\"rewardReporter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shield\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"claim(uint256)\":{\"params\":{\"_amount\":\"Amount to claim\"}},\"premiumIncome(uint256,uint256)\":{\"params\":{\"_amount\":\"Premium amount (shield)\",\"_poolId\":\"Pool id\"}},\"rewardReporter(uint256,address)\":{\"params\":{\"_poolId\":\"Pool id\",\"_reporter\":\"Reporter address\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"claim(uint256)\":{\"notice\":\"Claim shield by the owner\"},\"premiumIncome(uint256,uint256)\":{\"notice\":\"Record when receiving new premium income\"},\"rewardReporter(uint256,address)\":{\"notice\":\"Reward the correct reporter         Part of the priority pool income will be given to the reporter         Only called from executor when executing a report\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/pools/Treasury.sol\":\"Treasury\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363632353532323631393539\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"src/interfaces/IShield.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"../pools/SimpleIERC20.sol\\\";\\n\\ninterface IShield is SimpleIERC20 {\\n    function deposit(\\n        uint256 _type,\\n        address _stablecoin,\\n        uint256 _amount,\\n        uint256 _minAmount\\n    ) external;\\n}\\n\",\"keccak256\":\"0x22e4fc4218ad0df35d3a7c982296a7fdae6c502d5cf77a7e8d26155e7061cbe1\",\"license\":\"GPL-3.0-or-later\"},\"src/pools/SimpleIERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface SimpleIERC20 {\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(address from, address to, uint256 amount) external returns(bool);\\n}\\n\",\"keccak256\":\"0x93ccdbce4fcd2d86096e6ad8b10a06757d600a70a4eb660281238a4ef1d6be7f\",\"license\":\"MIT\"},\"src/pools/Treasury.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"../interfaces/IShield.sol\\\";\\n\\ncontract Treasury {\\n    address public owner;\\n\\n    address public executor;\\n\\n    address public shield;\\n\\n    uint256 public constant REPORTER_REWARD = 1000;\\n\\n    mapping(uint256 => uint256) public poolIncome;\\n\\n    event ReporterRewarded(address reporter, uint256 amount);\\n\\n    constructor(address _shield, address _executor) {\\n        executor = _executor;\\n        shield = _shield;\\n        owner = msg.sender;\\n    }\\n\\n    /**\\n     * @notice Reward the correct reporter\\n     *         Part of the priority pool income will be given to the reporter\\n     *         Only called from executor when executing a report\\n     *\\n     * @param _poolId   Pool id\\n     * @param _reporter Reporter address\\n     */\\n    function rewardReporter(uint256 _poolId, address _reporter) external {\\n        require(msg.sender == executor, \\\"Only executor\\\");\\n\\n        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;\\n\\n        poolIncome[_poolId] -= amount;\\n        SimpleIERC20(shield).transfer(_reporter, amount);\\n\\n        emit ReporterRewarded(_reporter, amount);\\n    }\\n\\n    /**\\n     * @notice Record when receiving new premium income\\n     *\\n     * @param _poolId Pool id\\n     * @param _amount Premium amount (shield)\\n     */\\n    function premiumIncome(uint256 _poolId, uint256 _amount) external {\\n        poolIncome[_poolId] += _amount;\\n    }\\n\\n    /**\\n     * @notice Claim shield by the owner\\n     *\\n     * @param _amount Amount to claim\\n     */\\n    function claim(uint256 _amount) external {\\n        require(msg.sender == owner, \\\"Only owner\\\");\\n\\n        SimpleIERC20(shield).transfer(owner, _amount);\\n    }\\n}\\n\",\"keccak256\":\"0xd0bddb4264156caec32070adc2206fcd6b6b689b356096fc94275ce31c99a97b\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
-  "bytecode": "0x60803461009557601f61052b38819003918201601f19168301916001600160401b0383118484101761009a578084926040948552833981010312610095576020610048826100b0565b916001600160a01b0391829161005e91016100b0565b169160018060a01b031992836001541617600155168160025416176002553390600054161760005560405161046690816100c58239f35b600080fd5b634e487b7160e01b600052604160045260246000fd5b51906001600160a01b03821682036100955756fe608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b1461026657508163379607f5146101895781635b97d3671461014257816370d39cff146101195781638da5cb5b146100f1578163c34c08e5146100c8578163d5647cc71461009c575063fd1238061461007d57600080fd5b34610098578160031936011261009857602090516103e88152f35b5080fd5b9050346100c45760203660031901126100c45760209282913581526003845220549051908152f35b8280fd5b50503461009857816003193601126100985760015490516001600160a01b039091168152602090f35b505034610098578160031936011261009857905490516001600160a01b039091168152602090f35b50503461009857816003193601126100985760025490516001600160a01b039091168152602090f35b9050346100c457816003193601126100c4576024358135845260036020528284209182549082198211610176575001905551f35b634e487b7160e01b865260119052602485fd5b9050346100c45760203660031901126100c45782546001600160a01b03908116903382900361023657600254845163a9059cbb60e01b81526001600160a01b0393909316848401908152933560208086019190915292938492908390036040019183918891165af1801561022a576101ff575051f35b61021f9060203d8111610223575b61021781836103db565b810190610413565b5051f35b503d61020d565b505051903d90823e3d90fd5b835162461bcd60e51b8152602081850152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b838591346100c457816003193601126100c457833590602435906001600160a01b039081831683036103d757816001541633036103a657508285526003602052838520546103e8908060001904821181151516610393579061271091020492855260036020528385208054848110610393578490039055600254845163a9059cbb60e01b81526001600160a01b038416978101978852602088810186905296979596909590928692169082908990829060400103925af1928315610389577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d9361036b575b5083516001600160a01b039190911681526020810191909152604090a151f35b6103829060203d81116102235761021781836103db565b508561034b565b84513d87823e3d90fd5b634e487b7160e01b875260118852602487fd5b62461bcd60e51b8152602087820152600d60248201526c27b7363c9032bc32b1baba37b960991b6044820152606490fd5b8580fd5b90601f8019910116810190811067ffffffffffffffff8211176103fd57604052565b634e487b7160e01b600052604160045260246000fd5b9081602091031261042b5751801515810361042b5790565b600080fdfea2646970667358221220ca60f63f539d5a667c94ea9ce2f7fe9cef4d451ce6e15d2067bacda458581beb64736f6c634300080f0033",
-  "deployedBytecode": "0x608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b1461026657508163379607f5146101895781635b97d3671461014257816370d39cff146101195781638da5cb5b146100f1578163c34c08e5146100c8578163d5647cc71461009c575063fd1238061461007d57600080fd5b34610098578160031936011261009857602090516103e88152f35b5080fd5b9050346100c45760203660031901126100c45760209282913581526003845220549051908152f35b8280fd5b50503461009857816003193601126100985760015490516001600160a01b039091168152602090f35b505034610098578160031936011261009857905490516001600160a01b039091168152602090f35b50503461009857816003193601126100985760025490516001600160a01b039091168152602090f35b9050346100c457816003193601126100c4576024358135845260036020528284209182549082198211610176575001905551f35b634e487b7160e01b865260119052602485fd5b9050346100c45760203660031901126100c45782546001600160a01b03908116903382900361023657600254845163a9059cbb60e01b81526001600160a01b0393909316848401908152933560208086019190915292938492908390036040019183918891165af1801561022a576101ff575051f35b61021f9060203d8111610223575b61021781836103db565b810190610413565b5051f35b503d61020d565b505051903d90823e3d90fd5b835162461bcd60e51b8152602081850152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b838591346100c457816003193601126100c457833590602435906001600160a01b039081831683036103d757816001541633036103a657508285526003602052838520546103e8908060001904821181151516610393579061271091020492855260036020528385208054848110610393578490039055600254845163a9059cbb60e01b81526001600160a01b038416978101978852602088810186905296979596909590928692169082908990829060400103925af1928315610389577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d9361036b575b5083516001600160a01b039190911681526020810191909152604090a151f35b6103829060203d81116102235761021781836103db565b508561034b565b84513d87823e3d90fd5b634e487b7160e01b875260118852602487fd5b62461bcd60e51b8152602087820152600d60248201526c27b7363c9032bc32b1baba37b960991b6044820152606490fd5b8580fd5b90601f8019910116810190811067ffffffffffffffff8211176103fd57604052565b634e487b7160e01b600052604160045260246000fd5b9081602091031261042b5751801515810361042b5790565b600080fdfea2646970667358221220ca60f63f539d5a667c94ea9ce2f7fe9cef4d451ce6e15d2067bacda458581beb64736f6c634300080f0033",
+  "numDeployments": 9,
+  "solcInputHash": "23a421d40a1af53a58a9d36919d18925",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_shield\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_executor\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_policyCenter\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ClaimedByOwner\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"NewIncomeToTreasury\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ReporterRewarded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"REPORTER_REWARD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"executor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"policyCenter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"poolIncome\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"premiumIncome\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_reporter\",\"type\":\"address\"}],\"name\":\"rewardReporter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shield\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"claim(uint256)\":{\"params\":{\"_amount\":\"Amount to claim\"}},\"premiumIncome(uint256,uint256)\":{\"params\":{\"_amount\":\"Premium amount (shield)\",\"_poolId\":\"Pool id\"}},\"rewardReporter(uint256,address)\":{\"params\":{\"_poolId\":\"Pool id\",\"_reporter\":\"Reporter address\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"claim(uint256)\":{\"notice\":\"Claim shield by the owner\"},\"premiumIncome(uint256,uint256)\":{\"notice\":\"Record when receiving new premium income         Only called from policy center\"},\"rewardReporter(uint256,address)\":{\"notice\":\"Reward the correct reporter         Part of the priority pool income will be given to the reporter         Only called from executor when executing a report\"}},\"notice\":\"Treasury Contract         Treasury will receive 5% of the premium income from policyCenter.         They are counted as different pools.         When a reporter gives a correct report (passed voting and executed),         he will get 10% of the income of that project pool.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/pools/Treasury.sol\":\"Treasury\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363633333030373438343336\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"src/pools/SimpleIERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface SimpleIERC20 {\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 amount\\n    ) external returns (bool);\\n}\\n\",\"keccak256\":\"0x9b15e78313a0d5b81dcaaea2e7545aa8688d1e44ef97f607f2405d0c9e7e0df7\",\"license\":\"MIT\"},\"src/pools/Treasury.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"./SimpleIERC20.sol\\\";\\n\\n/**\\n * @notice Treasury Contract\\n *\\n *         Treasury will receive 5% of the premium income from policyCenter.\\n *         They are counted as different pools.\\n *\\n *         When a reporter gives a correct report (passed voting and executed),\\n *         he will get 10% of the income of that project pool.\\n *\\n */\\ncontract Treasury {\\n    uint256 public constant REPORTER_REWARD = 1000;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Variables **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    address public owner;\\n\\n    address public executor;\\n\\n    address public policyCenter;\\n\\n    address public shield;\\n\\n    mapping(uint256 => uint256) public poolIncome;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    event ReporterRewarded(address indexed reporter, uint256 amount);\\n\\n    event NewIncomeToTreasury(uint256 indexed poolId, uint256 amount);\\n\\n    event ClaimedByOwner(uint256 amount);\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constructor ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    constructor(\\n        address _shield,\\n        address _executor,\\n        address _policyCenter\\n    ) {\\n        executor = _executor;\\n        shield = _shield;\\n        policyCenter = _policyCenter;\\n\\n        owner = msg.sender;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Main Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Reward the correct reporter\\n     *\\n     *         Part of the priority pool income will be given to the reporter\\n     *         Only called from executor when executing a report\\n     *\\n     * @param _poolId   Pool id\\n     * @param _reporter Reporter address\\n     */\\n    function rewardReporter(uint256 _poolId, address _reporter) external {\\n        require(msg.sender == executor, \\\"Only executor\\\");\\n\\n        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;\\n\\n        poolIncome[_poolId] -= amount;\\n        SimpleIERC20(shield).transfer(_reporter, amount);\\n\\n        emit ReporterRewarded(_reporter, amount);\\n    }\\n\\n    /**\\n     * @notice Record when receiving new premium income\\n     *\\n     *         Only called from policy center\\n     *\\n     * @param _poolId Pool id\\n     * @param _amount Premium amount (shield)\\n     */\\n    function premiumIncome(uint256 _poolId, uint256 _amount) external {\\n        require(msg.sender == policyCenter, \\\"Only policy center\\\");\\n\\n        poolIncome[_poolId] += _amount;\\n\\n        emit NewIncomeToTreasury(_poolId, _amount);\\n    }\\n\\n    /**\\n     * @notice Claim shield by the owner\\n     *\\n     * @param _amount Amount to claim\\n     */\\n    function claim(uint256 _amount) external {\\n        require(msg.sender == owner, \\\"Only owner\\\");\\n\\n        SimpleIERC20(shield).transfer(owner, _amount);\\n\\n        emit ClaimedByOwner(_amount);\\n    }\\n}\\n\",\"keccak256\":\"0x56f7186f61d07507ee67f5df22b8d4499eec9c09e7173177c22f6f6f70186f7e\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x6080346100a957601f61060438819003918201601f19168301916001600160401b038311848410176100ae578084926060946040528339810103126100a957610047816100c4565b61005f6040610058602085016100c4565b93016100c4565b60018060a01b0380928160018060a01b0319951685600154161760015516836003541617600355168160025416176002553390600054161760005560405161052b90816100d98239f35b600080fd5b634e487b7160e01b600052604160045260246000fd5b51906001600160a01b03821682036100a95756fe608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b1461033f57508163379607f5146102335781635b97d3671461017457816370d39cff1461014b5781638da5cb5b14610123578163c34c08e5146100fa578163d5647cc7146100cf57508063e8adbf2f146100a75763fd1238061461008857600080fd5b346100a357816003193601126100a357602090516103e88152f35b5080fd5b50346100a357816003193601126100a35760025490516001600160a01b039091168152602090f35b9050346100f65760203660031901126100f657602092818392358252845220549051908152f35b8280fd5b5050346100a357816003193601126100a35760015490516001600160a01b039091168152602090f35b5050346100a357816003193601126100a357905490516001600160a01b039091168152602090f35b5050346100a357816003193601126100a35760035490516001600160a01b039091168152602090f35b9050346100f657816003193601126100f657600254813591602435916001600160a01b031633036101fb578285528060205283852090815490831982116101e857508201905582519081527fbcdf08e43ded44076dd939f7e98f8bc0059c0b6e8bbc9a1c83a62432c43a739190602090a251f35b634e487b7160e01b875260119052602486fd5b606490602085519162461bcd60e51b8352820152601260248201527127b7363c903837b634b1bc9031b2b73a32b960711b6044820152fd5b8383346100a3576020806003193601126100f65782548435906001600160a01b03908116903382900361030f57600354855163a9059cbb60e01b81526001600160a01b039093169783019788526020880184905295969495919484928692169082908990829060400103925af1928315610305577f150afe1a4f039206f87a38d65a16f6a7c76f285e29a4b2b5eab4e8a917b40ca1936102d8575b508351908152a151f35b6102f790833d85116102fe575b6102ef81836104a0565b8101906104d8565b50856102ce565b503d6102e5565b84513d87823e3d90fd5b845162461bcd60e51b8152808801859052600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b838591346100f657816003193601126100f6576001600160a01b03602435818116928635919084820361049c578360015416330361046b5750818652602092878452858720546103e890806000190482118115151661045857906127109102049287528784528587208054848110610458578490039055600354865163a9059cbb60e01b81526001600160a01b039390931698830198895260208901849052969795969495919484928692908390036040019183918b91165af192831561044e577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d93610431575b508451908152a251f35b61044790833d85116102fe576102ef81836104a0565b5086610427565b85513d88823e3d90fd5b634e487b7160e01b895260118a52602489fd5b62461bcd60e51b8152602088820152600d60248201526c27b7363c9032bc32b1baba37b960991b6044820152606490fd5b8680fd5b90601f8019910116810190811067ffffffffffffffff8211176104c257604052565b634e487b7160e01b600052604160045260246000fd5b908160209103126104f0575180151581036104f05790565b600080fdfea26469706673582212208183b60a0a41f4e1a10314cc23d92afd1159361920ec6182aae9c3872486728964736f6c634300080f0033",
+  "deployedBytecode": "0x608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b1461033f57508163379607f5146102335781635b97d3671461017457816370d39cff1461014b5781638da5cb5b14610123578163c34c08e5146100fa578163d5647cc7146100cf57508063e8adbf2f146100a75763fd1238061461008857600080fd5b346100a357816003193601126100a357602090516103e88152f35b5080fd5b50346100a357816003193601126100a35760025490516001600160a01b039091168152602090f35b9050346100f65760203660031901126100f657602092818392358252845220549051908152f35b8280fd5b5050346100a357816003193601126100a35760015490516001600160a01b039091168152602090f35b5050346100a357816003193601126100a357905490516001600160a01b039091168152602090f35b5050346100a357816003193601126100a35760035490516001600160a01b039091168152602090f35b9050346100f657816003193601126100f657600254813591602435916001600160a01b031633036101fb578285528060205283852090815490831982116101e857508201905582519081527fbcdf08e43ded44076dd939f7e98f8bc0059c0b6e8bbc9a1c83a62432c43a739190602090a251f35b634e487b7160e01b875260119052602486fd5b606490602085519162461bcd60e51b8352820152601260248201527127b7363c903837b634b1bc9031b2b73a32b960711b6044820152fd5b8383346100a3576020806003193601126100f65782548435906001600160a01b03908116903382900361030f57600354855163a9059cbb60e01b81526001600160a01b039093169783019788526020880184905295969495919484928692169082908990829060400103925af1928315610305577f150afe1a4f039206f87a38d65a16f6a7c76f285e29a4b2b5eab4e8a917b40ca1936102d8575b508351908152a151f35b6102f790833d85116102fe575b6102ef81836104a0565b8101906104d8565b50856102ce565b503d6102e5565b84513d87823e3d90fd5b845162461bcd60e51b8152808801859052600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b838591346100f657816003193601126100f6576001600160a01b03602435818116928635919084820361049c578360015416330361046b5750818652602092878452858720546103e890806000190482118115151661045857906127109102049287528784528587208054848110610458578490039055600354865163a9059cbb60e01b81526001600160a01b039390931698830198895260208901849052969795969495919484928692908390036040019183918b91165af192831561044e577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d93610431575b508451908152a251f35b61044790833d85116102fe576102ef81836104a0565b5086610427565b85513d88823e3d90fd5b634e487b7160e01b895260118a52602489fd5b62461bcd60e51b8152602088820152600d60248201526c27b7363c9032bc32b1baba37b960991b6044820152606490fd5b8680fd5b90601f8019910116810190811067ffffffffffffffff8211176104c257604052565b634e487b7160e01b600052604160045260246000fd5b908160209103126104f0575180151581036104f05790565b600080fdfea26469706673582212208183b60a0a41f4e1a10314cc23d92afd1159361920ec6182aae9c3872486728964736f6c634300080f0033",
   "devdoc": {
     "kind": "dev",
     "methods": {
@@ -212,18 +263,19 @@
         "notice": "Claim shield by the owner"
       },
       "premiumIncome(uint256,uint256)": {
-        "notice": "Record when receiving new premium income"
+        "notice": "Record when receiving new premium income         Only called from policy center"
       },
       "rewardReporter(uint256,address)": {
         "notice": "Reward the correct reporter         Part of the priority pool income will be given to the reporter         Only called from executor when executing a report"
       }
     },
+    "notice": "Treasury Contract         Treasury will receive 5% of the premium income from policyCenter.         They are counted as different pools.         When a reporter gives a correct report (passed voting and executed),         he will get 10% of the income of that project pool.",
     "version": 1
   },
   "storageLayout": {
     "storage": [
       {
-        "astId": 16932,
+        "astId": 16856,
         "contract": "src/pools/Treasury.sol:Treasury",
         "label": "owner",
         "offset": 0,
@@ -231,7 +283,7 @@
         "type": "t_address"
       },
       {
-        "astId": 16934,
+        "astId": 16858,
         "contract": "src/pools/Treasury.sol:Treasury",
         "label": "executor",
         "offset": 0,
@@ -239,19 +291,27 @@
         "type": "t_address"
       },
       {
-        "astId": 16936,
+        "astId": 16860,
         "contract": "src/pools/Treasury.sol:Treasury",
-        "label": "shield",
+        "label": "policyCenter",
         "offset": 0,
         "slot": "2",
         "type": "t_address"
       },
       {
-        "astId": 16943,
+        "astId": 16862,
+        "contract": "src/pools/Treasury.sol:Treasury",
+        "label": "shield",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_address"
+      },
+      {
+        "astId": 16866,
         "contract": "src/pools/Treasury.sol:Treasury",
         "label": "poolIncome",
         "offset": 0,
-        "slot": "3",
+        "slot": "4",
         "type": "t_mapping(t_uint256,t_uint256)"
       }
     ],

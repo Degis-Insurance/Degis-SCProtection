@@ -130,7 +130,11 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor));
+        treasury = new Treasury(
+            address(shield),
+            address(executor),
+            address(policyCenter)
+        );
     }
 
     function _setupFarmingPool() internal {
