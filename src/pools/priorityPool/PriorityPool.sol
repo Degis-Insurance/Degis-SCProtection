@@ -444,8 +444,14 @@ contract PriorityPool is
         // Record cover amount in each month
         _updateCoverInfo(_amount, _length);
 
+        uint256 newSpeed = _premium * SCALE / _timestampLength;
+        console.log("newSpeed", newSpeed);
+        console.log("_premium", _premium);
+        console.log("_timestampLength", _timestampLength);
+
+
         // Update the weighted farming pool speed for this priority pool
-        _updateWeightedFarmingSpeed(_length, _premium / _timestampLength);
+        _updateWeightedFarmingSpeed(_length, newSpeed);
     }
 
     /**

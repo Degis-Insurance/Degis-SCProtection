@@ -411,7 +411,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
             uint256 newReward = _updateReward(_id);
             console.log("newReward", newReward);
             console.log("pool.shares", pool.shares);
-            pool.accRewardPerShare += (newReward * SCALE * SCALE * SCALE) / pool.shares;
+            pool.accRewardPerShare += (newReward * SCALE) / pool.shares;
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -506,6 +506,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
                         (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
                         speed[_id][lastY][lastM];
                 }
+                console.log("total Reward", totalReward);
 
                 unchecked {
                     if (++lastM > 12) {

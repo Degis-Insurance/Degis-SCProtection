@@ -122,7 +122,7 @@ contract RewardsTest is
         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
         vm.prank(_user);
         joe.approve(address(policyCenter), type(uint256).max);
-        joe.mint(_user, price * SCALE * 10);
+        joe.mint(_user, price * 11 / 10);
         vm.prank(_user);
         // Get Joe cover right address and buy cover
         crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, price * 11 / 10);

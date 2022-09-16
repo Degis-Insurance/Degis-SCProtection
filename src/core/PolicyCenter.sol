@@ -286,6 +286,10 @@ contract PolicyCenter is
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
 
+        console.log("premiumToProtectionPool", premiumToProtectionPool);
+        console.log("premiumToPriorityPool", premiumToPriorityPool);
+        console.log("premiumToTreasury", premiumToTreasury);
+
         IProtectionPool(protectionPool).updateWhenBuy(
             premiumToProtectionPool,
             _coverDuration,
@@ -692,7 +696,8 @@ contract PolicyCenter is
         // Check the real decimal diff
         uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
         premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
-
+        console.log("getNative,premium",premiumInNativeToken);
+        console.log("price",price);
         // Pay native tokens
         IERC20(_token).safeTransferFrom(
             msg.sender,
@@ -729,6 +734,7 @@ contract PolicyCenter is
             _premiumInUSD,
             nativeToken
         );
+        console.log("premiumInNativeToken",premiumInNativeToken);
 
         // Native tokens to Priority pool
         toPriority = (premiumInNativeToken * PREMIUM_TO_PRIORITY) / 10000;
