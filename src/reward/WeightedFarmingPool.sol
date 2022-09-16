@@ -444,6 +444,8 @@ contract WeightedFarmingPool {
     }
 
     function harvest(uint256 _id, address _to) external {
+        if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
@@ -522,7 +524,7 @@ contract WeightedFarmingPool {
 
                     totalReward +=
                         (DateTimeLibrary.SECONDS_PER_DAY * daysInMonth) *
-                            speed[_id][lastY][lastM];
+                        speed[_id][lastY][lastM];
                 }
 
                 unchecked {

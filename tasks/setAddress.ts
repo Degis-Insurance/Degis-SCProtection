@@ -531,7 +531,7 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   ).attach(addressList[network.name].PolicyCenter);
 
   const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].TestToken1
+    addressList[network.name].XAVAToken
   );
   console.log("tx details:", await tx.wait());
 });

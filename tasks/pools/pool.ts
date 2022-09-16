@@ -22,6 +22,12 @@ import {
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
+// npx hardhat deployPriorityPool --network fuji --name TraderJoe --token 0x8A59C56Abb435A1b668Ad328907FE77de7938f72 --capacity 2000 --premium 200
+// npx hardhat deployPriorityPool --network fuji --name GMX --token 0xded9296E272C953189AD67155c2D90fa061f7132 --capacity 2000 --premium 200
+// npx hardhat deployPriorityPool --network fuji --name PTP --token 0x94BBd5A34Bb244065284DCD919B8e96459f0999d --capacity 2000 --premium 250
+// npx hardhat deployPriorityPool --network fuji --name IME --token 0xbD2cFF4e54a1730a462Fd25527A4b2D1f680228C --capacity 2000 --premium 250
+// npx hardhat deployPriorityPool --network fuji --name XAVA --token 0xF832B3Bd9ECef5eE5C8F1Dcad64DF3BC72639A3B --capacity 2500 --premium 200
+
 task("deployPriorityPool", "Deploy a new priority pool by owner")
   .addParam("name", "Protocol name", null, types.string)
   .addParam("token", "Token address", null, types.string)

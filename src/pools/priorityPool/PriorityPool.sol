@@ -290,34 +290,40 @@ contract PriorityPool is
         // Then use dynamic ratio
         // TODO: test use 5 hours
         if (fromStart > DYNAMIC_TIME) {
-            // Covered ratio = Covered amount of this pool / Total covered amount
-            uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
-                (IProtectionPool(protectionPool).getTotalActiveCovered() +
-                    _coverAmount);
-
-            address lp = currentLPAddress();
-            // LP Token ratio = LP token in this pool / Total lp token
-            uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
-                SimpleERC20(protectionPool).totalSupply();
-
             // Total dynamic pools
-            uint256 numofPools = IPriorityPoolFactory(priorityPoolFactory)
-                .dynamicPoolCounter();
+            uint256 numofDynamicPools = IPriorityPoolFactory(
+                priorityPoolFactory
+            ).dynamicPoolCounter();
 
-            // Dynamic premium ratio
-            // ( N = total dynamic pools ≤ total pools )
-            //
-            //                      Covered          1
-            //                   --------------- + -----
-            //                    TotalCovered       N
-            // dynamic ratio =  -------------------------- * base ratio
-            //                      LP Amount         1
-            //                  ----------------- + -----
-            //                   Total LP Amount      N
-            //
-            ratio =
-                (basePremiumRatio * (coveredRatio * numofPools + SCALE)) /
-                ((tokenRatio * numofPools) + SCALE);
+            if (numofDynamicPools > 0) {
+                // Covered ratio = Covered amount of this pool / Total covered amount
+                uint256 coveredRatio = ((activeCovered() + _coverAmount) *
+                    SCALE) /
+                    (IProtectionPool(protectionPool).getTotalActiveCovered() +
+                        _coverAmount);
+
+                address lp = currentLPAddress();
+
+                // LP Token ratio = LP token in this pool / Total lp token
+                uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
+                    SimpleERC20(protectionPool).totalSupply();
+
+                // Dynamic premium ratio
+                // ( N = total dynamic pools ≤ total pools )
+                //
+                //                      Covered          1
+                //                   --------------- + -----
+                //                    TotalCovered       N
+                // dynamic ratio =  -------------------------- * base ratio
+                //                      LP Amount         1
+                //                  ----------------- + -----
+                //                   Total LP Amount      N
+                //
+                ratio =
+                    (basePremiumRatio *
+                        (coveredRatio * numofDynamicPools + SCALE)) /
+                    ((tokenRatio * numofDynamicPools) + SCALE);
+            } else ratio = basePremiumRatio;
         } else {
             ratio = basePremiumRatio;
         }

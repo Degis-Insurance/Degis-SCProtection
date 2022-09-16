@@ -96,10 +96,6 @@ contract RewardsTest is
     function setUp() public {
         setUpContracts();
 
-        // Set USDC address to current mainnet address
-        bytes memory bytecode = address(usdc).code;
-        vm.etch(policyCenter.USDC(), bytecode);
-
         vm.warp(0);
 
         // Deploy three protocol tokens
@@ -124,10 +120,8 @@ contract RewardsTest is
         // Fund exchange
         deg.mintDegis(address(exchange), 1000 ether);
         shield.mint(address(exchange), 1000 ether);
-        MockERC20(policyCenter.USDC()).mint(
-            address(exchange),
-            1000 ether * SCALE
-        );
+
+        usdc.mint(address(exchange), 1000 ether * SCALE);
         joe.mint(address(exchange), 1000 ether * SCALE);
     }
 
@@ -152,7 +146,9 @@ contract RewardsTest is
         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
         vm.prank(_user);
         joe.approve(address(policyCenter), type(uint256).max);
+
         joe.mint(_user, price * SCALE * 10);
+
         vm.prank(_user);
         // Get Joe cover right address and buy cover
         crJoeAddress = policyCenter.buyCover(
@@ -199,31 +195,14 @@ contract RewardsTest is
         uint256 reward = farmingPool.pendingReward(JOE_ID, CHARLIE);
         assertEq(reward, 0);
 
-        vm.prank(CHARLIE);
-        vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
-        farmingPool.harvest(JOE_ID, CHARLIE);
-
-        console.log(unicode"✅ Not harvest before month passed");
-
         uint256 snapshot_1 = vm.snapshot();
+
         vm.warp(31 days);
-
-        // # --------------------------------------------------------------------//
-        // # Should not be able to harvest if did not stake # //
-        // # --------------------------------------------------------------------//
-
-        vm.prank(CHARLIE);
-        vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
-        farmingPool.harvest(JOE_ID, CHARLIE);
-
-        console.log(unicode"✅ Not harvest if did not stake");
-
-        vm.revertTo(snapshot_1);
-
         vm.prank(CHARLIE);
         policyCenter.stakeLiquidity(JOE_ID, LIQUIDITY);
 
         vm.warp(31 days);
+
         uint256 snapshot_2 = vm.snapshot();
 
         // # --------------------------------------------------------------------//
@@ -244,7 +223,6 @@ contract RewardsTest is
 
         vm.prank(CHARLIE);
         vm.expectEmit(false, false, false, true);
-        // harvest does not represent correctly the expected emitted reward
         emit Harvest(JOE_ID, CHARLIE, CHARLIE, 547769660000000000000);
         farmingPool.harvest(JOE_ID, CHARLIE);
 
@@ -276,7 +254,8 @@ contract RewardsTest is
         vm.warp(62 days);
 
         vm.prank(CHARLIE);
-        vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+        vm.expectEmit(false, false, false, true);
+        emit Harvest(JOE_ID, CHARLIE, CHARLIE, 0);
         farmingPool.harvest(JOE_ID, CHARLIE);
 
         console.log(unicode"✅ Not harvest if unstaked");
