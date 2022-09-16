@@ -288,8 +288,8 @@ contract PriorityPool is
 
         // First 7 days use base ratio
         // Then use dynamic ratio
-        // TODO: test use 30 minutes
-        if (fromStart > 30 minutes) {
+        // TODO: test use 5 hours
+        if (fromStart > 5 hours) {
             // Covered ratio = Covered amount of this pool / Total covered amount
             uint256 coveredRatio = ((activeCovered() + _coverAmount) * SCALE) /
                 (IProtectionPool(protectionPool).getTotalCovered() +
@@ -585,7 +585,7 @@ contract PriorityPool is
      * @param _length Cover length in month
      */
     function _updateCoverInfo(uint256 _amount, uint256 _length) internal {
-        (uint256 currentYear, uint256 currentMonth, uint256 currentDay ) = block
+        (uint256 currentYear, uint256 currentMonth, uint256 currentDay) = block
             .timestamp
             .timestampToDate();
 

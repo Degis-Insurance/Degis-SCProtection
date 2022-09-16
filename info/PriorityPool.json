@@ -1,25 +1,33 @@
 {
-  "fuji": {
-    "1": {
-      "id": "1",
-      "poolAddress": "0x271423abaD20AFF5811658289EA003D5e1c7f3E0",
-      "name": "Project1",
-      "token": "0xcb1d663D727fe5eDb9306E5834510B935c67a408",
-      "premium": "200"
-    },
-    "2": {
-      "id": "2",
-      "poolAddress": "0xff263503eEF6b6a5D3F1203669efD049f84F5e9F",
-      "name": "Project2",
-      "token": "0xB8cC08f4157d406670fBDB4C53C525a9B2e5Dcf5",
-      "premium": "200"
-    }
-  },
-  "fujiInternal": {},
-  "avax": {},
-  "avaxTest": {},
-  "localhost": {},
-  "rinkeby": {},
-  "fujiTest": {},
-  "reserve": {}
+	"fuji": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0x271423abaD20AFF5811658289EA003D5e1c7f3E0",
+			"name": "Project1",
+			"token": "0xcb1d663D727fe5eDb9306E5834510B935c67a408",
+			"premium": "200"
+		},
+		"2": {
+			"id": "2",
+			"poolAddress": "0xff263503eEF6b6a5D3F1203669efD049f84F5e9F",
+			"name": "Project2",
+			"token": "0xB8cC08f4157d406670fBDB4C53C525a9B2e5Dcf5",
+			"premium": "200"
+		}
+	},
+	"fujiInternal": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0xEAB305F593C94B523796EB923501d11CF497521b",
+			"name": "Project1",
+			"token": "0x6ab12576975f74e2A1b00cd635AA817eB7746346",
+			"premium": "200"
+		}
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {},
+	"fujiTest": {},
+	"reserve": {}
 }

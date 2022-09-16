@@ -29,6 +29,8 @@ import {
   MockUSDC__factory,
   CoverRightToken,
   CoverRightToken__factory,
+  CoverRightTokenFactory,
+  CoverRightTokenFactory__factory,
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -152,4 +154,36 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
     addressList[network.name].TestToken1
   );
   console.log("tx details:", await tx.wait());
+});
+
+task("getCRToken", "Get cr token address").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const crFactory: CoverRightTokenFactory = new CoverRightTokenFactory__factory(
+    dev_account
+  ).attach(addressList[network.name].CoverRightTokenFactory);
+
+  const salt = hre.ethers.utils.solidityKeccak256(
+    ["uint256", "uint256", "uint256"],
+    [1, 1664553599, 1]
+  );
+
+  const address = await crFactory.saltToAddress(salt);
+  console.log("cr address:", address);
+
+  const crToken: CoverRightToken = new CoverRightToken__factory(
+    dev_account
+  ).attach("0xC8845faF685cD8CB637BcB2067675C364b67820d");
+
+  const gen = await crToken.generation();
+  console.log("gen", gen.toString());
+
+  const expiry = await crToken.expiry();
+  console.log("expiry", expiry.toString());
 });
