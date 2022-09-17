@@ -7,7 +7,7 @@ import "../interfaces/ICoverRightToken.sol";
 import "../interfaces/IPriorityPool.sol";
 import "../interfaces/IPriorityPoolFactory.sol";
 
-import "./SimpleIERC20.sol";
+import "../util/SimpleIERC20.sol";
 
 /**
  * @notice Payout Pool

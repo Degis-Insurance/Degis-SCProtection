@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/OwnableWithoutContext.sol";
+import "../util/OwnableWithoutContextUpgradeable.sol";
 import "./interfaces/ExecutorDependencies.sol";
 import "../voting/interfaces/VotingParameters.sol";
 import "./interfaces/ExecutorEventError.sol";
@@ -38,16 +38,26 @@ import "./interfaces/ExecutorEventError.sol";
 contract Executor is
     VotingParameters,
     ExecutorEventError,
-    OwnableWithoutContext,
+    OwnableWithoutContextUpgradeable,
     ExecutorDependencies
 {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Whether report already executed
     mapping(uint256 => bool) public reportExecuted;
 
     // Whether proposal already executed
     mapping(uint256 => bool) public proposalExecuted;
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -57,19 +67,19 @@ contract Executor is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
+        incidentReport = _incidentReport;
     }
 
     function setOnboardProposal(address _onboardProposal) external onlyOwner {
-        _setOnboardProposal(_onboardProposal);
+        onboardProposal = _onboardProposal;
     }
 
     function setTreasury(address _treasury) external onlyOwner {
-        _setTreasury(_treasury);
+        treasury = _treasury;
     }
 
     // ---------------------------------------------------------------------------------------- //

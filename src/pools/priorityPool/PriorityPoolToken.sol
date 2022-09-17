@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../SimpleERC20.sol";
+import "../../util/SimpleERC20.sol";
 
 /**
  * @notice LP token for priority pools

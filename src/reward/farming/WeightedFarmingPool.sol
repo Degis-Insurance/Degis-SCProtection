@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "../libraries/DateTime.sol";
-import "../interfaces/IPriorityPoolFactory.sol";
+import "../../libraries/DateTime.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
 
 import "./WeightedFarmingPoolEventError.sol";
 import "./WeightedFarmingPoolDependencies.sol";

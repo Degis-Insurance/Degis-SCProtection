@@ -14,23 +14,4 @@ abstract contract ExecutorDependencies {
     address public incidentReport;
     address public onboardProposal;
     address public treasury;
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = _priorityPoolFactory;
-    }
-
-    function _setIncidentReport(address _incidentReport) internal virtual {
-        incidentReport = _incidentReport;
-    }
-
-    function _setOnboardProposal(address _onboardProposal) internal virtual {
-        onboardProposal = _onboardProposal;
-    }
-
-    function _setTreasury(address _treasury) internal virtual {
-        treasury = _treasury;
-    }
 }
