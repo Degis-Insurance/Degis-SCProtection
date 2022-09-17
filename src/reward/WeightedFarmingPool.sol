@@ -5,8 +5,13 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../libraries/DateTime.sol";
 import "../interfaces/IPriorityPoolFactory.sol";
+
+import "./WeightedFarmingPoolEventError.sol";
+import "./WeightedFarmingPoolDependencies.sol";
 
 import "forge-std/console.sol";
 
@@ -29,37 +34,46 @@ import "forge-std/console.sol";
  *         - rewardDebt        SCALE * SCALE / SCALE = SCALE
  *         So pendingReward = ((share * acc) / SCALE - debt) / SCALE
  */
-contract WeightedFarmingPool {
+contract WeightedFarmingPool is
+    WeightedFarmingPoolEventError,
+    Initializable,
+    WeightedFarmingPoolDependencies
+{
     using DateTimeLibrary for uint256;
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     uint256 public constant SCALE = 1e12;
 
-    address public policyCenter;
-
-    address public priorityPoolFactory;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     uint256 public counter;
 
     struct PoolInfo {
-        address[] tokens;
-        uint256[] amount;
-        uint256[] weight;
-        uint256 shares;
-        address rewardToken;
-        uint256 lastRewardTimestamp;
-        uint256 accRewardPerShare;
+        address[] tokens; // Token addresses (PRI-LP)
+        uint256[] amount; // Token amounts
+        uint256[] weight; // Weight for each token
+        uint256 shares; // Total shares (share = amount * weight)
+        address rewardToken; // Reward token address
+        uint256 lastRewardTimestamp; // Last reward timestamp
+        uint256 accRewardPerShare; // Accumulated reward per share (not per token)
     }
+    // Pool id => Pool info
     mapping(uint256 => PoolInfo) public pools;
 
-    // pool id => year => month => speed
+    // Pool id => Year => Month => Speed
     mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
         public speed;
 
     struct UserInfo {
-        uint256[] amount;
-        uint256 share;
-        uint256 rewardDebt;
+        uint256[] amount; // Amount of each token
+        uint256 shares; // Total shares (share = amount * weight)
+        uint256 rewardDebt; // Reward debt
     }
     // Pool Id => User address => User Info
     mapping(uint256 => mapping(address => UserInfo)) public users;
@@ -69,37 +83,25 @@ contract WeightedFarmingPool {
     mapping(bytes32 => bool) public supported;
 
     // ---------------------------------------------------------------------------------------- //
-    // *************************************** Events ***************************************** //
+    // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event PoolAdded(uint256 poolId, address token);
-    event NewTokenAdded(uint256 poolId, address token, uint256 weight);
-    event PoolUpdated(uint256 poolId, uint256 accRewardPerShare);
-    event WeightChanged(uint256 poolId);
-    event Harvest(
-        uint256 poolId,
-        address user,
-        address receiver,
-        uint256 reward
-    );
+    // constructor(address _policyCenter, address _priorityPoolFactory) {
+    //     policyCenter = _policyCenter;
+    //     priorityPoolFactory = _priorityPoolFactory;
+    // }
 
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Errors ***************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    error WeightedFarmingPool__AlreadySupported();
-    error WeightedFarmingPool__WrongWeightLength();
-    error WeightedFarmingPool__WrongDateLength();
-    error WeightedFarmingPool__ZeroAmount();
-    error WeightedFarmingPool__InexistentPool();
-    error WeightedFarmingPool__OnlyPolicyCenter();
-    error WeightedFarmingPool__NoPendingRewards();
-    error WeightedFarmingPool__NotInPool();
-
-    constructor(address _policyCenter, address _priorityPoolFactory) {
+    function initialize(address _policyCenter, address _priorityPoolFactory)
+        public
+        initializer
+    {
         policyCenter = _policyCenter;
         priorityPoolFactory = _priorityPoolFactory;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     modifier isPriorityPool() {
         require(
@@ -148,9 +150,12 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Return the user's pending reward
-     * @param _id           Pool id
-     * @param _user         User's address to claim the reward
+     * @notice Pending reward
+     *
+     * @param _id   Pool id
+     * @param _user User's address
+     *
+     * @return pending Pending reward in native token
      */
     function pendingReward(uint256 _id, address _user)
         external
@@ -161,7 +166,7 @@ contract WeightedFarmingPool {
         UserInfo memory user = users[_id][_user];
 
         pending =
-            ((user.share * pool.accRewardPerShare) / SCALE - user.rewardDebt) /
+            ((user.shares * pool.accRewardPerShare) / SCALE - user.rewardDebt) /
             SCALE;
     }
 
@@ -181,6 +186,7 @@ contract WeightedFarmingPool {
 
     /**
      * @notice Register Pri-LP token
+     *         Called when new generation of PRI-LP tokens are deployed
      *
      * @param _id     Pool Id
      * @param _token  Priority pool lp token address
@@ -204,10 +210,11 @@ contract WeightedFarmingPool {
     }
 
     /**
-     * @notice Updates the weight of a token in a given pool
-     * @param _id            Pool Id
-     * @param _token         Token address
-     * @param _newWeight     New weight of the token in the pool
+     * @notice Update the weight of a token in a given pool
+     *
+     * @param _id        Pool Id
+     * @param _token     Token address
+     * @param _newWeight New weight of the token in the pool
      */
     function updateWeight(
         uint256 _id,
@@ -344,8 +351,8 @@ contract WeightedFarmingPool {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
-        if (user.share > 0) {
-            uint256 pending = ((user.share * pool.accRewardPerShare) /
+        if (user.shares > 0) {
+            uint256 pending = ((user.shares * pool.accRewardPerShare) /
                 SCALE -
                 user.rewardDebt) / SCALE;
 
@@ -373,13 +380,13 @@ contract WeightedFarmingPool {
 
         // Update user amount for this gen lp token
         user.amount[index] += _amount;
-        user.share += _amount * pool.weight[index];
+        user.shares += _amount * pool.weight[index];
 
         // Update pool amount for this gen lp token
         pool.amount[index] += _amount;
         pool.shares += _amount * pool.weight[index];
 
-        user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
+        user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
     }
 
     function _withdraw(
@@ -395,8 +402,8 @@ contract WeightedFarmingPool {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
-        if (user.share > 0) {
-            uint256 pending = ((user.share * pool.accRewardPerShare) /
+        if (user.shares > 0) {
+            uint256 pending = ((user.shares * pool.accRewardPerShare) /
                 SCALE -
                 user.rewardDebt) / SCALE;
 
@@ -414,12 +421,12 @@ contract WeightedFarmingPool {
         uint256 index = _getIndex(_id, _token);
 
         user.amount[index] -= _amount;
-        user.share -= _amount * pool.weight[index];
+        user.shares -= _amount * pool.weight[index];
 
         pool.amount[index] -= _amount;
         pool.shares -= _amount * pool.weight[index];
 
-        user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
+        user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
     }
 
     function updatePool(uint256 _id) public {
@@ -451,7 +458,7 @@ contract WeightedFarmingPool {
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = ((user.share * pool.accRewardPerShare) /
+        uint256 pending = ((user.shares * pool.accRewardPerShare) /
             SCALE -
             user.rewardDebt) / SCALE;
 
@@ -463,7 +470,7 @@ contract WeightedFarmingPool {
 
         emit Harvest(_id, msg.sender, _to, actualReward);
 
-        user.rewardDebt = (user.share * pool.accRewardPerShare) / SCALE;
+        user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
     }
 
     /**

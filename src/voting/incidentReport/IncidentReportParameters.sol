@@ -22,7 +22,7 @@ abstract contract IncidentReportParameters is VotingParameters {
 
     // // Quorum parameter
     // // TODO: 10% for test
-    uint256 public constant INCIDENT_QUORUM_RATIO = 10;
+    // uint256 public constant INCIDENT_QUORUM_RATIO = 10;
 
     // DEG threshold for starting a report
     uint256 public constant REPORT_THRESHOLD = 10000 ether;

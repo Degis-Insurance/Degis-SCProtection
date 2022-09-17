@@ -281,8 +281,8 @@ contract PolicyCenter is
 
         // Split the premium income and update the pool status
         (
-            ,
             uint256 premiumToPriorityPool,
+            ,
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
 
@@ -745,7 +745,9 @@ contract PolicyCenter is
         toPriority = (premiumInNativeToken * PREMIUM_TO_PRIORITY) / 10000;
 
         // Swap native tokens to shield
+        // Except for amount to priority pool, remaining is distributed in Shield
         uint256 amountToSwap = premiumInNativeToken - toPriority;
+        // Shield amount received
         uint256 amountReceived = _swapTokens(nativeToken, amountToSwap);
 
         // Shield to Protection Pool

@@ -196,6 +196,11 @@ contract IncidentReport is
         executor = _executor;
     }
 
+    function setQuorumRatio(uint256 _ratio) external onlyOwner {
+        if (_ratio >= 100) revert IncidentReport__QuorumRatioTooBig();
+        quorumRatio = _ratio;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
