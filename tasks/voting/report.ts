@@ -115,7 +115,11 @@ task("getReportInfo", "Get a report info")
 
     const votingTime = await incidentReport.INCIDENT_VOTING_PERIOD();
     console.log("Voting time: ", votingTime.toString());
+
+    const report = await incidentReport.getReport(1);
+    console.log(report);
   });
+  
 task("unpausePools", "Unpause pools for a report")
   .addParam("id", "Report id", null, types.string)
   .setAction(async (taskArgs, hre) => {

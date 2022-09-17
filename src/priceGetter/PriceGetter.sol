@@ -21,7 +21,7 @@
 pragma solidity ^0.8.13;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {OwnableWithoutContext} from "./OwnableWithoutContext.sol";
+import {OwnableWithoutContext} from "../util/OwnableWithoutContext.sol";
 
 /**
  * @title  Price Getter
@@ -131,7 +131,10 @@ contract PriceGetter is OwnableWithoutContext {
      *
      * @return finalPrice The latest price
      */
-    function getLatestPrice(address _tokenAddress) public returns (uint256 finalPrice) {
+    function getLatestPrice(address _tokenAddress)
+        public
+        returns (uint256 finalPrice)
+    {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
         (
             uint80 roundID,
@@ -152,6 +155,6 @@ contract PriceGetter is OwnableWithoutContext {
             answeredInRound
         );
         // Transfer the result decimals
-        finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));        
+        finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
     }
 }

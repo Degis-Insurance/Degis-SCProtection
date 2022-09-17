@@ -10,8 +10,8 @@ abstract contract OnboardProposalParameters is VotingParameters {
     uint256 public constant PROPOSAL_VOTING_PERIOD = 5 hours;
 
     // minimum 50% votes
-    // TODO: 10% when test
-    uint256 public constant PROPOSAL_QUORUM_RATIO = 10;
+    // // TODO: 10% when test
+    // uint256 public constant PROPOSAL_QUORUM_RATIO = 10;
 
     // DEG threshold for starting a report
     uint256 public constant PROPOSE_THRESHOLD = 10000 ether;

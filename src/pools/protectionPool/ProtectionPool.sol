@@ -20,14 +20,14 @@
 
 pragma solidity ^0.8.13;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 import "./ProtectionPoolDependencies.sol";
 import "./ProtectionPoolEventError.sol";
 import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "../../util/OwnableWithoutContext.sol";
-import "../../util/PausableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
+import "../../util/PausableWithoutContextUpgradeable.sol";
 import "../../util/FlashLoanPool.sol";
 
 import "../../libraries/DateTime.sol";
@@ -44,12 +44,13 @@ import "../../libraries/DateTime.sol";
  *         If the priority pool is unable to fulfil the cover amount,
  *         Protection Pool will be able to provide the remaining part
  */
+
 contract ProtectionPool is
     ProtectionPoolEventError,
-    ERC20,
+    ERC20Upgradeable,
     FlashLoanPool,
-    OwnableWithoutContext,
-    PausableWithoutContext,
+    OwnableWithoutContextUpgradeable,
+    PausableWithoutContextUpgradeable,
     ExternalTokenDependencies,
     ProtectionPoolDependencies
 {
@@ -78,15 +79,17 @@ contract ProtectionPool is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield
-    )
-        ERC20("ProtectionPool", "PRO-LP")
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+    ) public initializer {
+        __ERC20_init("ProtectionPool", "PRO-LP");
+        __FlashLoan__Init(_shield);
+        __Ownable_init();
+        __Pausable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
         // Register time that pool was deployed
         startTime = block.timestamp;
     }
@@ -163,18 +166,18 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
+        incidentReport = _incidentReport;
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
+        policyCenter = _policyCenter;
     }
 
     function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     // ---------------------------------------------------------------------------------------- //

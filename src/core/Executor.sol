@@ -109,7 +109,7 @@ contract Executor is
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
-        if (report.result != 1) revert Executor__ReportNotPassed();
+        if (report.result != PASS_RESULT) revert Executor__ReportNotPassed();
 
         // Executed callback function
         IIncidentReport(incidentReport).executed(_reportId);

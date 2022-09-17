@@ -72,8 +72,9 @@ task("deployPriorityPool", "Deploy a new priority pool by owner")
     storePriorityPoolList(priorityPoolList);
   });
 
-task("provideLiquidity", "Provide liquidity to protection pool").setAction(
-  async (taskArgs, hre) => {
+task("provideLiquidity", "Provide liquidity to protection pool")
+  .addParam("amount", "Amount to provide", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -81,23 +82,19 @@ task("provideLiquidity", "Provide liquidity to protection pool").setAction(
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const priorityPoolList = readPriorityPoolList();
-
-    const protectionPool: ProtectionPool = new ProtectionPool__factory(
-      dev_account
-    ).attach(addressList[network.name].ProtectionPool);
 
     const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
       addressList[network.name].PolicyCenter
     );
 
-    const tx = await center.provideLiquidity(parseUnits("100", 6));
+    const tx = await center.provideLiquidity(parseUnits(taskArgs.amount, 6));
     console.log("Tx details: ", await tx.wait());
-  }
-);
+  });
 
-task("stakeLiquidity", "Stake liquidity to priority pool").setAction(
-  async (taskArgs, hre) => {
+task("stakeLiquidity", "Stake liquidity to priority pool")
+  .addParam("id", "Pool id", null, types.string)
+  .addParam("amount", "Amount to stake", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -105,19 +102,23 @@ task("stakeLiquidity", "Stake liquidity to priority pool").setAction(
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const priorityPoolList = readPriorityPoolList();
 
     const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
       addressList[network.name].PolicyCenter
     );
 
-    const tx = await center.stakeLiquidity(1, parseUnits("10", 6));
+    const tx = await center.stakeLiquidity(
+      taskArgs.id,
+      parseUnits(taskArgs.amount, 6)
+    );
     console.log("Tx details: ", await tx.wait());
-  }
-);
+  });
 
-task("unstakeLiquidity", "UnStake liquidity from priority pool").setAction(
-  async (taskArgs, hre) => {
+task("unstakeLiquidity", "UnStake liquidity from priority pool")
+  .addParam("id", "Pool id", null, types.string)
+  .addParam("gen", "Generation of PRI-LP token", null, types.string)
+  .addParam("amount", "Amount to unstake", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -125,7 +126,6 @@ task("unstakeLiquidity", "UnStake liquidity from priority pool").setAction(
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const priorityPoolList = readPriorityPoolList();
 
     const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
       addressList[network.name].PolicyCenter
@@ -135,26 +135,25 @@ task("unstakeLiquidity", "UnStake liquidity from priority pool").setAction(
       dev_account
     ).attach(addressList[network.name].PriorityPoolFactory);
 
-    const priAddress = (await factory.pools(1)).poolAddress;
+    const priAddress = (await factory.pools(taskArgs.id)).poolAddress;
     console.log("Priority pool address:", priAddress);
     const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
       priAddress
     );
 
-    const priLPAddress = await priPool.currentLPAddress();
+    const priLPAddress = await priPool.lpTokenAddress(taskArgs.gen);
 
     const priceIndex = await priPool.priceIndex(priLPAddress);
     console.log("Price index of lp token: ", priceIndex.toString());
 
     const tx = await center.unstakeLiquidity(
-      1,
+      taskArgs.id,
       priLPAddress,
-      parseUnits("10", 6)
+      parseUnits(taskArgs.amount, 6)
     );
 
     console.log("Tx details: ", await tx.wait());
-  }
-);
+  });
 
 task("checkPri", "Check priority pool status").setAction(
   async (taskArgs, hre) => {
@@ -245,14 +244,17 @@ task("activeCovered", "Get priority pool active covered")
 
     const poolAddress = (await factory.pools(taskArgs.id)).poolAddress;
 
-    // const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
-    //   poolAddress
-    // );
-    // const covered = await pool.activeCovered();
-    // console.log("Active covered: ", formatUnits(covered, 6));
+    const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      poolAddress
+    );
+    const covered = await pool.activeCovered();
+    console.log("Active covered: ", formatUnits(covered, 6));
 
-    // const ratio = await pool.dynamicPremiumRatio(parseUnits("1000000", 6));
-    // console.log("Dynamic premium ratio: ", ratio.toString());
+    const ratio = await pool.dynamicPremiumRatio(parseUnits("1000000", 6));
+    console.log("Dynamic premium ratio: ", ratio.toString());
+
+    const coverIndex = await pool.coverIndex();
+    console.log("Cover index: ", coverIndex.toString());
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account

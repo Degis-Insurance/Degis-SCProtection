@@ -63,17 +63,15 @@ export const storePriorityPoolList = function (priorityPoolList: object) {
 ///
 /// Signer Info Record
 ///
-export const readSignerList = function () {
-  return JSON.parse(fs.readFileSync("info/Signers.json", "utf-8"));
+export const readImpList = function () {
+  return JSON.parse(fs.readFileSync("info/implementation.json", "utf-8"));
 };
 
-export const storeSignerList = function (signerList: object) {
-  fs.writeFileSync("info/Signers.json", JSON.stringify(signerList, null, "\t"));
-};
-
-export const clearSignerList = function () {
-  const emptyList = {};
-  fs.writeFileSync("info/Signers.json", JSON.stringify(emptyList, null, "\t"));
+export const storeImpList = function (impList: object) {
+  fs.writeFileSync(
+    "info/implementation.json",
+    JSON.stringify(impList, null, "\t")
+  );
 };
 
 export const getLinkAddress = function (networkName: string) {

@@ -1,13 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.13;
 
-import "../interfaces/ICoverRightTokenFactory.sol";
-import "../interfaces/ICoverRightToken.sol";
-import "../interfaces/IPriorityPool.sol";
-import "../interfaces/IPriorityPoolFactory.sol";
+import "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-import "../util/SimpleIERC20.sol";
+import "../../interfaces/ICoverRightTokenFactory.sol";
+import "../../interfaces/ICoverRightToken.sol";
+import "../../interfaces/IPriorityPool.sol";
+import "../../interfaces/IPriorityPoolFactory.sol";
+
+import "../../util/SimpleIERC20.sol";
 
 /**
  * @notice Payout Pool
@@ -19,7 +39,7 @@ import "../util/SimpleIERC20.sol";
  *         - endTimestamp After this timestamp, no more claims
  *         - ratio        Max ratio of a user's crToken
  */
-contract PayoutPool {
+contract PayoutPool is Initializable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -74,12 +94,12 @@ contract PayoutPool {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _shield,
         address _policyCenter,
         address _crFactory,
         address _priorityPoolFactory
-    ) {
+    ) public initializer {
         shield = _shield;
         policyCenter = _policyCenter;
         crFactory = _crFactory;

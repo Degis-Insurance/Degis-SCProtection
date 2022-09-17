@@ -24,7 +24,7 @@ import "../interfaces/ExternalTokenDependencies.sol";
 import "./interfaces/PolicyCenterEventError.sol";
 import "./interfaces/PolicyCenterDependencies.sol";
 
-import "../util/OwnableWithoutContext.sol";
+import "../util/OwnableWithoutContextUpgradeable.sol";
 
 import "../interfaces/IPriceGetter.sol";
 
@@ -46,8 +46,8 @@ import "forge-std/console.sol";
  */
 contract PolicyCenter is
     PolicyCenterEventError,
+    OwnableWithoutContextUpgradeable,
     ExternalTokenDependencies,
-    OwnableWithoutContext,
     PolicyCenterDependencies
 {
     using SafeERC20 for IERC20;
@@ -57,44 +57,38 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public immutable USDC;
+    address public usdc;
 
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
     mapping(uint256 => address) public tokenByPoolId;
 
-    // bps distribution of premiums 0: insurance pool, 1: protection pool
-    uint256[2] public premiumSplits;
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield,
         address _protectionPool,
-        address _USDC
-    )
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+        address _usdc
+    ) public initializer {
+        __Ownable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
         // Peotection pool as pool 0 and with shield token
         priorityPools[0] = _protectionPool;
         tokenByPoolId[0] = _shield;
 
-        _setProtectionPool(_protectionPool);
-
-        // Initialize premium split standard in bps
-        // 45% to protectionPool, 50% to insurancePool, 5% to treasury
-        premiumSplits = [4500, 5000];
+        protectionPool = _protectionPool;
 
         // Set USDC (base token for shield)
-        USDC = _USDC;
-
-        IERC20(_USDC).approve(address(shield), type(uint256).max);
+        usdc = _usdc;
+        // Approve USDC for later depositing for Shield
+        // Use parameter rather than storage variable
+        IERC20(_usdc).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -129,79 +123,49 @@ contract PolicyCenter is
         lpAddress = IPriorityPool(priorityPools[_poolId]).currentLPAddress();
     }
 
-    /**
-     * @notice Returns premium split used by Policy Center
-     *
-     * @return toPriorityPool   Premium split to priority pool in bps
-     * @return toProtectionPool Premium split to protection pool in bps
-     */
-    function getPremiumSplits() public view returns (uint256, uint256) {
-        return (premiumSplits[0], premiumSplits[1]);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Sets the premium splits used by Policy Center
-     *
-     * @param _priority    Split for priority pool in bps
-     * @param _protection  Split for protection pool in bps
-     */
-    function setPremiumSplit(uint256 _priority, uint256 _protection)
-        external
-        onlyOwner
-    {
-        // up to 1000bps, left over goes to treasury
-        if (
-            _priority == 0 ||
-            _protection == 0 ||
-            _priority + _protection > 10000
-        ) revert PolicyCenter__InvalidPremiumSplit();
-        //sets insurance and protection splits
-        premiumSplits = [_priority, _protection];
-    }
 
     function setExchange(address _exchange) external onlyOwner {
         exchange = _exchange;
     }
 
     function setPriceGetter(address _priceGetter) external onlyOwner {
-        _setPriceGetter(_priceGetter);
+        priceGetter = _priceGetter;
     }
 
     function setProtectionPool(address _protectionPool) external onlyOwner {
-        _setProtectionPool(_protectionPool);
+        protectionPool = _protectionPool;
     }
 
     function setWeightedFarmingPool(address _weightedFarmingPool)
         external
         onlyOwner
     {
-        _setWeightedFarmingPool(_weightedFarmingPool);
+        weightedFarmingPool = _weightedFarmingPool;
     }
 
     function setCoverRightTokenFactory(address _coverRightTokenFactory)
         external
         onlyOwner
     {
-        _setCoverRightTokenFactory(_coverRightTokenFactory);
+        coverRightTokenFactory = _coverRightTokenFactory;
     }
 
     function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     function setPayoutPool(address _payoutPool) external onlyOwner {
-        _setPayoutPool(_payoutPool);
+        payoutPool = _payoutPool;
     }
 
     function setTreasury(address _treasury) external onlyOwner {
-        _setTreausry(_treasury);
+        treasury = _treasury;
     }
 
     /**
@@ -532,7 +496,7 @@ contract PolicyCenter is
     {
         address[] memory path = new address[](2);
         path[0] = _fromToken;
-        path[1] = USDC;
+        path[1] = usdc;
 
         // Swap for USDC and return the received amount
         received = IExchange(exchange).swapExactTokensForTokens(
@@ -544,7 +508,7 @@ contract PolicyCenter is
         );
 
         // Deposit USDC and get back shield
-        shield.deposit(1, USDC, received, received);
+        shield.deposit(1, usdc, received, received);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }

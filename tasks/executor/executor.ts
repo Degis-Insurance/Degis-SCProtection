@@ -24,4 +24,21 @@ task("executeProposal", "Execute a proposal when it is passed")
     console.log("tx details", await tx.wait());
   });
 
-task("executeReport");
+task("executeReport")
+  .addParam("id", "Report id to be executed", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const executor: Executor = new Executor__factory(dev_account).attach(
+      addressList[network.name].Executor
+    );
+
+    const tx = await executor.executeReport(taskArgs.id);
+    console.log("tx details", await tx.wait());
+  });

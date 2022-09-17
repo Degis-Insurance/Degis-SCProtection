@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "./IncidentReportParameters.sol";
 import "./IncidentReportDependencies.sol";
@@ -74,8 +74,8 @@ import "forge-std/console.sol";
 contract IncidentReport is
     IncidentReportParameters,
     IncidentReportEventError,
+    OwnableWithoutContextUpgradeable,
     ExternalTokenDependencies,
-    OwnableWithoutContext,
     IncidentReportDependencies
 {
     // ---------------------------------------------------------------------------------------- //
@@ -129,14 +129,15 @@ contract IncidentReport is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
-    constructor(
+
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield
-    )
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+    ) public initializer {
+        __Ownable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
         // Initial quorum 50%
         quorumRatio = 50;
     }

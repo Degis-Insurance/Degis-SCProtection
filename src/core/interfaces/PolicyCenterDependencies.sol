@@ -17,10 +17,12 @@ abstract contract PolicyCenterDependencies {
     uint256 internal constant MAX_COVER_LENGTH = 3;
     uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
+    // 10000 = 100%
     uint256 internal constant PREMIUM_TO_PRIORITY = 4500;
     uint256 internal constant PREMIUM_TO_PROTECTION = 5000;
     uint256 internal constant PREMIUM_TO_TREASURY = 500;
 
+    // Swap slippage
     uint256 internal constant SLIPPAGE = 10;
 
     address public protectionPool;
@@ -31,45 +33,4 @@ abstract contract PolicyCenterDependencies {
     address public exchange;
     address public payoutPool;
     address public treasury;
-
-    function _setProtectionPool(address _protectionPool) internal virtual {
-        protectionPool = _protectionPool;
-    }
-
-    function _setPriceGetter(address _priceGetter) internal virtual {
-        priceGetter = _priceGetter;
-    }
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = _priorityPoolFactory;
-    }
-
-    function _setCoverRightTokenFactory(address _coverRightTokenFactory)
-        internal
-        virtual
-    {
-        coverRightTokenFactory = _coverRightTokenFactory;
-    }
-
-    function _setWeightedFarmingPool(address _weightedFarmingPool)
-        internal
-        virtual
-    {
-        weightedFarmingPool = _weightedFarmingPool;
-    }
-
-    function _setExchange(address _exchange) internal virtual {
-        exchange = _exchange;
-    }
-
-    function _setPayoutPool(address _payoutPool) internal virtual {
-        payoutPool = _payoutPool;
-    }
-
-    function _setTreausry(address _treasury) internal virtual {
-        treasury = _treasury;
-    }
 }

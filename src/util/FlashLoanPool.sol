@@ -2,13 +2,16 @@
 
 pragma solidity ^0.8.13;
 
+import "../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
 
-abstract contract FlashLoanPool is IERC3156FlashLender {
-    address constant public SHIELD = address(0x10);
-    uint256 constant public FEE = 10;
+abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
+    address public token;
+
+    // 10000 = 100%
+    uint256 public constant FEE = 10;
 
     event FlashLoanBorrowed(
         address indexed lender,
@@ -17,6 +20,10 @@ abstract contract FlashLoanPool is IERC3156FlashLender {
         uint256 amount,
         uint256 fee
     );
+
+    function __FlashLoan__Init(address _shield) internal onlyInitializing {
+        token = _shield;
+    }
 
     function flashLoan(
         IERC3156FlashBorrower _receiver,
@@ -58,16 +65,16 @@ abstract contract FlashLoanPool is IERC3156FlashLender {
 
     function flashFee(address _token, uint256 _amount)
         public
-        pure
+        view
         override
         returns (uint256)
     {
-        require(_token == SHIELD, "only shield");
+        require(_token == token, "Only shield");
         return (_amount * FEE) / 10000;
     }
 
     function maxFlashLoan(address _token) external view returns (uint256) {
-        require(_token == SHIELD, "only shield");
-        return IERC20(SHIELD).balanceOf(address(this));
+        require(_token == token, "only shield");
+        return IERC20(token).balanceOf(address(this));
     }
 }

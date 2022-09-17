@@ -54,7 +54,7 @@ task("checkFarming", "Check farming status").setAction(async (_, hre) => {
     1,
     "0x7d4d243ed1b432d6eda029f5e35a4e5c871738ad"
   );
-  console.log(userInfo.share.toString());
+  console.log(userInfo.shares.toString());
 
   const poolInfo = await farming.getPoolArrays(2);
   console.log("Token in this farming:", poolInfo[0]);
@@ -154,7 +154,7 @@ task("checkFarmings", "Check farming status").setAction(async (_, hre) => {
   const addr = "0x1be1a151ba3d24f594ee971dc9b843f23b5ba80e";
 
   const userInfo = await farming.users(1, addr);
-  console.log("User shares: ", userInfo.share.toString());
+  console.log("User shares: ", userInfo.shares.toString());
   console.log("User reward debt: ", userInfo.rewardDebt.toString());
 
   const userAmount = await farming.getUserLPAmount(1, addr);
@@ -239,7 +239,7 @@ task("pendingReward", "Pending reward in farming pool")
     console.log("Pending reward", formatEther(pending));
 
     const userInfo = await farming.users(2, taskArgs.address);
-    console.log("User share: ", formatEther(userInfo.share));
+    console.log("User share: ", formatEther(userInfo.shares));
     console.log("User debt: ", formatEther(userInfo.rewardDebt));
 
     const userAmount = await farming.getUserLPAmount(2, taskArgs.address);

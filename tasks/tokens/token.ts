@@ -17,6 +17,8 @@ import {
   CoverRightToken__factory,
   CoverRightTokenFactory,
   CoverRightTokenFactory__factory,
+  MockVeDEG,
+  MockVeDEG__factory,
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -57,6 +59,26 @@ task("mintShield", "Mint shield tokens").setAction(async (_, hre) => {
   console.log("tx details", await tx.wait());
 
   const balance = await shield.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 6));
+});
+
+task("mintVeDEG", "Mint veDEG tokens").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
+    addressList[network.name].MockVeDEG
+  );
+
+  const tx = await veDEG.mint(dev_account.address, parseUnits("30000", 18));
+  console.log("tx details", await tx.wait());
+
+  const balance = await veDEG.balanceOf(dev_account.address);
   console.log(formatUnits(balance, 6));
 });
 

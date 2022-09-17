@@ -31,7 +31,7 @@ import "../libraries/DateTime.sol";
  *             2) Not bought too close to the report timestamp
  *
  */
-contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
+contract CoverRightToken is ERC20, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -82,7 +82,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         address _policyCenter,
         address _incidentReport,
         address _payoutPool
-    ) ERC20(_name, "crToken") OwnableWithoutContext(msg.sender) {
+    ) ERC20(_name, "crToken") {
         expiry = _expiry;
 
         poolName = _poolName;
@@ -98,16 +98,23 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    modifier onlyPolicyCenter() {
+    modifier onlyPermitted() {
         if (policyCenter != address(0)) {
-            require(msg.sender == policyCenter, "Only policy center");
+            require(
+                msg.sender == policyCenter || msg.sender == payoutPool,
+                "Not permitted"
+            );
         }
         _;
     }
 
-    // TODO: remove this when mainnet
-    function setPolicyCenter(address _policyCenter) public onlyOwner {
+    // TODO: not needed
+    function setPolicyCenter(address _policyCenter) external {
         policyCenter = _policyCenter;
+    }
+
+    function setPayoutPool(address _payoutPool) external {
+        payoutPool = _payoutPool;
     }
 
     /**
@@ -135,7 +142,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _poolId,
         address _user,
         uint256 _amount
-    ) external onlyPolicyCenter nonReentrant {
+    ) external onlyPermitted nonReentrant {
         require(_amount > 0, "Zero Amount");
         require(_poolId == poolId, "Wrong pool id");
 
@@ -160,7 +167,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
         uint256 _poolId,
         address _user,
         uint256 _amount
-    ) external onlyPolicyCenter nonReentrant {
+    ) external onlyPermitted nonReentrant {
         require(_amount > 0, "Zero Amount");
         require(_poolId == poolId, "Wrong pool id");
 

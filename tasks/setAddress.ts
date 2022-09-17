@@ -159,6 +159,7 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
 
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
+    const executorAddress = addressList[network.name].Executor;
 
     const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
@@ -167,10 +168,15 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
     if (
       (await incidentReport.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx = await incidentReport.setPriorityPoolFactory(
+      const tx_1 = await incidentReport.setPriorityPoolFactory(
         priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx.wait());
+      console.log("Tx details: ", await tx_1.wait());
+    }
+
+    if ((await incidentReport.executor()) != executorAddress) {
+      const tx_2 = await incidentReport.setExecutor(executorAddress);
+      console.log("Tx details: ", await tx_2.wait());
     }
 
     console.log("\nFinish setting contract addresses in incident report\n");
@@ -503,17 +509,40 @@ task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
 
     const addressList = readAddressList();
 
+    const crFactory: CoverRightTokenFactory =
+      new CoverRightTokenFactory__factory(dev_account).attach(
+        addressList[network.name].CoverRightTokenFactory
+      );
+
+    const strtime = "2022-11-1 07:59:59";
+    const date = new Date(strtime);
+
+    const timestamp = Math.floor(Number(date.getTime()) / 1000);
+
+    const id = 1;
+    const expiry = timestamp;
+    const generation = 1;
+
+    const crTokenAddress = await crFactory.getCRTokenAddress(
+      id,
+      expiry,
+      generation
+    );
+
+    console.log("CR token address: ", crTokenAddress);
+
     const crToken: CoverRightToken = new CoverRightToken__factory(
       dev_account
-    ).attach("0x1AAFFEBF367DEd9eF5819A747b24b02f44002A5B");
+    ).attach(crTokenAddress);
 
-    const tx = await crToken.setPolicyCenter(
-      addressList[network.name].PolicyCenter
-    );
-    console.log("Tx details: ", await tx.wait());
+    const claimable = await crToken.getClaimableOf(dev_account.address);
+    console.log("Claimable: ", claimable.toString());
 
-    // const policyCenterAddress = await crToken.generation();
-    // console.log("policy center address", policyCenterAddress);
+    // const tx = await crToken.setPolicyCenter(hre.ethers.constants.AddressZero);
+    // console.log("Tx details: ", await tx.wait());
+
+    const policyCenterAddress = await crToken.policyCenter();
+    console.log("policy center address", policyCenterAddress);
   }
 );
 
