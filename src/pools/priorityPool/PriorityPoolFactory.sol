@@ -179,8 +179,11 @@ contract PriorityPoolFactory is
         incidentReport = _incidentReport;
     }
 
-    function setPayoutPool(address _payoutPool) external onlyOwner {
-        payoutPool = _payoutPool;
+    function setPriorityPoolDeployer(address _priorityPoolDeployer)
+        external
+        onlyOwner
+    {
+        priorityPoolDeployer = _priorityPoolDeployer;
     }
 
     // ---------------------------------------------------------------------------------------- //

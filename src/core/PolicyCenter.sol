@@ -222,10 +222,8 @@ contract PolicyCenter is
         uint256 _coverDuration,
         uint256 _maxPayment
     ) external poolExists(_poolId) returns (address) {
-        if (_coverAmount < MIN_COVER_AMOUNT)
-            revert PolicyCenter__CoverAmountTooSmall();
-        if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
         if (_poolId == 0) revert PolicyCenter__NonExistentPool();
+        if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
         _checkCapacity(_poolId, _coverAmount);
 

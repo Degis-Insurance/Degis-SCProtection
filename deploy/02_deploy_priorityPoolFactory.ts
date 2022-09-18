@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
 
   const proxyOptions: ProxyOptions = {
-    proxyContract: "TransparentUpgradeableProxy",
+    proxyContract: "OpenZeppelinTransparentProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
       init: {

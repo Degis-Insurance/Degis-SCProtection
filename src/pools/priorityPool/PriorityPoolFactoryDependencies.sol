@@ -10,7 +10,6 @@ interface IPolicyCenter {
     ) external;
 }
 
-
 interface IWeightedFarmingPool {
     function addPool(address _token) external;
 
@@ -33,7 +32,6 @@ interface IWeightedFarmingPool {
         uint256 _newWeight
     ) external;
 }
-
 
 interface IProtectionPool {
     function getTotalActiveCovered() external view returns (uint256);
@@ -64,11 +62,10 @@ interface IPriorityPoolDeployer {
 abstract contract PriorityPoolFactoryDependencies {
     // Priority Pools need access to executor address
     address public executor;
-    address internal policyCenter;
-    address internal protectionPool;
-    address internal incidentReport;
-    address internal weightedFarmingPool;
-    address internal payoutPool;
+    address public policyCenter;
+    address public protectionPool;
+    address public incidentReport;
+    address public weightedFarmingPool;
 
-    address internal priorityPoolDeployer;
+    address public priorityPoolDeployer;
 }

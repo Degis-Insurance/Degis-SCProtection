@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "../../interfaces/ICoverRightTokenFactory.sol";
 import "../../interfaces/ICoverRightToken.sol";

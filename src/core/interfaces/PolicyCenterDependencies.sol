@@ -14,8 +14,11 @@ import "../../interfaces/IExchange.sol";
 import "../../interfaces/IERC20Decimals.sol";
 
 abstract contract PolicyCenterDependencies {
+    // Max cover length
+    // Different priority pools have different max lengths
+    // This max length is the maximum of all pools
+    // There will also be a check in each pool
     uint256 internal constant MAX_COVER_LENGTH = 3;
-    uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
     // 10000 = 100%
     uint256 internal constant PREMIUM_TO_PRIORITY = 4500;

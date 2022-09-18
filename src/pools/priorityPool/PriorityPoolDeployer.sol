@@ -2,9 +2,11 @@
 
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./PriorityPool.sol";
 
-contract PriorityPoolDeployer {
+contract PriorityPoolDeployer is Initializable {
     address public owner;
 
     address public priorityPoolFactory;
@@ -13,9 +15,29 @@ contract PriorityPoolDeployer {
     address public policyCenter;
     address public payoutPool;
 
-    constructor() {
+    event LengthChange(uint256 minLength, uint256 maxLength);
+
+    function initialize(
+        address _priorityPoolFactory,
+        address _weightedFarmingPool,
+        address _protectionPool,
+        address _policyCenter,
+        address _payoutPool
+    ) public initializer {
         owner = msg.sender;
+
+        priorityPoolFactory = _priorityPoolFactory;
+        weightedFarmingPool = _weightedFarmingPool;
+        protectionPool = _protectionPool;
+        policyCenter = _policyCenter;
+        payoutPool = _payoutPool;
     }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
 
     /**
      * @notice Create a new priority pool

@@ -74,11 +74,11 @@ contract PriorityPool is
     // Avoid accuracy issues
     uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
-    // Max time length in months
-    uint256 internal immutable maxLength;
+    // Max time length in month
+    uint256 internal constant MAX_LENGTH = 3;
 
     // Min time length in month
-    uint256 internal immutable minLength;
+    uint256 internal constant MIN_LENGTH = 1;
 
     address internal immutable owner;
 
@@ -113,7 +113,7 @@ contract PriorityPool is
     uint256 public coverIndex;
 
     // Has already passed the base premium ratio period
-    bool internal passedBasePeriod;
+    bool public passedBasePeriod;
 
     // Year => Month => Amount of cover ends in that month
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
@@ -122,9 +122,9 @@ contract PriorityPool is
     mapping(uint256 => address) public lpTokenAddress;
 
     // Address => Whether is LP address
-    mapping(address => bool) internal isLPToken;
+    mapping(address => bool) public isLPToken;
 
-    // Generation => Price of lp tokens
+    // PRI-LP address => Price of lp tokens
     // PRI-LP token amount * Price Index = PRO-LP token amount
     mapping(address => uint256) public priceIndex;
 
@@ -154,10 +154,6 @@ contract PriorityPool is
         startTime = block.timestamp;
 
         basePremiumRatio = _baseRatio;
-
-        // TODO: change length
-        maxLength = 3;
-        minLength = 1;
 
         // Generation 1, price starts from 1 (SCALE)
         priceIndex[_deployNewGenerationLP(_weightedFarmingPool)] = SCALE;
@@ -213,7 +209,7 @@ contract PriorityPool is
         view
         returns (uint256 price, uint256 length)
     {
-        require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
+        _checkAmount(_amount);
 
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
@@ -440,7 +436,7 @@ contract PriorityPool is
      *         Only called from policy center
      *
      * @param _amount          Cover amount (shield)
-     * @param _premium         Premium for priority pool
+     * @param _premium         Premium for priority pool (in protocol token)
      * @param _length          Cover length (in month)
      * @param _timestampLength Cover length (in second)
      */
@@ -450,6 +446,12 @@ contract PriorityPool is
         uint256 _length,
         uint256 _timestampLength
     ) external whenNotPaused onlyPolicyCenter {
+        // Check cover length
+        _checkLength(_length);
+
+        // Check cover amount
+        _checkAmount(_amount);
+
         _updateDynamic();
 
         // Record cover amount in each month
@@ -458,6 +460,11 @@ contract PriorityPool is
         // Update the weighted farming pool speed for this priority pool
         uint256 newSpeed = (_premium * SCALE) / _timestampLength;
         _updateWeightedFarmingSpeed(_length, newSpeed);
+    }
+
+    function _checkLength(uint256 _length) internal pure {
+        if (_length > MAX_LENGTH || _length < MIN_LENGTH)
+            revert PriorityPool__WrongCoverLength();
     }
 
     /**
@@ -480,7 +487,9 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        _retrievePayout(_amount);
+        uint256 payout = _amount > activeCovered() ? activeCovered() : _amount;
+
+        _retrievePayout(payout);
 
         _updateCurrentLPWeight();
 
@@ -508,6 +517,11 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
+    }
+
+    function _checkAmount(uint256 _amount) internal pure {
+        if (_amount < MIN_COVER_AMOUNT)
+            revert PriorityPool__UnderMinCoverAmount();
     }
 
     /**

@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  readAddressList,
+  readImpList,
+  storeAddressList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -18,15 +22,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
+
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [],
+      },
+    },
+  };
 
   // Executor contract artifact
   const executor = await deploy("Executor", {
     contract: "Executor",
     from: deployer,
+    proxy: proxyOptions,
     args: [],
     log: true,
   });
   addressList[network.name].Executor = executor.address;
+
+  impList[network.name].Executor = executor.implementation;
 
   console.log("executor deployed to address: ", executor.address, "\n");
 

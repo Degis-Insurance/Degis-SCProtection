@@ -3,7 +3,6 @@
 pragma solidity ^0.8.13;
 
 interface PriorityPoolEventError {
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -11,7 +10,7 @@ interface PriorityPoolEventError {
     event StakedLiquidity(uint256 amount, address sender);
     event UnstakedLiquidity(uint256 amount, address sender);
     event Liquidation(uint256 amount, uint256 generation);
- 
+
     event NewGenerationLPTokenDeployed(
         string poolName,
         uint256 poolId,
@@ -30,4 +29,6 @@ interface PriorityPoolEventError {
     error PriorityPool__OnlyPolicyCenter();
     error PriorityPool__NotOwnerOrFactory();
     error PriorityPool__WrongLPToken();
+    error PriorityPool__WrongCoverLength();
+    error PriorityPool__UnderMinCoverAmount();
 }

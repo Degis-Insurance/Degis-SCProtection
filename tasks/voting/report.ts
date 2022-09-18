@@ -119,7 +119,7 @@ task("getReportInfo", "Get a report info")
     const report = await incidentReport.getReport(1);
     console.log(report);
   });
-  
+
 task("unpausePools", "Unpause pools for a report")
   .addParam("id", "Report id", null, types.string)
   .setAction(async (taskArgs, hre) => {
@@ -141,3 +141,20 @@ task("unpausePools", "Unpause pools for a report")
     const p = await incidentReport.reports(1);
     console.log(p.status.toString());
   });
+
+task("reported", "Check reported").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const incidentReport: IncidentReport = new IncidentReport__factory(
+    dev_account
+  ).attach(addressList[network.name].IncidentReport);
+
+  const reported = await incidentReport.reported(1);
+  console.log("reported:", reported);
+});

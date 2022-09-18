@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
       default: 0,
       localhost: 0,
       fuji: 0,
+      fujiInternal: 0,
       avax: 0,
     },
   },

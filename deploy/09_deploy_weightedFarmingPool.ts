@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
@@ -22,11 +22,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const policyCenterAddress = addressList[network.name].PolicyCenter;
   const factoryAddress = addressList[network.name].PriorityPoolFactory;
 
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [policyCenterAddress, factoryAddress],
+      },
+    },
+  };
+
   // WeightedFarmingPool contract artifact
   const weightedFarmingPool = await deploy("WeightedFarmingPool", {
     contract: "WeightedFarmingPool",
     from: deployer,
-    args: [policyCenterAddress, factoryAddress],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].WeightedFarmingPool = weightedFarmingPool.address;

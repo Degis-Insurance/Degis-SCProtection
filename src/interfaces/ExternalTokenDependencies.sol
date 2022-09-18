@@ -7,7 +7,7 @@ import "./IDegisToken.sol";
 import "./IShield.sol";
 import "./CommonDependencies.sol";
 
-import "../../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @notice External token dependencies

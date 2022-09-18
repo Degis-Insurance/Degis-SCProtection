@@ -1,0 +1,390 @@
+{
+  "address": "0x9d7F5d0a3aDDD8f828da2da6A2E6b79e4f081F3A",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "Treasury__OnlyExecutor",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Treasury__OnlyOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Treasury__OnlyPolicyCenter",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "ClaimedByOwner",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewIncomeToTreasury",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "reporter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "ReporterRewarded",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "REPORTER_REWARD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "claim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "executor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_shield",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_executor",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_policyCenter",
+          "type": "address"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "policyCenter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "poolIncome",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "premiumIncome",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_reporter",
+          "type": "address"
+        }
+      ],
+      "name": "rewardReporter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "shield",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x596934ff2cc2d4dd4c65ed530fe3e1657e1da67f216157ede9d78f8d46d96b8c",
+  "receipt": {
+    "to": null,
+    "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
+    "contractAddress": "0x9d7F5d0a3aDDD8f828da2da6A2E6b79e4f081F3A",
+    "transactionIndex": 0,
+    "gasUsed": "413097",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x5e6f9dc7dd6284e2b5eb140a7bfe55b58d7bfefc1ec26f5bb1ee8f4534ff1a8d",
+    "transactionHash": "0x596934ff2cc2d4dd4c65ed530fe3e1657e1da67f216157ede9d78f8d46d96b8c",
+    "logs": [],
+    "blockNumber": 13628580,
+    "cumulativeGasUsed": "413097",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "64d33c1fe980d2353cecc02ff755b0d2",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"Treasury__OnlyExecutor\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Treasury__OnlyOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Treasury__OnlyPolicyCenter\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ClaimedByOwner\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"NewIncomeToTreasury\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"reporter\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ReporterRewarded\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"REPORTER_REWARD\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"claim\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"executor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_shield\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_executor\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_policyCenter\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"policyCenter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"poolIncome\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"premiumIncome\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_reporter\",\"type\":\"address\"}],\"name\":\"rewardReporter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shield\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"claim(uint256)\":{\"params\":{\"_amount\":\"Amount to claim\"}},\"premiumIncome(uint256,uint256)\":{\"params\":{\"_amount\":\"Premium amount (shield)\",\"_poolId\":\"Pool id\"}},\"rewardReporter(uint256,address)\":{\"params\":{\"_poolId\":\"Pool id\",\"_reporter\":\"Reporter address\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"claim(uint256)\":{\"notice\":\"Claim shield by the owner\"},\"premiumIncome(uint256,uint256)\":{\"notice\":\"Record when receiving new premium income         Only called from policy center\"},\"rewardReporter(uint256,address)\":{\"notice\":\"Reward the correct reporter         Part of the priority pool income will be given to the reporter         Only called from executor when executing a report\"}},\"notice\":\"Treasury Contract         Treasury will receive 5% of the premium income (Shield) from policyCenter.         They are counted as different pools.         When a reporter gives a correct report (passed voting and executed),         he will get 10% of the income of that project pool.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/reward/treasury/Treasury.sol\":\"Treasury\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363633343834313533393330\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"src/reward/treasury/Treasury.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\\\";\\n\\nimport \\\"../../util/SimpleIERC20.sol\\\";\\n\\nimport \\\"./TreasuryDependencies.sol\\\";\\nimport \\\"./TreasuryEventError.sol\\\";\\n\\n/**\\n * @notice Treasury Contract\\n *\\n *         Treasury will receive 5% of the premium income (Shield) from policyCenter.\\n *         They are counted as different pools.\\n *\\n *         When a reporter gives a correct report (passed voting and executed),\\n *         he will get 10% of the income of that project pool.\\n *\\n */\\ncontract Treasury is TreasuryEventError, Initializable, TreasuryDependencies {\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constants **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    uint256 public constant REPORTER_REWARD = 1000; // 10%\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Variables **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    address public owner;\\n\\n    mapping(uint256 => uint256) public poolIncome;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constructor ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    // constructor(\\n    //     address _shield,\\n    //     address _executor,\\n    //     address _policyCenter\\n    // ) {\\n    //     executor = _executor;\\n    //     shield = _shield;\\n    //     policyCenter = _policyCenter;\\n\\n    //     owner = msg.sender;\\n    // }\\n\\n    function initialize(\\n        address _shield,\\n        address _executor,\\n        address _policyCenter\\n    ) public initializer {\\n        executor = _executor;\\n        shield = _shield;\\n        policyCenter = _policyCenter;\\n\\n        owner = msg.sender;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Main Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Reward the correct reporter\\n     *\\n     *         Part of the priority pool income will be given to the reporter\\n     *         Only called from executor when executing a report\\n     *\\n     * @param _poolId   Pool id\\n     * @param _reporter Reporter address\\n     */\\n    function rewardReporter(uint256 _poolId, address _reporter) external {\\n        if (msg.sender != executor) revert Treasury__OnlyExecutor();\\n\\n        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;\\n\\n        poolIncome[_poolId] -= amount;\\n        SimpleIERC20(shield).transfer(_reporter, amount);\\n\\n        emit ReporterRewarded(_reporter, amount);\\n    }\\n\\n    /**\\n     * @notice Record when receiving new premium income\\n     *\\n     *         Only called from policy center\\n     *\\n     * @param _poolId Pool id\\n     * @param _amount Premium amount (shield)\\n     */\\n    function premiumIncome(uint256 _poolId, uint256 _amount) external {\\n        if (msg.sender != policyCenter) revert Treasury__OnlyPolicyCenter();\\n\\n        poolIncome[_poolId] += _amount;\\n\\n        emit NewIncomeToTreasury(_poolId, _amount);\\n    }\\n\\n    /**\\n     * @notice Claim shield by the owner\\n     *\\n     * @param _amount Amount to claim\\n     */\\n    function claim(uint256 _amount) external {\\n        if (msg.sender != owner) revert Treasury__OnlyOwner();\\n\\n        SimpleIERC20(shield).transfer(owner, _amount);\\n\\n        emit ClaimedByOwner(_amount);\\n    }\\n}\\n\",\"keccak256\":\"0xbc85c1fbaae539f898563f02b257a52b3538eec19fa25450c73dcfdaf5ebc0f5\",\"license\":\"GPL-3.0-or-later\"},\"src/reward/treasury/TreasuryDependencies.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nabstract contract TreasuryDependencies {\\n    address public executor;\\n\\n    address public policyCenter;\\n\\n    address public shield;\\n}\\n\",\"keccak256\":\"0xd38676ca2ff3f5173591a347045fcf610934ebb6043c13477832dfdcf29dafa2\",\"license\":\"GPL-3.0-or-later\"},\"src/reward/treasury/TreasuryEventError.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nabstract contract TreasuryEventError {\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    event ReporterRewarded(address indexed reporter, uint256 amount);\\n\\n    event NewIncomeToTreasury(uint256 indexed poolId, uint256 amount);\\n\\n    event ClaimedByOwner(uint256 amount);\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Errors ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    error Treasury__OnlyExecutor();\\n\\n    error Treasury__OnlyPolicyCenter();\\n\\n    error Treasury__OnlyOwner();\\n}\\n\",\"keccak256\":\"0x8746aaa092d3eedf89467a2fe392bca71c4cd68695c26b25515a93aa74b4298f\",\"license\":\"GPL-3.0-or-later\"},\"src/util/SimpleIERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface SimpleIERC20 {\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 amount\\n    ) external returns (bool);\\n}\\n\",\"keccak256\":\"0x9b15e78313a0d5b81dcaaea2e7545aa8688d1e44ef97f607f2405d0c9e7e0df7\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080806040523461001657610681908161001c8239f35b600080fdfe608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b146104aa57508163379607f5146103ba5781635b97d3671461032557816370d39cff146102fc5781638da5cb5b146102d3578163c0c53b8b14610131578163c34c08e514610105578163d5647cc7146100da57508063e8adbf2f146100b25763fd1238061461009357600080fd5b346100ae57816003193601126100ae57602090516103e88152f35b5080fd5b50346100ae57816003193601126100ae5760015490516001600160a01b039091168152602090f35b90503461010157602036600319011261010157602092818392358252845220549051908152f35b8280fd5b5050346100ae57816003193601126100ae579054905160109190911c6001600160a01b03168152602090f35b905034610101576060366003190112610101576001600160a01b0390803582811691908290036102cf576101636105e0565b916044359384168094036102cb57855460ff8160081c1615928380946102be575b80156102a7575b1561024d575060ff19811660011787558261023c575b50855462010000600160b01b0319811660109490941b62010000600160b01b03169384178755600280546001600160a01b0319908116909317905560018054831690951790945560038054909116331790559091906101ff57505051f35b610100600160b01b0319161782558051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb384740249890602090a151f35b61ffff1916610101178655386101a1565b608490602088519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b15801561018b5750600160ff83161461018b565b50600160ff831610610184565b8580fd5b8480fd5b5050346100ae57816003193601126100ae5760035490516001600160a01b039091168152602090f35b5050346100ae57816003193601126100ae5760025490516001600160a01b039091168152602090f35b905034610101578160031936011261010157600154813591602435916001600160a01b031633036103ac5782855280602052838520908154908319821161039957508201905582519081527fbcdf08e43ded44076dd939f7e98f8bc0059c0b6e8bbc9a1c83a62432c43a739190602090a251f35b634e487b7160e01b875260119052602486fd5b8351636e9bc02b60e01b8152fd5b90503461010157602036600319011261010157600354813591906001600160a01b03908116903382900361049a57600254855163a9059cbb60e01b81526001600160a01b039390931693830193845260208085018690529294938592908390036040019183918991165af190811561048d577f150afe1a4f039206f87a38d65a16f6a7c76f285e29a4b2b5eab4e8a917b40ca192602092610460575b508351908152a151f35b61047f90833d8111610486575b61047781836105fb565b810190610633565b5038610456565b503d61046d565b50505051903d90823e3d90fd5b8451630396784360e51b81528390fd5b838591346101015781600319360112610101578335906104c86105e0565b845490916001600160a01b039160101c821633036105d25750828552602091868352848620546103e89080600019048211811515166105bf579061271091020493865286835284862080548581106105bf578590039055600254855163a9059cbb60e01b81526001600160a01b03831698810198895260208901869052969795969495849186918290036040019082908b9087165af19384156105b5577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d94610598575b5085519485521692a251f35b6105ae90843d86116104865761047781836105fb565b508761058c565b86513d89823e3d90fd5b634e487b7160e01b885260118952602488fd5b632051b72b60e11b81528690fd5b602435906001600160a01b03821682036105f657565b600080fd5b90601f8019910116810190811067ffffffffffffffff82111761061d57604052565b634e487b7160e01b600052604160045260246000fd5b908160209103126105f6575180151581036105f6579056fea2646970667358221220c1893cb04d38f6c27a3dbb6d397acb72a10161a5fcac88376de0f8d869db529f64736f6c634300080f0033",
+  "deployedBytecode": "0x608060408181526004918236101561001657600080fd5b600092833560e01c9182630627c88b146104aa57508163379607f5146103ba5781635b97d3671461032557816370d39cff146102fc5781638da5cb5b146102d3578163c0c53b8b14610131578163c34c08e514610105578163d5647cc7146100da57508063e8adbf2f146100b25763fd1238061461009357600080fd5b346100ae57816003193601126100ae57602090516103e88152f35b5080fd5b50346100ae57816003193601126100ae5760015490516001600160a01b039091168152602090f35b90503461010157602036600319011261010157602092818392358252845220549051908152f35b8280fd5b5050346100ae57816003193601126100ae579054905160109190911c6001600160a01b03168152602090f35b905034610101576060366003190112610101576001600160a01b0390803582811691908290036102cf576101636105e0565b916044359384168094036102cb57855460ff8160081c1615928380946102be575b80156102a7575b1561024d575060ff19811660011787558261023c575b50855462010000600160b01b0319811660109490941b62010000600160b01b03169384178755600280546001600160a01b0319908116909317905560018054831690951790945560038054909116331790559091906101ff57505051f35b610100600160b01b0319161782558051600181527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb384740249890602090a151f35b61ffff1916610101178655386101a1565b608490602088519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b15801561018b5750600160ff83161461018b565b50600160ff831610610184565b8580fd5b8480fd5b5050346100ae57816003193601126100ae5760035490516001600160a01b039091168152602090f35b5050346100ae57816003193601126100ae5760025490516001600160a01b039091168152602090f35b905034610101578160031936011261010157600154813591602435916001600160a01b031633036103ac5782855280602052838520908154908319821161039957508201905582519081527fbcdf08e43ded44076dd939f7e98f8bc0059c0b6e8bbc9a1c83a62432c43a739190602090a251f35b634e487b7160e01b875260119052602486fd5b8351636e9bc02b60e01b8152fd5b90503461010157602036600319011261010157600354813591906001600160a01b03908116903382900361049a57600254855163a9059cbb60e01b81526001600160a01b039390931693830193845260208085018690529294938592908390036040019183918991165af190811561048d577f150afe1a4f039206f87a38d65a16f6a7c76f285e29a4b2b5eab4e8a917b40ca192602092610460575b508351908152a151f35b61047f90833d8111610486575b61047781836105fb565b810190610633565b5038610456565b503d61046d565b50505051903d90823e3d90fd5b8451630396784360e51b81528390fd5b838591346101015781600319360112610101578335906104c86105e0565b845490916001600160a01b039160101c821633036105d25750828552602091868352848620546103e89080600019048211811515166105bf579061271091020493865286835284862080548581106105bf578590039055600254855163a9059cbb60e01b81526001600160a01b03831698810198895260208901869052969795969495849186918290036040019082908b9087165af19384156105b5577fc8ae12e13c66cfdc817755aaebcef528a42f8e59ac8ece9bc1e61625f752094d94610598575b5085519485521692a251f35b6105ae90843d86116104865761047781836105fb565b508761058c565b86513d89823e3d90fd5b634e487b7160e01b885260118952602488fd5b632051b72b60e11b81528690fd5b602435906001600160a01b03821682036105f657565b600080fd5b90601f8019910116810190811067ffffffffffffffff82111761061d57604052565b634e487b7160e01b600052604160045260246000fd5b908160209103126105f6575180151581036105f6579056fea2646970667358221220c1893cb04d38f6c27a3dbb6d397acb72a10161a5fcac88376de0f8d869db529f64736f6c634300080f0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "claim(uint256)": {
+        "params": {
+          "_amount": "Amount to claim"
+        }
+      },
+      "premiumIncome(uint256,uint256)": {
+        "params": {
+          "_amount": "Premium amount (shield)",
+          "_poolId": "Pool id"
+        }
+      },
+      "rewardReporter(uint256,address)": {
+        "params": {
+          "_poolId": "Pool id",
+          "_reporter": "Reporter address"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "claim(uint256)": {
+        "notice": "Claim shield by the owner"
+      },
+      "premiumIncome(uint256,uint256)": {
+        "notice": "Record when receiving new premium income         Only called from policy center"
+      },
+      "rewardReporter(uint256,address)": {
+        "notice": "Reward the correct reporter         Part of the priority pool income will be given to the reporter         Only called from executor when executing a report"
+      }
+    },
+    "notice": "Treasury Contract         Treasury will receive 5% of the premium income (Shield) from policyCenter.         They are counted as different pools.         When a reporter gives a correct report (passed voting and executed),         he will get 10% of the income of that project pool.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 52,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 55,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 22580,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "executor",
+        "offset": 2,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 22582,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "policyCenter",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_address"
+      },
+      {
+        "astId": 22584,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "shield",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_address"
+      },
+      {
+        "astId": 22440,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "owner",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_address"
+      },
+      {
+        "astId": 22444,
+        "contract": "src/reward/treasury/Treasury.sol:Treasury",
+        "label": "poolIncome",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_mapping(t_uint256,t_uint256)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_uint256,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}
