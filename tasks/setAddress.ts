@@ -52,7 +52,7 @@ task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
 
 task("setProtectionPool", "Set contract address in protectionPool").setAction(
   async (_, hre) => {
-    console.log("\nSetting contract addresses in reinsurance pool\n");
+    console.log("\nSetting contract addresses in protection pool\n");
 
     const { network } = hre;
 
@@ -99,9 +99,9 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
 
 task(
   "setPriorityPoolFactory",
-  "Set contract address in insurancePoolFactory"
+  "Set contract address in priorityPoolFactory"
 ).setAction(async (_, hre) => {
-  console.log("\nSetting contract addresses in insurancePoolFactory\n");
+  console.log("\nSetting contract addresses in priorityPoolFactory\n");
 
   const { network } = hre;
 
