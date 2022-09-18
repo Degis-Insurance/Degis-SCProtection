@@ -5,6 +5,7 @@ import {
   readAddressList,
   readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -56,6 +57,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["CoverRightTokenFactory"];

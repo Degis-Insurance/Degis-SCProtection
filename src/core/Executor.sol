@@ -25,6 +25,8 @@ import "./interfaces/ExecutorDependencies.sol";
 import "../voting/interfaces/VotingParameters.sol";
 import "./interfaces/ExecutorEventError.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Executor
  *
@@ -103,13 +105,12 @@ contract Executor is
         if (reportExecuted[_reportId]) revert Executor__AlreadyExecuted();
         reportExecuted[_reportId] = true;
 
-        // Get the report
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
-        if (report.result != PASS_RESULT) revert Executor__ReportNotPassed();
+        if (report.result != 1) revert Executor__ReportNotPassed();
 
         // Executed callback function
         IIncidentReport(incidentReport).executed(_reportId);

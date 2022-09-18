@@ -15,7 +15,9 @@ contract PriorityPoolDeployer is Initializable {
     address public policyCenter;
     address public payoutPool;
 
-    event LengthChange(uint256 minLength, uint256 maxLength);
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     function initialize(
         address _priorityPoolFactory,
@@ -33,11 +35,18 @@ contract PriorityPoolDeployer is Initializable {
         payoutPool = _payoutPool;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
         _;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Create a new priority pool
@@ -92,6 +101,7 @@ contract PriorityPoolDeployer is Initializable {
                 _maxCapacity,
                 _baseRatio,
                 owner,
+                priorityPoolFactory,
                 weightedFarmingPool,
                 protectionPool,
                 policyCenter,

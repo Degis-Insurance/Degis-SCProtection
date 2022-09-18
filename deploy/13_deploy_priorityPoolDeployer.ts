@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  readAddressList,
+  readImpList,
+  storeAddressList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -18,6 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
 
   const priorityPoolFactoryAddress =
     addressList[network.name].PriorityPoolFactory;
@@ -53,6 +58,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   addressList[network.name].PriorityPoolDeployer = priorityPoolDeployer.address;
+
+  impList[network.name].PriorityPoolDeployer =
+    priorityPoolDeployer.implementation;
 
   console.log(
     "Payout pool deployer deployed to address: ",

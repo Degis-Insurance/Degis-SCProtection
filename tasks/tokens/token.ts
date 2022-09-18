@@ -19,6 +19,8 @@ import {
   CoverRightTokenFactory__factory,
   MockVeDEG,
   MockVeDEG__factory,
+  MockERC20,
+  MockERC20__factory,
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -42,6 +44,31 @@ task("mintDegis", "Mint degis tokens").setAction(async (_, hre) => {
   console.log(formatUnits(balance, 18));
 });
 
+task("mintMockERC20", "Mint mock erc20 tokens").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const token: MockERC20 = new MockERC20__factory(dev_account).attach(
+    addressList[network.name].MockERC20
+  );
+
+  const tx = await token.mint(dev_account.address, parseUnits("10000"));
+  console.log("tx details", await tx.wait());
+
+  await token.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("10000000")
+  );
+
+  const balance = await token.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 18));
+});
+
 task("mintShield", "Mint shield tokens").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -55,7 +82,7 @@ task("mintShield", "Mint shield tokens").setAction(async (_, hre) => {
     addressList[network.name].MockShield
   );
 
-  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  const tx = await shield.mint(dev_account.address, parseUnits("10000", 6));
   console.log("tx details", await tx.wait());
 
   const balance = await shield.balanceOf(dev_account.address);
@@ -75,35 +102,37 @@ task("mintVeDEG", "Mint veDEG tokens").setAction(async (_, hre) => {
     addressList[network.name].MockVeDEG
   );
 
-  const tx = await veDEG.mint(dev_account.address, parseUnits("30000", 18));
+  const tx = await veDEG.mint(dev_account.address, parseUnits("4000000", 18));
   console.log("tx details", await tx.wait());
 
   const balance = await veDEG.balanceOf(dev_account.address);
   console.log(formatUnits(balance, 6));
 });
 
-task("mintMockUSD").setAction(async (_, hre) => {
-  const { network } = hre;
+task("mintMockUSD", "Mint mockUSD for mockExchange").setAction(
+  async (_, hre) => {
+    const { network } = hre;
 
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
 
-  const addressList = readAddressList();
+    const addressList = readAddressList();
 
-  const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
-    addressList[network.name].MockUSDC
-  );
+    const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
+      addressList[network.name].MockUSDC
+    );
 
-  const tx = await usd.mint(
-    addressList[network.name].MockExchange,
-    parseUnits("1000000000", 6)
-  );
-  console.log("tx details", await tx.wait());
+    const tx = await usd.mint(
+      addressList[network.name].MockExchange,
+      parseUnits("1000000000", 6)
+    );
+    console.log("tx details", await tx.wait());
 
-  const balance = await usd.balanceOf(addressList[network.name].MockExchange);
-  console.log("USDC balance:", formatUnits(balance, 6));
-});
+    const balance = await usd.balanceOf(addressList[network.name].MockExchange);
+    console.log("USDC balance of mock exchange:", formatUnits(balance, 6));
+  }
+);
 
 task("approveToken", "Approve token").setAction(async (_, hre) => {
   const { network } = hre;

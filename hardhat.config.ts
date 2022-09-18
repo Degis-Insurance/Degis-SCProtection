@@ -9,7 +9,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "hardhat-contract-sizer";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-import example from "./tasks/example";
+import "./tasks/example";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -31,7 +31,6 @@ function getRemappings() {
     .map((line) => line.trim().split("="));
 }
 
-task("example", "Example task").setAction(example);
 
 const config: HardhatUserConfig = {
   solidity: {

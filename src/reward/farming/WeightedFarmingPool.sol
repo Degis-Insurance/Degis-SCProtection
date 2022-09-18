@@ -180,12 +180,98 @@ contract WeightedFarmingPool is
         view
         returns (uint256 pending)
     {
-        PoolInfo memory pool = pools[_id];
-        UserInfo memory user = users[_id][_user];
+        PoolInfo storage pool = pools[_id];
+        UserInfo storage user = users[_id][_user];
 
-        pending =
-            ((user.shares * pool.accRewardPerShare) / SCALE - user.rewardDebt) /
-            SCALE;
+        // accRewardPerShare has 1 * SCALE
+        uint256 accReward = pool.accRewardPerShare;
+        uint256 totalReward;
+
+        uint256 currentTime = block.timestamp;
+        uint256 lastRewardTime = pool.lastRewardTimestamp;
+
+        if (user.shares > 0) {
+            if (
+                lastRewardTime > 0 && block.timestamp > pool.lastRewardTimestamp
+            ) {
+                (uint256 lastY, uint256 lastM, uint256 lastD) = lastRewardTime
+                    .timestampToDate();
+
+                (uint256 currentY, uint256 currentM, ) = currentTime
+                    .timestampToDate();
+
+                uint256 monthPassed = currentM - lastM;
+
+                // In the same month, use current month speed
+                if (monthPassed == 0) {
+                    totalReward +=
+                        (currentTime - lastRewardTime) *
+                        speed[_id][currentY][currentM];
+                }
+                // Across months, use different months' speed
+                else {
+                    for (uint256 i; i < monthPassed + 1; ) {
+                        // First month reward
+                        if (i == 0) {
+                            // End timestamp of the first month
+                            uint256 endTimestamp = DateTimeLibrary
+                                .timestampFromDateTime(
+                                    lastY,
+                                    lastM,
+                                    lastD,
+                                    23,
+                                    59,
+                                    59
+                                );
+                            totalReward +=
+                                (endTimestamp - lastRewardTime) *
+                                speed[_id][lastY][lastM];
+                        }
+                        // Last month reward
+                        else if (i == monthPassed) {
+                            uint256 startTimestamp = DateTimeLibrary
+                                .timestampFromDateTime(
+                                    lastY,
+                                    lastM,
+                                    1,
+                                    0,
+                                    0,
+                                    0
+                                );
+
+                            totalReward +=
+                                (currentTime - startTimestamp) *
+                                speed[_id][lastY][lastM];
+                        }
+                        // Middle month reward
+                        else {
+                            uint256 daysInMonth = DateTimeLibrary
+                                ._getDaysInMonth(lastY, lastM);
+
+                            totalReward +=
+                                (DateTimeLibrary.SECONDS_PER_DAY *
+                                    daysInMonth) *
+                                speed[_id][lastY][lastM];
+                        }
+
+                        unchecked {
+                            if (++lastM > 12) {
+                                ++lastY;
+                                lastM = 1;
+                            }
+
+                            ++i;
+                        }
+                    }
+                }
+            }
+
+            accReward += (totalReward * SCALE) / pool.shares;
+
+            pending =
+                ((user.shares * accReward) / SCALE - user.rewardDebt) /
+                SCALE;
+        }
     }
 
     /**
@@ -449,6 +535,7 @@ contract WeightedFarmingPool is
 
     function updatePool(uint256 _id) public {
         PoolInfo storage pool = pools[_id];
+
         if (block.timestamp <= pool.lastRewardTimestamp) {
             return;
         }

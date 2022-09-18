@@ -39,6 +39,18 @@ task("executeReport")
       addressList[network.name].Executor
     );
 
+    const factoryAddress = await executor.priorityPoolFactory();
+    console.log("Factory address", factoryAddress);
+
+    console.log("Incident report address: ", await executor.incidentReport());
+
+    console.log("Onboard proposal address: ", await executor.onboardProposal());
+
+    console.log("Payout pool address:", await executor.treasury());
+
     const tx = await executor.executeReport(taskArgs.id);
     console.log("tx details", await tx.wait());
+
+    const alreadyExecuted = await executor.reportExecuted(taskArgs.id);
+    console.log(alreadyExecuted);
   });

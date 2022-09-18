@@ -139,6 +139,7 @@ contract PriorityPool is
         uint256 _maxCapacity,
         uint256 _baseRatio,
         address _owner,
+        address _priorityPoolFactory,
         address _weightedFarmingPool,
         address _protectionPool,
         address _policyCenter,
@@ -160,7 +161,8 @@ contract PriorityPool is
 
         coverIndex = 10000;
 
-        priorityPoolFactory = msg.sender;
+        priorityPoolFactory = _priorityPoolFactory;
+
         weightedFarmingPool = _weightedFarmingPool;
         protectionPool = _protectionPool;
         policyCenter = _policyCenter;
@@ -282,6 +284,9 @@ contract PriorityPool is
         // Time passed since this pool started
         uint256 fromStart = block.timestamp - startTime;
 
+        uint256 totalActiveCovered = IProtectionPool(protectionPool)
+            .getTotalActiveCovered();
+
         // First 7 days use base ratio
         // Then use dynamic ratio
         // TODO: test use 5 hours
@@ -291,12 +296,10 @@ contract PriorityPool is
                 priorityPoolFactory
             ).dynamicPoolCounter();
 
-            if (numofDynamicPools > 0) {
+            if (numofDynamicPools > 0 && totalActiveCovered > 0) {
                 // Covered ratio = Covered amount of this pool / Total covered amount
                 uint256 coveredRatio = ((activeCovered() + _coverAmount) *
-                    SCALE) /
-                    (IProtectionPool(protectionPool).getTotalActiveCovered() +
-                        _coverAmount);
+                    SCALE) / (totalActiveCovered + _coverAmount);
 
                 address lp = currentLPAddress();
 
@@ -499,6 +502,15 @@ contract PriorityPool is
         _deployNewGenerationLP(weightedFarmingPool);
 
         emit Liquidation(_amount, generation);
+    }
+
+    function updateWhenClaimed(uint256 _expiry, uint256 _amount) external {
+        require(msg.sender == payoutPool, "Only payout pool");
+
+        (uint256 currentYear, uint256 currentMonth, ) = _expiry
+            .timestampToDate();
+
+        coverInMonth[currentYear][currentMonth] -= _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //

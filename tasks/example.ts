@@ -1,14 +1,26 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
+import { task, types } from "hardhat/config";
+import "@nomiclabs/hardhat-ethers";
 
-export default async function example(
-  params: any,
-  hre: HardhatRuntimeEnvironment
-): Promise<void> {
-  const ethers = hre.ethers;
+import { readAddressList } from "../scripts/contractAddress";
+import {
+  CoverRightTokenFactory,
+  CoverRightTokenFactory__factory,
+  MockSHIELD,
+  MockSHIELD__factory,
+  MockVeDEG,
+  MockVeDEG__factory,
+  OnboardProposal,
+  OnboardProposal__factory,
+  PolicyCenter,
+  PolicyCenter__factory,
+  WeightedFarmingPool,
+  WeightedFarmingPool__factory,
+} from "../typechain-types";
+import { formatEther, formatUnits, parseUnits } from "ethers/lib/utils";
 
-  const [account] = await ethers.getSigners();
-
-  console.log(
-    `Balance for 1st account ${await account.getAddress()}: ${await account.getBalance()}`
-  );
-}
+task("prepare", "Preparation").setAction(async (taskArgs, hre) => {
+  await hre.run("mintMockUSD");
+  await hre.run("setAllAddress");
+  await hre.run("mintShield");
+  await hre.run("mintMockERC20");
+});

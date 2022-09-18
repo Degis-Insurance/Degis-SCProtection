@@ -465,7 +465,7 @@ contract PolicyCenter is
                 _poolId,
                 poolName,
                 expiry,
-                _generation++
+                ++_generation
             );
 
             ICoverRightToken(newCRToken).mint(

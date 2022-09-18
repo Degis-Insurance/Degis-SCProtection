@@ -334,8 +334,10 @@ contract IncidentReport is
                 emit ReportSettled(_id, res);
             } else {
                 currentReport.result = FAILED_RESULT;
+                uint256 poolId = currentReport.poolId;
                 // FAILED: unlock the priority pool & protection pool immediately
-                _unpausePools(currentReport.poolId);
+                _unpausePools(poolId);
+                reported[poolId] = false;
                 emit ReportFailed(_id);
             }
         } else {
@@ -355,6 +357,10 @@ contract IncidentReport is
         _claimReward(_id, msg.sender);
     }
 
+    function setReported(uint256 _id) external {
+        reported[_id] = false;
+    }
+
     /**
      * @notice Pay debt to get back veDEG
      *
@@ -371,8 +377,11 @@ contract IncidentReport is
         uint256 finalResult = reports[_id].result;
 
         if (finalResult == 0) revert IncidentReport__NotSettled();
-        if (userVote.choice == finalResult || finalResult == TIED_RESULT)
-            revert IncidentReport__NotWrongChoice();
+        if (
+            userVote.choice == finalResult ||
+            finalResult == TIED_RESULT ||
+            finalResult == FAILED_RESULT
+        ) revert IncidentReport__NotWrongChoice();
         // @audit Add paid status
         if (userVote.paid) revert IncidentReport__AlreadyPaid();
 
@@ -528,11 +537,16 @@ contract IncidentReport is
 
     /**
      * @notice Claim the voting reward
-     *         If the result is TIED, unlock veDEG
+     *
+     *         Only called when:
+     *         - Result is TIED or FAILED
+     *         - Result is PASS or REJECT and you have the correct choice
+     *
+     *         If the result is TIED or FAILED, only unlock veDEG
      *         If the result is the same as your choice, get the reward
      *
-     * @param _id       Report id
-     * @param _user     User address to claim rewards from
+     * @param _id   Report id
+     * @param _user User address
      */
     function _claimReward(uint256 _id, address _user) internal {
         UserVote memory userVote = votes[_user][_id];
@@ -549,7 +563,7 @@ contract IncidentReport is
             _unlockVeDEG(_user, userVote.amount);
         }
         // Tied result, give back user's veDEG
-        else if (finalResult == TIED_RESULT) {
+        else if (finalResult == TIED_RESULT || finalResult == FAILED_RESULT) {
             _unlockVeDEG(_user, userVote.amount);
         }
         // Wrong choice, no reward

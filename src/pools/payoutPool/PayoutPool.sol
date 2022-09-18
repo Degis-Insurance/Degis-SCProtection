@@ -209,6 +209,14 @@ contract PayoutPool is Initializable {
         // Actual amount given to the user
         claimed = (claimable * coverIndex) / 10000;
 
+
+        // Reduce the active cover amount in priority pool
+        (, address poolAddress, , , ) = IPriorityPoolFactory(
+            priorityPoolFactory
+        ).pools(_poolId);
+        IPriorityPool(poolAddress).updateWhenClaimed(expiry, claimed);
+
+        // Burn current crToken
         ICoverRightToken(_crToken).burn(
             _poolId,
             _user,

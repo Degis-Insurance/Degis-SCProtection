@@ -108,6 +108,39 @@ task("checkFarmingSpeed", "Check farming speed")
       taskArgs.month
     );
     console.log("Reward speed:", rewardSpeed.toString());
+
+    const pending = await farming.pendingReward(
+      taskArgs.id,
+      dev_account.address
+    );
+    console.log("Pending: ", formatEther(pending));
+
+    const userShares = await farming.users(1, dev_account.address);
+    console.log("User shares:", userShares.shares.toString());
+    console.log("User debt:", userShares.rewardDebt.toString());
+
+    const pool = await farming.pools(1);
+    console.log("Pool acc:", pool.accRewardPerShare.toString());
+    console.log("Pool shares:", pool.shares.toString());
+  });
+
+task("harvest", "Check farming speed")
+  .addParam("id", "Pool id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
+      dev_account
+    ).attach(addressList[network.name].WeightedFarmingPool);
+
+    const tx = await farming.harvest(taskArgs.id, dev_account.address);
+    console.log("Reward speed:", await tx.wait());
   });
 
 task("setFarmingSpeed", "Check farming speed")
@@ -216,7 +249,7 @@ task("updatePool", "Add new token into a farming pool")
       dev_account
     ).attach(addressList[network.name].WeightedFarmingPool);
 
-    const tx = await farming.updatePool(1);
+    const tx = await farming.updatePool(taskArgs.id);
     console.log("Tx details:", await tx.wait());
   });
 

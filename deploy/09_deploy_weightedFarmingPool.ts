@@ -1,7 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  readAddressList,
+  storeAddressList,
+  storeImpList,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -18,6 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readAddressList();
 
   const policyCenterAddress = addressList[network.name].PolicyCenter;
   const factoryAddress = addressList[network.name].PriorityPoolFactory;
@@ -43,6 +48,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].WeightedFarmingPool = weightedFarmingPool.address;
 
+  impList[network.name].WeightedFarmingPool =
+    weightedFarmingPool.implementation;
+
   console.log(
     "WeightedFarmingPool deployed to address: ",
     weightedFarmingPool.address,
@@ -51,6 +59,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["WeightedFarmingPool"];

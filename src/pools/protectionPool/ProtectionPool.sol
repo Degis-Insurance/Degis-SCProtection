@@ -200,12 +200,12 @@ contract ProtectionPool is
         uint256 minRequirement;
 
         for (uint256 i; i < poolAmount; ) {
-            (, address poolAddress, , , ) = factory.pools(i);
+            (, address poolAddress, , , ) = factory.pools(i + 1);
 
             minRequirement = IPriorityPool(poolAddress).minAssetRequirement();
 
             if (minRequirement > currentReserved) {
-                indexToCut = (currentReserved * SCALE) / minRequirement;
+                indexToCut = (currentReserved * 10000) / minRequirement;
                 IPriorityPool(poolAddress).setCoverIndex(indexToCut);
             }
 
@@ -268,10 +268,10 @@ contract ProtectionPool is
 
         // Burn PRO_LP tokens to the user
         shieldToTransfer = (_amount * price) / SCALE;
-        if (
-            SimpleIERC20(shield).balanceOf(address(this)) <
-            getTotalCovered() + shieldToTransfer
-        ) revert ProtectionPool__NotEnoughLiquidity();
+
+        if (msg.sender == policyCenter) {
+            checkEnoughLiquidity(shieldToTransfer);
+        }
 
         // @audit Change path
         //
@@ -280,6 +280,43 @@ contract ProtectionPool is
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
+    }
+
+    function checkEnoughLiquidity(uint256 _amountToRemove) public view {
+        uint256 minRequirement = minAssetRequirement();
+
+        uint256 currentReserved = IShield(shield).balanceOf(address(this));
+
+        if (currentReserved < minRequirement + _amountToRemove)
+            revert ProtectionPool__NotEnoughLiquidity();
+    }
+
+    function minAssetRequirement()
+        public
+        view
+        returns (uint256 minRequirement)
+    {
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
+        );
+
+        uint256 poolAmount = factory.poolCounter();
+        uint256 minRequirementForPool;
+
+        for (uint256 i; i < poolAmount; ) {
+            (, address poolAddress, , , ) = factory.pools(i + 1);
+
+            minRequirementForPool = IPriorityPool(poolAddress)
+                .minAssetRequirement();
+
+            minRequirement = minRequirementForPool > minRequirement
+                ? minRequirementForPool
+                : minRequirement;
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     /**

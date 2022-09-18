@@ -29,6 +29,8 @@ import {
   CoverRightToken__factory,
   CoverRightTokenFactory__factory,
   CoverRightTokenFactory,
+  PriorityPoolDeployer,
+  PriorityPoolDeployer__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 

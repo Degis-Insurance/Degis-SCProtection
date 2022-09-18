@@ -64,4 +64,6 @@ interface IPriorityPool {
     function paused() external view returns (bool);
 
     function basePremiumRatio() external view returns (uint256);
+
+    function updateWhenClaimed(uint256 expiry, uint256 amount) external;
 }

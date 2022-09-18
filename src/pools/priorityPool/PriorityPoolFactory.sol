@@ -217,13 +217,6 @@ contract PriorityPoolFactory is
 
         uint256 currentPoolId = ++poolCounter;
 
-        // address newPoolAddress = _deployPool(
-        //     currentPoolId,
-        //     _name,
-        //     _protocolToken,
-        //     _maxCapacity,
-        //     _basePremiumRatio
-        // );
         address newPoolAddress = IPriorityPoolDeployer(priorityPoolDeployer)
             .deployPool(
                 currentPoolId,
@@ -276,16 +269,17 @@ contract PriorityPoolFactory is
      * @param _poolId Pool id
      */
     function updateDynamicPool(uint256 _poolId) external onlyPriorityPool {
-        if (dynamic[msg.sender])
+        address poolAddress = pools[_poolId].poolAddress;
+        if (dynamic[poolAddress])
             revert PriorityPoolFactory__AlreadyDynamicPool();
 
-        dynamic[msg.sender] = true;
+        dynamic[poolAddress] = true;
 
         unchecked {
             ++dynamicPoolCounter;
         }
 
-        emit DynamicPoolUpdate(_poolId, msg.sender, dynamicPoolCounter);
+        emit DynamicPoolUpdate(_poolId, poolAddress, dynamicPoolCounter);
     }
 
     function updateMaxCapaity(bool _isUp, uint256 _diff)
@@ -303,7 +297,8 @@ contract PriorityPoolFactory is
         if (msg.sender != incidentReport && msg.sender != executor)
             revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
-        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+         IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+       
 
         IProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }
