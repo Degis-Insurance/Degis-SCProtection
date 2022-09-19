@@ -10,7 +10,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
   if (network.name == "avax") {
-    console.log("You are deploying mock tokens on mainnet!!!");
+    console.log("\nYou are deploying mock tokens on mainnet!!!");
+    console.log("No need for this deployment, skipping...... \n");
     return;
   }
 

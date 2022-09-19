@@ -1,10 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
   readAddressList,
+  readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -22,10 +24,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
-
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
+  const [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
     network.name
   );
 
@@ -35,25 +36,40 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       ? addressList[network.name].MockUSDC
       : addressList[network.name].USDC;
 
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [
+          degAddress,
+          veDegAddress,
+          shieldAddress,
+          protectionPoolAddress,
+          USDCAddress,
+        ],
+      },
+    },
+  };
+
   // PolicyCenter contract artifact
   const policyCenter = await deploy("PolicyCenter", {
     contract: "PolicyCenter",
     from: deployer,
-    args: [
-      degAddress,
-      veDegAddress,
-      shieldAddress,
-      protectionPoolAddress,
-      USDCAddress,
-    ],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].PolicyCenter = policyCenter.address;
+
+  impList[network.name].PolicyCenter = policyCenter.implementation;
 
   console.log("\npolicy center deployed to address: ", policyCenter.address);
 
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["PolicyCenter"];

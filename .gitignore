@@ -5,6 +5,8 @@ out/
 # JS
 node_modules/
 
+deployments/
+
 #Hardhat files
 cache_hardhat/
 artifacts/

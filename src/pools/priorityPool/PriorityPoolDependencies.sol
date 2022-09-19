@@ -26,6 +26,8 @@ interface IProtectionPool {
     function pauseProtectionPool(bool _paused) external;
 
     function stakedSupply() external view returns (uint256);
+
+    function updateIndexCut() external;
 }
 
 interface IPolicyCenter {
@@ -42,6 +44,7 @@ interface IPayoutPool {
         uint256 _generation,
         uint256 _amount,
         uint256 _ratio,
+        uint256 _coverIndex,
         address _poolAddress
     ) external;
 }

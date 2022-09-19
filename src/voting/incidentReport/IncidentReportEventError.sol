@@ -61,4 +61,5 @@ interface IncidentReportEventError {
     error IncidentReport__PayoutExceedCovered();
     error IncidentReport__AlreadyPaid();
     error IncidentReport__OnlyExecutor();
+    error IncidentReport__QuorumRatioTooBig();
 }

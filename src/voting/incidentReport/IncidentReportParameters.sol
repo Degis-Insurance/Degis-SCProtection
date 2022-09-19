@@ -9,20 +9,17 @@ abstract contract IncidentReportParameters is VotingParameters {
     // If you submitted a wrong report, you cannot start another within cooldown period
     uint256 public constant COOLDOWN_WRONG_REPORT = 7 days;
 
-    // TODO: change parameters
-    // Voting time length parameters
-    // uint256 constant PENDING_PERIOD = 3 days;
+    //  Pending period before start voting
     uint256 public constant PENDING_PERIOD = 2 hours;
 
     // 16 hours for fuji, 2 hours for fujiInternal
-    uint256 public constant INCIDENT_VOTING_PERIOD = 5 hours;
+    uint256 public constant INCIDENT_VOTING_PERIOD = 16 hours;
 
-    uint256 public constant EXTEND_PERIOD = 1 hours;
-    uint256 public constant SAMPLE_PERIOD = 1 hours;
+    // Extend time length
+    uint256 public constant EXTEND_PERIOD = 2 hours;
 
-    // // Quorum parameter
-    // // TODO: 10% for test
-    uint256 public constant INCIDENT_QUORUM_RATIO = 10;
+    // Sample period for checking whether extend the round
+    uint256 public constant SAMPLE_PERIOD = 4 hours;
 
     // DEG threshold for starting a report
     uint256 public constant REPORT_THRESHOLD = 10000 ether;

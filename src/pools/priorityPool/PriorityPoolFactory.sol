@@ -22,11 +22,11 @@ pragma solidity ^0.8.13;
 
 import "./PriorityPoolFactoryDependencies.sol";
 
-import "../../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 import "../../interfaces/ExternalTokenDependencies.sol";
 import "./PriorityPoolFactoryEventError.sol";
 
-import "./PriorityPool.sol";
+// import "./PriorityPool.sol";
 
 import "../../interfaces/IPriorityPool.sol";
 
@@ -47,9 +47,9 @@ import "../../interfaces/IPriorityPool.sol";
  *
  */
 contract PriorityPoolFactory is
-    ExternalTokenDependencies,
-    OwnableWithoutContext,
     PriorityPoolFactoryEventError,
+    OwnableWithoutContextUpgradeable,
+    ExternalTokenDependencies,
     PriorityPoolFactoryDependencies
 {
     // ---------------------------------------------------------------------------------------- //
@@ -86,15 +86,15 @@ contract PriorityPoolFactory is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield,
         address _protectionPool
-    )
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+    ) public initializer {
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __Ownable_init();
+
         protectionPool = _protectionPool;
 
         poolRegistered[_protectionPool] = true;
@@ -103,6 +103,10 @@ contract PriorityPoolFactory is
         // Protection pool as pool 0
         pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     modifier onlyPriorityPool() {
         if (!poolRegistered[msg.sender])
@@ -156,7 +160,6 @@ contract PriorityPoolFactory is
         policyCenter = _policyCenter;
     }
 
-   
     function setWeightedFarmingPool(address _weightedFarmingPool)
         external
         onlyOwner
@@ -176,8 +179,11 @@ contract PriorityPoolFactory is
         incidentReport = _incidentReport;
     }
 
-    function setPayoutPool(address _payoutPool) external onlyOwner {
-        payoutPool = _payoutPool;
+    function setPriorityPoolDeployer(address _priorityPoolDeployer)
+        external
+        onlyOwner
+    {
+        priorityPoolDeployer = _priorityPoolDeployer;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -211,13 +217,14 @@ contract PriorityPoolFactory is
 
         uint256 currentPoolId = ++poolCounter;
 
-        address newPoolAddress = _deployPool(
-            currentPoolId,
-            _name,
-            _protocolToken,
-            _maxCapacity,
-            _basePremiumRatio
-        );
+        address newPoolAddress = IPriorityPoolDeployer(priorityPoolDeployer)
+            .deployPool(
+                currentPoolId,
+                _name,
+                _protocolToken,
+                _maxCapacity,
+                _basePremiumRatio
+            );
 
         pools[currentPoolId] = PoolInfo(
             _name,
@@ -262,16 +269,17 @@ contract PriorityPoolFactory is
      * @param _poolId Pool id
      */
     function updateDynamicPool(uint256 _poolId) external onlyPriorityPool {
-        if (dynamic[msg.sender])
+        address poolAddress = pools[_poolId].poolAddress;
+        if (dynamic[poolAddress])
             revert PriorityPoolFactory__AlreadyDynamicPool();
 
-        dynamic[msg.sender] = true;
+        dynamic[poolAddress] = true;
 
         unchecked {
             ++dynamicPoolCounter;
         }
 
-        emit DynamicPoolUpdate(_poolId, msg.sender, dynamicPoolCounter);
+        emit DynamicPoolUpdate(_poolId, poolAddress, dynamicPoolCounter);
     }
 
     function updateMaxCapaity(bool _isUp, uint256 _diff)
@@ -289,61 +297,9 @@ contract PriorityPoolFactory is
         if (msg.sender != incidentReport && msg.sender != executor)
             revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
-        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+         IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
+       
 
         IProtectionPool(protectionPool).pauseProtectionPool(_paused);
-    }
-
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
-
-    function _deployPool(
-        uint256 _poolId,
-        string memory _name,
-        address _protocolToken,
-        uint256 _maxCapacity,
-        uint256 _baseRatio
-    ) internal returns (address addr) {
-        bytes memory bytecode = type(PriorityPool).creationCode;
-        bytes32 salt = keccak256(abi.encodePacked(_poolId, _name));
-
-        bytes memory bytecodeWithParameters = abi.encodePacked(
-            bytecode,
-            abi.encode(
-                _poolId,
-                _name,
-                _protocolToken,
-                _maxCapacity,
-                _baseRatio,
-                owner(),
-                weightedFarmingPool,
-                protectionPool,
-                policyCenter,
-                payoutPool
-            )
-        );
-
-        addr = _deploy(bytecodeWithParameters, salt);
-    }
-
-    /**
-     * @notice Deploy function with create2
-     *
-     * @param _code Byte code of the contract (creation code) (including constructor parameters if any)
-     * @param _salt Salt for the deployment
-     *
-     * @return addr The deployed contract address
-     */
-    function _deploy(bytes memory _code, bytes32 _salt)
-        internal
-        returns (address addr)
-    {
-        assembly {
-            addr := create2(0, add(_code, 0x20), mload(_code), _salt)
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
-            }
-        }
     }
 }

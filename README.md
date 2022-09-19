@@ -21,6 +21,13 @@
 
 ```
 
+### Deploy
+
+```
+yarn deploy --network {network_name}
+npx hardhat setAllAddress --network {network_name}
+```
+
 ### Getting Started
 
 - Use Foundry:

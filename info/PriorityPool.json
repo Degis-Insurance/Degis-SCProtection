@@ -2,37 +2,37 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0x749aB4394C13c98F8787ae0E8fE45556D541f924",
+			"poolAddress": "0xF21C663E5ed3273C650b74192209229aFf9405A1",
 			"name": "TraderJoe",
-			"token": "0x8A59C56Abb435A1b668Ad328907FE77de7938f72",
+			"token": "0x2C563651419A72e721D83151713428D467f1Ce22",
 			"premium": "200"
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0x09755c92d5997481989c680F985E2ca16Ad1A48A",
+			"poolAddress": "0x517a5105027962E6668747eCD80024AeB08B40A3",
 			"name": "GMX",
-			"token": "0xded9296E272C953189AD67155c2D90fa061f7132",
+			"token": "0x10C9F09503048B0b93B12b316C4eb93324a79fdf",
 			"premium": "200"
 		},
 		"3": {
 			"id": "3",
-			"poolAddress": "0xb9a53F751E333211e816C01580c197054828cec9",
+			"poolAddress": "0xefC4E49ea3e93e491bFa2F37daCFC8cf3Ab00654",
 			"name": "PTP",
-			"token": "0x94BBd5A34Bb244065284DCD919B8e96459f0999d",
+			"token": "0x1A0F76C19F9A9301A3cDE8532f72ce703FE58856",
 			"premium": "250"
 		},
 		"4": {
 			"id": "4",
-			"poolAddress": "0xEAB92B65E79eA267F4f481FEc8eAFececa646b1E",
+			"poolAddress": "0x0c1CC532D104877B7E3E7d9e2eFbC3DF4036603c",
 			"name": "IME",
-			"token": "0xbD2cFF4e54a1730a462Fd25527A4b2D1f680228C",
+			"token": "0xe6b592f03Cc0447E61004C5437c3579b590B6Efb",
 			"premium": "250"
 		},
 		"5": {
 			"id": "5",
-			"poolAddress": "0xf2C220A66d7C6ae2867f20C012B6324E9934Ce32",
+			"poolAddress": "0xd55d4d384296229286F475d7c537cCEcB234c763",
 			"name": "XAVA",
-			"token": "0xF832B3Bd9ECef5eE5C8F1Dcad64DF3BC72639A3B",
+			"token": "0x8BfA09Bc7778f98505160C08d1E2D519B4c6137e",
 			"premium": "200"
 		}
 	},
@@ -47,7 +47,15 @@
 	},
 	"avax": {},
 	"avaxTest": {},
-	"localhost": {},
+	"localhost": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0x0EAbD3027F84295C0FA709994788Ee83A307Bd1f",
+			"name": "Test",
+			"token": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+			"premium": "400"
+		}
+	},
 	"rinkeby": {},
 	"fujiTest": {},
 	"reserve": {}

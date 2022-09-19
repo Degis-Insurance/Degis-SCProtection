@@ -7,22 +7,27 @@ import "./IDegisToken.sol";
 import "./IShield.sol";
 import "./CommonDependencies.sol";
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 /**
  * @notice External token dependencies
  *         Include the tokens that are not deployed by this repo
  *         DEG, veDEG & SHIELD
  *         They are set as immutable
  */
-abstract contract ExternalTokenDependencies is CommonDependencies {
-    IDegisToken immutable deg;
-    IVeDEG immutable veDeg;
-    IShield immutable shield;
+abstract contract ExternalTokenDependencies is
+    CommonDependencies,
+    Initializable
+{
+    IDegisToken internal deg;
+    IVeDEG internal veDeg;
+    IShield internal shield;
 
-    constructor(
+    function __ExternalToken__Init(
         address _deg,
         address _veDeg,
         address _shield
-    ) {
+    ) internal onlyInitializing {
         deg = IDegisToken(_deg);
         veDeg = IVeDEG(_veDeg);
         shield = IShield(_shield);

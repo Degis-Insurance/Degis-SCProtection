@@ -20,14 +20,14 @@
 
 pragma solidity ^0.8.13;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 import "./ProtectionPoolDependencies.sol";
 import "./ProtectionPoolEventError.sol";
 import "../../interfaces/ExternalTokenDependencies.sol";
 
-import "../../util/OwnableWithoutContext.sol";
-import "../../util/PausableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
+import "../../util/PausableWithoutContextUpgradeable.sol";
 import "../../util/FlashLoanPool.sol";
 
 import "../../libraries/DateTime.sol";
@@ -44,12 +44,13 @@ import "../../libraries/DateTime.sol";
  *         If the priority pool is unable to fulfil the cover amount,
  *         Protection Pool will be able to provide the remaining part
  */
+
 contract ProtectionPool is
     ProtectionPoolEventError,
-    ERC20,
+    ERC20Upgradeable,
     FlashLoanPool,
-    OwnableWithoutContext,
-    PausableWithoutContext,
+    OwnableWithoutContextUpgradeable,
+    PausableWithoutContextUpgradeable,
     ExternalTokenDependencies,
     ProtectionPoolDependencies
 {
@@ -78,15 +79,17 @@ contract ProtectionPool is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield
-    )
-        ERC20("ProtectionPool", "PRO-LP")
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+    ) public initializer {
+        __ERC20_init("ProtectionPool", "PRO-LP");
+        __FlashLoan__Init(_shield);
+        __Ownable_init();
+        __Pausable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
         // Register time that pool was deployed
         startTime = block.timestamp;
     }
@@ -163,18 +166,18 @@ contract ProtectionPool is
     // ---------------------------------------------------------------------------------------- //
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
+        incidentReport = _incidentReport;
     }
 
     function setPolicyCenter(address _policyCenter) external onlyOwner {
-        _setPolicyCenter(_policyCenter);
+        policyCenter = _policyCenter;
     }
 
     function setPriorityPoolFactory(address _priorityPoolFactory)
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -197,12 +200,12 @@ contract ProtectionPool is
         uint256 minRequirement;
 
         for (uint256 i; i < poolAmount; ) {
-            (, address poolAddress, , , ) = factory.pools(i);
+            (, address poolAddress, , , ) = factory.pools(i + 1);
 
             minRequirement = IPriorityPool(poolAddress).minAssetRequirement();
 
             if (minRequirement > currentReserved) {
-                indexToCut = (currentReserved * SCALE) / minRequirement;
+                indexToCut = (currentReserved * 10000) / minRequirement;
                 IPriorityPool(poolAddress).setCoverIndex(indexToCut);
             }
 
@@ -265,18 +268,58 @@ contract ProtectionPool is
 
         // Burn PRO_LP tokens to the user
         shieldToTransfer = (_amount * price) / SCALE;
-        if (
-            SimpleIERC20(shield).balanceOf(address(this)) <
-            getTotalCovered() + shieldToTransfer
-        ) revert ProtectionPool__NotEnoughLiquidity();
+
+        if (msg.sender == policyCenter) {
+            checkEnoughLiquidity(shieldToTransfer);
+        }
 
         // @audit Change path
-        //
+        // If sent from policyCenter => this is a user action
+        // If sent from priority pool => this is a payout action
         address realPayer = msg.sender == policyCenter ? _provider : msg.sender;
+        
         _burn(realPayer, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
+    }
+
+    function checkEnoughLiquidity(uint256 _amountToRemove) public view {
+        // Minimum shield requirement
+        uint256 minRequirement = minAssetRequirement();
+
+        uint256 currentReserved = IShield(shield).balanceOf(address(this));
+
+        if (currentReserved < minRequirement + _amountToRemove)
+            revert ProtectionPool__NotEnoughLiquidity();
+    }
+
+    function minAssetRequirement()
+        public
+        view
+        returns (uint256 minRequirement)
+    {
+        IPriorityPoolFactory factory = IPriorityPoolFactory(
+            priorityPoolFactory
+        );
+
+        uint256 poolAmount = factory.poolCounter();
+        uint256 minRequirementForPool;
+
+        for (uint256 i; i < poolAmount; ) {
+            (, address poolAddress, , , ) = factory.pools(i + 1);
+
+            minRequirementForPool = IPriorityPool(poolAddress)
+                .minAssetRequirement();
+
+            minRequirement = minRequirementForPool > minRequirement
+                ? minRequirementForPool
+                : minRequirement;
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     /**

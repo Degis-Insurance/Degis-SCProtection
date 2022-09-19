@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "./IncidentReportParameters.sol";
 import "./IncidentReportDependencies.sol";
@@ -74,8 +74,8 @@ import "forge-std/console.sol";
 contract IncidentReport is
     IncidentReportParameters,
     IncidentReportEventError,
+    OwnableWithoutContextUpgradeable,
     ExternalTokenDependencies,
-    OwnableWithoutContext,
     IncidentReportDependencies
 {
     // ---------------------------------------------------------------------------------------- //
@@ -129,14 +129,15 @@ contract IncidentReport is
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
-    constructor(
+
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield
-    )
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
+    ) public initializer {
+        __Ownable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
         // Initial quorum 50%
         quorumRatio = 50;
     }
@@ -181,6 +182,10 @@ contract IncidentReport is
         return poolReports[_poolId].length;
     }
 
+    function addPoolReports(uint256 _poolId, uint256 _number) external {
+        poolReports[_poolId].push(_number);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -194,6 +199,11 @@ contract IncidentReport is
 
     function setExecutor(address _executor) external onlyOwner {
         executor = _executor;
+    }
+
+    function setQuorumRatio(uint256 _ratio) external onlyOwner {
+        if (_ratio >= 100) revert IncidentReport__QuorumRatioTooBig();
+        quorumRatio = _ratio;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -263,6 +273,8 @@ contract IncidentReport is
         currentReport.status = CLOSE_STATUS;
         reported[_id] = false;
 
+        poolReports[currentReport.poolId].pop();
+
         _unpausePools(currentReport.poolId);
 
         emit ReportClosed(_id, block.timestamp);
@@ -320,6 +332,8 @@ contract IncidentReport is
                     uint256 poolId = currentReport.poolId;
                     _unpausePools(poolId);
                     reported[poolId] = false;
+
+                    poolReports[poolId].pop();
                 }
 
                 currentReport.result = res;
@@ -328,8 +342,10 @@ contract IncidentReport is
                 emit ReportSettled(_id, res);
             } else {
                 currentReport.result = FAILED_RESULT;
+                uint256 poolId = currentReport.poolId;
                 // FAILED: unlock the priority pool & protection pool immediately
-                _unpausePools(currentReport.poolId);
+                _unpausePools(poolId);
+                reported[poolId] = false;
                 emit ReportFailed(_id);
             }
         } else {
@@ -349,6 +365,10 @@ contract IncidentReport is
         _claimReward(_id, msg.sender);
     }
 
+    function setReported(uint256 _id) external {
+        reported[_id] = false;
+    }
+
     /**
      * @notice Pay debt to get back veDEG
      *
@@ -365,8 +385,11 @@ contract IncidentReport is
         uint256 finalResult = reports[_id].result;
 
         if (finalResult == 0) revert IncidentReport__NotSettled();
-        if (userVote.choice == finalResult || finalResult == TIED_RESULT)
-            revert IncidentReport__NotWrongChoice();
+        if (
+            userVote.choice == finalResult ||
+            finalResult == TIED_RESULT ||
+            finalResult == FAILED_RESULT
+        ) revert IncidentReport__NotWrongChoice();
         // @audit Add paid status
         if (userVote.paid) revert IncidentReport__AlreadyPaid();
 
@@ -522,11 +545,16 @@ contract IncidentReport is
 
     /**
      * @notice Claim the voting reward
-     *         If the result is TIED, unlock veDEG
+     *
+     *         Only called when:
+     *         - Result is TIED or FAILED
+     *         - Result is PASS or REJECT and you have the correct choice
+     *
+     *         If the result is TIED or FAILED, only unlock veDEG
      *         If the result is the same as your choice, get the reward
      *
-     * @param _id       Report id
-     * @param _user     User address to claim rewards from
+     * @param _id   Report id
+     * @param _user User address
      */
     function _claimReward(uint256 _id, address _user) internal {
         UserVote memory userVote = votes[_user][_id];
@@ -543,7 +571,7 @@ contract IncidentReport is
             _unlockVeDEG(_user, userVote.amount);
         }
         // Tied result, give back user's veDEG
-        else if (finalResult == TIED_RESULT) {
+        else if (finalResult == TIED_RESULT || finalResult == FAILED_RESULT) {
             _unlockVeDEG(_user, userVote.amount);
         }
         // Wrong choice, no reward

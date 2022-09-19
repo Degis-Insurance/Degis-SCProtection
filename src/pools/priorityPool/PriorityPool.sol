@@ -76,11 +76,11 @@ contract PriorityPool is
     // Avoid accuracy issues
     uint256 internal constant MIN_COVER_AMOUNT = 10e6;
 
-    // Max time length in months
-    uint256 internal immutable maxLength;
+    // Max time length in month
+    uint256 internal constant MAX_LENGTH = 3;
 
     // Min time length in month
-    uint256 internal immutable minLength;
+    uint256 internal constant MIN_LENGTH = 1;
 
     address internal immutable owner;
 
@@ -115,7 +115,7 @@ contract PriorityPool is
     uint256 public coverIndex;
 
     // Has already passed the base premium ratio period
-    bool internal passedBasePeriod;
+    bool public passedBasePeriod;
 
     // Year => Month => Amount of cover ends in that month
     mapping(uint256 => mapping(uint256 => uint256)) public coverInMonth;
@@ -124,11 +124,13 @@ contract PriorityPool is
     mapping(uint256 => address) public lpTokenAddress;
 
     // Address => Whether is LP address
-    mapping(address => bool) internal isLPToken;
+    mapping(address => bool) public isLPToken;
 
-    // Generation => Price of lp tokens
+    // PRI-LP address => Price of lp tokens
     // PRI-LP token amount * Price Index = PRO-LP token amount
     mapping(address => uint256) public priceIndex;
+
+    mapping(uint256 => mapping(uint256 => uint256)) public payoutInMonth;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -141,6 +143,7 @@ contract PriorityPool is
         uint256 _maxCapacity,
         uint256 _baseRatio,
         address _owner,
+        address _priorityPoolFactory,
         address _weightedFarmingPool,
         address _protectionPool,
         address _policyCenter,
@@ -157,16 +160,13 @@ contract PriorityPool is
 
         basePremiumRatio = _baseRatio;
 
-        // TODO: change length
-        maxLength = 3;
-        minLength = 1;
-
         // Generation 1, price starts from 1 (SCALE)
         priceIndex[_deployNewGenerationLP(_weightedFarmingPool)] = SCALE;
 
         coverIndex = 10000;
 
-        priorityPoolFactory = msg.sender;
+        priorityPoolFactory = _priorityPoolFactory;
+
         weightedFarmingPool = _weightedFarmingPool;
         protectionPool = _protectionPool;
         policyCenter = _policyCenter;
@@ -215,7 +215,7 @@ contract PriorityPool is
         view
         returns (uint256 price, uint256 length)
     {
-        require(_amount >= MIN_COVER_AMOUNT, "Under minimum cover amount");
+        _checkAmount(_amount);
 
         // Dynamic premium ratio (annually)
         uint256 dynamicRatio = dynamicPremiumRatio(_amount);
@@ -244,7 +244,8 @@ contract PriorityPool is
 
         // Only count the latest 3 months
         for (uint256 i; i < 3; ) {
-            covered += coverInMonth[currentYear][currentMonth];
+            covered += (coverInMonth[currentYear][currentMonth] -
+                payoutInMonth[currentYear][currentMonth]);
 
             unchecked {
                 if (++currentMonth > 12) {
@@ -287,6 +288,9 @@ contract PriorityPool is
         // Time passed since this pool started
         uint256 fromStart = block.timestamp - startTime;
 
+        uint256 totalActiveCovered = IProtectionPool(protectionPool)
+            .getTotalActiveCovered();
+
         // First 7 days use base ratio
         // Then use dynamic ratio
         // TODO: test use 5 hours
@@ -296,12 +300,10 @@ contract PriorityPool is
                 priorityPoolFactory
             ).dynamicPoolCounter();
 
-            if (numofDynamicPools > 0) {
+            if (numofDynamicPools > 0 && totalActiveCovered > 0) {
                 // Covered ratio = Covered amount of this pool / Total covered amount
                 uint256 coveredRatio = ((activeCovered() + _coverAmount) *
-                    SCALE) /
-                    (IProtectionPool(protectionPool).getTotalActiveCovered() +
-                        _coverAmount);
+                    SCALE) / (totalActiveCovered + _coverAmount);
 
                 address lp = currentLPAddress();
 
@@ -441,7 +443,7 @@ contract PriorityPool is
      *         Only called from policy center
      *
      * @param _amount          Cover amount (shield)
-     * @param _premium         Premium for priority pool
+     * @param _premium         Premium for priority pool (in protocol token)
      * @param _length          Cover length (in month)
      * @param _timestampLength Cover length (in second)
      */
@@ -451,6 +453,12 @@ contract PriorityPool is
         uint256 _length,
         uint256 _timestampLength
     ) external whenNotPaused onlyPolicyCenter {
+        // Check cover length
+        _checkLength(_length);
+
+        // Check cover amount
+        _checkAmount(_amount);
+
         _updateDynamic();
 
         // Record cover amount in each month
@@ -459,6 +467,11 @@ contract PriorityPool is
         // Update the weighted farming pool speed for this priority pool
         uint256 newSpeed = (_premium * SCALE) / _timestampLength;
         _updateWeightedFarmingSpeed(_length, newSpeed);
+    }
+
+    function _checkLength(uint256 _length) internal pure {
+        if (_length > MAX_LENGTH || _length < MIN_LENGTH)
+            revert PriorityPool__WrongCoverLength();
     }
 
     /**
@@ -481,16 +494,55 @@ contract PriorityPool is
      * @param _amount Payout amount to be moved out
      */
     function liquidatePool(uint256 _amount) external onlyExecutor {
-        _retrievePayout(_amount);
+        uint256 payout = _amount > activeCovered() ? activeCovered() : _amount;
+
+        uint256 payoutRatio = _retrievePayout(payout);
 
         _updateCurrentLPWeight();
+
+        _updateCoveredWhenLiquidated(payoutRatio);
 
         // Generation ++
         // Deploy the new generation lp token
         // Those who stake liquidity into this priority pool will be given the new lp token
         _deployNewGenerationLP(weightedFarmingPool);
 
+        // Update other pools' cover indexes
+        IProtectionPool(protectionPool).updateIndexCut();
+
         emit Liquidation(_amount, generation);
+    }
+
+    function _updateCoveredWhenLiquidated(uint256 _payoutRatio) internal {
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
+
+        // Only count the latest 3 months
+        for (uint256 i; i < 3; ) {
+            payoutInMonth[currentYear][currentMonth] =
+                (coverInMonth[currentYear][currentMonth] * _payoutRatio) /
+                SCALE;
+
+            unchecked {
+                if (++currentMonth > 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
+
+                ++i;
+            }
+        }
+    }
+
+    function updateWhenClaimed(uint256 _expiry, uint256 _amount) external {
+        require(msg.sender == payoutPool, "Only payout pool");
+
+        (uint256 currentYear, uint256 currentMonth, ) = _expiry
+            .timestampToDate();
+
+        coverInMonth[currentYear][currentMonth] -= _amount;
+        payoutInMonth[currentYear][currentMonth] -= _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -509,6 +561,11 @@ contract PriorityPool is
             IPriorityPoolFactory(priorityPoolFactory).updateDynamicPool(poolId);
             passedBasePeriod = true;
         }
+    }
+
+    function _checkAmount(uint256 _amount) internal pure {
+        if (_amount < MIN_COVER_AMOUNT)
+            revert PriorityPool__UnderMinCoverAmount();
     }
 
     /**
@@ -653,7 +710,10 @@ contract PriorityPool is
      *
      * @param _amount Amount of SHIELD to retrieve
      */
-    function _retrievePayout(uint256 _amount) internal {
+    function _retrievePayout(uint256 _amount)
+        internal
+        returns (uint256 payoutRatio)
+    {
         // Current PRO-LP amount
         uint256 currentLPAmount = SimpleERC20(protectionPool).balanceOf(
             address(this)
@@ -677,7 +737,7 @@ contract PriorityPool is
         } else {
             uint256 shieldGot = proPool.removedLiquidity(
                 currentLPAmount,
-                address(this)
+                payoutPool
             );
 
             uint256 remainingPayout = _amount - shieldGot;
@@ -690,7 +750,6 @@ contract PriorityPool is
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
-        uint256 payoutRatio;
         activeCovered() > 0
             ? payoutRatio = (_amount * SCALE) / activeCovered()
             : payoutRatio = 0;
@@ -700,6 +759,7 @@ contract PriorityPool is
             generation,
             _amount,
             payoutRatio,
+            coverIndex,
             address(this)
         );
     }

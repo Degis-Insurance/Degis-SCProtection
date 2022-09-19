@@ -10,5 +10,6 @@ interface ISimplePriorityPool {
 
 abstract contract IncidentReportDependencies {
     IPriorityPoolFactory public priorityPoolFactory;
+
     address public executor;
 }

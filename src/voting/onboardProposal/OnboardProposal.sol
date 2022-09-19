@@ -20,7 +20,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../../util/OwnableWithoutContext.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "./OnboardProposalParameters.sol";
 import "./OnboardProposalDependencies.sol";
@@ -34,8 +34,8 @@ import "../../interfaces/ExternalTokenDependencies.sol";
 contract OnboardProposal is
     OnboardProposalParameters,
     OnboardProposalEventError,
+    OwnableWithoutContextUpgradeable,
     ExternalTokenDependencies,
-    OwnableWithoutContext,
     OnboardProposalDependencies
 {
     // ---------------------------------------------------------------------------------------- //
@@ -81,15 +81,15 @@ contract OnboardProposal is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(
+    function initialize(
         address _deg,
         address _veDeg,
         address _shield
-    )
-        ExternalTokenDependencies(_deg, _veDeg, _shield)
-        OwnableWithoutContext(msg.sender)
-    {
-        // Initial quorum 30% 
+    ) public initializer {
+        __Ownable_init();
+        __ExternalToken__Init(_deg, _veDeg, _shield);
+
+        // Initial quorum 30%
         quorumRatio = 30;
     }
 
@@ -139,7 +139,7 @@ contract OnboardProposal is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setQuorumRatio(uint256 _quorumRatio) external onlyOwner {

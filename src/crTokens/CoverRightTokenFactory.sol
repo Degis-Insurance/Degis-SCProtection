@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "./CoverRightToken.sol";
-import "../util/OwnableWithoutContext.sol";
+import "../util/OwnableWithoutContextUpgradeable.sol";
 
 import "forge-std/console.sol";
 
@@ -18,7 +18,7 @@ import "forge-std/console.sol";
  *         And find the address of the crToken with its salt
  *
  */
-contract CoverRightTokenFactory is OwnableWithoutContext {
+contract CoverRightTokenFactory is OwnableWithoutContextUpgradeable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -54,13 +54,29 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _policyCenter, address _incidentReport)
-        OwnableWithoutContext(msg.sender)
+    function initialize(address _policyCenter, address _incidentReport)
+        public
+        initializer
     {
+        __Ownable_init();
+
         policyCenter = _policyCenter;
         incidentReport = _incidentReport;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Get crToken address
+     *
+     * @param _poolId     Pool id
+     * @param _expiry     Expiry timestamp
+     * @param _generation Generation of the crToken
+     *
+     * @return crToken CRToken address
+     */
     function getCRTokenAddress(
         uint256 _poolId,
         uint256 _expiry,
@@ -98,7 +114,9 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
      * @param _poolId     Pool Id
      * @param _tokenName  Name of insured token (e.g. DEG)
      * @param _expiry     Expiry date of cover right token
-     * @param _generation Generation of priority pool (1 if no liquidations occurred)
+     * @param _generation Generation of priority pool & crToken (1 if no liquidations occurred)
+     *
+     * @return newCRToken New deployed crToken address
      */
     function deployCRToken(
         string calldata _poolName,
