@@ -215,13 +215,13 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         // If report amount > 0, the effective report should be amount - 1
         uint256 reportAmount = incident.getPoolReportsAmount(poolId);
 
-        if (reportAmount > 0) {
+        if (reportAmount > 0 && generation <= reportAmount) {
             // Only count for the valid report
             // E.g. Current report amount is 3, then for generation 1 crToken,
             //      its corresponding report index (in the array) is 0
             uint256 validReportId = incident.poolReports(
                 poolId,
-                generation - 2
+                generation - 1
             );
 
             (, , , uint256 voteTimestamp, , , , , uint256 result, , ) = incident

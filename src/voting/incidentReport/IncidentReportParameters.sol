@@ -17,8 +17,8 @@ abstract contract IncidentReportParameters is VotingParameters {
     // 16 hours for fuji, 2 hours for fujiInternal
     uint256 public constant INCIDENT_VOTING_PERIOD = 5 minutes;
 
-    uint256 public constant EXTEND_PERIOD = 2 minutes;
-    uint256 public constant SAMPLE_PERIOD = 2 minutes;
+    uint256 public constant EXTEND_PERIOD = 5 minutes;
+    uint256 public constant SAMPLE_PERIOD = 5 minutes;
 
     // DEG threshold for starting a report
     uint256 public constant REPORT_THRESHOLD = 10000 ether;
