@@ -221,7 +221,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
             //      its corresponding report index (in the array) is 0
             uint256 validReportId = incident.poolReports(
                 poolId,
-                generation - 1
+                generation - 2
             );
 
             (, , , uint256 voteTimestamp, , , , , uint256 result, , ) = incident

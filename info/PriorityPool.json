@@ -2,35 +2,35 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0x1e81f37DFEbeb48616934d1DAE6909580B58a5Ad",
+			"poolAddress": "0xcCc25e79a0e4518A683EB2eDFA911620cc985841",
 			"name": "TraderJoe",
 			"token": "0x2C563651419A72e721D83151713428D467f1Ce22",
 			"premium": "200"
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0x96a1859572dEA1131CCe2338ec24AF4dc198fc0b",
+			"poolAddress": "0xa03f10AfD0558c27ca14411c21CF04B414bfde37",
 			"name": "GMX",
 			"token": "0x10C9F09503048B0b93B12b316C4eb93324a79fdf",
 			"premium": "200"
 		},
 		"3": {
 			"id": "3",
-			"poolAddress": "0xf5D68f39f3255D4E5Fd98E716907Daa740e7C3B3",
+			"poolAddress": "0x46C30078fe3d60fb0196a5bc64284ce68f8d5350",
 			"name": "PTP",
 			"token": "0x1A0F76C19F9A9301A3cDE8532f72ce703FE58856",
 			"premium": "250"
 		},
 		"4": {
 			"id": "4",
-			"poolAddress": "0x590Ea181d2Ea398d589F92A22fCd2D9c87Cf0aEA",
+			"poolAddress": "0x580113D359593Ffb7817014A65B8952FeAE1ac5A",
 			"name": "IME",
 			"token": "0xe6b592f03Cc0447E61004C5437c3579b590B6Efb",
 			"premium": "250"
 		},
 		"5": {
 			"id": "5",
-			"poolAddress": "0x7891dA4C18250D0974E486e698071bbF014188dA",
+			"poolAddress": "0x2708793af51acC26834B2593D877b408Cfc5699C",
 			"name": "XAVA",
 			"token": "0x8BfA09Bc7778f98505160C08d1E2D519B4c6137e",
 			"premium": "200"
@@ -50,10 +50,10 @@
 	"localhost": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0x4319D1eD7978cA18c10C235006f70dc5E1A6915C",
+			"poolAddress": "0x0EAbD3027F84295C0FA709994788Ee83A307Bd1f",
 			"name": "Test",
 			"token": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
-			"premium": "500"
+			"premium": "400"
 		}
 	},
 	"rinkeby": {},

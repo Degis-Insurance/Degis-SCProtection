@@ -9,7 +9,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "hardhat-contract-sizer";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-import "./tasks/example";
+import "./tasks/localTest";
 
 import * as dotenv from "dotenv";
 dotenv.config();

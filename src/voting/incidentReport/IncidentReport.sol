@@ -182,6 +182,10 @@ contract IncidentReport is
         return poolReports[_poolId].length;
     }
 
+    function addPoolReports(uint256 _poolId, uint256 _number) external {
+        poolReports[_poolId].push(_number);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //

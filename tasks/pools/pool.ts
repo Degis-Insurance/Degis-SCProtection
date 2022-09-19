@@ -323,7 +323,7 @@ task("dynamicPremium", "Get priority pool active covered")
     console.log("Min requirement: ", minReq.toString());
   });
 
-task("updateIndexCut", "Buy a cover").setAction(async (_, hre) => {
+task("updateIndexCut", "Update cover index").setAction(async (_, hre) => {
   const { network } = hre;
 
   // Signers

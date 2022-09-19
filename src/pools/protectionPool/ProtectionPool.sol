@@ -274,8 +274,10 @@ contract ProtectionPool is
         }
 
         // @audit Change path
-        //
+        // If sent from policyCenter => this is a user action
+        // If sent from priority pool => this is a payout action
         address realPayer = msg.sender == policyCenter ? _provider : msg.sender;
+        
         _burn(realPayer, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 

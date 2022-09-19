@@ -21,6 +21,8 @@ import {
   MockVeDEG__factory,
   MockERC20,
   MockERC20__factory,
+  IncidentReport,
+  IncidentReport__factory,
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -37,7 +39,7 @@ task("mintDegis", "Mint degis tokens").setAction(async (_, hre) => {
     addressList[network.name].MockDEG
   );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("50000"));
   console.log("tx details", await tx.wait());
 
   const balance = await deg.balanceOf(dev_account.address);
@@ -216,11 +218,29 @@ task("getCRToken", "Get cr token address").setAction(async (_, hre) => {
 
   const crToken: CoverRightToken = new CoverRightToken__factory(
     dev_account
-  ).attach("0xC8845faF685cD8CB637BcB2067675C364b67820d");
+  ).attach("0xc4F8Ac8B98b2f1b6C86467d2c9992C882Bdf3BFa");
 
   const gen = await crToken.generation();
   console.log("gen", gen.toString());
 
   const expiry = await crToken.expiry();
   console.log("expiry", expiry.toString());
+
+  const incidentReport = await crToken.incidentReport();
+  console.log("Incident report in cr: ", incidentReport);
+  const inci: IncidentReport = new IncidentReport__factory(dev_account).attach(
+    incidentReport
+  );
+
+  const poolReportAmount = await inci.getPoolReportsAmount(2);
+  console.log("Report amount: ", poolReportAmount.toString());
+
+  const poolReports = await inci.poolReports(2, 1);
+  console.log("Report id: ", poolReports.toString());
+
+  const claimable = await crToken.getClaimableOf(dev_account.address);
+  console.log("Claimable: ", claimable.toString());
+
+  const excluded = await crToken.getExcludedCoverageOf(dev_account.address);
+  console.log("Excluded: ", excluded.toString());
 });

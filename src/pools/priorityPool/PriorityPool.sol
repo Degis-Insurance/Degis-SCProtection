@@ -128,6 +128,8 @@ contract PriorityPool is
     // PRI-LP token amount * Price Index = PRO-LP token amount
     mapping(address => uint256) public priceIndex;
 
+    mapping(uint256 => mapping(uint256 => uint256)) public payoutInMonth;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -241,7 +243,8 @@ contract PriorityPool is
 
         // Only count the latest 3 months
         for (uint256 i; i < 3; ) {
-            covered += coverInMonth[currentYear][currentMonth];
+            covered += (coverInMonth[currentYear][currentMonth] -
+                payoutInMonth[currentYear][currentMonth]);
 
             unchecked {
                 if (++currentMonth > 12) {
@@ -492,16 +495,43 @@ contract PriorityPool is
     function liquidatePool(uint256 _amount) external onlyExecutor {
         uint256 payout = _amount > activeCovered() ? activeCovered() : _amount;
 
-        _retrievePayout(payout);
+        uint256 payoutRatio = _retrievePayout(payout);
 
         _updateCurrentLPWeight();
+
+        _updateCoveredWhenLiquidated(payoutRatio);
 
         // Generation ++
         // Deploy the new generation lp token
         // Those who stake liquidity into this priority pool will be given the new lp token
         _deployNewGenerationLP(weightedFarmingPool);
 
+        // Update other pools' cover indexes
+        IProtectionPool(protectionPool).updateIndexCut();
+
         emit Liquidation(_amount, generation);
+    }
+
+    function _updateCoveredWhenLiquidated(uint256 _payoutRatio) internal {
+        (uint256 currentYear, uint256 currentMonth, ) = block
+            .timestamp
+            .timestampToDate();
+
+        // Only count the latest 3 months
+        for (uint256 i; i < 3; ) {
+            payoutInMonth[currentYear][currentMonth] =
+                (coverInMonth[currentYear][currentMonth] * _payoutRatio) /
+                SCALE;
+
+            unchecked {
+                if (++currentMonth > 12) {
+                    ++currentYear;
+                    currentMonth = 1;
+                }
+
+                ++i;
+            }
+        }
     }
 
     function updateWhenClaimed(uint256 _expiry, uint256 _amount) external {
@@ -511,6 +541,7 @@ contract PriorityPool is
             .timestampToDate();
 
         coverInMonth[currentYear][currentMonth] -= _amount;
+        payoutInMonth[currentYear][currentMonth] -= _amount;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -678,7 +709,10 @@ contract PriorityPool is
      *
      * @param _amount Amount of SHIELD to retrieve
      */
-    function _retrievePayout(uint256 _amount) internal {
+    function _retrievePayout(uint256 _amount)
+        internal
+        returns (uint256 payoutRatio)
+    {
         // Current PRO-LP amount
         uint256 currentLPAmount = SimpleERC20(protectionPool).balanceOf(
             address(this)
@@ -702,7 +736,7 @@ contract PriorityPool is
         } else {
             uint256 shieldGot = proPool.removedLiquidity(
                 currentLPAmount,
-                address(this)
+                payoutPool
             );
 
             uint256 remainingPayout = _amount - shieldGot;
@@ -715,7 +749,6 @@ contract PriorityPool is
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
-        uint256 payoutRatio;
         activeCovered() > 0
             ? payoutRatio = (_amount * SCALE) / activeCovered()
             : payoutRatio = 0;
@@ -725,6 +758,7 @@ contract PriorityPool is
             generation,
             _amount,
             payoutRatio,
+            coverIndex,
             address(this)
         );
     }

@@ -65,6 +65,7 @@ contract PayoutPool is Initializable {
         uint256 remaining;
         uint256 endTiemstamp;
         uint256 ratio;
+        uint256 coverIndex;
         address priorityPool;
     }
     // Pool id => Generation => Payout
@@ -147,6 +148,7 @@ contract PayoutPool is Initializable {
         uint256 _generation,
         uint256 _amount,
         uint256 _ratio,
+        uint256 _coverIndex,
         address _poolAddress
     ) external onlyPriorityPool(_poolId) {
         Payout storage payout = payouts[_poolId][_generation];
@@ -155,6 +157,7 @@ contract PayoutPool is Initializable {
         payout.amount = _amount;
         payout.endTiemstamp = block.timestamp + CLAIM_PERIOD;
         payout.ratio = _ratio;
+        payout.coverIndex = _coverIndex;
         payout.priorityPool = _poolAddress;
 
         emit NewPayout(_poolId, _generation, _amount, _ratio);
@@ -204,11 +207,10 @@ contract PayoutPool is Initializable {
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 
-        uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
+        // uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
 
         // Actual amount given to the user
-        claimed = (claimable * coverIndex) / 10000;
-
+        claimed = (claimable * payout.coverIndex) / 10000;
 
         // Reduce the active cover amount in priority pool
         (, address poolAddress, , , ) = IPriorityPoolFactory(
