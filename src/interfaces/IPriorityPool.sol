@@ -5,6 +5,11 @@ pragma solidity ^0.8.13;
 interface IPriorityPool {
     //
 
+    function lpTokenAddress(uint256 _generation)
+        external
+        view
+        returns (address);
+
     function insuredToken() external view returns (address);
 
     function pausePriorityPool(bool _paused) external;

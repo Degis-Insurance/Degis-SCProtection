@@ -100,4 +100,6 @@ interface IPriorityPoolFactory {
     function payoutPool() external view returns (address);
 
     function pausePriorityPool(uint256 _poolId, bool _paused) external;
+
+   
 }

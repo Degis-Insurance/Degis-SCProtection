@@ -474,12 +474,29 @@ contract WeightedFarmingPool is
         // check if current index exists for user
         // index is 0, push
         // length <= index
-        if (user.amount.length < index + 1) {
-            user.amount.push(0);
+        uint256 userLength = user.amount.length;
+        if (userLength < index + 1) {
+            // If user amount length is 0, index is 1 => Push 2 zeros
+            // If user amount length is 1, index is 1 => Push 1 zero
+            // If user amount length is 1, index is 2 => Push 2 zeros
+            for (uint256 i = userLength; i < index + 1; ) {
+                user.amount.push(0);
+
+                unchecked {
+                    ++i;
+                }
+            }
         }
 
-        if (pool.amount.length < index + 1) {
-            pool.amount.push(0);
+        uint256 poolLength = pool.amount.length;
+        if (poolLength < index + 1) {
+            for (uint256 i = poolLength; i < index + 1; ) {
+                pool.amount.push(0);
+
+                unchecked {
+                    ++i;
+                }
+            }
         }
 
         // Update user amount for this gen lp token
@@ -506,6 +523,11 @@ contract WeightedFarmingPool is
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
+        uint256 index = _getIndex(_id, _token);
+
+        if (_amount > user.amount[index])
+            revert WeightedFarmingPool__NotEnoughAmount();
+
         if (user.shares > 0) {
             uint256 pending = ((user.shares * pool.accRewardPerShare) /
                 SCALE -
@@ -521,8 +543,6 @@ contract WeightedFarmingPool is
         }
 
         IERC20(_token).transfer(_user, _amount);
-
-        uint256 index = _getIndex(_id, _token);
 
         user.amount[index] -= _amount;
         user.shares -= _amount * pool.weight[index];

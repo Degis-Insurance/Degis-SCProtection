@@ -139,7 +139,7 @@ contract OnboardProposal is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setQuorumRatio(uint256 _quorumRatio) external onlyOwner {

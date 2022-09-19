@@ -110,7 +110,7 @@ contract Executor is
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
-        if (report.result != 1) revert Executor__ReportNotPassed();
+        if (report.result != PASS_RESULT) revert Executor__ReportNotPassed();
 
         // Executed callback function
         IIncidentReport(incidentReport).executed(_reportId);
@@ -153,7 +153,8 @@ contract Executor is
 
         if (proposal.status != SETTLED_STATUS)
             revert Executor__ProposalNotSettled();
-        if (proposal.result != 1) revert Executor__ProposalNotPassed();
+        if (proposal.result != PASS_RESULT)
+            revert Executor__ProposalNotPassed();
 
         // Execute the proposal
         newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(

@@ -341,6 +341,7 @@ contract PolicyCenter is
         // Mint PRI-LP tokens to the user directly
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+
         IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
         emit LiquidityStakedWithoutFarming(msg.sender, _poolId, _amount);
@@ -362,7 +363,7 @@ contract PolicyCenter is
         uint256 _poolId,
         address _priorityLP,
         uint256 _amount
-    ) external poolExists(_poolId) {
+    ) public poolExists(_poolId) {
         if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         // First remove the PRI-LP token from weighted farming pool
@@ -384,6 +385,26 @@ contract PolicyCenter is
 
         emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
+
+    // /**
+    //  * @notice Unstake all liquidity (all generations)
+    //  *
+    //  *         Priority: generation from small to big
+    //  *
+    //  * @param _poolId Pool id
+    //  * @param _amount Total amount
+    //  */
+    // function unstakeAllLiquidity(uint256 _poolId, uint256 _amount) external {
+    //     IPriorityPool priPool = IPriorityPool(priorityPools[_poolId]);
+
+    //     uint256 generation = priPool.generation();
+
+    //     for (uint256 i; i < generation; ) {
+    //         address priLP = priPool.lpTokenAddress(++i);
+    //         uint256 balance = IERC20(priLP).balanceOf(address(this));
+    //         unstakeLiquidity(_poolId, priPool.lpTokenAddress(++i), _amount);
+    //     }
+    // }
 
     /**
      * @notice Unstake liquidity without removing PRI-LP from farming

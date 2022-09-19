@@ -6,11 +6,4 @@ import "../../interfaces/IPriorityPoolFactory.sol";
 
 abstract contract OnboardProposalDependencies {
     IPriorityPoolFactory public priorityPoolFactory;
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
-    }
 }

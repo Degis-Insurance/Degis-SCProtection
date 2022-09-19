@@ -273,6 +273,8 @@ contract IncidentReport is
         currentReport.status = CLOSE_STATUS;
         reported[_id] = false;
 
+        poolReports[currentReport.poolId].pop();
+
         _unpausePools(currentReport.poolId);
 
         emit ReportClosed(_id, block.timestamp);
@@ -330,6 +332,8 @@ contract IncidentReport is
                     uint256 poolId = currentReport.poolId;
                     _unpausePools(poolId);
                     reported[poolId] = false;
+
+                    poolReports[poolId].pop();
                 }
 
                 currentReport.result = res;

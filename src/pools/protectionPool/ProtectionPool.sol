@@ -285,6 +285,7 @@ contract ProtectionPool is
     }
 
     function checkEnoughLiquidity(uint256 _amountToRemove) public view {
+        // Minimum shield requirement
         uint256 minRequirement = minAssetRequirement();
 
         uint256 currentReserved = IShield(shield).balanceOf(address(this));

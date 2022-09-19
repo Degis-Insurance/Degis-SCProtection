@@ -190,8 +190,15 @@ task("checkFarmings", "Check farming status").setAction(async (_, hre) => {
   console.log("User shares: ", userInfo.shares.toString());
   console.log("User reward debt: ", userInfo.rewardDebt.toString());
 
+  const poolInfo = await farming.pools(1);
+  console.log("Pool info: ", poolInfo.accRewardPerShare.toString());
+
+  const poolArray = await farming.getPoolArrays(1);
+  console.log("Tokens: ", poolArray[0]);
+  console.log("Amount:", poolArray[1]);
+
   const userAmount = await farming.getUserLPAmount(1, addr);
-  console.log("User lp amount: ", userAmount[0].toString());
+  console.log("User lp amount: ", userAmount);
 });
 
 task("addPool", "Add new farming pool")
