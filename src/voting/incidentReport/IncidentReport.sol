@@ -388,14 +388,18 @@ contract IncidentReport is
     }
 
     /**
-     * @notice Executed by executor
+     * @notice Update status after execution
+     *         Only callable by executor
      *
-     * @param _poolId Report id
+     * @param _reportId Report id
      */
-    function executed(uint256 _poolId) external {
-        require(msg.sender == executor, "IncidentReport: Not executor");
-        reported[_poolId] = false;
-        _unpausePools(_poolId);
+    function executed(uint256 _reportId) external {
+        if (msg.sender != executor) revert IncidentReport__OnlyExecutor();
+
+        uint256 poolId = reports[_reportId].poolId;
+        reported[poolId] = false;
+
+        _unpausePools(poolId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -469,7 +473,8 @@ contract IncidentReport is
         if (reports[_id].status != VOTING_STATUS)
             revert IncidentReport__WrongStatus();
         if (_amount == 0) revert IncidentReport__ZeroAmount();
-        if (_isFor != 1 && _isFor != 2) revert IncidentReport__WrongChoice();
+        if (_isFor != VOTE_FOR && _isFor != VOTE_AGAINST)
+            revert IncidentReport__WrongChoice();
 
         _enoughVeDEG(_user, _amount);
 
@@ -488,7 +493,7 @@ contract IncidentReport is
 
         Report storage currentReport = reports[_id];
         // Record the vote for this report
-        if (_isFor == 1) {
+        if (_isFor == VOTE_FOR) {
             currentReport.numFor += _amount;
         } else {
             currentReport.numAgainst += _amount;
@@ -526,7 +531,7 @@ contract IncidentReport is
         UserVote memory userVote = votes[_user][_id];
         uint256 finalResult = reports[_id].result;
 
-        if (finalResult == 0) revert IncidentReport__NotSettled();
+        if (finalResult == INIT_RESULT) revert IncidentReport__NotSettled();
         if (userVote.claimed) revert IncidentReport__AlreadyClaimed();
 
         // Correct choice
@@ -660,7 +665,7 @@ contract IncidentReport is
     {
         bool hasChanged = tempResults[_id].hasChanged;
 
-        if (hasChanged && _round < 2) {
+        if (hasChanged && _round < MAX_EXTEND_ROUND) {
             _extendRound(_id);
         } else {
             result = _getVotingResult(
@@ -668,14 +673,6 @@ contract IncidentReport is
                 reports[_id].numAgainst
             );
         }
-
-        // if (!hasChanged) {
-        //     result = _getVotingResult(
-        //         reports[_id].numFor,
-        //         reports[_id].numAgainst
-        //     );
-        // } else if (hasChanged && _round < 2) {} else
-        //     revert("Extend round error");
     }
 
     /**

@@ -54,6 +54,16 @@ contract CoverRightTokenFactory is OwnableWithoutContext {
         incidentReport = _incidentReport;
     }
 
+    function getCRTokenAddress(
+        uint256 _poolId,
+        uint256 _expiry,
+        uint256 _generation
+    ) external view returns (address crToken) {
+        crToken = saltToAddress[
+            keccak256(abi.encodePacked(_poolId, _expiry, _generation))
+        ];
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //

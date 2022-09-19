@@ -34,16 +34,16 @@ contract RewardsTest is
 
     uint256 internal constant PREMIUMRATIO_1 = 200;
 
-    uint256 internal constant COVER_AMOUNT = 1e13;
-    uint256 internal constant PAYOUT = 1e13;
+    uint256 internal constant COVER_AMOUNT = 1e18;
+    uint256 internal constant PAYOUT = 1e18;
     uint256 internal constant LIQUIDITY_UNIT = 100e6;
     uint256 internal constant MIN_COVER_AMOUNT = 100e6;
     uint256 internal constant SCALE = 1e12;
 
     uint256 internal constant LIQUIDITY = 1000 ether;
 
-    uint256 internal constant VOTE_FOR = 1;
-    uint256 internal constant VOTE_AGAINST = 2;
+    // uint256 internal constant VOTE_FOR = 1;
+    // uint256 internal constant VOTE_AGAINST = 2;
     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
     uint256 internal constant PROPOSAL_VOTE_TIME = 0;
@@ -150,7 +150,7 @@ contract RewardsTest is
         vm.prank(CHARLIE);
         protectionPool.approve(address(policyCenter), LIQUIDITY * 2);
         _buyCover(ALICE);
-        _buyCover(BOB);
+        // _buyCover(BOB);
 
         MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);

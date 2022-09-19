@@ -245,3 +245,19 @@ task("pendingReward", "Pending reward in farming pool")
     const userAmount = await farming.getUserLPAmount(2, taskArgs.address);
     console.log("User lp amount: ", userAmount[0].toString());
   });
+
+task("updateRewardSpeed", "Update reward speed in farming pool").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const farming: WeightedFarmingPool = new WeightedFarmingPool__factory(
+      dev_account
+    ).attach(addressList[network.name].WeightedFarmingPool);
+  }
+);

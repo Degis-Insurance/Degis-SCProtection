@@ -23,6 +23,13 @@ import "forge-std/console.sol";
  *         The distribution is in the way of "farming" but with multiple tokens
  *
  *         Different generations of PRI-LP-1-JOE-G1
+ *
+ *         About the scales of variables:
+ *         - weight            SCALE
+ *         - share             SCALE
+ *         - accRewardPerShare SCALE * SCALE / SCALE = SCALE
+ *         - rewardDebt        SCALE * SCALE / SCALE = SCALE
+ *         So pendingReward = ((share * acc) / SCALE - debt) / SCALE
  */
 contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     using DateTimeLibrary for uint256;
@@ -47,7 +54,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     }
     mapping(uint256 => PoolInfo) public pools;
 
-    // pool id => year => month => daily amount
+    // pool id => year => month => speed
     mapping(uint256 => mapping(uint256 => mapping(uint256 => uint256)))
         public speed;
 
@@ -62,7 +69,6 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     // Keccak256(poolId, token) => Whether supported
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
-
 
     constructor(address _policyCenter, address _priorityPoolFactory) {
         policyCenter = _policyCenter;
@@ -128,8 +134,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         PoolInfo memory pool = pools[_id];
         UserInfo memory user = users[_id][_user];
 
-        pending = (user.share * pool.accRewardPerShare / SCALE
-                 - user.rewardDebt) / SCALE;
+        pending = ((user.share * pool.accRewardPerShare) /
+            SCALE -
+            user.rewardDebt);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -218,14 +225,13 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
         emit WeightChanged(_id);
     }
 
-
-    /** 
-     * @notice Sets the speed for a given array of years and months in a given pool
-     * 
-     * @param _id            Pool Id
-     * @param _newSpeed     New speed of the token in the pool
-     * @param _years        Array of years
-     * @param _months       Array of months
+    /**
+     * @notice Update reward speed when new premium income
+     *
+     * @param _id       Pool id
+     * @param _newSpeed New speed (SCALED)
+     * @param _years    Years to be updated
+     * @param _months   Months to be updated
      */
     function updateRewardSpeed(
         uint256 _id,
@@ -317,9 +323,9 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
-        console.log("share",user.share);
-        console.log("acc",pool.accRewardPerShare);
-        console.log("debt",user.rewardDebt);
+        console.log("share", user.share);
+        console.log("acc", pool.accRewardPerShare);
+        console.log("debt", user.rewardDebt);
         if (user.share > 0) {
             uint256 pending = pendingReward(_id, _user);
 
@@ -366,15 +372,15 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
-        
+
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
-        console.log("share",user.share);
-        console.log("acc",pool.accRewardPerShare);
-        console.log("debt",user.rewardDebt);
+        console.log("share", user.share);
+        console.log("acc", pool.accRewardPerShare);
+        console.log("debt", user.rewardDebt);
         if (user.share > 0) {
             uint256 pending = pendingReward(_id, _user);
 
@@ -411,7 +417,10 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
             uint256 newReward = _updateReward(_id);
             console.log("newReward", newReward);
             console.log("pool.shares", pool.shares);
-            pool.accRewardPerShare += (newReward * SCALE) / pool.shares;
+            pool.accRewardPerShare +=
+                newReward * SCALE  /
+                (pool.shares / SCALE);
+            console.log("accRewardPerShare", pool.accRewardPerShare);
 
             pool.lastRewardTimestamp = block.timestamp;
 
@@ -424,7 +433,7 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
     function harvest(uint256 _id, address _to) external {
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
-        
+
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
@@ -432,7 +441,6 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
 
         uint256 pending = pendingReward(_id, msg.sender);
 
-        // TODO: whether should be an error
         if (pending <= 0) revert WeightedFarmingPool__NoPendingRewards();
 
         uint256 actualReward = _safeRewardTransfer(
@@ -521,40 +529,11 @@ contract WeightedFarmingPool is WeightedFarmingPoolEventError {
     }
 
     /**
-     * @notice Update reward speed
-     *
-     * @param _id       Pool id
-     * @param _months   Cover length in months
-     * @param _newSpeed New speed to be added
-     */
-    function _updateRewardSpeed(
-        uint256 _id,
-        uint256 _months,
-        uint256 _newSpeed
-    ) internal {
-        (uint256 currentY, uint256 currentM, ) = block
-            .timestamp
-            .timestampToDate();
-
-        for (uint256 i; i < _months; ) {
-            speed[_id][currentY][currentM] += _newSpeed;
-
-            unchecked {
-                if (++currentM > 12) {
-                    ++currentY;
-                    currentM = 1;
-                }
-
-                ++i;
-            }
-        }
-    }
-
-    /**
      * @notice Safely transfers reward to a user address
-     * @param _token         Reward token address
-     * @param _to         	Address to send reward to
-     * @param _amount      	Amount to send
+     *
+     * @param _token  Reward token address
+     * @param _to     Address to send reward to
+     * @param _amount Amount to send
      */
     function _safeRewardTransfer(
         address _token,

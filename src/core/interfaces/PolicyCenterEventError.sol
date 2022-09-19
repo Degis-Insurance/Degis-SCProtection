@@ -59,20 +59,20 @@ interface PolicyCenterEventError {
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    error PolicyCenter__AlreadyClaimedPayout();
-    error PolicyCenter__WrongPriorityPoolID();
-    error PolicyCenter__InsufficientCapacity();
-    error PolicyCenter__OnlyPriorityPoolFactory();
-    error PolicyCenter__ZeroPremium();
-    error PolicyCenter__NoLiquidity();
-    error PolicyCenter__NoExchange();
-    error PolicyCenter__ZeroAmount();
-    error PolicyCenter__NoPayout();
-    error PolicyCenter__NonExistentPool();
-    error PolicyCenter__CoverAmountTooSmall();
-    error PolicyCenter__BadLength();
-    error PolicyCenter__PremiumTooHigh();
-    error PolicyCenter__InvalidPremiumSplit();
-    error PolicyCenter__PoolPaused();
-    error PolicyCenter__OnlyTreasury();
+    error PolicyCenter__AlreadyClaimedPayout(); // a2ded9c1
+    error PolicyCenter__WrongPriorityPoolID(); // 67f304bf
+    error PolicyCenter__InsufficientCapacity(); // 7730dc0b
+    error PolicyCenter__OnlyPriorityPoolFactory(); // aca500b4
+    error PolicyCenter__ZeroPremium(); // 720794bf
+    error PolicyCenter__NoLiquidity(); // d5c16599
+    error PolicyCenter__NoExchange(); // 7bb995d0
+    error PolicyCenter__ZeroAmount(); // 1613633b
+    error PolicyCenter__NoPayout(); // 6e472dea
+    error PolicyCenter__NonExistentPool(); // 5824d49b
+    error PolicyCenter__CoverAmountTooSmall(); // 5827c187
+    error PolicyCenter__BadLength(); //
+    error PolicyCenter__PremiumTooHigh(); // 
+    error PolicyCenter__InvalidPremiumSplit(); //
+    error PolicyCenter__PoolPaused(); //
+    error PolicyCenter__OnlyTreasury(); //
 }

@@ -416,10 +416,10 @@ task("setCRFactory", "Set cover right token factory").setAction(
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    // if ((await crFactory.payoutPool()) != payoutPoolAddress) {
-    //   const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
-    //   console.log("Tx details: ", await tx_3.wait());
-    // }
+    if ((await crFactory.payoutPool()) != payoutPoolAddress) {
+      const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
+      console.log("Tx details: ", await tx_3.wait());
+    }
 
     console.log(
       "\nFinish setting contract addresses in cover right token factory\n"
@@ -531,7 +531,7 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   ).attach(addressList[network.name].PolicyCenter);
 
   const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].TestToken2
+    addressList[network.name].XAVAToken
   );
   console.log("tx details:", await tx.wait());
 });

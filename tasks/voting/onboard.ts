@@ -38,7 +38,7 @@ task("proposeNewPool", "Proposa a new pool in onboard proposal")
     console.log("tx details", await tx.wait());
   });
 
-task("startVoting", "Start voting process of a proposal")
+task("startVotingProposal", "Start voting process of a proposal")
   .addParam("id", "Proposal id", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
@@ -58,7 +58,7 @@ task("startVoting", "Start voting process of a proposal")
     console.log("Tx details:", await tx.wait());
   });
 
-task("settle", "Settle a voting")
+task("settleProposal", "Settle a proposal voting result")
   .addParam("id", "Proposal id", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;

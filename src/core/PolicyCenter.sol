@@ -281,8 +281,8 @@ contract PolicyCenter is
 
         // Split the premium income and update the pool status
         (
-            uint256 premiumToProtectionPool,
             uint256 premiumToPriorityPool,
+            uint256 premiumToProtectionPool,
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
 
@@ -290,11 +290,7 @@ contract PolicyCenter is
         console.log("premiumToPriorityPool", premiumToPriorityPool);
         console.log("premiumToTreasury", premiumToTreasury);
 
-        IProtectionPool(protectionPool).updateWhenBuy(
-            premiumToProtectionPool,
-            _coverDuration,
-            timestampDuration
-        );
+        IProtectionPool(protectionPool).updateWhenBuy();
         IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
             _coverAmount,
             premiumToPriorityPool,
@@ -358,7 +354,8 @@ contract PolicyCenter is
             address(this)
         );
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
-        
+        IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
+
         IWeightedFarmingPool(weightedFarmingPool).depositFromPolicyCenter(
             _poolId,
             lpToken,
@@ -387,6 +384,7 @@ contract PolicyCenter is
         // Mint PRI-LP tokens to the user directly
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
         IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+        IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
         emit LiquidityStakedWithoutFarming(msg.sender, _poolId, _amount);
     }
@@ -425,6 +423,8 @@ contract PolicyCenter is
             msg.sender
         );
 
+        IProtectionPool(protectionPool).updateStakedSupply(false, _amount);
+
         emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
 
@@ -447,6 +447,8 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
+
+        IProtectionPool(protectionPool).updateStakedSupply(false, _amount);
 
         emit LiquidityUnstakedWithoutFarming(
             msg.sender,
@@ -526,6 +528,8 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
+     *
+     * @return received Actual shield amount received
      */
     function _swapTokens(address _fromToken, uint256 _amount)
         internal
@@ -554,6 +558,8 @@ contract PolicyCenter is
      * @notice Check the cover length
      *
      * @param _length Length to check (in month)
+     *
+     * @return withinLength Whether the cover is within the length
      */
     function _withinLength(uint256 _length) internal pure returns (bool) {
         return _length > 0 && _length <= MAX_COVER_LENGTH;
@@ -565,6 +571,8 @@ contract PolicyCenter is
      *
      * @param _poolId        Pool id
      * @param _coverDuration Cover length in month
+     *
+     * @return crToken Cover right token address
      */
     function _checkCRToken(uint256 _poolId, uint256 _coverDuration)
         internal
@@ -616,6 +624,8 @@ contract PolicyCenter is
      * @param _poolName      Pool name
      * @param _expiry        Expiry timestamp of the cr token
      * @param _newGeneration New generation of the cr token
+     *
+     * @return newCRToken New cover right token address
      */
     function _checkNewCRToken(
         uint256 _poolId,
@@ -684,6 +694,8 @@ contract PolicyCenter is
      *
      * @param _premium Premium in USD
      * @param _token   Native token address
+     *
+     * @return premiumInNativeToken Premium calculated in native token
      */
     function _getNativeTokenAmount(uint256 _premium, address _token)
         internal
@@ -695,7 +707,7 @@ contract PolicyCenter is
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
         uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
-        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
+        premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
         console.log("getNative,premium",premiumInNativeToken);
         console.log("price",price);
         // Pay native tokens
