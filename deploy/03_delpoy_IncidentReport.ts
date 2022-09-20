@@ -1,10 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
   readAddressList,
+  readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -22,26 +24,40 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
-
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
+  const [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
     network.name
   );
+
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [degAddress, veDegAddress, shieldAddress],
+      },
+    },
+  };
 
   // Proxy Admin contract artifact
   const incidentReport = await deploy("IncidentReport", {
     contract: "IncidentReport",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].IncidentReport = incidentReport.address;
+
+  impList[network.name].IncidentReport = incidentReport.implementation;
 
   console.log("\ndeployed to address: ", incidentReport.address);
 
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["IncidentReport"];

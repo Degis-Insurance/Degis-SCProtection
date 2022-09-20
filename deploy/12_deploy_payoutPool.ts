@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
@@ -30,16 +30,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const priorityPoolFactoryAddress =
     addressList[network.name].PriorityPoolFactory;
 
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [
+          shieldAddress,
+          policyCenterAddress,
+          crTokenFactoryAddress,
+          priorityPoolFactoryAddress,
+        ],
+      },
+    },
+  };
+
   // Payout pool contract artifact
   const payoutPool = await deploy("PayoutPool", {
     contract: "PayoutPool",
     from: deployer,
-    args: [
-      shieldAddress,
-      policyCenterAddress,
-      crTokenFactoryAddress,
-      priorityPoolFactoryAddress,
-    ],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].PayoutPool = payoutPool.address;

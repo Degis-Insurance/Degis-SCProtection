@@ -16,6 +16,7 @@ interface IIncidentReport {
         uint256 votingReward; // Voting reward per veDEG
         uint256 payout; // Payout amount of this report (partial payout)
     }
+
     struct TempResult {
         uint256 a;
         uint256 b;

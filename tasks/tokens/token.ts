@@ -17,6 +17,12 @@ import {
   CoverRightToken__factory,
   CoverRightTokenFactory,
   CoverRightTokenFactory__factory,
+  MockVeDEG,
+  MockVeDEG__factory,
+  MockERC20,
+  MockERC20__factory,
+  IncidentReport,
+  IncidentReport__factory,
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -33,10 +39,35 @@ task("mintDegis", "Mint degis tokens").setAction(async (_, hre) => {
     addressList[network.name].MockDEG
   );
 
-  const tx = await deg.mintDegis(dev_account.address, parseUnits("10000"));
+  const tx = await deg.mintDegis(dev_account.address, parseUnits("50000"));
   console.log("tx details", await tx.wait());
 
   const balance = await deg.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 18));
+});
+
+task("mintMockERC20", "Mint mock erc20 tokens").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const token: MockERC20 = new MockERC20__factory(dev_account).attach(
+    addressList[network.name].MockERC20
+  );
+
+  const tx = await token.mint(dev_account.address, parseUnits("10000"));
+  console.log("tx details", await tx.wait());
+
+  await token.approve(
+    addressList[network.name].PolicyCenter,
+    parseUnits("10000000")
+  );
+
+  const balance = await token.balanceOf(dev_account.address);
   console.log(formatUnits(balance, 18));
 });
 
@@ -53,14 +84,14 @@ task("mintShield", "Mint shield tokens").setAction(async (_, hre) => {
     addressList[network.name].MockShield
   );
 
-  const tx = await shield.mint(dev_account.address, parseUnits("1000", 6));
+  const tx = await shield.mint(dev_account.address, parseUnits("10000", 6));
   console.log("tx details", await tx.wait());
 
   const balance = await shield.balanceOf(dev_account.address);
   console.log(formatUnits(balance, 6));
 });
 
-task("mintMockUSD").setAction(async (_, hre) => {
+task("mintVeDEG", "Mint veDEG tokens").setAction(async (_, hre) => {
   const { network } = hre;
 
   // Signers
@@ -69,19 +100,41 @@ task("mintMockUSD").setAction(async (_, hre) => {
 
   const addressList = readAddressList();
 
-  const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
-    addressList[network.name].MockUSDC
+  const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
+    addressList[network.name].MockVeDEG
   );
 
-  const tx = await usd.mint(
-    addressList[network.name].MockExchange,
-    parseUnits("1000000000", 6)
-  );
+  const tx = await veDEG.mint(dev_account.address, parseUnits("4000000", 18));
   console.log("tx details", await tx.wait());
 
-  const balance = await usd.balanceOf(addressList[network.name].MockExchange);
-  console.log("USDC balance:", formatUnits(balance, 6));
+  const balance = await veDEG.balanceOf(dev_account.address);
+  console.log(formatUnits(balance, 6));
 });
+
+task("mintMockUSD", "Mint mockUSD for mockExchange").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
+      addressList[network.name].MockUSDC
+    );
+
+    const tx = await usd.mint(
+      addressList[network.name].MockExchange,
+      parseUnits("1000000000", 6)
+    );
+    console.log("tx details", await tx.wait());
+
+    const balance = await usd.balanceOf(addressList[network.name].MockExchange);
+    console.log("USDC balance of mock exchange:", formatUnits(balance, 6));
+  }
+);
 
 task("approveToken", "Approve token").setAction(async (_, hre) => {
   const { network } = hre;
@@ -165,11 +218,29 @@ task("getCRToken", "Get cr token address").setAction(async (_, hre) => {
 
   const crToken: CoverRightToken = new CoverRightToken__factory(
     dev_account
-  ).attach("0xC8845faF685cD8CB637BcB2067675C364b67820d");
+  ).attach("0xc4F8Ac8B98b2f1b6C86467d2c9992C882Bdf3BFa");
 
   const gen = await crToken.generation();
   console.log("gen", gen.toString());
 
   const expiry = await crToken.expiry();
   console.log("expiry", expiry.toString());
+
+  const incidentReport = await crToken.incidentReport();
+  console.log("Incident report in cr: ", incidentReport);
+  const inci: IncidentReport = new IncidentReport__factory(dev_account).attach(
+    incidentReport
+  );
+
+  const poolReportAmount = await inci.getPoolReportsAmount(2);
+  console.log("Report amount: ", poolReportAmount.toString());
+
+  const poolReports = await inci.poolReports(2, 1);
+  console.log("Report id: ", poolReports.toString());
+
+  const claimable = await crToken.getClaimableOf(dev_account.address);
+  console.log("Claimable: ", claimable.toString());
+
+  const excluded = await crToken.getExcludedCoverageOf(dev_account.address);
+  console.log("Excluded: ", excluded.toString());
 });

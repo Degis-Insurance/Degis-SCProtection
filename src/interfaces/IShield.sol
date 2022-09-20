@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../pools/SimpleIERC20.sol";
+import "../util/SimpleIERC20.sol";
 
 interface IShield is SimpleIERC20 {
     function deposit(

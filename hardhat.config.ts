@@ -9,7 +9,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "hardhat-contract-sizer";
 import { HardhatUserConfig, task } from "hardhat/config";
 
-import example from "./tasks/example";
+import "./tasks/localTest";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -21,6 +21,7 @@ import "./tasks/executor/executor";
 import "./tasks/pools/pool";
 import "./tasks/weightedFarming";
 import "./tasks/tokens/token";
+import "./tasks/policyCenter";
 
 function getRemappings() {
   return fs
@@ -30,7 +31,6 @@ function getRemappings() {
     .map((line) => line.trim().split("="));
 }
 
-task("example", "Example task").setAction(example);
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -48,6 +48,7 @@ const config: HardhatUserConfig = {
       default: 0,
       localhost: 0,
       fuji: 0,
+      fujiInternal: 0,
       avax: 0,
     },
   },

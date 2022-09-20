@@ -1,10 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
   readAddressList,
+  readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -22,22 +24,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
 
-  let degAddress: string, veDegAddress: string, shieldAddress: string;
-
-  [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
+  const [degAddress, veDegAddress, shieldAddress] = getExternalTokenAddress(
     network.name
   );
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
+
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OpenZeppelinTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      init: {
+        methodName: "initialize",
+        args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
+      },
+    },
+  };
 
   // Proxy Admin contract artifact
   const priorityPoolFactory = await deploy("PriorityPoolFactory", {
     contract: "PriorityPoolFactory",
     from: deployer,
-    args: [degAddress, veDegAddress, shieldAddress, protectionPoolAddress],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].PriorityPoolFactory = priorityPoolFactory.address;
+
+  impList[network.name].PriorityPoolFactory =
+    priorityPoolFactory.implementation;
 
   console.log(
     "Priority pool factory deployed to address: ",
@@ -45,8 +61,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     "\n"
   );
 
+  console.log(
+    "Priority pool factory implementation deployed to address: ",
+    priorityPoolFactory.implementation,
+    "\n"
+  );
+
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["PriorityPoolFactory"];

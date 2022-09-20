@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+pragma solidity ^0.8.13;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+import "../../util/SimpleIERC20.sol";
+
+import "./TreasuryDependencies.sol";
+import "./TreasuryEventError.sol";
+
+/**
+ * @notice Treasury Contract
+ *
+ *         Treasury will receive 5% of the premium income (Shield) from policyCenter.
+ *         They are counted as different pools.
+ *
+ *         When a reporter gives a correct report (passed voting and executed),
+ *         he will get 10% of the income of that project pool.
+ *
+ */
+contract Treasury is TreasuryEventError, Initializable, TreasuryDependencies {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    uint256 public constant REPORTER_REWARD = 1000; // 10%
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    address public owner;
+
+    mapping(uint256 => uint256) public poolIncome;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // constructor(
+    //     address _shield,
+    //     address _executor,
+    //     address _policyCenter
+    // ) {
+    //     executor = _executor;
+    //     shield = _shield;
+    //     policyCenter = _policyCenter;
+
+    //     owner = msg.sender;
+    // }
+
+    function initialize(
+        address _shield,
+        address _executor,
+        address _policyCenter
+    ) public initializer {
+        executor = _executor;
+        shield = _shield;
+        policyCenter = _policyCenter;
+
+        owner = msg.sender;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Reward the correct reporter
+     *
+     *         Part of the priority pool income will be given to the reporter
+     *         Only called from executor when executing a report
+     *
+     * @param _poolId   Pool id
+     * @param _reporter Reporter address
+     */
+    function rewardReporter(uint256 _poolId, address _reporter) external {
+        if (msg.sender != executor) revert Treasury__OnlyExecutor();
+
+        uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
+
+        poolIncome[_poolId] -= amount;
+        SimpleIERC20(shield).transfer(_reporter, amount);
+
+        emit ReporterRewarded(_reporter, amount);
+    }
+
+    /**
+     * @notice Record when receiving new premium income
+     *
+     *         Only called from policy center
+     *
+     * @param _poolId Pool id
+     * @param _amount Premium amount (shield)
+     */
+    function premiumIncome(uint256 _poolId, uint256 _amount) external {
+        if (msg.sender != policyCenter) revert Treasury__OnlyPolicyCenter();
+
+        poolIncome[_poolId] += _amount;
+
+        emit NewIncomeToTreasury(_poolId, _amount);
+    }
+
+    /**
+     * @notice Claim shield by the owner
+     *
+     * @param _amount Amount to claim
+     */
+    function claim(uint256 _amount) external {
+        if (msg.sender != owner) revert Treasury__OnlyOwner();
+
+        SimpleIERC20(shield).transfer(owner, _amount);
+
+        emit ClaimedByOwner(_amount);
+    }
+}

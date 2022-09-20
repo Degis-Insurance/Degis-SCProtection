@@ -20,10 +20,12 @@
 
 pragma solidity ^0.8.13;
 
-import "../util/OwnableWithoutContext.sol";
+import "../util/OwnableWithoutContextUpgradeable.sol";
 import "./interfaces/ExecutorDependencies.sol";
 import "../voting/interfaces/VotingParameters.sol";
 import "./interfaces/ExecutorEventError.sol";
+
+import "forge-std/console.sol";
 
 /**
  * @title Executor
@@ -38,16 +40,26 @@ import "./interfaces/ExecutorEventError.sol";
 contract Executor is
     VotingParameters,
     ExecutorEventError,
-    OwnableWithoutContext,
+    OwnableWithoutContextUpgradeable,
     ExecutorDependencies
 {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Whether report already executed
     mapping(uint256 => bool) public reportExecuted;
 
     // Whether proposal already executed
     mapping(uint256 => bool) public proposalExecuted;
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -57,19 +69,19 @@ contract Executor is
         external
         onlyOwner
     {
-        _setPriorityPoolFactory(_priorityPoolFactory);
+        priorityPoolFactory = _priorityPoolFactory;
     }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        _setIncidentReport(_incidentReport);
+        incidentReport = _incidentReport;
     }
 
     function setOnboardProposal(address _onboardProposal) external onlyOwner {
-        _setOnboardProposal(_onboardProposal);
+        onboardProposal = _onboardProposal;
     }
 
     function setTreasury(address _treasury) external onlyOwner {
-        _setTreasury(_treasury);
+        treasury = _treasury;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -93,13 +105,12 @@ contract Executor is
         if (reportExecuted[_reportId]) revert Executor__AlreadyExecuted();
         reportExecuted[_reportId] = true;
 
-        // Get the report
         IIncidentReport.Report memory report = IIncidentReport(incidentReport)
             .getReport(_reportId);
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
-        if (report.result != 1) revert Executor__ReportNotPassed();
+        if (report.result != PASS_RESULT) revert Executor__ReportNotPassed();
 
         // Executed callback function
         IIncidentReport(incidentReport).executed(report.poolId);
@@ -144,7 +155,8 @@ contract Executor is
 
         if (proposal.status != SETTLED_STATUS)
             revert Executor__ProposalNotSettled();
-        if (proposal.result != 1) revert Executor__ProposalNotPassed();
+        if (proposal.result != PASS_RESULT)
+            revert Executor__ProposalNotPassed();
 
         // Execute the proposal
         newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(

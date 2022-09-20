@@ -69,7 +69,6 @@ interface PolicyCenterEventError {
     error PolicyCenter__ZeroAmount(); // 1613633b
     error PolicyCenter__NoPayout(); // 6e472dea
     error PolicyCenter__NonExistentPool(); // 5824d49b
-    error PolicyCenter__CoverAmountTooSmall(); // 5827c187
     error PolicyCenter__BadLength(); //
     error PolicyCenter__PremiumTooHigh(); // 
     error PolicyCenter__InvalidPremiumSplit(); //

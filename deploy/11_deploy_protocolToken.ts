@@ -19,8 +19,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const name = "IME";
-  const symbol = "IME";
+  const name = "JOE";
+  const symbol = "JOE";
   const decimal = 18;
 
   // PriceGetter contract artifact

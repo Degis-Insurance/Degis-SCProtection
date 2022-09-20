@@ -32,24 +32,7 @@ interface IPriorityPool {
 }
 
 abstract contract ProtectionPoolDependencies is CommonDependencies {
-    uint256 constant UINT256_MAX = type(uint256).max;
-
     address public priorityPoolFactory;
     address public policyCenter;
     address public incidentReport;
-
-    function _setPolicyCenter(address _policyCenter) internal virtual {
-        policyCenter = _policyCenter;
-    }
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = _priorityPoolFactory;
-    }
-
-    function _setIncidentReport(address _incidentReport) internal virtual {
-        incidentReport = _incidentReport;
-    }
 }

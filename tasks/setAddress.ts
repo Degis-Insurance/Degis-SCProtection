@@ -29,6 +29,8 @@ import {
   CoverRightToken__factory,
   CoverRightTokenFactory__factory,
   CoverRightTokenFactory,
+  PriorityPoolDeployer,
+  PriorityPoolDeployer__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -52,7 +54,7 @@ task("setAllAddress", "Set all addresses").setAction(async (_, hre) => {
 
 task("setProtectionPool", "Set contract address in protectionPool").setAction(
   async (_, hre) => {
-    console.log("\nSetting contract addresses in reinsurance pool\n");
+    console.log("\nSetting contract addresses in protection pool\n");
 
     const { network } = hre;
 
@@ -99,9 +101,9 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
 
 task(
   "setPriorityPoolFactory",
-  "Set contract address in insurancePoolFactory"
+  "Set contract address in priorityPoolFactory"
 ).setAction(async (_, hre) => {
-  console.log("\nSetting contract addresses in insurancePoolFactory\n");
+  console.log("\nSetting contract addresses in priorityPoolFactory\n");
 
   const { network } = hre;
 
@@ -116,31 +118,50 @@ task(
   const weightedFarmingPoolAddress =
     addressList[network.name].WeightedFarmingPool;
   const incidentReportAddress = addressList[network.name].IncidentReport;
-  const payoutPoolAddress = addressList[network.name].PayoutPool;
+  const priorityPoolDeployerAddress =
+    addressList[network.name].PriorityPoolDeployer;
 
   const priorityPoolFactory: PriorityPoolFactory =
     new PriorityPoolFactory__factory(dev_account).attach(
       addressList[network.name].PriorityPoolFactory
     );
 
-  const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
-  console.log("Tx details: ", await tx_1.wait());
+  if ((await priorityPoolFactory.policyCenter()) != policyCenterAddress) {
+    const tx_1 = await priorityPoolFactory.setPolicyCenter(policyCenterAddress);
+    console.log("Tx details: ", await tx_1.wait());
+  }
 
-  const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
-  console.log("Tx details: ", await tx_2.wait());
+  if ((await priorityPoolFactory.executor()) != executorAddress) {
+    const tx_2 = await priorityPoolFactory.setExecutor(executorAddress);
+    console.log("Tx details: ", await tx_2.wait());
+  }
 
-  const tx_3 = await priorityPoolFactory.setWeightedFarmingPool(
+  if (
+    (await priorityPoolFactory.weightedFarmingPool()) !=
     weightedFarmingPoolAddress
-  );
-  console.log("Tx details: ", await tx_3.wait());
+  ) {
+    const tx_3 = await priorityPoolFactory.setWeightedFarmingPool(
+      weightedFarmingPoolAddress
+    );
+    console.log("Tx details: ", await tx_3.wait());
+  }
 
-  const tx_4 = await priorityPoolFactory.setIncidentReport(
-    incidentReportAddress
-  );
-  console.log("Tx details: ", await tx_4.wait());
+  if ((await priorityPoolFactory.incidentReport()) != incidentReportAddress) {
+    const tx_4 = await priorityPoolFactory.setIncidentReport(
+      incidentReportAddress
+    );
+    console.log("Tx details: ", await tx_4.wait());
+  }
 
-  const tx_5 = await priorityPoolFactory.setPayoutPool(payoutPoolAddress);
-  console.log("Tx details: ", await tx_5.wait());
+  if (
+    (await priorityPoolFactory.priorityPoolDeployer()) !=
+    priorityPoolDeployerAddress
+  ) {
+    const tx_5 = await priorityPoolFactory.setPriorityPoolDeployer(
+      priorityPoolDeployerAddress
+    );
+    console.log("Tx details: ", await tx_5.wait());
+  }
 
   console.log("\nFinish setting contract addresses in priority pool factory\n");
 });
@@ -159,6 +180,7 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
 
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
+    const executorAddress = addressList[network.name].Executor;
 
     const incidentReport: IncidentReport = new IncidentReport__factory(
       dev_account
@@ -167,10 +189,15 @@ task("setIncidentReport", "Set contract address in incident report").setAction(
     if (
       (await incidentReport.priorityPoolFactory()) != priorityPoolFactoryAddress
     ) {
-      const tx = await incidentReport.setPriorityPoolFactory(
+      const tx_1 = await incidentReport.setPriorityPoolFactory(
         priorityPoolFactoryAddress
       );
-      console.log("Tx details: ", await tx.wait());
+      console.log("Tx details: ", await tx_1.wait());
+    }
+
+    if ((await incidentReport.executor()) != executorAddress) {
+      const tx_2 = await incidentReport.setExecutor(executorAddress);
+      console.log("Tx details: ", await tx_2.wait());
     }
 
     console.log("\nFinish setting contract addresses in incident report\n");
@@ -503,17 +530,40 @@ task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
 
     const addressList = readAddressList();
 
+    const crFactory: CoverRightTokenFactory =
+      new CoverRightTokenFactory__factory(dev_account).attach(
+        addressList[network.name].CoverRightTokenFactory
+      );
+
+    const strtime = "2022-11-1 07:59:59";
+    const date = new Date(strtime);
+
+    const timestamp = Math.floor(Number(date.getTime()) / 1000);
+
+    const id = 1;
+    const expiry = timestamp;
+    const generation = 1;
+
+    const crTokenAddress = await crFactory.getCRTokenAddress(
+      id,
+      expiry,
+      generation
+    );
+
+    console.log("CR token address: ", crTokenAddress);
+
     const crToken: CoverRightToken = new CoverRightToken__factory(
       dev_account
-    ).attach("0x1AAFFEBF367DEd9eF5819A747b24b02f44002A5B");
+    ).attach(crTokenAddress);
 
-    const tx = await crToken.setPolicyCenter(
-      addressList[network.name].PolicyCenter
-    );
-    console.log("Tx details: ", await tx.wait());
+    const claimable = await crToken.getClaimableOf(dev_account.address);
+    console.log("Claimable: ", claimable.toString());
 
-    // const policyCenterAddress = await crToken.generation();
-    // console.log("policy center address", policyCenterAddress);
+    // const tx = await crToken.setPolicyCenter(hre.ethers.constants.AddressZero);
+    // console.log("Tx details: ", await tx.wait());
+
+    const policyCenterAddress = await crToken.policyCenter();
+    console.log("policy center address", policyCenterAddress);
   }
 );
 

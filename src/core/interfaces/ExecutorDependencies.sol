@@ -5,32 +5,32 @@ pragma solidity ^0.8.13;
 import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IOnboardProposal.sol";
-import "../../interfaces/IIncidentReport.sol";
+
 import "../../interfaces/ITreasury.sol";
 
+interface IIncidentReport {
+    struct Report {
+        uint256 poolId; // Project pool id
+        uint256 reportTimestamp; // Time of starting report
+        address reporter; // Reporter address
+        uint256 voteTimestamp; // Voting start timestamp
+        uint256 numFor; // Votes voting for
+        uint256 numAgainst; // Votes voting against
+        uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
+        uint256 status; // PENDING, VOTING, SETTLED, CLOSED
+        uint256 result; // 1: Pass, 2: Reject, 3: Tied
+        uint256 votingReward; // Voting reward per veDEG
+        uint256 payout; // Payout amount of this report (partial payout)
+    }
+
+    function getReport(uint256) external view returns (Report memory);
+
+    function executed(uint256 _reportId) external;
+}
 
 abstract contract ExecutorDependencies {
     address public priorityPoolFactory;
     address public incidentReport;
     address public onboardProposal;
     address public treasury;
-
-    function _setPriorityPoolFactory(address _priorityPoolFactory)
-        internal
-        virtual
-    {
-        priorityPoolFactory = _priorityPoolFactory;
-    }
-
-    function _setIncidentReport(address _incidentReport) internal virtual {
-        incidentReport = _incidentReport;
-    }
-
-    function _setOnboardProposal(address _onboardProposal) internal virtual {
-        onboardProposal = _onboardProposal;
-    }
-
-    function _setTreasury(address _treasury) internal virtual {
-        treasury = _treasury;
-    }
 }
