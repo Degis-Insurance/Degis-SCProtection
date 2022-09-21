@@ -94,6 +94,6 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable, Ownable {
 
     function maxFlashLoan(address _token) external view returns (uint256) {
         require(_token == token, "only shield");
-        return IERC20(token).balanceOf(address(this));
+        return IERC20(token).balanceOf(address(protectionPool));
     }
 }

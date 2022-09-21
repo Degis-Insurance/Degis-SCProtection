@@ -9,7 +9,6 @@ import "./utils/BaseTest.sol";
 import "./utils/ContractSetupBaseTest.sol";
 import "../src/voting/incidentReport/IncidentReportParameters.sol";
 
-
 contract FlashLoanTest is
     Test,
     FlashLoanPool,
@@ -74,35 +73,31 @@ contract FlashLoanTest is
     function testPoolBalance() public {
         shield.approve(address(protectionPool), LIQUIDITY);
         protectionPool.deposit(LIQUIDITY);
-        flashLoanPool.maxFlashLoan(address(shield));
-        uint256 fee = flashLoanPool.flashFee(address(shield), LIQUIDITY);
+        uint256 maxFlashLoan = flashLoanPool.maxFlashLoan(address(shield));
+        uint256 fee = flashLoanPool.flashFee(address(shield), maxFlashLoan);
         assertEq(shield.balanceOf(protectionPool), LIQUIDITY + fee);
-        assertEq(shield.balanceOf(address(loaner)), loaner.poolBalance());
     }
 
     function testBorrowZeroRevert() public {
-        vm.expectRevert(FlashLoanPool__FlashLoanMinnimumNotMet.selector);
+        vm.expectRevert(FlashLoanPool__MinnimumNotMet.selector);
         flashLoanPool.flashLoan(msg.sender, address(shield), 0, "");
-
     }
 
     function testBorrowMoreRevert() public {
         vm.expectRevert(FlashLoanPool__NotEnoughFunds.selector);
         flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY * 2, "");
-
     }
 
     function testReturnAmountRevert() public {
-        vm.expectRevert(FlashLoanPool.FlashLoanPool__NotPaidBack.selector);
+        vm.expectRevert(FlashLoanPool__NotPaidBack.selector);
         flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
     }
 
     function testFlashLoan() public {
         // we want to borrow and return right away
-        return_amount = 100;
+        return_amount = LIQUIDITY;
         flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
-        assertEq(loaner.poolBalance(), 100);
-        assertEq(shield.balanceOf(address(loaner)), loaner.poolBalance());
+        assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY);
     }
 
     function testOnlyOwnerRevert() public {
@@ -110,19 +105,6 @@ contract FlashLoanTest is
         vm.expectRevert("Ownable: caller is not the owner");
         flashLoanPool.setProtectionPool(bob);
         vm.stopPrank();
-    }
-
-    function testFuzzDeposit(uint256 amount) public {
-        vm.assume(type(uint256).max - amount >= shield.totalSupply());
-        vm.assume(amount > 0);
-
-        shield.mint(address(this), amount);
-        shield.approve(address(flashLoanPool), amount);
-
-        uint256 prebalance = shield.balanceOf(address(flashLoanPool));
-        shield.balanceOf(address(protectionPool));
-
-        assertEq(shield.balanceOf(address(protectionPool)), prebalance + amount);
     }
 
     function testFuzzFlashLoan(uint256 borrow_amount, uint256 _return_amount)
@@ -133,14 +115,17 @@ contract FlashLoanTest is
         vm.assume(borrow_amount <= _return_amount);
         vm.assume(borrow_amount <= shield.balanceOf(address(flashLoanPool)));
 
-        return_amount = _return_amount;
-        flashLoanPool.flashLoan(borrow_amount);
-        assertEq(shield.balanceOf(address(flashLoanPool)), shield.balanceOf(address(protectionPool)));
-    }
-
-    function testBrokenFlashLoan() public {
-        return_amount = 2;
+        vm.expectEmit(true, true, false, true);
+        emit FlashLoanBorrowed(
+            address(protectionPool),
+            address(this),
+            address(shield),
+            fee
+        );
         flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
-        assertEq(shield.balanceOf(address(flashLoanPool)), shield.balanceOf(address(protectionPool)));
+        assertEq(
+            shield.balanceOf(address(flashLoanPool)),
+            shield.balanceOf(address(protectionPool))
+        );
     }
 }
