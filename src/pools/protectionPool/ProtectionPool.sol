@@ -82,7 +82,8 @@ contract ProtectionPool is
     function initialize(
         address _deg,
         address _veDeg,
-        address _shield
+        address _shield,
+        address _flashPoolPool
     ) public initializer {
         __ERC20_init("ProtectionPool", "PRO-LP");
         __FlashLoan__Init(_shield);
@@ -92,6 +93,7 @@ contract ProtectionPool is
 
         // Register time that pool was deployed
         startTime = block.timestamp;
+        shield.approve(_flashPoolPool, type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //

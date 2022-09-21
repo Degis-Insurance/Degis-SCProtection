@@ -4,11 +4,13 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
 
-abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
+abstract contract FlashLoanPool is IERC3156FlashLender, Initializable, Ownable {
     address public token;
+    address public protectionPool;
 
     // 10000 = 100%
     uint256 public constant FEE = 10;
@@ -21,8 +23,16 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
         uint256 fee
     );
 
+    error FlashLoanPool__MinnimumNotMet();
+    error FlashLoanPool__NotEnoughFunds();
+    error FlashLoanPool__NotPaidBack();
+
     function __FlashLoan__Init(address _shield) internal onlyInitializing {
         token = _shield;
+    }
+
+    function setProtectionPool(address _protectionPool) external onlyOwner {
+        protectionPool = _protectionPool;
     }
 
     function flashLoan(
@@ -31,13 +41,21 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
         uint256 _amount,
         bytes calldata _data
     ) external override returns (bool) {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0) revert FlashLoanPool__MinnimumNotMet();
 
         uint256 fee = flashFee(_token, _amount);
 
-        uint256 previousBalance = IERC20(_token).balanceOf(address(this));
+        uint256 previousBalance = IERC20(_token).balanceOf(
+            address(protectionPool)
+        );
 
-        IERC20(_token).transfer(address(_receiver), _amount);
+        if (previousBalance < _amount) revert FlashLoanPool__NotEnoughFunds();
+
+        IERC20(_token).transferFrom(
+            address(protectionPool),
+            address(_receiver),
+            _amount
+        );
         require(
             _receiver.onFlashLoan(msg.sender, _token, _amount, fee, _data) ==
                 keccak256("ERC3156FlashBorrower.onFlashLoan"),
@@ -45,15 +63,16 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
         );
         IERC20(_token).transferFrom(
             address(_receiver),
-            address(this),
+            address(protectionPool),
             _amount + fee
         );
 
-        uint256 finalBalance = IERC20(_token).balanceOf(address(this));
-        require(finalBalance >= previousBalance + fee, "Not enough pay back");
+        uint256 finalBalance = IERC20(_token).balanceOf(address(protectionPool));
+        if (finalBalance < previousBalance + fee)
+            revert FlashLoanPool__NotPaidBack();
 
         emit FlashLoanBorrowed(
-            address(this),
+            address(protectionPool),
             address(_receiver),
             _token,
             _amount,

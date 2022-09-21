@@ -244,15 +244,10 @@ contract PolicyCenter is
         // Split the premium income and update the pool status
         (
             uint256 premiumToPriorityPool,
-<<<<<<< HEAD
-            uint256 premiumToProtectionPool,
-=======
             ,
->>>>>>> internal_test
             uint256 premiumToTreasury
         ) = _splitPremium(_poolId, premium);
 
-        console.log("premiumToProtectionPool", premiumToProtectionPool);
         console.log("premiumToPriorityPool", premiumToPriorityPool);
         console.log("premiumToTreasury", premiumToTreasury);
 

@@ -31,14 +31,10 @@ import "../libraries/DateTime.sol";
  *             2) Not bought too close to the report timestamp
  *
  */
-<<<<<<< HEAD
-contract CoverRightToken is ERC20, ReentrancyGuard, OwnableWithoutContext {
-=======
 contract CoverRightToken is ERC20, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
->>>>>>> internal_test
 
     // Generation of crToken
     // Same as the generation of the priority pool (when this token was deployed)
@@ -172,12 +168,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         uint256 _poolId,
         address _user,
         uint256 _amount
-<<<<<<< HEAD
-    ) external nonReentrant {
-        require(msg.sender == payoutPool, "Only payout pool");
-=======
     ) external onlyPermitted nonReentrant {
->>>>>>> internal_test
         require(_amount > 0, "Zero Amount");
         require(_poolId == poolId, "Wrong pool id");
 

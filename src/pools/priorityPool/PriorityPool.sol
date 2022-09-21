@@ -288,11 +288,8 @@ contract PriorityPool is
         // Time passed since this pool started
         uint256 fromStart = block.timestamp - startTime;
 
-<<<<<<< HEAD
-=======
         uint256 totalActiveCovered = IProtectionPool(protectionPool)
             .getTotalActiveCovered();
->>>>>>> internal_test
 
         // First 7 days use base ratio
         // Then use dynamic ratio
@@ -754,12 +751,7 @@ contract PriorityPool is
 
         // Set a ratio used when claiming with crTokens
         // E.g. ratio is 1e11
-<<<<<<< HEAD
-        //      You can only use 100% (1e10 / SCALE) of your crTokens for claiming
-        uint256 payoutRatio;
-=======
         //      You can only use 10% (1e11 / SCALE) of your crTokens for claiming
->>>>>>> internal_test
         activeCovered() > 0
             ? payoutRatio = (_amount * SCALE) / activeCovered()
             : payoutRatio = 0;

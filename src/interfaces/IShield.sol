@@ -11,4 +11,9 @@ interface IShield is SimpleIERC20 {
         uint256 _amount,
         uint256 _minAmount
     ) external;
+
+    function approve(
+        address _spender,
+        uint256 _amount
+    ) external;
 }

@@ -11,21 +11,22 @@ import {PriorityPoolFactory} from "src/pools/priorityPool/PriorityPoolFactory.so
 import {ProtectionPool} from "src/pools/protectionPool/ProtectionPool.sol";
 import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
-import "src/pools/PayoutPool.sol";
-import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/Treasury.sol";
+import "src/pools/payoutPool/PayoutPool.sol";
+import "src/reward/farming/WeightedFarmingPool.sol";
+import "src/reward/treasury/Treasury.sol";
+import "src/util/FlashLoanPool.sol";
 
-import "src/voting/incidentReport/IncidentReport.sol";
+import {IncidentReport} from "src/voting/incidentReport/IncidentReport.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
 
-import "src/crTokens/CoverRightToken.sol";
-import "src/crTokens/CoverRightTokenFactory.sol";
+import {CoverRightToken} from "src/crTokens/CoverRightToken.sol";
+import {CoverRightTokenFactory} from "src/crTokens/CoverRightTokenFactory.sol";
 
 import "src/mock/MockERC20.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
 import "src/mock/MockSHIELD.sol";
-import { MockExchange } from "src/mock/MockExchange.sol";
+import {MockExchange} from "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
 import "src/mock/MockUSDC.sol";
 
@@ -45,6 +46,8 @@ contract ContractSetupBaseTest is BaseTest {
 
     CoverRightTokenFactory internal crFactory;
 
+    FlashLoanPool internal flashLoanPool;
+
     MockDEG internal deg;
     MockVeDEG internal veDEG;
     MockSHIELD internal shield;
@@ -61,6 +64,8 @@ contract ContractSetupBaseTest is BaseTest {
 
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
+
+        _setupFlashLoanPool();
 
         _setupProtectionPool();
         _setupFactory();
@@ -82,15 +87,18 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupProtectionPool() internal {
-        protectionPool = new ProtectionPool(
+        protectionPool = new ProtectionPool();
+        protectionPool.initialize(
             address(deg),
             address(veDEG),
-            address(shield)
+            address(shield),
+            address(flashLoanPool)
         );
     }
 
     function _setupFactory() internal {
-        priorityPoolFactory = new PriorityPoolFactory(
+        priorityPoolFactory = new PriorityPoolFactory();
+        priorityPoolFactory.initialize(
             address(deg),
             address(veDEG),
             address(shield),
@@ -99,49 +107,46 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupPolicyCenter() internal {
-        policyCenter = new PolicyCenter(
+        policyCenter = new PolicyCenter();
+        policyCenter.initialize(
             address(deg),
             address(veDEG),
             address(shield),
             address(protectionPool),
             address(USDC)
-
         );
     }
 
     function _setupExecutor() internal {
         executor = new Executor();
+        executor.initialize();
     }
 
     function _setupCRFactory() internal {
-        crFactory = new CoverRightTokenFactory(
-            address(policyCenter),
-            address(incidentReport)
-        );
-    }
-
-    function _setupPayoutPool() internal {
-        payoutPool = new PayoutPool(
-            address(shield),
-            address(policyCenter),
-            address(crFactory),
-            address(priorityPoolFactory)
-        );
+        crFactory = new CoverRightTokenFactory();
+        crFactory.initialize(address(policyCenter), address(incidentReport));
     }
 
     function _setupTreasury() internal {
-        treasury = new Treasury(address(shield), address(executor), address(policyCenter));
+        treasury = new Treasury();
+        treasury.initialize(
+            address(shield),
+            address(executor),
+            address(policyCenter)
+        );
     }
 
     function _setupFarmingPool() internal {
-        farmingPool = new WeightedFarmingPool(
+        farmingPool = new WeightedFarmingPool();
+        farmingPool.initialize(
             address(policyCenter),
             address(priorityPoolFactory)
         );
     }
 
     function _setupIncidentReport() internal {
-        incidentReport = new IncidentReport(
+        incidentReport = new IncidentReport();
+        incidentReport.initialize(
             address(deg),
             address(veDEG),
             address(shield)
@@ -149,10 +154,26 @@ contract ContractSetupBaseTest is BaseTest {
     }
 
     function _setupOnboardProposal() internal {
-        onboardProposal = new OnboardProposal(
+        onboardProposal = new OnboardProposal();
+        onboardProposal.initialize(
             address(deg),
             address(veDEG),
             address(shield)
+        );
+    }
+
+    function _setupFlashLoanPool() internal {
+        flashLoanPool = new FlashLoanPool();
+        flashLoanPool.__FlashLoan__Init(address(shield));
+    }
+
+    function _setupPayoutPool() internal {
+        payoutPool = new PayoutPool();
+        payoutPool.initialize(
+            address(shield),
+            address(policyCenter),
+            address(crFactory),
+            address(priorityPoolFactory)
         );
     }
 
@@ -169,6 +190,8 @@ contract ContractSetupBaseTest is BaseTest {
 
         // Set cover right factory
         crFactory.setPayoutPool(address(payoutPool));
+
+        
 
         // Set protection pool
         protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -197,5 +220,8 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         priorityPoolFactory.setPayoutPool(address(payoutPool));
+
+        // Set flash loan pool
+        flashLoanPool.setProtectionPool(address(protectionPool));
     }
 }
