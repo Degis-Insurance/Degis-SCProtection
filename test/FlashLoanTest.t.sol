@@ -4,17 +4,14 @@ pragma solidity 0.8.15;
 import "ds-test/test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import "../src/util/FlashLoanPool.sol";
-import "./utils/BaseTest.sol";
-import "./utils/ContractSetupBaseTest.sol";
-import "../src/voting/incidentReport/IncidentReportParameters.sol";
+import {ProtectionPool} from "../src/pools/protectionPool/ProtectionPool.sol";
+import "src/util/FlashLoanPool.sol";
+import "utils/ContractSetupBaseTest.sol";
+import "src/mock/MockERC20.sol";
+import "./utils/Receiver.sol";
+import "./utils/BadReceiver.sol";
 
-contract FlashLoanTest is
-    Test,
-    FlashLoanPool,
-    ContractSetupBaseTest,
-    IncidentReportParameters
-{
+contract FlashLoanTest is Test, FlashLoanPool, ContractSetupBaseTest {
     address internal ALICE = mkaddr("Alice");
     address internal BOB = mkaddr("Bob");
     address internal CHARLIE = mkaddr("Charlie");
@@ -30,102 +27,116 @@ contract FlashLoanTest is
     uint256 internal constant LIQUIDITY_UNIT = 100e6;
     uint256 internal constant MIN_COVER_AMOUNT = 100e6;
     uint256 internal constant SCALE = 1e12;
+    uint256 internal returnAmount;
 
     uint256 internal constant LIQUIDITY = 1000 ether;
 
-    // uint256 internal constant VOTE_FOR = 1;
-    // uint256 internal constant VOTE_AGAINST = 2;
-    uint256 internal constant VOTE_AMOUNT = 100 ether;
-
-    uint256 internal constant INCIDENT_VOTE_TIME = PENDING_PERIOD;
-
-    uint256 internal constant INCIDENT_SETTLE_TIME =
-        INCIDENT_VOTE_TIME + INCIDENT_VOTING_PERIOD;
-
     IPriorityPool internal joePool;
 
-    MockERC20 internal joe;
-    MockERC20 internal shield;
+    MockERC20 internal vedeg;
 
-    address internal joeLPAddress;
+    Receiver internal receiver;
 
-    address internal crJoeAddress;
+    bytes internal data = "";
+
+    address internal alice = mkaddr("Alice");
+    address internal bob = mkaddr("Bob");
 
     // effectively a "beforeEach" block
     function setUp() public {
-        _setupContracts();
-        vm.label(alice, "Alice");
-        vm.label(bob, "Bob");
-        vm.label(address(this), "TestContract");
+        setUpContracts();
+        deg = new MockDEG(0, "Degis", 18, "DEG");
+        vedeg = new MockERC20("VoteEscrowedDegis", "veDEG", 18);
+        receiver = new Receiver(IERC3156FlashLender(protectionPool));
+        shield.mint(address(alice), LIQUIDITY);
+        vm.prank(alice);
+        shield.approve(address(policyCenter), type(uint256).max);
 
-        shield = new MockERC20("shield", "SHD", 18);
-        vm.label(address(shield), "SHIELD");
-
-        shield.mint(address(this), 1e18);
-        shield.approve(address(protectionPool), LIQUIDITY);
+        shield.approve(address(protectionPool), type(uint256).max);
     }
 
     function testConstructNonZeroToken() public {
-        vm.expectRevert(flashLoanPool.TokenAddressCannotBeZero.selector);
-        new FlashLoanPool(address(0x0));
+        ProtectionPool ptemp = new ProtectionPool();
+        vm.expectRevert(FlashLoanPool__TokenAddressNotZero.selector);
+        ptemp.initialize(address(deg), address(vedeg), address(0x0));
     }
 
     function testPoolBalance() public {
-        shield.approve(address(protectionPool), LIQUIDITY);
-        protectionPool.deposit(LIQUIDITY);
-        uint256 maxFlashLoan = flashLoanPool.maxFlashLoan(address(shield));
-        uint256 fee = flashLoanPool.flashFee(address(shield), maxFlashLoan);
-        assertEq(shield.balanceOf(protectionPool), LIQUIDITY + fee);
+        vm.prank(alice);
+        policyCenter.provideLiquidity(LIQUIDITY);
+        uint256 maxFlashLoan = protectionPool.maxFlashLoan(address(shield));
+        uint256 fee = protectionPool.flashFee(address(shield), maxFlashLoan);
+        assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY);
+        assertEq(maxFlashLoan, LIQUIDITY);
+        assertEq(fee, (LIQUIDITY / 10000) * 10);
     }
 
     function testBorrowZeroRevert() public {
+        shield.mint(address(receiver), LIQUIDITY / 100);
+        vm.prank(address(receiver));
+        shield.approve(address(protectionPool), type(uint256).max);
+        testPoolBalance();
         vm.expectRevert(FlashLoanPool__MinnimumNotMet.selector);
-        flashLoanPool.flashLoan(msg.sender, address(shield), 0, "");
+        protectionPool.flashLoan(receiver, address(shield), 0, data);
     }
 
     function testBorrowMoreRevert() public {
+        testPoolBalance();
+        shield.mint(address(receiver), LIQUIDITY / 100);
+        vm.prank(address(receiver));
+        shield.approve(address(protectionPool), type(uint256).max);
         vm.expectRevert(FlashLoanPool__NotEnoughFunds.selector);
-        flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY * 2, "");
+        protectionPool.flashLoan(
+            receiver,
+            address(shield),
+            LIQUIDITY * 2,
+            data
+        );
     }
 
     function testReturnAmountRevert() public {
+        BadReceiver badReceiver = new BadReceiver(IERC3156FlashLender(protectionPool));
+        shield.mint(address(badReceiver), LIQUIDITY);
+        testPoolBalance();
+        vm.prank(address(badReceiver));
+        shield.approve(address(protectionPool), type(uint256).max);
         vm.expectRevert(FlashLoanPool__NotPaidBack.selector);
-        flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
+        protectionPool.flashLoan(badReceiver, address(shield), LIQUIDITY, data);
     }
 
     function testFlashLoan() public {
+        testPoolBalance();
         // we want to borrow and return right away
-        return_amount = LIQUIDITY;
-        flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
-        assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY);
+        shield.mint(address(receiver), LIQUIDITY / 100);
+        vm.prank(address(receiver));
+        shield.approve(address(protectionPool), type(uint256).max);
+        uint256 fee = protectionPool.flashFee(address(shield), LIQUIDITY);
+        protectionPool.flashLoan(receiver, address(shield), LIQUIDITY, data);
+        assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY + fee);
     }
 
-    function testOnlyOwnerRevert() public {
-        vm.startPrank(bob);
-        vm.expectRevert("Ownable: caller is not the owner");
-        flashLoanPool.setProtectionPool(bob);
-        vm.stopPrank();
-    }
-
-    function testFuzzFlashLoan(uint256 borrow_amount, uint256 _return_amount)
+    function testFuzzFlashLoan(uint256 _borrowAmount, uint256 _returnAmount)
         public
     {
-        vm.assume(borrow_amount > 0);
-        vm.assume(_return_amount <= shield.balanceOf(address(this)));
-        vm.assume(borrow_amount <= _return_amount);
-        vm.assume(borrow_amount <= shield.balanceOf(address(flashLoanPool)));
+        testPoolBalance();
+        vm.assume(_borrowAmount > 0);
+        vm.assume(_returnAmount <= shield.balanceOf(address(this)));
+        vm.assume(_borrowAmount <= _returnAmount);
+        vm.assume(_borrowAmount <= shield.balanceOf(address(protectionPool)));
+        uint256 fee = protectionPool.flashFee(address(shield), _borrowAmount);
+        shield.mint(address(receiver), LIQUIDITY / 100);
+        vm.prank(address(receiver));
+        shield.approve(address(protectionPool), type(uint256).max);
 
         vm.expectEmit(true, true, false, true);
         emit FlashLoanBorrowed(
-            address(protectionPool),
             address(this),
+            address(protectionPool),
             address(shield),
+            _borrowAmount,
             fee
         );
-        flashLoanPool.flashLoan(msg.sender, address(shield), LIQUIDITY, "");
-        assertEq(
-            shield.balanceOf(address(flashLoanPool)),
-            shield.balanceOf(address(protectionPool))
-        );
+        protectionPool.flashLoan(receiver, address(shield), LIQUIDITY, data);
+        assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY + fee);
     }
 }

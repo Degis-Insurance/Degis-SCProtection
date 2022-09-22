@@ -14,7 +14,6 @@ import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 import "src/pools/payoutPool/PayoutPool.sol";
 import "src/reward/farming/WeightedFarmingPool.sol";
 import "src/reward/treasury/Treasury.sol";
-import "src/util/FlashLoanPool.sol";
 
 import {IncidentReport} from "src/voting/incidentReport/IncidentReport.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";
@@ -46,7 +45,6 @@ contract ContractSetupBaseTest is BaseTest {
 
     CoverRightTokenFactory internal crFactory;
 
-    FlashLoanPool internal flashLoanPool;
 
     MockDEG internal deg;
     MockVeDEG internal veDEG;
@@ -65,7 +63,6 @@ contract ContractSetupBaseTest is BaseTest {
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
 
-        _setupFlashLoanPool();
 
         _setupProtectionPool();
         _setupFactory();
@@ -91,8 +88,7 @@ contract ContractSetupBaseTest is BaseTest {
         protectionPool.initialize(
             address(deg),
             address(veDEG),
-            address(shield),
-            address(flashLoanPool)
+            address(shield)
         );
     }
 
@@ -162,11 +158,6 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
-    function _setupFlashLoanPool() internal {
-        flashLoanPool = new FlashLoanPool();
-        flashLoanPool.__FlashLoan__Init(address(shield));
-    }
-
     function _setupPayoutPool() internal {
         payoutPool = new PayoutPool();
         payoutPool.initialize(
@@ -219,9 +210,7 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setExecutor(address(executor));
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
-        priorityPoolFactory.setPayoutPool(address(payoutPool));
+        // priorityPoolFactory.setPayoutPool(address(payoutPool));
 
-        // Set flash loan pool
-        flashLoanPool.setProtectionPool(address(protectionPool));
     }
 }
