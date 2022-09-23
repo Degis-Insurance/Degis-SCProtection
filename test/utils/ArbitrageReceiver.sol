@@ -10,7 +10,8 @@ import "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
 import "src/mock/MockArbitrageExchange.sol";
 
 
-contract BadReceiver is IERC3156FlashBorrower {
+contract ArbitrageReceiver is IERC3156FlashBorrower {
+
     IERC3156FlashLender lender;
     MockArbitrageExchange arbitrageExchange;
     ERC20 usdc;
@@ -44,7 +45,7 @@ contract BadReceiver is IERC3156FlashBorrower {
         address[] memory t = new address[](3);
         t[0] = address(usdc);
         t[1] = address(token);
-        t[2] = address(0x2);
+        t[2] = address(0x1);
         IERC20(token).approve(address(arbitrageExchange), amount);
         uint256 amountOut = arbitrageExchange.swapExactTokensForTokens(
             amount,
@@ -64,7 +65,6 @@ contract BadReceiver is IERC3156FlashBorrower {
             address(this),
             block.timestamp + 1000
         );
-        
 
         emit Balance(IERC20(token).balanceOf(address(this)));
 
