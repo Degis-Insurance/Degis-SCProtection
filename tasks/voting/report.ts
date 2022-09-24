@@ -2,12 +2,7 @@ import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
-import {
-  IncidentReport,
-  IncidentReport__factory,
-  OnboardProposal,
-  OnboardProposal__factory,
-} from "../../typechain-types";
+import { IncidentReport, IncidentReport__factory } from "../../typechain-types";
 import { parseUnits } from "ethers/lib/utils";
 
 task("newReport", "Start a new report for a pool")
@@ -26,8 +21,10 @@ task("newReport", "Start a new report for a pool")
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
-    const tx = await incidentReport.report(taskArgs.id, taskArgs.payout);
-
+    const tx = await incidentReport.report(
+      taskArgs.id,
+      parseUnits(taskArgs.payout, 6)
+    );
     console.log("tx details", await tx.wait());
   });
 
@@ -45,7 +42,7 @@ task("setQuorum", "Start a new report for a pool").setAction(
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
-    const newQuorum = 0;
+    const newQuorum = 3;
 
     const tx = await incidentReport.setQuorumRatio(newQuorum);
 
@@ -152,7 +149,7 @@ task("closeReport", "Close a report voting")
     const tx = await incidentReport.closeReport(taskArgs.id);
     console.log("Tx details:", await tx.wait());
 
-    const p = await incidentReport.reports(1);
+    const p = await incidentReport.reports(taskArgs.id);
     console.log(p.status.toString());
   });
 

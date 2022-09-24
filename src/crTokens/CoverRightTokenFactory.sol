@@ -5,7 +5,6 @@ pragma solidity ^0.8.13;
 import "./CoverRightToken.sol";
 import "../util/OwnableWithoutContextUpgradeable.sol";
 
-import "forge-std/console.sol";
 
 /**
  * @notice Factory for deploying crTokens

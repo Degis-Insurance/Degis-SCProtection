@@ -31,7 +31,6 @@ import "../../interfaces/IPriorityPoolFactory.sol";
 import "./WeightedFarmingPoolEventError.sol";
 import "./WeightedFarmingPoolDependencies.sol";
 
-import "forge-std/console.sol";
 
 /**
  * @notice Weighted Farming Pool
