@@ -2,16 +2,16 @@
 	"fuji": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0xF21C663E5ed3273C650b74192209229aFf9405A1",
+			"poolAddress": "0x41820810E323B27399E39C4A47b68348901fECc7",
 			"name": "TraderJoe",
-			"token": "0x2C563651419A72e721D83151713428D467f1Ce22",
+			"token": "0x7DAD0DdEFd94d75C598e791375B3DaAaE04A05dc",
 			"premium": "200"
 		},
 		"2": {
 			"id": "2",
-			"poolAddress": "0x517a5105027962E6668747eCD80024AeB08B40A3",
+			"poolAddress": "0x7a7b67200b22b4e21d6d92006242557a19cE0d92",
 			"name": "GMX",
-			"token": "0x10C9F09503048B0b93B12b316C4eb93324a79fdf",
+			"token": "0x5462894DEE859029c2939E74485865da2148f63C",
 			"premium": "200"
 		},
 		"3": {

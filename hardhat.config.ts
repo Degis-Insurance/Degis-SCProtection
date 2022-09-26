@@ -31,7 +31,6 @@ function getRemappings() {
     .map((line) => line.trim().split("="));
 }
 
-
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.15",
@@ -86,7 +85,9 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      avalancheFujiTestnet: "CHSGYSXFKHQC7UX7MRAYW43Q238741N2N4",
+      avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY_FUJI
+        ? process.env.ETHERSCAN_API_KEY_FUJI
+        : "",
     },
   },
   paths: {

@@ -14,7 +14,6 @@ import "src/core/interfaces/PolicyCenterDependencies.sol";
 import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/onboardProposal/OnboardProposalParameters.sol";
 
-import "forge-std/console.sol";
 
 interface WeightedFarmingPoolEventError {
     // ---------------------------------------------------------------------------------------- //
