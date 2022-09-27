@@ -662,7 +662,14 @@ contract PriorityPool is
             monthsToAdd++;
         }
 
-        uint256 endMonth = currentMonth + monthsToAdd;
+        uint256 endMonth;
+
+        // Check if the cover will end in the same year
+        if (currentMonth + monthsToAdd > 12) {
+            endMonth = currentMonth + monthsToAdd - 12;
+        } else {
+            endMonth = currentMonth + monthsToAdd;
+        }
 
         coverInMonth[currentYear][endMonth] += _amount;
     }
