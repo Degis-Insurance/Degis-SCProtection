@@ -355,6 +355,8 @@ contract WeightedFarmingPool is
         address _token,
         uint256 _newWeight
     ) external isPriorityPool {
+        if (_newWeight == 0) revert WeightedFarmingPool__ZeroAmount();
+
         updatePool(_id);
 
         uint256 index = _getIndex(_id, _token);
@@ -460,8 +462,6 @@ contract WeightedFarmingPool is
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
-        if (!supportedToken(_id, _token))
-            revert WeightedFarmingPool__NotSupported();
 
         updatePool(_id);
 
@@ -599,19 +599,21 @@ contract WeightedFarmingPool is
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = ((user.shares * pool.accRewardPerShare) /
-            SCALE -
-            user.rewardDebt) / SCALE;
+        if (user.shares > 0) {
+            uint256 pending = ((user.shares * pool.accRewardPerShare) /
+                SCALE -
+                user.rewardDebt) / SCALE;
 
-        uint256 actualReward = _safeRewardTransfer(
-            pool.rewardToken,
-            _to,
-            pending
-        );
+            uint256 actualReward = _safeRewardTransfer(
+                pool.rewardToken,
+                _to,
+                pending
+            );
 
-        emit Harvest(_id, msg.sender, _to, actualReward);
+            emit Harvest(_id, msg.sender, _to, actualReward);
 
-        user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+            user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+        }
     }
 
     /**
@@ -713,15 +715,21 @@ contract WeightedFarmingPool is
     /**
      * @notice Returns the index of Cover Right token given a pool id and crtoken address
      *
+     *         If the token is not supported, revert with an error (to avoid return default value as 0)
+     *
      * @param _id    Pool id
-     * @param _token Address of Cover Right token
+     * @param _token LP token address
+     *
+     * @return index Index of the token in the pool
      */
     function _getIndex(uint256 _id, address _token)
         internal
         view
         returns (uint256 index)
     {
+        if (!supportedToken(_id, _token))
+            revert WeightedFarmingPool__NotSupported();
+
         index = tokenIndex[_id][_token];
-        assert(index > 0);
     }
 }
