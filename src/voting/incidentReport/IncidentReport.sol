@@ -269,7 +269,8 @@ contract IncidentReport is
             revert IncidentReport__WrongPeriod();
 
         currentReport.status = CLOSE_STATUS;
-        reported[_id] = false;
+
+        _setReportedStatus(_id, false);
 
         poolReports[currentReport.poolId].pop();
 
@@ -329,7 +330,7 @@ contract IncidentReport is
                 if (res != PASS_RESULT) {
                     uint256 poolId = currentReport.poolId;
                     _unpausePools(poolId);
-                    reported[poolId] = false;
+                    _setReportedStatus(poolId, false);
 
                     poolReports[poolId].pop();
                 }
@@ -341,9 +342,11 @@ contract IncidentReport is
             } else {
                 currentReport.result = FAILED_RESULT;
                 uint256 poolId = currentReport.poolId;
+
                 // FAILED: unlock the priority pool & protection pool immediately
                 _unpausePools(poolId);
-                reported[poolId] = false;
+                _setReportedStatus(poolId, false);
+
                 emit ReportFailed(_id);
             }
         } else {
@@ -361,10 +364,6 @@ contract IncidentReport is
      */
     function claimReward(uint256 _id) external {
         _claimReward(_id, msg.sender);
-    }
-
-    function setReported(uint256 _id) external {
-        reported[_id] = false;
     }
 
     /**
@@ -419,8 +418,7 @@ contract IncidentReport is
         if (msg.sender != executor) revert IncidentReport__OnlyExecutor();
 
         uint256 poolId = reports[_reportId].poolId;
-        reported[poolId] = false;
-
+        _setReportedStatus(poolId, false);
         _unpausePools(poolId);
     }
 
@@ -448,7 +446,7 @@ contract IncidentReport is
         _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
-        reported[_poolId] = true;
+        _setReportedStatus(_poolId, true);
 
         uint256 currentId = ++reportCounter;
         // Record the new report
@@ -861,5 +859,15 @@ contract IncidentReport is
      */
     function _lockVeDEG(address _user, uint256 _amount) internal {
         veDeg.lockVeDEG(_user, _amount);
+    }
+
+    /**
+     * @notice Set reported status for a pool
+     *
+     * @param _poolId   Pool id
+     * @param _reported Whether already reported
+     */
+    function _setReportedStatus(uint256 _poolId, bool _reported) internal {
+        reported[_poolId] = _reported;
     }
 }
