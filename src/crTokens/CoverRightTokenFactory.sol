@@ -5,7 +5,6 @@ pragma solidity ^0.8.13;
 import "./CoverRightToken.sol";
 import "../util/OwnableWithoutContextUpgradeable.sol";
 
-
 /**
  * @notice Factory for deploying crTokens
  *
@@ -90,15 +89,8 @@ contract CoverRightTokenFactory is OwnableWithoutContextUpgradeable {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setPolicyCenter(address _policyCenter) external onlyOwner {
-        policyCenter = _policyCenter;
-    }
-
-    function setIncidentReport(address _incidentReport) external onlyOwner {
-        incidentReport = _incidentReport;
-    }
-
     function setPayoutPool(address _payoutPool) external onlyOwner {
+        require(_payoutPool != address(0), "Zero Address");
         payoutPool = _payoutPool;
     }
 
@@ -171,6 +163,10 @@ contract CoverRightTokenFactory is OwnableWithoutContextUpgradeable {
         uint256 _generation
     ) internal view returns (bytes memory code) {
         bytes memory bytecode = type(CoverRightToken).creationCode;
+
+        require(policyCenter != address(0), "Zero Address");
+        require(incidentReport != address(0), "Zero Address");
+        require(payoutPool != address(0), "Zero Address");
 
         code = abi.encodePacked(
             bytecode,
