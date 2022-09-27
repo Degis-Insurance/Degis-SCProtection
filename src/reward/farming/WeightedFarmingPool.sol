@@ -418,10 +418,9 @@ contract WeightedFarmingPool is
     function deposit(
         uint256 _id,
         address _token,
-        uint256 _amount,
-        address _user
+        uint256 _amount
     ) external {
-        _deposit(_id, _token, _amount, _user);
+        _deposit(_id, _token, _amount, msg.sender);
 
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
     }
@@ -727,7 +726,7 @@ contract WeightedFarmingPool is
             actualAmount = _amount;
         }
 
-        // Check the balance before and after the transfer 
+        // Check the balance before and after the transfer
         // to check the final actual amount
         uint256 balanceBefore = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, actualAmount);
