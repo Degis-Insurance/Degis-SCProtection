@@ -636,7 +636,14 @@ contract WeightedFarmingPool is
 
         (uint256 currentY, uint256 currentM, ) = currentTime.timestampToDate();
 
-        uint256 monthPassed = currentM - lastM;
+        // If time goes across years
+        // Change the calculation of months passed
+        uint256 monthPassed;
+        if (currentY > lastY) {
+            monthPassed = currentM + 12 - lastM;
+        } else {
+            monthPassed = currentM - lastM;
+        }
 
         // In the same month, use current month speed
         if (monthPassed == 0) {
