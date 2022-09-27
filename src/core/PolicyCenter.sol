@@ -32,7 +32,6 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
 /**
  * @title Policy Center
  *
@@ -181,6 +180,9 @@ contract PolicyCenter is
     ) external {
         if (msg.sender != priorityPoolFactory)
             revert PolicyCenter__OnlyPriorityPoolFactory();
+
+        // Should never change the protection pool information
+        assert(_poolId > 0);
 
         tokenByPoolId[_poolId] = _token;
         priorityPools[_poolId] = _pool;
