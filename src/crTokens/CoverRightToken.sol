@@ -98,6 +98,16 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Only called from permitted addresses
+     *
+     *         Permitted addresses:
+     *            1) Policy center
+     *            2) Payout pool
+     *
+     *         For policyCenter, when deploying new crTokens, the policyCenter address is still not initialized,
+     *         so we only skip the test when policyCenter is address(0)
+     */
     modifier onlyPermitted() {
         if (policyCenter != address(0)) {
             require(
@@ -106,15 +116,6 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
             );
         }
         _;
-    }
-
-    // TODO: not needed
-    function setPolicyCenter(address _policyCenter) external {
-        policyCenter = _policyCenter;
-    }
-
-    function setPayoutPool(address _payoutPool) external {
-        payoutPool = _payoutPool;
     }
 
     /**
