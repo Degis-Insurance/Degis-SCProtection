@@ -283,6 +283,9 @@ contract PriorityPoolFactory is
         emit DynamicPoolUpdate(_poolId, poolAddress, dynamicPoolCounter);
     }
 
+    /**
+     * @notice Update max capacity from a priority pool
+     */
     function updateMaxCapaity(bool _isUp, uint256 _diff)
         external
         onlyPriorityPool
@@ -298,8 +301,7 @@ contract PriorityPoolFactory is
         if (msg.sender != incidentReport && msg.sender != executor)
             revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
-         IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
-       
+        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
 
         IProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }

@@ -343,26 +343,24 @@ contract PriorityPool is
      *         Only owner set this function on a monthly / quaterly base
      *         (For those unpopular pools to decrease, and those popular ones to increase)
      *
-     * @param _isUp        Whether it should increase the capacity
      * @param _maxCapacity New max capacity of this pool
      */
-    function setMaxCapacity(bool _isUp, uint256 _maxCapacity) external {
+    function setMaxCapacity(uint256 _maxCapacity) external {
         require(msg.sender == owner, "Only owner");
 
         maxCapacity = _maxCapacity;
 
+        bool isUp = _maxCapacity > maxCapacity;
+
         uint256 diff;
-        if (_isUp) {
+        if (isUp) {
             diff = _maxCapacity - maxCapacity;
         } else {
             diff = maxCapacity - _maxCapacity;
         }
 
         // Store the max capacity change
-        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
-            _isUp,
-            diff
-        );
+        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(isUp, diff);
     }
 
     /**
