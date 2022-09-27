@@ -640,7 +640,7 @@ contract WeightedFarmingPool is
         // Change the calculation of months passed
         uint256 monthPassed;
         if (currentY > lastY) {
-            monthPassed = currentM + 12 - lastM;
+            monthPassed = currentM + 12 * (currentY - lastY) - lastM;
         } else {
             monthPassed = currentM - lastM;
         }
@@ -656,9 +656,20 @@ contract WeightedFarmingPool is
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
                 if (i == 0) {
+                    uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
+                        lastY,
+                        lastM
+                    );
                     // End timestamp of the first month
                     uint256 endTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);
+                        .timestampFromDateTime(
+                            lastY,
+                            lastM,
+                            daysInMonth,
+                            23,
+                            59,
+                            59
+                        );
                     totalReward +=
                         (endTimestamp - lastRewardTime) *
                         speed[_id][lastY][lastM];
