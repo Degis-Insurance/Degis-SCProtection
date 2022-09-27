@@ -23,14 +23,13 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "../../libraries/DateTime.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 
 import "./WeightedFarmingPoolEventError.sol";
 import "./WeightedFarmingPoolDependencies.sol";
-
 
 /**
  * @notice Weighted Farming Pool
@@ -53,7 +52,7 @@ import "./WeightedFarmingPoolDependencies.sol";
  */
 contract WeightedFarmingPool is
     WeightedFarmingPoolEventError,
-    Initializable,
+    OwnableWithoutContextUpgradeable,
     WeightedFarmingPoolDependencies
 {
     using DateTimeLibrary for uint256;
@@ -99,19 +98,19 @@ contract WeightedFarmingPool is
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
+    // Pool id => Token address => Token index in the tokens array
+    mapping(uint256 => mapping(address => uint256)) public tokenIndex;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // constructor(address _policyCenter, address _priorityPoolFactory) {
-    //     policyCenter = _policyCenter;
-    //     priorityPoolFactory = _priorityPoolFactory;
-    // }
 
     function initialize(address _policyCenter, address _priorityPoolFactory)
         public
         initializer
     {
+        __Ownable_init();
+
         policyCenter = _policyCenter;
         priorityPoolFactory = _priorityPoolFactory;
     }
@@ -134,7 +133,14 @@ contract WeightedFarmingPool is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    // @audit Add view functions for user lp amount
+    /**
+     * @notice Get a user's LP amount
+     *
+     * @param _poolId Pool id
+     * @param _user   User address
+     *
+     * @return amounts Amount array of user's lp in each generation of lp token
+     */
     function getUserLPAmount(uint256 _poolId, address _user)
         external
         view
@@ -143,6 +149,15 @@ contract WeightedFarmingPool is
         return users[_poolId][_user].amount;
     }
 
+    /**
+     * @notice Get pool information arrays
+     *
+     * @param _poolId Pool id
+     *
+     * @return tokens  Token addresses array
+     * @return amounts Token amounts array
+     * @return weights Token weights array
+     */
     function getPoolArrays(uint256 _poolId)
         external
         view
@@ -154,16 +169,6 @@ contract WeightedFarmingPool is
     {
         PoolInfo storage pool = pools[_poolId];
         return (pool.tokens, pool.amount, pool.weight);
-    }
-
-    // TODO: add owner or remove this
-    function setPolicyCenter(address _policyCenter) public {
-        policyCenter = _policyCenter;
-    }
-
-    // TODO: add owner or remove this
-    function setPriorityPoolFactory(address _priorityPoolFactory) external {
-        priorityPoolFactory = _priorityPoolFactory;
     }
 
     /**
@@ -289,7 +294,9 @@ contract WeightedFarmingPool is
 
     /**
      * @notice Register Pri-LP token
+     *
      *         Called when new generation of PRI-LP tokens are deployed
+     *         Only called from a priority pool
      *
      * @param _id     Pool Id
      * @param _token  Priority pool lp token address
@@ -299,7 +306,7 @@ contract WeightedFarmingPool is
         uint256 _id,
         address _token,
         uint256 _weight
-    ) public {
+    ) public isPriorityPool {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
@@ -309,11 +316,18 @@ contract WeightedFarmingPool is
         pools[_id].tokens.push(_token);
         pools[_id].weight.push(_weight);
 
-        emit NewTokenAdded(_id, _token, _weight);
+        uint256 index = pools[_id].tokens.length - 1;
+
+        // Store the token index for later check
+        tokenIndex[_id][_token] = index;
+
+        emit NewTokenAdded(_id, _token, index, _weight);
     }
 
     /**
      * @notice Update the weight of a token in a given pool
+     *
+     *         Only called from a priority pool
      *
      * @param _id        Pool Id
      * @param _token     Token address
@@ -323,40 +337,19 @@ contract WeightedFarmingPool is
         uint256 _id,
         address _token,
         uint256 _newWeight
-    ) external {
+    ) external isPriorityPool {
         updatePool(_id);
 
         uint256 index = _getIndex(_id, _token);
-
         pools[_id].weight[index] = _newWeight;
-    }
 
-    /**
-     * @notice Sets the weight for a given array of tokens in a given pool
-     * @param _id            Pool Id
-     * @param _weights       Array of weights of the tokens in the pool
-     */
-    function setWeight(uint256 _id, uint256[] calldata _weights) external {
-        PoolInfo storage pool = pools[_id];
-
-        uint256 weightLength = _weights.length;
-
-        if (weightLength != pool.weight.length)
-            revert WeightedFarmingPool__WrongWeightLength();
-
-        for (uint256 i; i < weightLength; ) {
-            pool.weight[i] = _weights[i];
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        emit WeightChanged(_id);
+        emit PoolWeightUpdated(_id, index, _newWeight);
     }
 
     /**
      * @notice Update reward speed when new premium income
+     *
+     *         Only called from a priority pool
      *
      * @param _id       Pool id
      * @param _newSpeed New speed (SCALED)
@@ -368,7 +361,7 @@ contract WeightedFarmingPool is
         uint256 _newSpeed,
         uint256[] memory _years,
         uint256[] memory _months
-    ) external {
+    ) external isPriorityPool {
         if (_years.length != _months.length)
             revert WeightedFarmingPool__WrongDateLength();
 
@@ -380,6 +373,8 @@ contract WeightedFarmingPool is
                 ++i;
             }
         }
+
+        emit RewardSpeedUpdated(_id, _newSpeed, _years, _months);
     }
 
     /**
@@ -684,9 +679,6 @@ contract WeightedFarmingPool is
     ) internal returns (uint256 actualAmount) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
-        // @audit remove this check
-        // require(balance > 0, "Zero balance");
-
         if (_amount > balance) {
             actualAmount = balance;
         } else {
@@ -698,28 +690,16 @@ contract WeightedFarmingPool is
 
     /**
      * @notice Returns the index of Cover Right token given a pool id and crtoken address
-     * @param _id            Pool id
-     * @param _token         Address of Cover Right token
+     *
+     * @param _id    Pool id
+     * @param _token Address of Cover Right token
      */
     function _getIndex(uint256 _id, address _token)
         internal
         view
         returns (uint256 index)
     {
-        address[] memory allTokens = pools[_id].tokens;
-        uint256 length = allTokens.length;
-
-        for (uint256 i; i < length; ) {
-            if (allTokens[i] == _token) {
-                index = i;
-                break;
-            } else {
-                unchecked {
-                    ++i;
-                }
-            }
-        }
-
-        // revert WeightedFarmingPool__NotInPool();
+        index = tokenIndex[_id][_token];
+        assert(index > 0);
     }
 }

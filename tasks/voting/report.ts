@@ -42,7 +42,7 @@ task("setQuorum", "Start a new report for a pool").setAction(
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
-    const newQuorum = 3;
+    const newQuorum = 1;
 
     const tx = await incidentReport.setQuorumRatio(newQuorum);
 
