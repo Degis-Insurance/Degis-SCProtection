@@ -300,7 +300,7 @@ contract WeightedFarmingPool is
      *
      * @param _rewardToken Reward token address (protocol native token)
      */
-    function addPool(address _rewardToken) external {
+    function addPool(address _rewardToken) external isPriorityPool {
         uint256 currentId = ++counter;
 
         PoolInfo storage pool = pools[currentId];
@@ -323,7 +323,7 @@ contract WeightedFarmingPool is
         uint256 _id,
         address _token,
         uint256 _weight
-    ) public isPriorityPool {
+    ) external isPriorityPool {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
