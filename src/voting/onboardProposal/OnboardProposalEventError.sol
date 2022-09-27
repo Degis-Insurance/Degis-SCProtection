@@ -37,7 +37,6 @@ interface OnboardProposalEventError {
     error OnboardProposal__WrongChoice();
     error OnboardProposal__ChooseBothSides();
     error OnboardProposal__NotEnoughVeDEG();
-    error OnboardProposal__AlreadySettled();
     error OnboardProposal__NotSettled();
     error OnboardProposal__NotWrongChoice();
     error OnboardProposal__AlreadyClaimed();

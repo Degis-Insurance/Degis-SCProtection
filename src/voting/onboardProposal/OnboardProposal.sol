@@ -237,8 +237,6 @@ contract OnboardProposal is
         if (!_passedVotingPeriod(proposal.voteTimestamp))
             revert OnboardProposal__WrongPeriod();
 
-        if (proposal.result > 0) revert OnboardProposal__AlreadySettled();
-
         // If reached quorum, settle the result
         if (_checkQuorum(proposal.numFor + proposal.numAgainst)) {
             uint256 res = _getVotingResult(
