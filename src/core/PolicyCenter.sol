@@ -97,6 +97,7 @@ contract PolicyCenter is
      * @notice Whether the pool exists
      */
     modifier poolExists(uint256 _poolId) {
+        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
         if (priorityPools[_poolId] == address(0))
             revert PolicyCenter__NonExistentPool();
         _;
@@ -223,7 +224,6 @@ contract PolicyCenter is
         uint256 _coverDuration,
         uint256 _maxPayment
     ) external poolExists(_poolId) returns (address) {
-        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
         if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
         _checkCapacity(_poolId, _coverAmount);
@@ -463,8 +463,6 @@ contract PolicyCenter is
         address _crToken,
         uint256 _generation
     ) public poolExists(_poolId) {
-        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
-
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
         ).pools(_poolId);
