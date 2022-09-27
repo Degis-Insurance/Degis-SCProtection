@@ -172,6 +172,23 @@ contract WeightedFarmingPool is
     }
 
     /**
+     * @notice Check whether a token is supported in a certain pool
+     *
+     * @param _poolId Pool id
+     * @param _token  PRI-LP token address
+     *
+     * @return isSupported Whether supported
+     */
+    function supportedToken(uint256 _poolId, address _token)
+        public
+        view
+        returns (bool isSupported)
+    {
+        bytes32 key = keccak256(abi.encodePacked(_poolId, _token));
+        return supported[key];
+    }
+
+    /**
      * @notice Pending reward
      *
      * @param _id   Pool id
@@ -443,6 +460,8 @@ contract WeightedFarmingPool is
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+        if (!supportedToken(_id, _token))
+            revert WeightedFarmingPool__NotSupported();
 
         updatePool(_id);
 
@@ -512,6 +531,9 @@ contract WeightedFarmingPool is
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+        if (!supportedToken(_id, _token))
+            revert WeightedFarmingPool__NotSupported();
+
         updatePool(_id);
 
         PoolInfo storage pool = pools[_id];
