@@ -727,7 +727,13 @@ contract WeightedFarmingPool is
             actualAmount = _amount;
         }
 
+        // Check the balance before and after the transfer 
+        // to check the final actual amount
+        uint256 balanceBefore = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, actualAmount);
+        uint256 balanceAfter = IERC20(_token).balanceOf(address(this));
+
+        actualAmount = balanceBefore - balanceAfter;
     }
 
     /**
