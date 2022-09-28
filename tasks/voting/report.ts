@@ -50,26 +50,6 @@ task("setQuorum", "Start a new report for a pool").setAction(
   }
 );
 
-task("setReported", "Start a new report for a pool").setAction(
-  async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
-
-    const incidentReport: IncidentReport = new IncidentReport__factory(
-      dev_account
-    ).attach(addressList[network.name].IncidentReport);
-
-    const tx = await incidentReport.setReported(1);
-
-    console.log("tx details", await tx.wait());
-  }
-);
-
 task("voteReport", "Start a new report for a pool")
   .addParam("id", "Pool id", null, types.string)
   .setAction(async (taskArgs, hre) => {

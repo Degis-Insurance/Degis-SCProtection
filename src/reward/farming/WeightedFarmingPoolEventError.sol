@@ -37,6 +37,7 @@ abstract contract WeightedFarmingPoolEventError {
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    error WeightedFarmingPool_ZeroAddress();
     error WeightedFarmingPool__AlreadySupported();
     error WeightedFarmingPool__WrongDateLength();
     error WeightedFarmingPool__ZeroAmount();

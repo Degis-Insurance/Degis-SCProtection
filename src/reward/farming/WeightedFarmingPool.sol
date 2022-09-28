@@ -109,6 +109,10 @@ contract WeightedFarmingPool is
         public
         initializer
     {
+        if (_policyCenter == address(0) || _priorityPoolFactory == address(0)) {
+            revert WeightedFarmingPool_ZeroAddress();
+        }
+
         __Ownable_init();
 
         policyCenter = _policyCenter;

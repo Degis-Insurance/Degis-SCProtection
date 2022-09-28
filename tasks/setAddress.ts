@@ -252,9 +252,12 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
-    const exchangeAddress = addressList[network.name].MockExchange;
+    const exchangeAddress =
+      network.name != "avax" && network.name != "avaxTest"
+        ? addressList[network.name].MockExchange
+        : addressList[network.name].Exchange;
     const priceGetterAddress =
-      network.name != "avax"
+      network.name != "avax" && network.name != "avaxTest"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -277,10 +280,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_1.wait());
     }
 
-    if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
-      const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
+    //   const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     if ((await policyCenter.exchange()) != exchangeAddress) {
       const tx_3 = await policyCenter.setExchange(exchangeAddress);
@@ -394,19 +397,19 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
         addressList[network.name].WeightedFarmingPool
       );
 
-    if ((await weightedFarmingPool.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await weightedFarmingPool.setPolicyCenter(
-        policyCenterAddress
-      );
-      console.log("Tx details: ", await tx_1.wait());
-    }
+    // if ((await weightedFarmingPool.policyCenter()) != policyCenterAddress) {
+    //   const tx_1 = await weightedFarmingPool.setPolicyCenter(
+    //     policyCenterAddress
+    //   );
+    //   console.log("Tx details: ", await tx_1.wait());
+    // }
 
-    if ((await weightedFarmingPool.priorityPoolFactory()) != factoryAddress) {
-      const tx_2 = await weightedFarmingPool.setPriorityPoolFactory(
-        factoryAddress
-      );
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await weightedFarmingPool.priorityPoolFactory()) != factoryAddress) {
+    //   const tx_2 = await weightedFarmingPool.setPriorityPoolFactory(
+    //     factoryAddress
+    //   );
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in farming pool\n");
   }
@@ -433,15 +436,15 @@ task("setCRFactory", "Set cover right token factory").setAction(
         addressList[network.name].CoverRightTokenFactory
       );
 
-    if ((await crFactory.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await crFactory.setPolicyCenter(policyCenterAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
+    // if ((await crFactory.policyCenter()) != policyCenterAddress) {
+    //   const tx_1 = await crFactory.setPolicyCenter(policyCenterAddress);
+    //   console.log("Tx details: ", await tx_1.wait());
+    // }
 
-    if ((await crFactory.incidentReport()) != incidentReportAddress) {
-      const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await crFactory.incidentReport()) != incidentReportAddress) {
+    //   const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     if ((await crFactory.payoutPool()) != payoutPoolAddress) {
       const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);

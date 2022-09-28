@@ -55,7 +55,7 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public usdc;
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
 
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
@@ -70,8 +70,7 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool,
-        address _usdc
+        address _protectionPool
     ) public initializer {
         __Ownable_init();
         __ExternalToken__Init(_deg, _veDeg, _shield);
@@ -82,11 +81,9 @@ contract PolicyCenter is
 
         protectionPool = _protectionPool;
 
-        // Set USDC (base token for shield)
-        usdc = _usdc;
         // Approve USDC for later depositing for Shield
         // Use parameter rather than storage variable
-        IERC20(_usdc).approve(address(shield), type(uint256).max);
+        IERC20(USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -514,7 +511,7 @@ contract PolicyCenter is
     {
         address[] memory path = new address[](2);
         path[0] = _fromToken;
-        path[1] = usdc;
+        path[1] = USDC;
 
         // Swap for USDC and return the received amount
         received = IExchange(exchange).swapExactTokensForTokens(
@@ -526,7 +523,8 @@ contract PolicyCenter is
         );
 
         // Deposit USDC and get back shield
-        shield.deposit(1, usdc, received, received);
+        // When depositing USDC, no slippage
+        shield.deposit(1, USDC, received, received);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }

@@ -21,7 +21,7 @@
 pragma solidity ^0.8.13;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {OwnableWithoutContext} from "../util/OwnableWithoutContext.sol";
+import {OwnableWithoutContextUpgradeable} from "../util/OwnableWithoutContextUpgradeable.sol";
 
 /**
  * @title  Price Getter
@@ -30,7 +30,7 @@ import {OwnableWithoutContext} from "../util/OwnableWithoutContext.sol";
  *         Got the sponsorship and collaboration with Chainlink.
  * @dev    The price from chainlink priceFeed has different decimals, be careful.
  */
-contract PriceGetter is OwnableWithoutContext {
+contract PriceGetter is OwnableWithoutContextUpgradeable {
     struct PriceFeedInfo {
         address priceFeedAddress;
         uint256 decimals;
@@ -63,7 +63,9 @@ contract PriceGetter is OwnableWithoutContext {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //

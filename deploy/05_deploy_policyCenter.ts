@@ -31,10 +31,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
 
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
-  const USDCAddress =
-    network.name != "avax"
-      ? addressList[network.name].MockUSDC
-      : addressList[network.name].USDC;
 
   const proxyOptions: ProxyOptions = {
     proxyContract: "OpenZeppelinTransparentProxy",
@@ -46,8 +42,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           degAddress,
           veDegAddress,
           shieldAddress,
-          protectionPoolAddress,
-          USDCAddress,
+          protectionPoolAddress
         ],
       },
     },
