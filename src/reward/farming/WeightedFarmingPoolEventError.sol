@@ -30,6 +30,5 @@ abstract contract WeightedFarmingPoolEventError {
     error WeightedFarmingPool__OnlyPolicyCenter();
     error WeightedFarmingPool__NoPendingRewards();
     error WeightedFarmingPool__NotInPool();
-
     error WeightedFarmingPool__NotEnoughAmount();
 }

@@ -28,8 +28,6 @@
 //     uint256 internal constant PREMIUMRATIO_2 = 250;
 //     uint256 internal constant PREMIUMRATIO_3 = 400;
 
-//     uint256 internal constant VOTE_FOR = 1;
-//     uint256 internal constant VOTE_AGAINST = 2;
 //     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
 //     uint256 internal constant PROPOSE_TIME = 0;

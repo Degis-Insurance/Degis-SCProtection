@@ -71,33 +71,60 @@
 //         shield.approve(address(policyCenter), type(uint256).max);
 //     }
 
-//     function testConstructNonZeroToken() public {
+//     function testInitializerNonZeroToken() public {
+//         // # --------------------------------------------------------------------//
+//         // # Initializer should only accept non-zero token addressses # //
+//         // # --------------------------------------------------------------------//
+
 //         ProtectionPool ptemp = new ProtectionPool();
 //         vm.expectRevert(FlashLoanPool__TokenAddressNotZero.selector);
 //         ptemp.initialize(address(deg), address(vedeg), address(0x0));
+
+//         console.log(unicode"✅ Only accept non-zero token address");
+
 //     }
 
 //     function testPoolBalance() public {
 //         vm.prank(alice);
+
+//         // # --------------------------------------------------------------------//
+//         // # Pool should have a balance # //
+//         // # --------------------------------------------------------------------//
+
 //         policyCenter.provideLiquidity(LIQUIDITY);
 //         uint256 maxFlashLoan = protectionPool.maxFlashLoan(address(shield));
 //         uint256 fee = protectionPool.flashFee(address(shield), maxFlashLoan);
 //         assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY);
 //         assertEq(maxFlashLoan, LIQUIDITY);
 //         assertEq(fee, (LIQUIDITY / 10000) * 10);
+
+//         console.log(unicode"✅ Pool has balance");
+
 //     }
 
 //     function testBorrowZeroRevert() public {
+
+//         // # --------------------------------------------------------------------//
+//         // # Should not be able to borrow more than pool balance # //
+//         // # --------------------------------------------------------------------//
+
 //         shield.mint(address(receiver), LIQUIDITY / 1000);
 //         vm.prank(address(receiver));
 //         shield.approve(address(protectionPool), type(uint256).max);
 //         testPoolBalance();
 //         vm.expectRevert(FlashLoanPool__MinnimumNotMet.selector);
 //         protectionPool.flashLoan(receiver, address(shield), 0, data);
+
+//         console.log(unicode"✅ Not borrow 0");
 //     }
 
 //     function testBorrowMoreRevert() public {
 //         testPoolBalance();
+
+//         // # --------------------------------------------------------------------//
+//         // # Should not be able to borrow more than pool balance # //
+//         // # --------------------------------------------------------------------//
+
 //         shield.mint(address(receiver), LIQUIDITY / 1000);
 //         vm.prank(address(receiver));
 //         shield.approve(address(protectionPool), type(uint256).max);
@@ -108,10 +135,17 @@
 //             LIQUIDITY * 2,
 //             data
 //         );
+
+//         console.log(unicode"✅ Not borrow more than pool balance");
 //     }
 
 //     function testReturnAmountRevert() public {
 //         testPoolBalance();
+
+//         // # --------------------------------------------------------------------//
+//         // # Should not be able to flash loan due to lack of funds # //
+//         // # --------------------------------------------------------------------//
+
 //         // mint fee and enough tokens so it can payback lender
 //         shield.mint(address(badReceiver), LIQUIDITY / 10);
 
@@ -132,10 +166,18 @@
 
 //         // transaction reverts, keeps previous balance
 //         assertEq(shield.balanceOf(address(badReceiver)), previousBalance);
+
+//         console.log(unicode"✅ Not flash loan due to lack of funds");
+
 //     }
 
 //     function testReturnAmountWithLiquidity() public {
 //         testPoolBalance();
+
+//         // # --------------------------------------------------------------------//
+//         // # Should be able to flash loan with current funds despite loss # //
+//         // # --------------------------------------------------------------------//
+
 //         // mint fee and enough tokens so it can payback lender
 //         shield.mint(address(badReceiver), LIQUIDITY / 1000 + LIQUIDITY / 10);
 
@@ -175,10 +217,18 @@
 //         // New balance is higher then previous balance because it used previosuly
 //         // owned capital to payback loan
 //         assertEq(shield.balanceOf(address(badReceiver)) < previousBalance, true);
+
+//         console.log(unicode"✅ Pay for flash loan losing funds");
+
 //     }
 
 //     function testFlashLoanArbitrage() public {
 //         testPoolBalance();
+
+//         // # --------------------------------------------------------------------//
+//         // # Should be able to flash loan with no arbitrage # //
+//         // # --------------------------------------------------------------------//
+
 //         // we want to borrow and return right away
 //         shield.mint(address(arbitrageReceiver), LIQUIDITY / 1000);
 //         uint256 previousBalance = shield.balanceOf(address(arbitrageReceiver));
@@ -196,10 +246,18 @@
 //             shield.balanceOf(address(arbitrageReceiver)) > previousBalance,
 //             true
 //         );
+
+//         console.log(unicode"✅ Flash loan with arbitrage");
+
 //     }
 
 //     function testFlashLoanNoArbitrage() public {
+//         // setup pool
 //         testPoolBalance();
+//         // # --------------------------------------------------------------------//
+//         // # Should be able to flash loan with no arbitrage # //
+//         // # --------------------------------------------------------------------//
+
 //         // we want to borrow and return right away and not make a profit
 //         shield.mint(address(receiver), LIQUIDITY / 1000);
 //         vm.prank(address(receiver));
@@ -219,29 +277,33 @@
 //         assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY + fee);
 //         // paid fee and returned loan, empty balance. No profit
 //         assertEq(shield.balanceOf(address(arbitrageReceiver)), 0);
+
+//         console.log(unicode"✅ Flash loan with no arbitrage");
+
 //     }
 
-//     function testFuzzFlashLoan(uint256 _borrowAmount)
-//         public
-//     {
-//         testPoolBalance();
-//         vm.assume(_borrowAmount > 0);
-//         vm.assume(_borrowAmount <= shield.balanceOf(address(protectionPool)));
-//         uint256 fee = protectionPool.flashFee(address(shield), _borrowAmount);
+//     // TODO: fix fuzzing
+//     // function testFuzzFlashLoan(uint256 _borrowAmount)
+//     //     public
+//     // {   
+//     //     testPoolBalance();
+//     //     vm.assume(_borrowAmount > 0);
+//     //     vm.assume(_borrowAmount <= shield.balanceOf(address(protectionPool)));
+//     //     uint256 fee = protectionPool.flashFee(address(shield), _borrowAmount);
 
-//         shield.mint(address(receiver), LIQUIDITY / 1000);
-//         vm.prank(address(receiver));
-//         shield.approve(address(protectionPool), type(uint256).max);
+//     //     shield.mint(address(receiver), LIQUIDITY / 1000);
+//     //     vm.prank(address(receiver));
+//     //     shield.approve(address(protectionPool), type(uint256).max);
 
-//         vm.expectEmit(true, true, false, true);
-//         emit FlashLoanBorrowed(
-//             address(protectionPool),
-//             address(receiver),
-//             address(shield),
-//             _borrowAmount,
-//             fee
-//         );
-//         protectionPool.flashLoan(receiver, address(shield), LIQUIDITY, data);
-//         assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY + fee);
-//     }
+//     //     vm.expectEmit(true, true, false, true);
+//     //     emit FlashLoanBorrowed(
+//     //         address(protectionPool),
+//     //         address(receiver),
+//     //         address(shield),
+//     //         _borrowAmount,
+//     //         fee
+//     //     );
+//     //     protectionPool.flashLoan(receiver, address(shield), LIQUIDITY, data);
+//     //     assertEq(shield.balanceOf(address(protectionPool)), LIQUIDITY + fee);
+//     // }
 // }

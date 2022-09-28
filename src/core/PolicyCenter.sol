@@ -226,6 +226,7 @@ contract PolicyCenter is
         if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
         _checkCapacity(_poolId, _coverAmount);
+        console.log("coverAmount", _coverAmount);
 
         // Premium in USD (shield) and duration in second
         (uint256 premium, uint256 timestampDuration) = _getCoverPrice(
@@ -233,6 +234,8 @@ contract PolicyCenter is
             _coverAmount,
             _coverDuration
         );
+        console.log("premium in cover", premium);
+
         // Check if premium cost is within limits given by user
         if (premium > _maxPayment) revert PolicyCenter__PremiumTooHigh();
 
@@ -688,10 +691,13 @@ contract PolicyCenter is
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
-        uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
+        uint256 decimalDiff = IERC20Decimals(_token).decimals() + 12;
         premiumInNativeToken = (_premium * (10**decimalDiff)) / price;
-        console.log("getNative,premium",premiumInNativeToken);
+
+        console.log("premium", _premium);
+        console.log("getNative premium",premiumInNativeToken);
         console.log("price",price);
+        
         // Pay native tokens
         IERC20(_token).safeTransferFrom(
             msg.sender,
@@ -745,6 +751,10 @@ contract PolicyCenter is
             (PREMIUM_TO_PROTECTION + PREMIUM_TO_TREASURY);
         // Shield to Treasury
         toTreasury = amountReceived - toProtection;
+        console.log("amountReceived",amountReceived);
+        console.log("toPriority",toPriority);
+        console.log("toProtection",toProtection);
+        console.log("toTreasury",toTreasury);
 
         emit PremiumSplitted(toPriority, toProtection, toTreasury);
 

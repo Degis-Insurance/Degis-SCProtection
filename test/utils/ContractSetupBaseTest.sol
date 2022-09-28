@@ -8,6 +8,7 @@ import "src/core/PolicyCenter.sol";
 import "src/core/Executor.sol";
 
 import {PriorityPoolFactory} from "src/pools/priorityPool/PriorityPoolFactory.sol";
+import {PriorityPoolDeployer} from "src/pools/priorityPool/PriorityPoolDeployer.sol";
 import {ProtectionPool} from "src/pools/protectionPool/ProtectionPool.sol";
 import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
@@ -34,6 +35,7 @@ contract ContractSetupBaseTest is BaseTest {
     Executor internal executor;
 
     PriorityPoolFactory internal priorityPoolFactory;
+    PriorityPoolDeployer internal priorityPoolDeployer;
     ProtectionPool internal protectionPool;
 
     Treasury internal treasury;
@@ -44,7 +46,6 @@ contract ContractSetupBaseTest is BaseTest {
     OnboardProposal internal onboardProposal;
 
     CoverRightTokenFactory internal crFactory;
-
 
     MockDEG internal deg;
     MockVeDEG internal veDEG;
@@ -63,7 +64,6 @@ contract ContractSetupBaseTest is BaseTest {
         priceGetter = new MockPriceGetter();
         exchange = new MockExchange();
 
-
         _setupProtectionPool();
         _setupFactory();
 
@@ -79,6 +79,7 @@ contract ContractSetupBaseTest is BaseTest {
 
         _setupCRFactory();
         _setupPayoutPool();
+        _setupPoolDeployer();
 
         _setAddresses();
     }
@@ -168,6 +169,17 @@ contract ContractSetupBaseTest is BaseTest {
         );
     }
 
+    function _setupPoolDeployer() internal {
+        priorityPoolDeployer = new PriorityPoolDeployer();
+        priorityPoolDeployer.initialize(
+            address(priorityPoolFactory),
+            address(farmingPool),
+            address(protectionPool),
+            address(policyCenter),
+            address(payoutPool)
+        );
+    }
+
     function _setAddresses() internal {
         // Set incident report
         incidentReport.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -181,8 +193,6 @@ contract ContractSetupBaseTest is BaseTest {
 
         // Set cover right factory
         crFactory.setPayoutPool(address(payoutPool));
-
-        
 
         // Set protection pool
         protectionPool.setPriorityPoolFactory(address(priorityPoolFactory));
@@ -211,6 +221,8 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory.setWeightedFarmingPool(address(farmingPool));
         priorityPoolFactory.setIncidentReport(address(incidentReport));
         // priorityPoolFactory.setPayoutPool(address(payoutPool));
-
+        priorityPoolFactory.setPriorityPoolDeployer(
+            address(priorityPoolDeployer)
+        );
     }
 }

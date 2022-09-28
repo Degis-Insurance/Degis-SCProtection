@@ -25,8 +25,6 @@ import "./interfaces/ExecutorDependencies.sol";
 import "../voting/interfaces/VotingParameters.sol";
 import "./interfaces/ExecutorEventError.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @title Executor
  *
@@ -122,10 +120,8 @@ contract Executor is
             priorityPoolFactory
         );
 
-        // // Unpause the priority pool and protection pool
+        // Unpause the priority pool and protection pool
         // factory.pausePriorityPool(report.poolId, false);
-
-        // IIncidentReport(incidentReport).setReported(report.poolId, false);
 
         // Liquidate the pool
         (, address poolAddress, , , ) = factory.pools(report.poolId);

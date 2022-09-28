@@ -600,8 +600,10 @@ contract IncidentReport is
                 REPORTER_REWARD + REPORT_THRESHOLD
             );
 
-            // 40% of total deg reward to the opposite
-            totalRewardToVoters = (numAgainst * REWARD_RATIO) / 100;
+            // 40% of total deg reward to the opposite (deg amount)
+            // REWARD_RATIO is 100 max
+            // veDEG => DEG also divided by 100
+            totalRewardToVoters = (numAgainst * REWARD_RATIO) / 10000;
 
             // Update deg reward for those who vote for
             currentReport.votingReward = (totalRewardToVoters * SCALE) / numFor;
@@ -610,7 +612,7 @@ contract IncidentReport is
             totalRewardToVoters =
                 REPORT_THRESHOLD +
                 (numFor * REWARD_RATIO) /
-                100;
+                10000;
 
             // Update deg reward for those who vote against
             currentReport.votingReward =

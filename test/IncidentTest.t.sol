@@ -35,8 +35,6 @@
 //     uint256 internal constant PAYOUT = 1000e6;
 //     uint256 internal constant LIQUIDITY = 1000 ether;
 
-//     uint256 internal constant VOTE_FOR = 1;
-//     uint256 internal constant VOTE_AGAINST = 2;
 //     uint256 internal constant VOTE_AMOUNT = 100 ether;
 
 //     uint256 internal constant REPORT_TIME = 0;
@@ -94,7 +92,7 @@
 //         // Fund exchange
 //         deg.mintDegis(address(exchange), 1000 ether);
 //         shield.mint(address(exchange), 1000 ether);
-//         MockERC20(policyCenter.USDC()).mint(address(exchange), 1000 ether * SCALE);
+//         MockERC20(policyCenter.usdc()).mint(address(exchange), 1000 ether * SCALE);
 //         joe.mint(address(exchange), 1000 ether * SCALE);
 //         ptp.mint(address(exchange), 1000 ether * SCALE);
 //         gmx.mint(address(exchange), 1000 ether * SCALE);
@@ -749,10 +747,10 @@
 
 //         vm.warp(SETTLE_TIME);
 //         vm.expectEmit(false, false, false, true);
-//         emit VotingRewardSettled(1, (VOTE_AMOUNT * REWARD_RATIO) / 100);
+//         emit VotingRewardSettled(1, VOTE_AMOUNT * REWARD_RATIO / 10000);
 //         incidentReport.settle(1);
 
-//         uint256 totalRewardToVoters = (VOTE_AMOUNT * REWARD_RATIO) / 100;
+//         uint256 totalRewardToVoters = (VOTE_AMOUNT * REWARD_RATIO / 10000);
 
 //         IncidentReport.Report memory report = incidentReport.getReport(1);
 //         assertEq(report.result, PASS_RESULT);
@@ -904,13 +902,12 @@
 //         vm.expectEmit(false, false, false, true);
 //         emit VotingRewardSettled(
 //             1,
-//             REPORT_THRESHOLD + (VOTE_AMOUNT * REWARD_RATIO) / 100
+//             REPORT_THRESHOLD + (VOTE_AMOUNT * REWARD_RATIO / 10000)
 //         );
 //         incidentReport.settle(1);
 
 //         uint256 totalRewardToVoters = REPORT_THRESHOLD +
-//             (VOTE_AMOUNT * REWARD_RATIO) /
-//             100;
+//             (VOTE_AMOUNT * REWARD_RATIO / 10000);
 
 //         IncidentReport.Report memory report = incidentReport.getReport(1);
 //         assertEq(report.result, REJECT_RESULT);

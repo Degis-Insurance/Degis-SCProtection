@@ -77,14 +77,20 @@ task("settleProposal", "Settle a proposal voting result")
     console.log("Tx details:", await tx.wait());
 
     const p = await onboardProposal.proposals(taskArgs.id);
-    console.log(p.result.toString());
 
-    const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
-      addressList[network.name].MockVeDEG
-    );
+    const res = p.result.toString();
 
-    const totalSupply = await veDEG.totalSupply();
-    console.log(formatEther(totalSupply));
+    if (res == "1") console.log("Passed");
+    else if (res == "2") console.log("Reject");
+    else if (res == "3") console.log("Tied");
+    else console.log("Failed");
+
+    // const veDEG: MockVeDEG = new MockVeDEG__factory(dev_account).attach(
+    //   addressList[network.name].MockVeDEG
+    // );
+
+    // const totalSupply = await veDEG.totalSupply();
+    // console.log(formatEther(totalSupply));
   });
 
 task("getProposal", "Get proposal info")
@@ -106,8 +112,9 @@ task("getProposal", "Get proposal info")
     console.log(proposal);
   });
 
-task("setQuorumProposal", "Start a new report for a pool").setAction(
-  async (taskArgs, hre) => {
+task("setQuorumProposal", "Start a new report for a pool")
+  .addParam("quorum", "Quorum ratio", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -120,10 +127,9 @@ task("setQuorumProposal", "Start a new report for a pool").setAction(
       dev_account
     ).attach(addressList[network.name].OnboardProposal);
 
-    const newQuorum = 0;
+    const newQuorum = taskArgs.quorum;
 
     const tx = await onboardProposal.setQuorumRatio(newQuorum);
 
     console.log("tx details", await tx.wait());
-  }
-);
+  });

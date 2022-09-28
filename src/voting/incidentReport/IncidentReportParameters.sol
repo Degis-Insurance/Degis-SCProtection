@@ -28,9 +28,9 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 public constant REPORTER_REWARD = 10000 ether;
 
     // Reward & Punishment ratios
-    uint256 public constant REWARD_RATIO = 40; // 40% go to winners, 40% reserve
-    uint256 public constant RESERVE_RATIO = 40;
-    uint256 public constant DEBT_RATIO = 80; // 80% as the debt to unlock veDEG
+    uint256 public constant REWARD_RATIO = 4000; // 40% go to winners, 40% reserve
+    uint256 public constant RESERVE_RATIO = 4000;
+    uint256 public constant DEBT_RATIO = 8000; // 80% as the debt to unlock veDEG
 
     // 2 extra rounds at most
     uint256 public constant MAX_EXTEND_ROUND = 2;

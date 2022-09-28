@@ -37,7 +37,7 @@
 //     uint256 internal constant COVER_AMOUNT = 1e18;
 //     uint256 internal constant PAYOUT = 1e18;
 //     uint256 internal constant LIQUIDITY_UNIT = 100e6;
-//     uint256 internal constant MIN_COVER_AMOUNT = 100e6;
+//     uint256 internal constant MIN_COVER_AMOUNT = 1e7;
 //     uint256 internal constant SCALE = 1e12;
 
 //     uint256 internal constant LIQUIDITY = 1000 ether;
@@ -71,7 +71,7 @@
 
 //         // Set USDC address to current mainnet address
 //         bytes memory bytecode = address(usdc).code;
-//         vm.etch(policyCenter.USDC(), bytecode);
+//         vm.etch(policyCenter.usdc(), bytecode);
 
 //         vm.warp(0);
 
@@ -97,7 +97,10 @@
 //         // Fund exchange
 //         deg.mintDegis(address(exchange), 1000 ether);
 //         shield.mint(address(exchange), 1000 ether);
-//         MockERC20(policyCenter.USDC()).mint(address(exchange), 1000 ether * SCALE);
+//         MockERC20(policyCenter.usdc()).mint(
+//             address(exchange),
+//             1000 ether * SCALE
+//         );
 //         joe.mint(address(exchange), 1000 ether * SCALE);
 //     }
 
@@ -122,12 +125,16 @@
 //         (uint256 price, uint256 length) = joePool.coverPrice(COVER_AMOUNT, 3);
 //         vm.prank(_user);
 //         joe.approve(address(policyCenter), type(uint256).max);
-//         joe.mint(_user, price * 11 / 10);
+//         joe.mint(_user, price * 1e12);
 //         vm.prank(_user);
 //         // Get Joe cover right address and buy cover
-//         crJoeAddress = policyCenter.buyCover(JOE_ID, COVER_AMOUNT, 3, price * 11 / 10);
+//         crJoeAddress = policyCenter.buyCover(
+//             JOE_ID,
+//             COVER_AMOUNT,
+//             3,
+//             (price * 11) / 10
+//         );
 //     }
-
 
 //     function _truthfulReport(uint256 time, uint256 reportId) internal {
 //         vm.warp(time + 0);
@@ -150,9 +157,12 @@
 //         vm.prank(CHARLIE);
 //         protectionPool.approve(address(policyCenter), LIQUIDITY * 2);
 //         _buyCover(ALICE);
-//         // _buyCover(BOB);
+//         _buyCover(BOB);
 
-//         MockERC20(policyCenter.USDC()).approve(address(policyCenter), type(uint256).max);
+//         MockERC20(policyCenter.usdc()).approve(
+//             address(policyCenter),
+//             type(uint256).max
+//         );
 //         deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
 
 //         // # --------------------------------------------------------------------//
@@ -163,7 +173,10 @@
 //         assertEq(reward, 0);
 
 //         vm.prank(CHARLIE);
-//         vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         // current implementation accepts harvesting 0 rewards
+//         // vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         vm.expectEmit(false, false, false, true);
+//         emit Harvest(JOE_ID, CHARLIE, CHARLIE, 0);
 //         farmingPool.harvest(JOE_ID, CHARLIE);
 
 //         console.log(unicode"✅ Not harvest before month passed");
@@ -176,7 +189,10 @@
 //         // # --------------------------------------------------------------------//
 
 //         vm.prank(CHARLIE);
-//         vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         // current implementation accepts harvesting 0 rewards
+//         // vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         vm.expectEmit(false, false, false, true);
+//         emit Harvest(JOE_ID, CHARLIE, CHARLIE, 0);
 //         farmingPool.harvest(JOE_ID, CHARLIE);
 
 //         console.log(unicode"✅ Not harvest if did not stake");
@@ -216,15 +232,19 @@
 //         // # --------------------------------------------------------------------//
 //         // # Should be able to harvest to another address # //
 //         // # --------------------------------------------------------------------//
-        
+
 //         vm.revertTo(snapshot_2);
 //         uint256 snapshot_3 = vm.snapshot();
 
-//         reward = farmingPool.pendingReward(JOE_ID, CHARLIE);
+//         (,,, uint256 accRewardPerShare) = farmingPool.pools(JOE_ID);
+//         (uint256 shares, uint256 rewardDebt) = farmingPool.users(JOE_ID, CHARLIE);
+//         uint256 pending = ((shares * accRewardPerShare) /
+//             SCALE -
+//             rewardDebt) / SCALE;
 
 //         vm.prank(CHARLIE);
 //         vm.expectEmit(false, false, false, true);
-//         emit Harvest(JOE_ID, CHARLIE, BOB, reward);
+//         emit Harvest(JOE_ID, CHARLIE, BOB, pending);
 //         farmingPool.harvest(JOE_ID, BOB);
 
 //         console.log(unicode"✅ harvest to another address");
@@ -239,7 +259,10 @@
 //         vm.warp(62 days);
 
 //         vm.prank(CHARLIE);
-//         vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         // current implementation accepts harvesting 0 rewards
+//         // vm.expectRevert(WeightedFarmingPool__NoPendingRewards.selector);
+//         vm.expectEmit(false, false, false, true);
+//         emit Harvest(JOE_ID, CHARLIE, CHARLIE, 0);
 //         farmingPool.harvest(JOE_ID, CHARLIE);
 
 //         console.log(unicode"✅ Not harvest if unstaked");
@@ -251,16 +274,18 @@
 //         // # --------------------------------------------------------------------//
 //         // # Should be able to harvest after report # //
 //         // # --------------------------------------------------------------------//
-//         reward = farmingPool.pendingReward(JOE_ID, CHARLIE);
-
+//         (,,, accRewardPerShare) = farmingPool.pools(JOE_ID);
+//         ( shares, rewardDebt) = farmingPool.users(JOE_ID, CHARLIE);
+//         pending = ((shares * accRewardPerShare) /
+//             SCALE -
+//             rewardDebt) / SCALE;
+//         console.log(unicode"pending", pending);
 //         // reward should be the entire amount of what was paid to the pool
 //         vm.prank(CHARLIE);
 //         vm.expectEmit(false, false, false, true);
-//         emit Harvest(JOE_ID, CHARLIE, CHARLIE, reward);
-//         farmingPool.harvest(JOE_ID, ALICE);
+//         emit Harvest(JOE_ID, CHARLIE, CHARLIE, pending);
+//         farmingPool.harvest(JOE_ID, CHARLIE);
 
 //         console.log(unicode"✅ harvest after report");
-
 //     }
-
 // }

@@ -536,9 +536,8 @@ contract WeightedFarmingPool is
 
         uint256 index = _getIndex(_id, _token);
 
-        if (_amount > user.amount[index])
+        if (index >= user.amount.length || _amount > user.amount[index])
             revert WeightedFarmingPool__NotEnoughAmount();
-
         if (user.shares > 0) {
             uint256 pending = ((user.shares * pool.accRewardPerShare) /
                 SCALE -
@@ -558,9 +557,6 @@ contract WeightedFarmingPool is
         user.amount[index] -= _amount;
         user.shares -= _amount * pool.weight[index];
 
-        pool.amount[index] -= _amount;
-        pool.shares -= _amount * pool.weight[index];
-
         user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
     }
 
@@ -576,7 +572,7 @@ contract WeightedFarmingPool is
             console.log("newReward", newReward);
             console.log("pool.shares", pool.shares);
             pool.accRewardPerShare +=
-                newReward * SCALE  /
+                (newReward * SCALE) /
                 (pool.shares / SCALE);
             console.log("accRewardPerShare", pool.accRewardPerShare);
 

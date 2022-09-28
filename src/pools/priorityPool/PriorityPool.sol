@@ -74,7 +74,7 @@ contract PriorityPool is
 
     // Mininum cover amount 10U
     // Avoid accuracy issues
-    uint256 internal constant MIN_COVER_AMOUNT = 10e6;
+    uint256 internal constant MIN_COVER_AMOUNT = 1e7;
 
     // Max time length in month
     uint256 internal constant MAX_LENGTH = 3;
@@ -755,7 +755,7 @@ contract PriorityPool is
         activeCovered() > 0
             ? payoutRatio = (_amount * SCALE) / activeCovered()
             : payoutRatio = 0;
-        console.log(payoutRatio);
+        console.log("payoutRatio", payoutRatio);
         IPayoutPool(payoutPool).newPayout(
             poolId,
             generation,

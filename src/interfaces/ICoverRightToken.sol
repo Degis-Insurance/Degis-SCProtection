@@ -21,4 +21,6 @@ interface ICoverRightToken {
     function generation() external view returns (uint256);
 
     function policyCenter() external view returns (address);
+    
+    function balanceOf(address account) external view returns (uint256);
 }
