@@ -133,6 +133,14 @@ contract WeightedFarmingPool is
         _;
     }
 
+    modifier onlyFactory() {
+        require(
+            msg.sender == priorityPoolFactory,
+            "Only Priority Pool Factory"
+        );
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -304,7 +312,7 @@ contract WeightedFarmingPool is
      *
      * @param _rewardToken Reward token address (protocol native token)
      */
-    function addPool(address _rewardToken) external isPriorityPool {
+    function addPool(address _rewardToken) external onlyFactory {
         uint256 currentId = ++counter;
 
         PoolInfo storage pool = pools[currentId];
