@@ -304,6 +304,9 @@ task("dynamicPremium", "Get priority pool active covered")
       dev_account
     ).attach(addressList[network.name].ProtectionPool);
 
+    const totalActiveCovered = await protectionPool.getTotalActiveCovered();
+    console.log("Total covered: ", totalActiveCovered.toString());
+
     const stakedSupply = await protectionPool.stakedSupply();
     console.log("Staked supply: ", stakedSupply.toString());
 
@@ -313,11 +316,12 @@ task("dynamicPremium", "Get priority pool active covered")
     const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
       poolAddress
     );
-    const ratio = await pool.dynamicPremiumRatio(0);
-    console.log(ratio.toString());
 
     const dynamicCounter = await factory.dynamicPoolCounter();
     console.log("Dynamic pool counter:", dynamicCounter.toString());
+
+    const ratio = await pool.dynamicPremiumRatio(0);
+    console.log(ratio.toString());
 
     const minReq = await pool.minAssetRequirement();
     console.log("Min requirement: ", minReq.toString());

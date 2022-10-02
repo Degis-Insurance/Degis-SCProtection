@@ -82,6 +82,34 @@ contract PriorityPoolDeployer is Initializable {
         return newPoolAddress;
     }
 
+    function getPoolAddress(
+        uint256 _poolId,
+        string memory _name,
+        address _protocolToken,
+        uint256 _maxCapacity,
+        uint256 _baseRatio
+    ) public view returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(_poolId, _name));
+        bytes memory bytecodeWithParameters = _getBytecode(
+            _poolId,
+            _name,
+            _protocolToken,
+            _maxCapacity,
+            _baseRatio
+        );
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(bytecodeWithParameters)
+            )
+        );
+
+        return address(uint160(uint256(hash)));
+    }
+
     function _deployPool(
         uint256 _poolId,
         string memory _name,
@@ -89,10 +117,29 @@ contract PriorityPoolDeployer is Initializable {
         uint256 _maxCapacity,
         uint256 _baseRatio
     ) internal returns (address addr) {
-        bytes memory bytecode = type(PriorityPool).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(_poolId, _name));
 
-        bytes memory bytecodeWithParameters = abi.encodePacked(
+        bytes memory bytecodeWithParameters = _getBytecode(
+            _poolId,
+            _name,
+            _protocolToken,
+            _maxCapacity,
+            _baseRatio
+        );
+
+        addr = _deploy(bytecodeWithParameters, salt);
+    }
+
+    function _getBytecode(
+        uint256 _poolId,
+        string memory _name,
+        address _protocolToken,
+        uint256 _maxCapacity,
+        uint256 _baseRatio
+    ) internal view returns (bytes memory bytecodeWithParameters) {
+        bytes memory bytecode = type(PriorityPool).creationCode;
+
+        bytecodeWithParameters = abi.encodePacked(
             bytecode,
             abi.encode(
                 _poolId,
@@ -108,8 +155,6 @@ contract PriorityPoolDeployer is Initializable {
                 payoutPool
             )
         );
-
-        addr = _deploy(bytecodeWithParameters, salt);
     }
 
     /**

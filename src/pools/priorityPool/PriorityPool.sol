@@ -290,6 +290,9 @@ contract PriorityPool is
         uint256 totalActiveCovered = IProtectionPool(protectionPool)
             .getTotalActiveCovered();
 
+        uint256 stakedProSupply = IProtectionPool(protectionPool)
+            .stakedSupply();
+
         // First 7 days use base ratio
         // Then use dynamic ratio
         // TODO: test use 5 hours
@@ -299,7 +302,11 @@ contract PriorityPool is
                 priorityPoolFactory
             ).dynamicPoolCounter();
 
-            if (numofDynamicPools > 0 && totalActiveCovered > 0) {
+            if (
+                numofDynamicPools > 0 &&
+                totalActiveCovered > 0 &&
+                stakedProSupply > 0
+            ) {
                 // Covered ratio = Covered amount of this pool / Total covered amount
                 uint256 coveredRatio = ((activeCovered() + _coverAmount) *
                     SCALE) / (totalActiveCovered + _coverAmount);
@@ -311,7 +318,7 @@ contract PriorityPool is
                 //                    PRO-LP token staked in all priority pools
                 //
                 uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
-                    IProtectionPool(protectionPool).stakedSupply();
+                    stakedProSupply;
 
                 // Dynamic premium ratio
                 // ( N = total dynamic pools ≤ total pools )

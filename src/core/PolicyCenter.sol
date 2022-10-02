@@ -514,13 +514,17 @@ contract PolicyCenter is
         path[1] = USDC;
 
         // Swap for USDC and return the received amount
-        received = IExchange(exchange).swapExactTokensForTokens(
+        uint256[] memory amountsOut = new uint256[](2);
+
+        amountsOut = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * (10000 - SLIPPAGE)) / 10000),
             path,
             address(this),
             block.timestamp + 1
         );
+
+        received = amountsOut[1];
 
         // Deposit USDC and get back shield
         // When depositing USDC, no slippage

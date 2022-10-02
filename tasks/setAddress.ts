@@ -31,6 +31,8 @@ import {
   CoverRightTokenFactory,
   PriorityPoolDeployer,
   PriorityPoolDeployer__factory,
+  PriceGetter,
+  PriceGetter__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -586,5 +588,26 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   const tx = await policyCenter.approvePoolToken(
     addressList[network.name].XAVAToken
   );
+  console.log("tx details:", await tx.wait());
+});
+
+task("addPriceFeed").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const priceGetter: PriceGetter = new PriceGetter__factory(dev_account).attach(
+    addressList[network.name].PriceGetter
+  );
+
+  const joe = "0x0a2b1C1EE4e3be91CED786441154352D67c16732";
+
+  const feed = "0x02D35d3a8aC3e1626d3eE09A78Dd87286F5E8e3a";
+
+  const tx = await priceGetter.setPriceFeed("JOE", joe, feed, 8);
   console.log("tx details:", await tx.wait());
 });

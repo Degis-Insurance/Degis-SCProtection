@@ -28,8 +28,9 @@ task("newReport", "Start a new report for a pool")
     console.log("tx details", await tx.wait());
   });
 
-task("setQuorum", "Start a new report for a pool").setAction(
-  async (taskArgs, hre) => {
+task("setQuorumReport", "Start a new report for a pool")
+  .addParam("quorum", "Quorum for report voting", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -42,13 +43,12 @@ task("setQuorum", "Start a new report for a pool").setAction(
       dev_account
     ).attach(addressList[network.name].IncidentReport);
 
-    const newQuorum = 1;
+    const newQuorum = 0;
 
     const tx = await incidentReport.setQuorumRatio(newQuorum);
 
     console.log("tx details", await tx.wait());
-  }
-);
+  });
 
 task("voteReport", "Start a new report for a pool")
   .addParam("id", "Pool id", null, types.string)
@@ -197,22 +197,5 @@ task("reported", "Check reported").setAction(async (_, hre) => {
   ).attach(addressList[network.name].IncidentReport);
 
   const reported = await incidentReport.reported(1);
-  console.log("reported:", reported);
-});
-
-task("addPoolReports", "Check reported").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
-
-  const incidentReport: IncidentReport = new IncidentReport__factory(
-    dev_account
-  ).attach(addressList[network.name].IncidentReport);
-
-  const reported = await incidentReport.addPoolReports(2, 3);
   console.log("reported:", reported);
 });

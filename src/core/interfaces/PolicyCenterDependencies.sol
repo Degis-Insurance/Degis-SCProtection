@@ -26,7 +26,8 @@ abstract contract PolicyCenterDependencies {
     uint256 internal constant PREMIUM_TO_TREASURY = 500;
 
     // Swap slippage
-    uint256 internal constant SLIPPAGE = 10;
+    // TODO: change
+    uint256 internal constant SLIPPAGE = 10000;
 
     address public protectionPool;
     address public priceGetter;

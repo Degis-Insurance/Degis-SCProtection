@@ -218,6 +218,16 @@ contract PriorityPoolFactory is
 
         uint256 currentPoolId = ++poolCounter;
 
+        address newAddress = IPriorityPoolDeployer(priorityPoolDeployer)
+            .getPoolAddress(
+                currentPoolId,
+                _name,
+                _protocolToken,
+                _maxCapacity,
+                _basePremiumRatio
+            );
+        poolRegistered[newAddress] = true;
+
         address newPoolAddress = IPriorityPoolDeployer(priorityPoolDeployer)
             .deployPool(
                 currentPoolId,
@@ -236,7 +246,6 @@ contract PriorityPoolFactory is
         );
 
         tokenRegistered[_protocolToken] = true;
-        poolRegistered[newPoolAddress] = true;
         poolAddressToId[newPoolAddress] = currentPoolId;
 
         // Store pool information in Policy Center
@@ -286,7 +295,7 @@ contract PriorityPoolFactory is
     /**
      * @notice Update max capacity from a priority pool
      */
-    function updateMaxCapaity(bool _isUp, uint256 _diff)
+    function updateMaxCapacity(bool _isUp, uint256 _diff)
         external
         onlyPriorityPool
     {

@@ -46,7 +46,15 @@
 		}
 	},
 	"avax": {},
-	"avaxTest": {},
+	"avaxTest": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0xBA8f4614d4F93CeA5C0DB159A62eEa5999EcE9eC",
+			"name": "TraderJoe",
+			"token": "0x0a2b1C1EE4e3be91CED786441154352D67c16732",
+			"premium": "200"
+		}
+	},
 	"localhost": {
 		"1": {
 			"id": "1",
