@@ -219,7 +219,8 @@ contract PolicyCenter is
         uint256 _poolId,
         uint256 _coverAmount,
         uint256 _coverDuration,
-        uint256 _maxPayment
+        uint256 _maxPayment,
+        address[] memory path
     ) external poolExists(_poolId) returns (address) {
         if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
@@ -244,7 +245,7 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool,
             ,
             uint256 premiumToTreasury
-        ) = _splitPremium(_poolId, premium);
+        ) = _splitPremium(_poolId, premium, path);
 
         IProtectionPool(protectionPool).updateWhenBuy();
         IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
@@ -502,16 +503,19 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
+     * @param _path      Swap path
      *
      * @return received Actual shield amount received
      */
-    function _swapTokens(address _fromToken, uint256 _amount)
-        internal
-        returns (uint256 received)
-    {
-        address[] memory path = new address[](2);
-        path[0] = _fromToken;
-        path[1] = USDC;
+    function _swapTokens(
+        address _fromToken,
+        uint256 _amount,
+        address[] _path
+    ) internal returns (uint256 received) {
+        uint256 length = _path.length;
+
+        if (_path[length - 1] != USDC) revert PolicyCenter__WrongPath();
+        if (length[0] != _fromToken) revert PolicyCenter__WrongPath();
 
         // Swap for USDC and return the received amount
         uint256[] memory amountsOut = new uint256[](2);
@@ -519,11 +523,12 @@ contract PolicyCenter is
         amountsOut = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * (10000 - SLIPPAGE)) / 10000),
-            path,
+            _path,
             address(this),
             block.timestamp + 1
         );
 
+        // Received amount is the second element of the return value
         received = amountsOut[1];
 
         // Deposit USDC and get back shield
@@ -703,12 +708,17 @@ contract PolicyCenter is
      *
      * @param _poolId       Pool id
      * @param _premiumInUSD Premium in USD
+     * @param _path         Swap path
      *
      * @return toPriority   Premium to priority pool
      * @return toProtection Premium to protection pool
      * @return toTreasury   Premium to treasury
      */
-    function _splitPremium(uint256 _poolId, uint256 _premiumInUSD)
+    function _splitPremium(
+        uint256 _poolId,
+        uint256 _premiumInUSD,
+        address[] memory _path
+    )
         internal
         returns (
             uint256 toPriority,
@@ -732,7 +742,7 @@ contract PolicyCenter is
         // Except for amount to priority pool, remaining is distributed in Shield
         uint256 amountToSwap = premiumInNativeToken - toPriority;
         // Shield amount received
-        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap);
+        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, path);
 
         // Shield to Protection Pool
         toProtection =
