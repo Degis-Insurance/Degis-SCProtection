@@ -510,12 +510,12 @@ contract PolicyCenter is
     function _swapTokens(
         address _fromToken,
         uint256 _amount,
-        address[] _path
+        address[] memory _path
     ) internal returns (uint256 received) {
         uint256 length = _path.length;
 
         if (_path[length - 1] != USDC) revert PolicyCenter__WrongPath();
-        if (length[0] != _fromToken) revert PolicyCenter__WrongPath();
+        if (_path[0] != _fromToken) revert PolicyCenter__WrongPath();
 
         // Swap for USDC and return the received amount
         uint256[] memory amountsOut = new uint256[](2);
@@ -742,7 +742,7 @@ contract PolicyCenter is
         // Except for amount to priority pool, remaining is distributed in Shield
         uint256 amountToSwap = premiumInNativeToken - toPriority;
         // Shield amount received
-        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, path);
+        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, _path);
 
         // Shield to Protection Pool
         toProtection =

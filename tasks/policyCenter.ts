@@ -79,7 +79,8 @@ task("buyCover", "Buy a cover")
       taskArgs.id,
       parseUnits(taskArgs.amount, 6),
       taskArgs.length,
-      parseUnits("10000")
+      parseUnits("10000"),
+      []
     );
 
     console.log("Tx details", await tx.wait());

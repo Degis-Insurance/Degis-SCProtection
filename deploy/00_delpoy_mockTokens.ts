@@ -36,34 +36,34 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("mock degis token deployed to address: ", mockDEG.address, "\n");
 
-  const mockShield = await deploy("MockSHIELD", {
-    contract: "MockSHIELD",
-    from: deployer,
-    args: [0, "Shield", 6, "SHD"],
-    log: true,
-  });
-  addressList[network.name].MockShield = mockShield.address;
+  // const mockShield = await deploy("MockSHIELD", {
+  //   contract: "MockSHIELD",
+  //   from: deployer,
+  //   args: [0, "Shield", 6, "SHD"],
+  //   log: true,
+  // });
+  // addressList[network.name].MockShield = mockShield.address;
 
-  console.log(
-    "mock shield token deployed to address: ",
-    mockShield.address,
-    "\n"
-  );
+  // console.log(
+  //   "mock shield token deployed to address: ",
+  //   mockShield.address,
+  //   "\n"
+  // );
 
-  // Proxy Admin contract artifact
-  const mockVeDEG = await deploy("MockVeDEG", {
-    contract: "MockVeDEG",
-    from: deployer,
-    args: [0, "VoteEscrowedDegis", 18, "VeDEG"],
-    log: true,
-  });
-  addressList[network.name].MockVeDEG = mockVeDEG.address;
+  // // Proxy Admin contract artifact
+  // const mockVeDEG = await deploy("MockVeDEG", {
+  //   contract: "MockVeDEG",
+  //   from: deployer,
+  //   args: [0, "VoteEscrowedDegis", 18, "VeDEG"],
+  //   log: true,
+  // });
+  // addressList[network.name].MockVeDEG = mockVeDEG.address;
 
-  console.log(
-    "mock vote escrowed degis token deployed to address: ",
-    mockVeDEG.address,
-    "\n"
-  );
+  // console.log(
+  //   "mock vote escrowed degis token deployed to address: ",
+  //   mockVeDEG.address,
+  //   "\n"
+  // );
 
   // Store the address list after deployment
   storeAddressList(addressList);
