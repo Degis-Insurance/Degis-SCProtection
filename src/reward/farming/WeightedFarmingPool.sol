@@ -698,8 +698,7 @@ contract WeightedFarmingPool is
         uint256 currentTime = block.timestamp;
         uint256 lastRewardTime = pool.lastRewardTimestamp;
 
-        (uint256 lastY, uint256 lastM, uint256 lastD) = lastRewardTime
-            .timestampToDate();
+        (uint256 lastY, uint256 lastM, ) = lastRewardTime.timestampToDate();
 
         (uint256 currentY, uint256 currentM, ) = currentTime.timestampToDate();
 
