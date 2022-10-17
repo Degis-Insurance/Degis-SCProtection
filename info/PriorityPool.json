@@ -49,9 +49,16 @@
 	"avaxTest": {
 		"1": {
 			"id": "1",
-			"poolAddress": "0xBA8f4614d4F93CeA5C0DB159A62eEa5999EcE9eC",
+			"poolAddress": "0x4322E068695d47b702858381C8E1a0f0a224C010",
 			"name": "TraderJoe",
-			"token": "0x0a2b1C1EE4e3be91CED786441154352D67c16732",
+			"token": "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+			"premium": "200"
+		},
+		"3": {
+			"id": "3",
+			"poolAddress": "0x7cf082813B8F18B2C4Ef52a174Af79170D2e86Ed",
+			"name": "GMX",
+			"token": "0x62edc0692BD897D2295872a9FFCac5425011c661",
 			"premium": "200"
 		}
 	},

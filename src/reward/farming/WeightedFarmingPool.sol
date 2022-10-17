@@ -367,7 +367,8 @@ contract WeightedFarmingPool is
         address _token,
         uint256 _newWeight
     ) external isPriorityPool {
-        if (_newWeight == 0) revert WeightedFarmingPool__ZeroAmount();
+        // if (_newWeight == 0) revert WeightedFarmingPool__ZeroAmount();
+        // if (_newWeight == 0)
 
         updatePool(_id);
 

@@ -138,25 +138,31 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
         returns (uint256 finalPrice)
     {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(priceFeed.priceFeedAddress).latestRoundData();
 
-        // require(price > 0, "Only accept price that > 0");
-        if (price < 0) price = 0;
+        if (priceFeed.priceFeedAddress == address(0)) {
+            finalPrice = 1e18;
+        } else {
+            (
+                uint80 roundID,
+                int256 price,
+                uint256 startedAt,
+                uint256 timeStamp,
+                uint80 answeredInRound
+            ) = AggregatorV3Interface(priceFeed.priceFeedAddress)
+                    .latestRoundData();
 
-        emit LatestPriceGet(
-            roundID,
-            price,
-            startedAt,
-            timeStamp,
-            answeredInRound
-        );
-        // Transfer the result decimals
-        finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+            // require(price > 0, "Only accept price that > 0");
+            if (price < 0) price = 0;
+
+            emit LatestPriceGet(
+                roundID,
+                price,
+                startedAt,
+                timeStamp,
+                answeredInRound
+            );
+            // Transfer the result decimals
+            finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+        }
     }
 }

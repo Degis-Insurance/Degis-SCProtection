@@ -529,7 +529,7 @@ contract PolicyCenter is
         );
 
         // Received amount is the second element of the return value
-        received = amountsOut[1];
+        received = amountsOut[length - 1];
 
         // Deposit USDC and get back shield
         // When depositing USDC, no slippage

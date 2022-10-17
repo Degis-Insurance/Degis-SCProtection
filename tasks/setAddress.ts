@@ -33,6 +33,8 @@ import {
   PriorityPoolDeployer__factory,
   PriceGetter,
   PriceGetter__factory,
+  Treasury,
+  Treasury__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -604,10 +606,26 @@ task("addPriceFeed").setAction(async (_, hre) => {
     addressList[network.name].PriceGetter
   );
 
-  const joe = "0x0a2b1C1EE4e3be91CED786441154352D67c16732";
-
+  const joe = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd";
   const feed = "0x02D35d3a8aC3e1626d3eE09A78Dd87286F5E8e3a";
 
   const tx = await priceGetter.setPriceFeed("JOE", joe, feed, 8);
   console.log("tx details:", await tx.wait());
+});
+
+task("check").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const treasury: Treasury = new Treasury__factory(dev_account).attach(
+    addressList[network.name].Treasury
+  );
+
+  const tx = await treasury.policyCenter();
+  console.log("tx details:", tx);
 });
