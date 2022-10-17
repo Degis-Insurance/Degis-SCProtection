@@ -101,6 +101,10 @@ contract WeightedFarmingPool is
     // Pool id => Token address => Token index in the tokens array
     mapping(uint256 => mapping(address => uint256)) public tokenIndex;
 
+    // Pool id => User address => Index => Previous Weight
+    mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
+        public preWeight;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -367,13 +371,20 @@ contract WeightedFarmingPool is
         address _token,
         uint256 _newWeight
     ) external isPriorityPool {
-        // if (_newWeight == 0) revert WeightedFarmingPool__ZeroAmount();
-        // if (_newWeight == 0)
-
+        // First update the reward till now
+        // Then update the index to be the new one
         updatePool(_id);
 
         uint256 index = _getIndex(_id, _token);
-        pools[_id].weight[index] = _newWeight;
+
+        PoolInfo storage pool = pools[_id];
+
+        uint256 previousWeight = pool.weight[index];
+        pool.weight[index] = _newWeight;
+
+        // Update the pool's shares immediately
+        // When user interaction, update each user's share first
+        pool.shares -= pool.amount[index] * (previousWeight - _newWeight);
 
         emit PoolWeightUpdated(_id, index, _newWeight);
     }
@@ -411,7 +422,14 @@ contract WeightedFarmingPool is
 
     /**
      * @notice Deposit from Policy Center
+     *
      *         No need for approval
+     *         Only called from policy center
+     *
+     * @param _id     Pool id
+     * @param _token  PRI-LP token address
+     * @param _amount Amount to deposit
+     * @param _user   User address
      */
     function depositFromPolicyCenter(
         uint256 _id,
@@ -477,6 +495,10 @@ contract WeightedFarmingPool is
 
         updatePool(_id);
 
+        uint256 index = _getIndex(_id, _token);
+
+        _updateUserWeight(_id, _user, index);
+
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
@@ -493,8 +515,6 @@ contract WeightedFarmingPool is
 
             emit Harvest(_id, _user, _user, actualReward);
         }
-
-        uint256 index = _getIndex(_id, _token);
 
         // check if current index exists for user
         // index is 0, push
@@ -524,15 +544,48 @@ contract WeightedFarmingPool is
             }
         }
 
+        uint256 currentWeight = pool.weight[index];
+
         // Update user amount for this gen lp token
         user.amount[index] += _amount;
-        user.shares += _amount * pool.weight[index];
+        user.shares += _amount * currentWeight;
+
+        // Record this user's previous weight for this token index
+        preWeight[_id][_user][index] = currentWeight;
 
         // Update pool amount for this gen lp token
         pool.amount[index] += _amount;
-        pool.shares += _amount * pool.weight[index];
+        pool.shares += _amount * currentWeight;
 
         user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+    }
+
+    /**
+     * @notice Update a user's weight
+     *
+     * @param _id    Pool id
+     * @param _user  User address
+     * @param _index Token index in this pool
+     */
+    function _updateUserWeight(
+        uint256 _id,
+        address _user,
+        uint256 _index
+    ) internal {
+        PoolInfo storage pool = pools[_id];
+        UserInfo storage user = users[_id][_user];
+
+        uint256 weight = pool.weight[_index];
+        uint256 previousWeight = preWeight[_id][_user][_index];
+
+        // Only update when weight changes
+        if (weight != previousWeight) {
+            uint256 amount = user.amount[_index];
+
+            // Weight is always decreasing
+            // Ensure: previousWeight - weight > 0
+            user.shares -= amount * (previousWeight - weight);
+        }
     }
 
     function _withdraw(
@@ -548,10 +601,12 @@ contract WeightedFarmingPool is
 
         updatePool(_id);
 
+        uint256 index = _getIndex(_id, _token);
+
+        _updateUserWeight(_id, _user, index);
+
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
-
-        uint256 index = _getIndex(_id, _token);
 
         if (_amount > user.amount[index])
             revert WeightedFarmingPool__NotEnoughAmount();
