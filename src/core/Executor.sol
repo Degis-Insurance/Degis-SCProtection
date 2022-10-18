@@ -67,19 +67,19 @@ contract Executor is
         external
         onlyOwner
     {
-        priorityPoolFactory = _priorityPoolFactory;
+        priorityPoolFactory = IPriorityPoolFactory(_priorityPoolFactory);
     }
 
     function setIncidentReport(address _incidentReport) external onlyOwner {
-        incidentReport = _incidentReport;
+        incidentReport = IIncidentReport(_incidentReport);
     }
 
     function setOnboardProposal(address _onboardProposal) external onlyOwner {
-        onboardProposal = _onboardProposal;
+        onboardProposal = IOnboardProposal(_onboardProposal);
     }
 
     function setTreasury(address _treasury) external onlyOwner {
-        treasury = _treasury;
+        treasury = ITreasury(_treasury);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -103,28 +103,27 @@ contract Executor is
         if (reportExecuted[_reportId]) revert Executor__AlreadyExecuted();
         reportExecuted[_reportId] = true;
 
-        IIncidentReport.Report memory report = IIncidentReport(incidentReport)
-            .getReport(_reportId);
+        IIncidentReport.Report memory report = incidentReport.getReport(
+            _reportId
+        );
 
         if (report.status != SETTLED_STATUS)
             revert Executor__ReportNotSettled();
         if (report.result != PASS_RESULT) revert Executor__ReportNotPassed();
 
         // Executed callback function
-        IIncidentReport(incidentReport).executed(_reportId);
+        incidentReport.executed(_reportId);
 
         // Give 10% of treasury to the reporter
-        ITreasury(treasury).rewardReporter(report.poolId, report.reporter);
-
-        IPriorityPoolFactory factory = IPriorityPoolFactory(
-            priorityPoolFactory
-        );
+        treasury.rewardReporter(report.poolId, report.reporter);
 
         // Unpause the priority pool and protection pool
         // factory.pausePriorityPool(report.poolId, false);
 
         // Liquidate the pool
-        (, address poolAddress, , , ) = factory.pools(report.poolId);
+        (, address poolAddress, , , ) = priorityPoolFactory.pools(
+            report.poolId
+        );
         IPriorityPool(poolAddress).liquidatePool(report.payout);
 
         emit ReportExecuted(poolAddress, report.poolId, _reportId);
@@ -145,9 +144,9 @@ contract Executor is
         if (proposalExecuted[_proposalId]) revert Executor__AlreadyExecuted();
         proposalExecuted[_proposalId] = true;
 
-        IOnboardProposal.Proposal memory proposal = IOnboardProposal(
-            onboardProposal
-        ).getProposal(_proposalId);
+        IOnboardProposal.Proposal memory proposal = onboardProposal.getProposal(
+            _proposalId
+        );
 
         if (proposal.status != SETTLED_STATUS)
             revert Executor__ProposalNotSettled();
@@ -155,7 +154,7 @@ contract Executor is
             revert Executor__ProposalNotPassed();
 
         // Execute the proposal
-        newPriorityPool = IPriorityPoolFactory(priorityPoolFactory).deployPool(
+        newPriorityPool = priorityPoolFactory.deployPool(
             proposal.name,
             proposal.protocolToken,
             proposal.maxCapacity,

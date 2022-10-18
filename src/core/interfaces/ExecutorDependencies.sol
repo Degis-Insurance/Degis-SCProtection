@@ -29,8 +29,8 @@ interface IIncidentReport {
 }
 
 abstract contract ExecutorDependencies {
-    address public priorityPoolFactory;
-    address public incidentReport;
-    address public onboardProposal;
-    address public treasury;
+    IPriorityPoolFactory public priorityPoolFactory;
+    IIncidentReport public incidentReport;
+    IOnboardProposal public onboardProposal;
+    ITreasury public treasury;
 }
