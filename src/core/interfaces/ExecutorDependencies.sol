@@ -2,11 +2,15 @@
 
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IPriorityPool.sol";
+// import "../../interfaces/IPriorityPool.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 import "../../interfaces/IOnboardProposal.sol";
 
 import "../../interfaces/ITreasury.sol";
+
+interface IPriorityPool {
+    function liquidatePool(uint256 amount) external;
+}
 
 interface IIncidentReport {
     struct Report {

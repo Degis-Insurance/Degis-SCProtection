@@ -11,9 +11,9 @@ import {PriorityPoolFactory} from "src/pools/priorityPool/PriorityPoolFactory.so
 import {ProtectionPool} from "src/pools/protectionPool/ProtectionPool.sol";
 import {PriorityPool} from "src/pools/priorityPool/PriorityPool.sol";
 
-import "src/pools/PayoutPool.sol";
-import "src/reward/WeightedFarmingPool.sol";
-import "src/pools/Treasury.sol";
+import "src/pools/payoutPool/PayoutPool.sol";
+import "src/reward/farming/WeightedFarmingPool.sol";
+import "src/reward/treasury/Treasury.sol";
 
 import "src/voting/incidentReport/IncidentReport.sol";
 import "src/voting/onboardProposal/OnboardProposal.sol";

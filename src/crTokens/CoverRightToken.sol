@@ -48,7 +48,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
 
     // Those covers bought within 2 days will be excluded
     // TODO: test will set it as 0
-    uint256 public constant EXCLUDE_DAYS = 0;
+    uint256 public constant EXCLUDE_DAYS = 2;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -147,9 +147,12 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         require(_amount > 0, "Zero Amount");
         require(_poolId == poolId, "Wrong pool id");
 
-        uint256 effectiveFrom = _getEOD(
-            block.timestamp + EXCLUDE_DAYS * 1 days
-        );
+        // uint256 effectiveFrom = _getEOD(
+        //     block.timestamp + EXCLUDE_DAYS * 1 days
+        // );
+
+        // Start from today's last timestamp
+        uint256 effectiveFrom = _getEOD(block.timestamp);
 
         coverStartFrom[_user][effectiveFrom] += _amount;
 

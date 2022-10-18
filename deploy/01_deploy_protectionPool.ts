@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
+import { DeployFunction, DeployResult, ProxyOptions } from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
@@ -42,7 +42,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   };
 
   // Deploy contract
-  const protectionPool = await deploy("ProtectionPool", {
+  const protectionPool: DeployResult = await deploy("ProtectionPool", {
     contract: "ProtectionPool",
     from: deployer,
     proxy: proxyOptions,

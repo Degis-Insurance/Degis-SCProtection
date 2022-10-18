@@ -11,8 +11,12 @@ import {
   MockVeDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
+  PayoutPool,
+  PayoutPool__factory,
   PolicyCenter,
   PolicyCenter__factory,
+  ProtectionPool,
+  ProtectionPool__factory,
   WeightedFarmingPool,
   WeightedFarmingPool__factory,
 } from "../typechain-types";
@@ -75,7 +79,7 @@ task("buyCover", "Buy a cover")
       addressList[network.name].PolicyCenter
     );
 
-    const swapPath = ["", ""]
+    const swapPath = ["", ""];
 
     const tx = await center.buyCover(
       taskArgs.id,
