@@ -458,10 +458,10 @@ contract IncidentReport is
         // Need to add this smart contract to burner list
         deg.burnDegis(_user, REPORT_THRESHOLD);
 
-        // TODO: Check this part
+        // Record this report id to this pool's all reports list
         poolReports[_poolId].push(currentId);
 
-        // @audit Pause pools immediately when report
+        // Pause pools immediately when report
         _pausePools(_poolId);
 
         emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);

@@ -4,7 +4,9 @@ import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import {
   getExternalTokenAddress,
   readAddressList,
+  readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -22,6 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
+  const impList = readImpList();
 
   const [, , shieldAddress] = getExternalTokenAddress(network.name);
   const policyCenterAddress = addressList[network.name].PolicyCenter;
@@ -58,8 +61,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Payout pool deployed to address: ", payoutPool.address, "\n");
 
+  impList[network.name].PayoutPool = payoutPool.implementation;
+
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["PayoutPool"];

@@ -254,7 +254,10 @@ contract ProtectionPool is
 
     /**
      * @notice Finish removing liquidity
-     *         Only callable through policyCenter
+     *         Only callable through 
+     *         1) policyCenter (by user removing liquidity)
+     *         2) 
+     *         
      *
      * @param _amount   Liquidity to remove (LP token amount)
      * @param _provider Provider address

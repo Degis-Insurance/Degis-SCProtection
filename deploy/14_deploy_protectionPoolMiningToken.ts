@@ -25,13 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
   const impList = readImpList();
 
-  const priorityPoolFactoryAddress =
-    addressList[network.name].PriorityPoolFactory;
-  const weightedFarmingPoolAddress =
-    addressList[network.name].WeightedFarmingPool;
+  const name = "ProtectionPoolMiningToken";
+  const symbol = "PMT";
   const protectionPoolAddress = addressList[network.name].ProtectionPool;
-  const policyCenterAddress = addressList[network.name].PolicyCenter;
-  const payoutPoolAddress = addressList[network.name].PayoutPool;
 
   const proxyOptions: ProxyOptions = {
     proxyContract: "OpenZeppelinTransparentProxy",
@@ -39,39 +35,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     execute: {
       init: {
         methodName: "initialize",
-        args: [
-          priorityPoolFactoryAddress,
-          weightedFarmingPoolAddress,
-          protectionPoolAddress,
-          policyCenterAddress,
-          payoutPoolAddress,
-        ],
+        args: [name, symbol, protectionPoolAddress],
       },
     },
   };
 
   // Payout pool contract artifact
-  const priorityPoolDeployer = await deploy("PriorityPoolDeployer", {
-    contract: "PriorityPoolDeployer",
+  const protectionPoolMiningToken = await deploy("ProtectionPoolMiningToken", {
+    contract: "ProtectionPoolMiningToken",
     from: deployer,
     proxy: proxyOptions,
     args: [],
     log: true,
   });
-  addressList[network.name].PriorityPoolDeployer = priorityPoolDeployer.address;
+  addressList[network.name].ProtectionPoolMiningToken =
+    protectionPoolMiningToken.address;
 
-  impList[network.name].PriorityPoolDeployer =
-    priorityPoolDeployer.implementation;
-
-  console.log(
-    "Priority pool deployer deployed to address: ",
-    priorityPoolDeployer.address,
-    "\n"
-  );
+  impList[network.name].ProtectionPoolMiningToken =
+    protectionPoolMiningToken.implementation;
 
   console.log(
-    "Priority pool deployer implementation deployed to address: ",
-    priorityPoolDeployer.implementation,
+    "Protection pool mining token deployed to address: ",
+    protectionPoolMiningToken.address,
     "\n"
   );
 
@@ -80,5 +65,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeImpList(impList);
 };
 
-func.tags = ["PriorityPoolDeployer"];
+func.tags = ["ProtectionPoolMiningToken"];
 export default func;

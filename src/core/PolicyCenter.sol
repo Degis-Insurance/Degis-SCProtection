@@ -62,6 +62,11 @@ contract PolicyCenter is
     mapping(uint256 => address) public priorityPools;
     mapping(uint256 => address) public tokenByPoolId;
 
+    // Protocol token => Oracle type
+    // 0: Default as chainlink oracle
+    // 1: Dex oracle by traderJoe
+    mapping(address => uint256) public oracleType;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -164,28 +169,8 @@ contract PolicyCenter is
         treasury = _treasury;
     }
 
-    /**
-     * @notice Store new pool information
-     *
-     * @param _pool   Address of the priority pool
-     * @param _token  Address of the priority pool's native token
-     * @param _poolId Pool id
-     */
-    function storePoolInformation(
-        address _pool,
-        address _token,
-        uint256 _poolId
-    ) external {
-        if (msg.sender != priorityPoolFactory)
-            revert PolicyCenter__OnlyPriorityPoolFactory();
-
-        // Should never change the protection pool information
-        assert(_poolId > 0);
-
-        tokenByPoolId[_poolId] = _token;
-        priorityPools[_poolId] = _pool;
-
-        _approvePoolToken(_token);
+    function setDexPriceGetter(address _dexPriceGetter) external onlyOwner {
+        dexPriceGetter = _dexPriceGetter;
     }
 
     /**
@@ -302,9 +287,9 @@ contract PolicyCenter is
         address pool = priorityPools[_poolId];
 
         // Update status and mint Prority Pool LP tokens
-        // TODO: Directly mint pri-lp tokens to policy center
-        // TODO: And send the PRI-LP tokens to weighted farming pool
-        // TODO: no need for approval
+        // Directly mint pri-lp tokens to policy center
+        // And send the PRI-LP tokens to weighted farming pool
+        // No need for approval
         address lpToken = IPriorityPool(pool).stakedLiquidity(
             _amount,
             address(this)
@@ -384,26 +369,6 @@ contract PolicyCenter is
 
         emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
-
-    // /**
-    //  * @notice Unstake all liquidity (all generations)
-    //  *
-    //  *         Priority: generation from small to big
-    //  *
-    //  * @param _poolId Pool id
-    //  * @param _amount Total amount
-    //  */
-    // function unstakeAllLiquidity(uint256 _poolId, uint256 _amount) external {
-    //     IPriorityPool priPool = IPriorityPool(priorityPools[_poolId]);
-
-    //     uint256 generation = priPool.generation();
-
-    //     for (uint256 i; i < generation; ) {
-    //         address priLP = priPool.lpTokenAddress(++i);
-    //         uint256 balance = IERC20(priLP).balanceOf(address(this));
-    //         unstakeLiquidity(_poolId, priPool.lpTokenAddress(++i), _amount);
-    //     }
-    // }
 
     /**
      * @notice Unstake liquidity without removing PRI-LP from farming
@@ -492,6 +457,30 @@ contract PolicyCenter is
                 newGenerationCRAmount
             );
         }
+    }
+
+    /**
+     * @notice Store new pool information
+     *
+     * @param _pool   Address of the priority pool
+     * @param _token  Address of the priority pool's native token
+     * @param _poolId Pool id
+     */
+    function storePoolInformation(
+        address _pool,
+        address _token,
+        uint256 _poolId
+    ) external {
+        if (msg.sender != priorityPoolFactory)
+            revert PolicyCenter__OnlyPriorityPoolFactory();
+
+        // Should never change the protection pool information
+        assert(_poolId > 0);
+
+        tokenByPoolId[_poolId] = _token;
+        priorityPools[_poolId] = _pool;
+
+        _approvePoolToken(_token);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -686,7 +675,14 @@ contract PolicyCenter is
         returns (uint256 premiumInNativeToken)
     {
         // Price in 18 decimals
-        uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
+        uint256 price;
+        if (oracleType[_token] == 0) {
+            // By default use chainlink
+            price = IPriceGetter(priceGetter).getLatestPrice(_token);
+        } else if (oracleType[_token] == 1) {
+            // If no chainlink oracle, use dex price getter
+            price = IPriceGetter(dexPriceGetter).getLatestPrice(_token);
+        } else revert("Wrong type");
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff

@@ -73,6 +73,7 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
       addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
+    const miningTokenAddress = addressList[network.name].MiningToken;
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
@@ -97,6 +98,11 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
         incidentReportAddress
       );
       console.log("Tx details: ", await tx_3.wait());
+    }
+
+    if ((await protectionPool.miningToken()) != miningTokenAddress) {
+      const tx_4 = await protectionPool.setMiningToken(miningTokenAddress);
+      console.log("Tx details: ", await tx_4.wait());
     }
 
     console.log("\nFinish setting contract addresses in protection pool\n");
@@ -270,6 +276,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].WeightedFarmingPool;
     const payoutPoolAddress = addressList[network.name].PayoutPool;
     const treasuryAddress = addressList[network.name].Treasury;
+    const dexPriceGetterAddress = addressList[network.name].DexPriceGetter;
 
     const policyCenter: PolicyCenter = new PolicyCenter__factory(
       dev_account
@@ -326,6 +333,11 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       const tx_8 = await policyCenter.setTreasury(treasuryAddress);
       console.log("Tx details: ", await tx_8.wait());
     }
+
+    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+    //   console.log("Tx details: ", await tx_9.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }

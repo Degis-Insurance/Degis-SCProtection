@@ -163,7 +163,7 @@ contract OnboardProposal is
         address _token,
         uint256 _maxCapacity,
         uint256 _basePremiumRatio // 10000 == 100% premium annual cost
-    ) external {
+    ) external onlyOwner {
         _propose(_name, _token, _maxCapacity, _basePremiumRatio, msg.sender);
     }
 

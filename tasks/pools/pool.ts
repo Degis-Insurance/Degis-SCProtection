@@ -344,3 +344,23 @@ task("updateIndexCut", "Update cover index").setAction(async (_, hre) => {
 
   console.log("Tx details", await tx.wait());
 });
+
+
+task("setMiningToken", "Set mining token in protection pool")
+.setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const protectionPool: ProtectionPool = new ProtectionPool__factory(
+    dev_account
+  ).attach(addressList[network.name].ProtectionPool);
+
+  const miningTokenAddress = addressList[network.name].ProtectionPoolMiningToken;
+
+  const tx = await protectionPool.setMiningToken(miningTokenAddress);
+})

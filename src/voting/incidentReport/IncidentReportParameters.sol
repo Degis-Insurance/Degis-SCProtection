@@ -10,22 +10,22 @@ abstract contract IncidentReportParameters is VotingParameters {
     uint256 public constant COOLDOWN_WRONG_REPORT = 7 days;
 
     //  Pending period before start voting
-    uint256 public constant PENDING_PERIOD = 0 hours;
+    uint256 public constant PENDING_PERIOD = 1 days;
 
     // 16 hours for fuji, 2 hours for fujiInternal
-    uint256 public constant INCIDENT_VOTING_PERIOD = 4 hours;
+    uint256 public constant INCIDENT_VOTING_PERIOD = 3 days;
 
     // Extend time length
-    uint256 public constant EXTEND_PERIOD = 1 hours;
+    uint256 public constant EXTEND_PERIOD = 1 days;
 
     // Sample period for checking whether extend the round
-    uint256 public constant SAMPLE_PERIOD = 1 hours;
+    uint256 public constant SAMPLE_PERIOD = 1 days;
 
     // DEG threshold for starting a report
-    uint256 public constant REPORT_THRESHOLD = 100 ether;
+    uint256 public constant REPORT_THRESHOLD = 10000 ether;
 
     // DEG reward for correct reporter
-    uint256 public constant REPORTER_REWARD = 100 ether;
+    uint256 public constant REPORTER_REWARD = 10000 ether;
 
     // Reward & Punishment ratios
     uint256 public constant REWARD_RATIO = 40; // 40% go to winners, 40% reserve
