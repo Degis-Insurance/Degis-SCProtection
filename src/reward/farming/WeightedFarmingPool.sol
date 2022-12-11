@@ -575,16 +575,20 @@ contract WeightedFarmingPool is
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
-        uint256 weight = pool.weight[_index];
-        uint256 previousWeight = preWeight[_id][_user][_index];
+        if (pool.weight.length > 0) {
+            uint256 weight = pool.weight[_index];
+            uint256 previousWeight = preWeight[_id][_user][_index];
 
-        // Only update when weight changes
-        if (weight != previousWeight) {
-            uint256 amount = user.amount[_index];
+            if (previousWeight != 0) {
+                // Only update when weight changes
+                if (weight != previousWeight) {
+                    uint256 amount = user.amount[_index];
 
-            // Weight is always decreasing
-            // Ensure: previousWeight - weight > 0
-            user.shares -= amount * (previousWeight - weight);
+                    // Weight is always decreasing
+                    // Ensure: previousWeight - weight > 0
+                    user.shares -= amount * (previousWeight - weight);
+                }
+            }
         }
     }
 

@@ -173,6 +173,11 @@ contract PolicyCenter is
         dexPriceGetter = _dexPriceGetter;
     }
 
+    function setOracleType(address _token, uint256 _type) external onlyOwner {
+        require(_type < 2, "Wrong type");
+        oracleType[_token] = _type;
+    }
+
     /**
      * @notice Approve the exchange to swap tokens
      *

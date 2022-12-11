@@ -308,7 +308,7 @@ contract OnboardProposal is
         if (proposed[_token]) revert OnboardProposal__AlreadyProposed();
 
         // Burn degis tokens to start a proposal
-        deg.burnDegis(_user, PROPOSE_THRESHOLD);
+        // deg.burnDegis(_user, PROPOSE_THRESHOLD);
 
         proposed[_token] = true;
 

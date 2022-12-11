@@ -96,6 +96,9 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY_FUJI
         ? process.env.ETHERSCAN_API_KEY_FUJI
         : "",
+      avalanche: process.env.ETHERSCAN_API_KEY_AVAX
+        ? process.env.ETHERSCAN_API_KEY_AVAX
+        : "",
     },
   },
   paths: {

@@ -52,9 +52,6 @@ contract DexPriceGetter is OwnableUpgradeable {
     address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
 
-    // Minimum period before endTime to start sampling
-    uint256 public constant PERIOD = 60 * 60 * 24 * 2; // 2 days
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -73,6 +70,8 @@ contract DexPriceGetter is OwnableUpgradeable {
     }
     // Policy Base Token Name => IDO Info
     mapping(string => IDOPriceInfo) public priceFeeds;
+
+    mapping(address => string) public addressToName;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -170,6 +169,13 @@ contract DexPriceGetter is OwnableUpgradeable {
         priceFeeds[_policyToken].priceAverage = _price;
     }
 
+    function setAddressToName(address _token, string memory _name)
+        external
+        onlyOwner
+    {
+        addressToName[_token] = _name;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -229,14 +235,25 @@ contract DexPriceGetter is OwnableUpgradeable {
     }
 
     /**
+     * @notice Get latest price of a token
+     *
+     * @param _token Address of the token
+     *
+     * @return price The latest price
+     */
+    function getLatestPrice(address _token) public returns (uint256) {
+        return getLatestPriceFromName(addressToName[_token]);
+    }
+
+    /**
      * @notice Get latest price
      *
      * @param _policyToken Policy token name
      *
      * @return price USD price of the base token
      */
-    function getLatestPrice(string calldata _policyToken)
-        external
+    function getLatestPriceFromName(string memory _policyToken)
+        public
         returns (uint256 price)
     {
         uint256 priceInAVAX;

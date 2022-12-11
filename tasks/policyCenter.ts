@@ -15,6 +15,8 @@ import {
   PayoutPool__factory,
   PolicyCenter,
   PolicyCenter__factory,
+  PriceGetter,
+  PriceGetter__factory,
   ProtectionPool,
   ProtectionPool__factory,
   WeightedFarmingPool,
@@ -91,3 +93,5 @@ task("buyCover", "Buy a cover")
 
     console.log("Tx details", await tx.wait());
   });
+
+

@@ -27,7 +27,7 @@ abstract contract PolicyCenterDependencies {
 
     // Swap slippage
     // TODO: Slippage tolerance parameter 10000 as 100%
-    uint256 internal constant SLIPPAGE = 1000;
+    uint256 internal constant SLIPPAGE = 10000;
 
     address public protectionPool;
     address public priceGetter;

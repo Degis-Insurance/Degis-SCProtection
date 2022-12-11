@@ -7,6 +7,8 @@ import {
   storePriorityPoolList,
 } from "../../scripts/contractAddress";
 import {
+  DexPriceGetter,
+  DexPriceGetter__factory,
   MockSHIELD,
   MockSHIELD__factory,
   MockVeDEG,
@@ -15,6 +17,8 @@ import {
   OnboardProposal__factory,
   PolicyCenter,
   PolicyCenter__factory,
+  PriceGetter,
+  PriceGetter__factory,
   PriorityPool,
   PriorityPoolDeployer,
   PriorityPoolDeployer__factory,
@@ -320,8 +324,10 @@ task("dynamicPremium", "Get priority pool active covered")
     const dynamicCounter = await factory.dynamicPoolCounter();
     console.log("Dynamic pool counter:", dynamicCounter.toString());
 
-    const ratio = await pool.dynamicPremiumRatio(0);
-    console.log(ratio.toString());
+    const ratio = await pool.dynamicPremiumRatio(
+      hre.ethers.utils.parseUnits("500", 6)
+    );
+    console.log("Dynamic premium ratio:", ratio.toString());
 
     const minReq = await pool.minAssetRequirement();
     console.log("Min requirement: ", minReq.toString());
@@ -345,22 +351,71 @@ task("updateIndexCut", "Update cover index").setAction(async (_, hre) => {
   console.log("Tx details", await tx.wait());
 });
 
+task("setMiningToken", "Set mining token in protection pool").setAction(
+  async (_, hre) => {
+    const { network } = hre;
 
-task("setMiningToken", "Set mining token in protection pool")
-.setAction(async (_, hre) => {
-  const { network } = hre;
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
 
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+    const addressList = readAddressList();
 
-  const addressList = readAddressList();
+    const protectionPool: ProtectionPool = new ProtectionPool__factory(
+      dev_account
+    ).attach(addressList[network.name].ProtectionPool);
 
-  const protectionPool: ProtectionPool = new ProtectionPool__factory(
-    dev_account
-  ).attach(addressList[network.name].ProtectionPool);
+    const miningTokenAddress =
+      addressList[network.name].ProtectionPoolMiningToken;
 
-  const miningTokenAddress = addressList[network.name].ProtectionPoolMiningToken;
+    const tx = await protectionPool.setMiningToken(miningTokenAddress);
+  }
+);
 
-  const tx = await protectionPool.setMiningToken(miningTokenAddress);
-})
+task("coverPrice", "Set mining token in protection pool")
+  .addParam("id", "Pool id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].PriorityPoolFactory);
+
+    const poolAddress = (await factory.pools(taskArgs.id)).poolAddress;
+    console.log("pool address:", poolAddress);
+
+    const pool: PriorityPool = new PriorityPool__factory(dev_account).attach(
+      poolAddress
+    );
+
+    const amount = hre.ethers.utils.parseUnits("500", 6);
+    const duration = 1;
+
+    const ratio = await pool.dynamicPremiumRatio(amount);
+    console.log("Dynamic premium ratio:", ratio.toString());
+
+    const [price, length] = await pool.coverPrice(amount, duration);
+    console.log("Length in second: ", length.toString());
+    console.log("Price in usd: ", hre.ethers.utils.formatUnits(price, 6));
+
+    // const priceGetter: PriceGetter = new PriceGetter__factory(
+    //   dev_account
+    // ).attach(addressList[network.name].PriceGetter);
+    // const avaxPrice = await priceGetter["getLatestPrice(string)"]("AVAX");
+    // console.log("Avax price: ", avaxPrice);
+
+    const dexPriceGetter: DexPriceGetter = new DexPriceGetter__factory(
+      dev_account
+    ).attach(addressList[network.name].DexPriceGetter);
+
+    const gmxPrice = (await dexPriceGetter.priceFeeds("GMX")).priceAverage;
+    console.log("GMX to avax: ", hre.ethers.utils.formatEther(gmxPrice));
+
+    // console.log("final price: ", gmxPrice.mul(avaxPrice))
+  });
