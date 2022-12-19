@@ -74,6 +74,14 @@ const config: HardhatUserConfig = {
       },
       timeout: 60000,
     },
+    avaxTest: {
+      url: process.env.AVAX_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
+        count: 20,
+      },
+    },
     avax: {
       url: process.env.AVAX_URL || "",
       accounts: {
@@ -87,6 +95,9 @@ const config: HardhatUserConfig = {
     apiKey: {
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY_FUJI
         ? process.env.ETHERSCAN_API_KEY_FUJI
+        : "",
+      avalanche: process.env.ETHERSCAN_API_KEY_AVAX
+        ? process.env.ETHERSCAN_API_KEY_AVAX
         : "",
     },
   },

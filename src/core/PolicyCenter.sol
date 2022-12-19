@@ -32,7 +32,6 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
 /**
  * @title Policy Center
  *
@@ -56,12 +55,17 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public usdc;
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
 
     // poolId => address, updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
     mapping(uint256 => address) public tokenByPoolId;
+
+    // Protocol token => Oracle type
+    // 0: Default as chainlink oracle
+    // 1: Dex oracle by traderJoe
+    mapping(address => uint256) public oracleType;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -71,8 +75,7 @@ contract PolicyCenter is
         address _deg,
         address _veDeg,
         address _shield,
-        address _protectionPool,
-        address _usdc
+        address _protectionPool
     ) public initializer {
         __Ownable_init();
         __ExternalToken__Init(_deg, _veDeg, _shield);
@@ -83,11 +86,9 @@ contract PolicyCenter is
 
         protectionPool = _protectionPool;
 
-        // Set USDC (base token for shield)
-        usdc = _usdc;
         // Approve USDC for later depositing for Shield
         // Use parameter rather than storage variable
-        IERC20(_usdc).approve(address(shield), type(uint256).max);
+        IERC20(USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -98,6 +99,7 @@ contract PolicyCenter is
      * @notice Whether the pool exists
      */
     modifier poolExists(uint256 _poolId) {
+        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
         if (priorityPools[_poolId] == address(0))
             revert PolicyCenter__NonExistentPool();
         _;
@@ -167,25 +169,13 @@ contract PolicyCenter is
         treasury = _treasury;
     }
 
-    /**
-     * @notice Store new pool information
-     *
-     * @param _pool   Address of the priority pool
-     * @param _token  Address of the priority pool's native token
-     * @param _poolId Pool id
-     */
-    function storePoolInformation(
-        address _pool,
-        address _token,
-        uint256 _poolId
-    ) external {
-        if (msg.sender != priorityPoolFactory)
-            revert PolicyCenter__OnlyPriorityPoolFactory();
+    function setDexPriceGetter(address _dexPriceGetter) external onlyOwner {
+        dexPriceGetter = _dexPriceGetter;
+    }
 
-        tokenByPoolId[_poolId] = _token;
-        priorityPools[_poolId] = _pool;
-
-        _approvePoolToken(_token);
+    function setOracleType(address _token, uint256 _type) external onlyOwner {
+        require(_type < 2, "Wrong type");
+        oracleType[_token] = _type;
     }
 
     /**
@@ -219,9 +209,9 @@ contract PolicyCenter is
         uint256 _poolId,
         uint256 _coverAmount,
         uint256 _coverDuration,
-        uint256 _maxPayment
+        uint256 _maxPayment,
+        address[] memory path
     ) external poolExists(_poolId) returns (address) {
-        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
         if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
         _checkCapacity(_poolId, _coverAmount);
@@ -245,7 +235,7 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool,
             ,
             uint256 premiumToTreasury
-        ) = _splitPremium(_poolId, premium);
+        ) = _splitPremium(_poolId, premium, path);
 
         IProtectionPool(protectionPool).updateWhenBuy();
         IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
@@ -302,9 +292,9 @@ contract PolicyCenter is
         address pool = priorityPools[_poolId];
 
         // Update status and mint Prority Pool LP tokens
-        // TODO: Directly mint pri-lp tokens to policy center
-        // TODO: And send the PRI-LP tokens to weighted farming pool
-        // TODO: no need for approval
+        // Directly mint pri-lp tokens to policy center
+        // And send the PRI-LP tokens to weighted farming pool
+        // No need for approval
         address lpToken = IPriorityPool(pool).stakedLiquidity(
             _amount,
             address(this)
@@ -385,26 +375,6 @@ contract PolicyCenter is
         emit LiquidityUnstaked(msg.sender, _poolId, _priorityLP, _amount);
     }
 
-    // /**
-    //  * @notice Unstake all liquidity (all generations)
-    //  *
-    //  *         Priority: generation from small to big
-    //  *
-    //  * @param _poolId Pool id
-    //  * @param _amount Total amount
-    //  */
-    // function unstakeAllLiquidity(uint256 _poolId, uint256 _amount) external {
-    //     IPriorityPool priPool = IPriorityPool(priorityPools[_poolId]);
-
-    //     uint256 generation = priPool.generation();
-
-    //     for (uint256 i; i < generation; ) {
-    //         address priLP = priPool.lpTokenAddress(++i);
-    //         uint256 balance = IERC20(priLP).balanceOf(address(this));
-    //         unstakeLiquidity(_poolId, priPool.lpTokenAddress(++i), _amount);
-    //     }
-    // }
-
     /**
      * @notice Unstake liquidity without removing PRI-LP from farming
      *
@@ -461,8 +431,6 @@ contract PolicyCenter is
         address _crToken,
         uint256 _generation
     ) public poolExists(_poolId) {
-        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
-
         (string memory poolName, , , , ) = IPriorityPoolFactory(
             priorityPoolFactory
         ).pools(_poolId);
@@ -496,6 +464,30 @@ contract PolicyCenter is
         }
     }
 
+    /**
+     * @notice Store new pool information
+     *
+     * @param _pool   Address of the priority pool
+     * @param _token  Address of the priority pool's native token
+     * @param _poolId Pool id
+     */
+    function storePoolInformation(
+        address _pool,
+        address _token,
+        uint256 _poolId
+    ) external {
+        if (msg.sender != priorityPoolFactory)
+            revert PolicyCenter__OnlyPriorityPoolFactory();
+
+        // Should never change the protection pool information
+        assert(_poolId > 0);
+
+        tokenByPoolId[_poolId] = _token;
+        priorityPools[_poolId] = _pool;
+
+        _approvePoolToken(_token);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -505,28 +497,37 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
+     * @param _path      Swap path
      *
      * @return received Actual shield amount received
      */
-    function _swapTokens(address _fromToken, uint256 _amount)
-        internal
-        returns (uint256 received)
-    {
-        address[] memory path = new address[](2);
-        path[0] = _fromToken;
-        path[1] = usdc;
+    function _swapTokens(
+        address _fromToken,
+        uint256 _amount,
+        address[] memory _path
+    ) internal returns (uint256 received) {
+        uint256 length = _path.length;
+
+        if (_path[length - 1] != USDC) revert PolicyCenter__WrongPath();
+        if (_path[0] != _fromToken) revert PolicyCenter__WrongPath();
 
         // Swap for USDC and return the received amount
-        received = IExchange(exchange).swapExactTokensForTokens(
+        uint256[] memory amountsOut = new uint256[](2);
+
+        amountsOut = IExchange(exchange).swapExactTokensForTokens(
             _amount,
             ((_amount * (10000 - SLIPPAGE)) / 10000),
-            path,
+            _path,
             address(this),
             block.timestamp + 1
         );
 
+        // Received amount is the second element of the return value
+        received = amountsOut[length - 1];
+
         // Deposit USDC and get back shield
-        shield.deposit(1, usdc, received, received);
+        // When depositing USDC, no slippage
+        shield.deposit(1, USDC, received, received);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }
@@ -679,7 +680,14 @@ contract PolicyCenter is
         returns (uint256 premiumInNativeToken)
     {
         // Price in 18 decimals
-        uint256 price = IPriceGetter(priceGetter).getLatestPrice(_token);
+        uint256 price;
+        if (oracleType[_token] == 0) {
+            // By default use chainlink
+            price = IPriceGetter(priceGetter).getLatestPrice(_token);
+        } else if (oracleType[_token] == 1) {
+            // If no chainlink oracle, use dex price getter
+            price = IPriceGetter(dexPriceGetter).getLatestPrice(_token);
+        } else revert("Wrong type");
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
@@ -701,12 +709,17 @@ contract PolicyCenter is
      *
      * @param _poolId       Pool id
      * @param _premiumInUSD Premium in USD
+     * @param _path         Swap path
      *
      * @return toPriority   Premium to priority pool
      * @return toProtection Premium to protection pool
      * @return toTreasury   Premium to treasury
      */
-    function _splitPremium(uint256 _poolId, uint256 _premiumInUSD)
+    function _splitPremium(
+        uint256 _poolId,
+        uint256 _premiumInUSD,
+        address[] memory _path
+    )
         internal
         returns (
             uint256 toPriority,
@@ -730,7 +743,7 @@ contract PolicyCenter is
         // Except for amount to priority pool, remaining is distributed in Shield
         uint256 amountToSwap = premiumInNativeToken - toPriority;
         // Shield amount received
-        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap);
+        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, _path);
 
         // Shield to Protection Pool
         toProtection =

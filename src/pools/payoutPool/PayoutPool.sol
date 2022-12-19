@@ -207,8 +207,6 @@ contract PayoutPool is Initializable {
 
         if (claimable == 0) revert PayoutPool__NoPayout();
 
-        // uint256 coverIndex = IPriorityPool(payout.priorityPool).coverIndex();
-
         // Actual amount given to the user
         claimed = (claimable * payout.coverIndex) / 10000;
 

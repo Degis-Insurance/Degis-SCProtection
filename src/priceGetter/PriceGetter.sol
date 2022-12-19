@@ -21,7 +21,7 @@
 pragma solidity ^0.8.13;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {OwnableWithoutContext} from "../util/OwnableWithoutContext.sol";
+import {OwnableWithoutContextUpgradeable} from "../util/OwnableWithoutContextUpgradeable.sol";
 
 /**
  * @title  Price Getter
@@ -30,7 +30,7 @@ import {OwnableWithoutContext} from "../util/OwnableWithoutContext.sol";
  *         Got the sponsorship and collaboration with Chainlink.
  * @dev    The price from chainlink priceFeed has different decimals, be careful.
  */
-contract PriceGetter is OwnableWithoutContext {
+contract PriceGetter is OwnableWithoutContextUpgradeable {
     struct PriceFeedInfo {
         address priceFeedAddress;
         uint256 decimals;
@@ -63,7 +63,9 @@ contract PriceGetter is OwnableWithoutContext {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    function initialize() public initializer {
+        __Ownable_init();
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //
@@ -136,25 +138,31 @@ contract PriceGetter is OwnableWithoutContext {
         returns (uint256 finalPrice)
     {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(priceFeed.priceFeedAddress).latestRoundData();
 
-        // require(price > 0, "Only accept price that > 0");
-        if (price < 0) price = 0;
+        if (priceFeed.priceFeedAddress == address(0)) {
+            finalPrice = 1e18;
+        } else {
+            (
+                uint80 roundID,
+                int256 price,
+                uint256 startedAt,
+                uint256 timeStamp,
+                uint80 answeredInRound
+            ) = AggregatorV3Interface(priceFeed.priceFeedAddress)
+                    .latestRoundData();
 
-        emit LatestPriceGet(
-            roundID,
-            price,
-            startedAt,
-            timeStamp,
-            answeredInRound
-        );
-        // Transfer the result decimals
-        finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+            // require(price > 0, "Only accept price that > 0");
+            if (price < 0) price = 0;
+
+            emit LatestPriceGet(
+                roundID,
+                price,
+                startedAt,
+                timeStamp,
+                answeredInRound
+            );
+            // Transfer the result decimals
+            finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+        }
     }
 }

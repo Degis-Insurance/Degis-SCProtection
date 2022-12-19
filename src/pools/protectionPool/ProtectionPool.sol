@@ -72,6 +72,9 @@ contract ProtectionPool is
     // Total amount staked
     uint256 public stakedSupply;
 
+    // Mining token address
+    address public miningToken;
+
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
@@ -180,6 +183,10 @@ contract ProtectionPool is
         priorityPoolFactory = _priorityPoolFactory;
     }
 
+    function setMiningToken(address _miningToken) external onlyOwner {
+        miningToken = _miningToken;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -240,11 +247,17 @@ contract ProtectionPool is
         uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
         emit LiquidityProvided(_amount, amountToMint, _provider);
+
+        // Mint mining tokens to the user
+        IMiningToken(miningToken).mint(_provider, amountToMint);
     }
 
     /**
      * @notice Finish removing liquidity
-     *         Only callable through policyCenter
+     *         Only callable through 
+     *         1) policyCenter (by user removing liquidity)
+     *         2) 
+     *         
      *
      * @param _amount   Liquidity to remove (LP token amount)
      * @param _provider Provider address
@@ -277,11 +290,16 @@ contract ProtectionPool is
         // If sent from policyCenter => this is a user action
         // If sent from priority pool => this is a payout action
         address realPayer = msg.sender == policyCenter ? _provider : msg.sender;
-        
+
         _burn(realPayer, _amount);
         SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
 
         emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
+
+        // Burn mining token
+        if (msg.sender == policyCenter) {
+            IMiningToken(miningToken).burn(realPayer, shieldToTransfer);
+        }
     }
 
     function checkEnoughLiquidity(uint256 _amountToRemove) public view {

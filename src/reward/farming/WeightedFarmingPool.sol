@@ -23,14 +23,13 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "../../libraries/DateTime.sol";
 import "../../interfaces/IPriorityPoolFactory.sol";
 
 import "./WeightedFarmingPoolEventError.sol";
 import "./WeightedFarmingPoolDependencies.sol";
-
 
 /**
  * @notice Weighted Farming Pool
@@ -53,7 +52,7 @@ import "./WeightedFarmingPoolDependencies.sol";
  */
 contract WeightedFarmingPool is
     WeightedFarmingPoolEventError,
-    Initializable,
+    OwnableWithoutContextUpgradeable,
     WeightedFarmingPoolDependencies
 {
     using DateTimeLibrary for uint256;
@@ -99,19 +98,27 @@ contract WeightedFarmingPool is
     // Ensure one token not be added for multiple times
     mapping(bytes32 => bool) public supported;
 
+    // Pool id => Token address => Token index in the tokens array
+    mapping(uint256 => mapping(address => uint256)) public tokenIndex;
+
+    // Pool id => User address => Index => Previous Weight
+    mapping(uint256 => mapping(address => mapping(uint256 => uint256)))
+        public preWeight;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // constructor(address _policyCenter, address _priorityPoolFactory) {
-    //     policyCenter = _policyCenter;
-    //     priorityPoolFactory = _priorityPoolFactory;
-    // }
 
     function initialize(address _policyCenter, address _priorityPoolFactory)
         public
         initializer
     {
+        if (_policyCenter == address(0) || _priorityPoolFactory == address(0)) {
+            revert WeightedFarmingPool_ZeroAddress();
+        }
+
+        __Ownable_init();
+
         policyCenter = _policyCenter;
         priorityPoolFactory = _priorityPoolFactory;
     }
@@ -130,11 +137,26 @@ contract WeightedFarmingPool is
         _;
     }
 
+    modifier onlyFactory() {
+        require(
+            msg.sender == priorityPoolFactory,
+            "Only Priority Pool Factory"
+        );
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    // @audit Add view functions for user lp amount
+    /**
+     * @notice Get a user's LP amount
+     *
+     * @param _poolId Pool id
+     * @param _user   User address
+     *
+     * @return amounts Amount array of user's lp in each generation of lp token
+     */
     function getUserLPAmount(uint256 _poolId, address _user)
         external
         view
@@ -143,6 +165,15 @@ contract WeightedFarmingPool is
         return users[_poolId][_user].amount;
     }
 
+    /**
+     * @notice Get pool information arrays
+     *
+     * @param _poolId Pool id
+     *
+     * @return tokens  Token addresses array
+     * @return amounts Token amounts array
+     * @return weights Token weights array
+     */
     function getPoolArrays(uint256 _poolId)
         external
         view
@@ -156,14 +187,21 @@ contract WeightedFarmingPool is
         return (pool.tokens, pool.amount, pool.weight);
     }
 
-    // TODO: add owner or remove this
-    function setPolicyCenter(address _policyCenter) public {
-        policyCenter = _policyCenter;
-    }
-
-    // TODO: add owner or remove this
-    function setPriorityPoolFactory(address _priorityPoolFactory) external {
-        priorityPoolFactory = _priorityPoolFactory;
+    /**
+     * @notice Check whether a token is supported in a certain pool
+     *
+     * @param _poolId Pool id
+     * @param _token  PRI-LP token address
+     *
+     * @return isSupported Whether supported
+     */
+    function supportedToken(uint256 _poolId, address _token)
+        public
+        view
+        returns (bool isSupported)
+    {
+        bytes32 key = keccak256(abi.encodePacked(_poolId, _token));
+        return supported[key];
     }
 
     /**
@@ -278,7 +316,7 @@ contract WeightedFarmingPool is
      *
      * @param _rewardToken Reward token address (protocol native token)
      */
-    function addPool(address _rewardToken) external {
+    function addPool(address _rewardToken) external onlyFactory {
         uint256 currentId = ++counter;
 
         PoolInfo storage pool = pools[currentId];
@@ -289,7 +327,9 @@ contract WeightedFarmingPool is
 
     /**
      * @notice Register Pri-LP token
+     *
      *         Called when new generation of PRI-LP tokens are deployed
+     *         Only called from a priority pool
      *
      * @param _id     Pool Id
      * @param _token  Priority pool lp token address
@@ -299,7 +339,7 @@ contract WeightedFarmingPool is
         uint256 _id,
         address _token,
         uint256 _weight
-    ) public {
+    ) external isPriorityPool {
         bytes32 key = keccak256(abi.encodePacked(_id, _token));
         if (supported[key]) revert WeightedFarmingPool__AlreadySupported();
 
@@ -309,11 +349,18 @@ contract WeightedFarmingPool is
         pools[_id].tokens.push(_token);
         pools[_id].weight.push(_weight);
 
-        emit NewTokenAdded(_id, _token, _weight);
+        uint256 index = pools[_id].tokens.length - 1;
+
+        // Store the token index for later check
+        tokenIndex[_id][_token] = index;
+
+        emit NewTokenAdded(_id, _token, index, _weight);
     }
 
     /**
      * @notice Update the weight of a token in a given pool
+     *
+     *         Only called from a priority pool
      *
      * @param _id        Pool Id
      * @param _token     Token address
@@ -323,40 +370,29 @@ contract WeightedFarmingPool is
         uint256 _id,
         address _token,
         uint256 _newWeight
-    ) external {
+    ) external isPriorityPool {
+        // First update the reward till now
+        // Then update the index to be the new one
         updatePool(_id);
 
         uint256 index = _getIndex(_id, _token);
 
-        pools[_id].weight[index] = _newWeight;
-    }
-
-    /**
-     * @notice Sets the weight for a given array of tokens in a given pool
-     * @param _id            Pool Id
-     * @param _weights       Array of weights of the tokens in the pool
-     */
-    function setWeight(uint256 _id, uint256[] calldata _weights) external {
         PoolInfo storage pool = pools[_id];
 
-        uint256 weightLength = _weights.length;
+        uint256 previousWeight = pool.weight[index];
+        pool.weight[index] = _newWeight;
 
-        if (weightLength != pool.weight.length)
-            revert WeightedFarmingPool__WrongWeightLength();
+        // Update the pool's shares immediately
+        // When user interaction, update each user's share first
+        pool.shares -= pool.amount[index] * (previousWeight - _newWeight);
 
-        for (uint256 i; i < weightLength; ) {
-            pool.weight[i] = _weights[i];
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        emit WeightChanged(_id);
+        emit PoolWeightUpdated(_id, index, _newWeight);
     }
 
     /**
      * @notice Update reward speed when new premium income
+     *
+     *         Only called from a priority pool
      *
      * @param _id       Pool id
      * @param _newSpeed New speed (SCALED)
@@ -368,7 +404,7 @@ contract WeightedFarmingPool is
         uint256 _newSpeed,
         uint256[] memory _years,
         uint256[] memory _months
-    ) external {
+    ) external isPriorityPool {
         if (_years.length != _months.length)
             revert WeightedFarmingPool__WrongDateLength();
 
@@ -380,11 +416,20 @@ contract WeightedFarmingPool is
                 ++i;
             }
         }
+
+        emit RewardSpeedUpdated(_id, _newSpeed, _years, _months);
     }
 
     /**
      * @notice Deposit from Policy Center
+     *
      *         No need for approval
+     *         Only called from policy center
+     *
+     * @param _id     Pool id
+     * @param _token  PRI-LP token address
+     * @param _amount Amount to deposit
+     * @param _user   User address
      */
     function depositFromPolicyCenter(
         uint256 _id,
@@ -404,10 +449,9 @@ contract WeightedFarmingPool is
     function deposit(
         uint256 _id,
         address _token,
-        uint256 _amount,
-        address _user
+        uint256 _amount
     ) external {
-        _deposit(_id, _token, _amount, _user);
+        _deposit(_id, _token, _amount, msg.sender);
 
         IERC20(_token).transferFrom(msg.sender, address(this), _amount);
     }
@@ -451,6 +495,10 @@ contract WeightedFarmingPool is
 
         updatePool(_id);
 
+        uint256 index = _getIndex(_id, _token);
+
+        _updateUserWeight(_id, _user, index);
+
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
 
@@ -467,8 +515,6 @@ contract WeightedFarmingPool is
 
             emit Harvest(_id, _user, _user, actualReward);
         }
-
-        uint256 index = _getIndex(_id, _token);
 
         // check if current index exists for user
         // index is 0, push
@@ -498,15 +544,52 @@ contract WeightedFarmingPool is
             }
         }
 
+        uint256 currentWeight = pool.weight[index];
+
         // Update user amount for this gen lp token
         user.amount[index] += _amount;
-        user.shares += _amount * pool.weight[index];
+        user.shares += _amount * currentWeight;
+
+        // Record this user's previous weight for this token index
+        preWeight[_id][_user][index] = currentWeight;
 
         // Update pool amount for this gen lp token
         pool.amount[index] += _amount;
-        pool.shares += _amount * pool.weight[index];
+        pool.shares += _amount * currentWeight;
 
         user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+    }
+
+    /**
+     * @notice Update a user's weight
+     *
+     * @param _id    Pool id
+     * @param _user  User address
+     * @param _index Token index in this pool
+     */
+    function _updateUserWeight(
+        uint256 _id,
+        address _user,
+        uint256 _index
+    ) internal {
+        PoolInfo storage pool = pools[_id];
+        UserInfo storage user = users[_id][_user];
+
+        if (pool.weight.length > 0) {
+            uint256 weight = pool.weight[_index];
+            uint256 previousWeight = preWeight[_id][_user][_index];
+
+            if (previousWeight != 0) {
+                // Only update when weight changes
+                if (weight != previousWeight) {
+                    uint256 amount = user.amount[_index];
+
+                    // Weight is always decreasing
+                    // Ensure: previousWeight - weight > 0
+                    user.shares -= amount * (previousWeight - weight);
+                }
+            }
+        }
     }
 
     function _withdraw(
@@ -517,12 +600,17 @@ contract WeightedFarmingPool is
     ) internal {
         if (_amount == 0) revert WeightedFarmingPool__ZeroAmount();
         if (_id > counter) revert WeightedFarmingPool__InexistentPool();
+        if (!supportedToken(_id, _token))
+            revert WeightedFarmingPool__NotSupported();
+
         updatePool(_id);
+
+        uint256 index = _getIndex(_id, _token);
+
+        _updateUserWeight(_id, _user, index);
 
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][_user];
-
-        uint256 index = _getIndex(_id, _token);
 
         if (_amount > user.amount[index])
             revert WeightedFarmingPool__NotEnoughAmount();
@@ -582,19 +670,21 @@ contract WeightedFarmingPool is
         PoolInfo storage pool = pools[_id];
         UserInfo storage user = users[_id][msg.sender];
 
-        uint256 pending = ((user.shares * pool.accRewardPerShare) /
-            SCALE -
-            user.rewardDebt) / SCALE;
+        if (user.shares > 0) {
+            uint256 pending = ((user.shares * pool.accRewardPerShare) /
+                SCALE -
+                user.rewardDebt) / SCALE;
 
-        uint256 actualReward = _safeRewardTransfer(
-            pool.rewardToken,
-            _to,
-            pending
-        );
+            uint256 actualReward = _safeRewardTransfer(
+                pool.rewardToken,
+                _to,
+                pending
+            );
 
-        emit Harvest(_id, msg.sender, _to, actualReward);
+            emit Harvest(_id, msg.sender, _to, actualReward);
 
-        user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+            user.rewardDebt = (user.shares * pool.accRewardPerShare) / SCALE;
+        }
     }
 
     /**
@@ -612,12 +702,18 @@ contract WeightedFarmingPool is
         uint256 currentTime = block.timestamp;
         uint256 lastRewardTime = pool.lastRewardTimestamp;
 
-        (uint256 lastY, uint256 lastM, uint256 lastD) = lastRewardTime
-            .timestampToDate();
+        (uint256 lastY, uint256 lastM, ) = lastRewardTime.timestampToDate();
 
         (uint256 currentY, uint256 currentM, ) = currentTime.timestampToDate();
 
-        uint256 monthPassed = currentM - lastM;
+        // If time goes across years
+        // Change the calculation of months passed
+        uint256 monthPassed;
+        if (currentY > lastY) {
+            monthPassed = currentM + 12 * (currentY - lastY) - lastM;
+        } else {
+            monthPassed = currentM - lastM;
+        }
 
         // In the same month, use current month speed
         if (monthPassed == 0) {
@@ -630,9 +726,20 @@ contract WeightedFarmingPool is
             for (uint256 i; i < monthPassed + 1; ) {
                 // First month reward
                 if (i == 0) {
+                    uint256 daysInMonth = DateTimeLibrary._getDaysInMonth(
+                        lastY,
+                        lastM
+                    );
                     // End timestamp of the first month
                     uint256 endTimestamp = DateTimeLibrary
-                        .timestampFromDateTime(lastY, lastM, lastD, 23, 59, 59);
+                        .timestampFromDateTime(
+                            lastY,
+                            lastM,
+                            daysInMonth,
+                            23,
+                            59,
+                            59
+                        );
                     totalReward +=
                         (endTimestamp - lastRewardTime) *
                         speed[_id][lastY][lastM];
@@ -684,42 +791,39 @@ contract WeightedFarmingPool is
     ) internal returns (uint256 actualAmount) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
-        // @audit remove this check
-        // require(balance > 0, "Zero balance");
-
         if (_amount > balance) {
             actualAmount = balance;
         } else {
             actualAmount = _amount;
         }
 
+        // Check the balance before and after the transfer
+        // to check the final actual amount
+        uint256 balanceBefore = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(_to, actualAmount);
+        uint256 balanceAfter = IERC20(_token).balanceOf(address(this));
+
+        actualAmount = balanceBefore - balanceAfter;
     }
 
     /**
      * @notice Returns the index of Cover Right token given a pool id and crtoken address
-     * @param _id            Pool id
-     * @param _token         Address of Cover Right token
+     *
+     *         If the token is not supported, revert with an error (to avoid return default value as 0)
+     *
+     * @param _id    Pool id
+     * @param _token LP token address
+     *
+     * @return index Index of the token in the pool
      */
     function _getIndex(uint256 _id, address _token)
         internal
         view
         returns (uint256 index)
     {
-        address[] memory allTokens = pools[_id].tokens;
-        uint256 length = allTokens.length;
+        if (!supportedToken(_id, _token))
+            revert WeightedFarmingPool__NotSupported();
 
-        for (uint256 i; i < length; ) {
-            if (allTokens[i] == _token) {
-                index = i;
-                break;
-            } else {
-                unchecked {
-                    ++i;
-                }
-            }
-        }
-
-        // revert WeightedFarmingPool__NotInPool();
+        index = tokenIndex[_id][_token];
     }
 }

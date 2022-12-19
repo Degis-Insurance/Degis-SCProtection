@@ -26,7 +26,8 @@ abstract contract PolicyCenterDependencies {
     uint256 internal constant PREMIUM_TO_TREASURY = 500;
 
     // Swap slippage
-    uint256 internal constant SLIPPAGE = 10;
+    // TODO: Slippage tolerance parameter 10000 as 100%
+    uint256 internal constant SLIPPAGE = 10000;
 
     address public protectionPool;
     address public priceGetter;
@@ -36,4 +37,6 @@ abstract contract PolicyCenterDependencies {
     address public exchange;
     address public payoutPool;
     address public treasury;
+
+    address public dexPriceGetter;
 }

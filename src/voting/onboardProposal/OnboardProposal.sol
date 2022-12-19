@@ -163,7 +163,7 @@ contract OnboardProposal is
         address _token,
         uint256 _maxCapacity,
         uint256 _basePremiumRatio // 10000 == 100% premium annual cost
-    ) external {
+    ) external onlyOwner {
         _propose(_name, _token, _maxCapacity, _basePremiumRatio, msg.sender);
     }
 
@@ -237,8 +237,6 @@ contract OnboardProposal is
         if (!_passedVotingPeriod(proposal.voteTimestamp))
             revert OnboardProposal__WrongPeriod();
 
-        if (proposal.result > 0) revert OnboardProposal__AlreadySettled();
-
         // If reached quorum, settle the result
         if (_checkQuorum(proposal.numFor + proposal.numAgainst)) {
             uint256 res = _getVotingResult(
@@ -310,7 +308,7 @@ contract OnboardProposal is
         if (proposed[_token]) revert OnboardProposal__AlreadyProposed();
 
         // Burn degis tokens to start a proposal
-        deg.burnDegis(_user, PROPOSE_THRESHOLD);
+        // deg.burnDegis(_user, PROPOSE_THRESHOLD);
 
         proposed[_token] = true;
 
@@ -390,7 +388,6 @@ contract OnboardProposal is
         UserVote storage userVote = votes[_user][_id];
 
         // @audit Add claimed check
-        // ! Critical
         if (userVote.claimed) revert OnboardProposal__AlreadyClaimed();
 
         // Unlock the veDEG used for voting

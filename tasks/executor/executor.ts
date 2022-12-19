@@ -39,6 +39,12 @@ task("executeReport")
       addressList[network.name].Executor
     );
 
+    const treasury = await executor.treasury();
+    console.log("Treasury:", treasury);
+
+    const incident = await executor.incidentReport();
+    console.log("incident report", incident);
+
     const tx = await executor.executeReport(taskArgs.id);
     console.log("tx details", await tx.wait());
 

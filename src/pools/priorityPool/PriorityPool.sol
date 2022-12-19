@@ -291,6 +291,9 @@ contract PriorityPool is
         uint256 totalActiveCovered = IProtectionPool(protectionPool)
             .getTotalActiveCovered();
 
+        uint256 stakedProSupply = IProtectionPool(protectionPool)
+            .stakedSupply();
+
         // First 7 days use base ratio
         // Then use dynamic ratio
         // TODO: test use 5 hours
@@ -300,7 +303,11 @@ contract PriorityPool is
                 priorityPoolFactory
             ).dynamicPoolCounter();
 
-            if (numofDynamicPools > 0 && totalActiveCovered > 0) {
+            if (
+                numofDynamicPools > 0 &&
+                totalActiveCovered > 0 &&
+                stakedProSupply > 0
+            ) {
                 // Covered ratio = Covered amount of this pool / Total covered amount
                 uint256 coveredRatio = ((activeCovered() + _coverAmount) *
                     SCALE) / (totalActiveCovered + _coverAmount);
@@ -312,7 +319,7 @@ contract PriorityPool is
                 //                    PRO-LP token staked in all priority pools
                 //
                 uint256 tokenRatio = (SimpleERC20(lp).totalSupply() * SCALE) /
-                    IProtectionPool(protectionPool).stakedSupply();
+                    stakedProSupply;
 
                 // Dynamic premium ratio
                 // ( N = total dynamic pools ≤ total pools )
@@ -344,26 +351,24 @@ contract PriorityPool is
      *         Only owner set this function on a monthly / quaterly base
      *         (For those unpopular pools to decrease, and those popular ones to increase)
      *
-     * @param _isUp        Whether it should increase the capacity
      * @param _maxCapacity New max capacity of this pool
      */
-    function setMaxCapacity(bool _isUp, uint256 _maxCapacity) external {
+    function setMaxCapacity(uint256 _maxCapacity) external {
         require(msg.sender == owner, "Only owner");
 
         maxCapacity = _maxCapacity;
 
+        bool isUp = _maxCapacity > maxCapacity;
+
         uint256 diff;
-        if (_isUp) {
+        if (isUp) {
             diff = _maxCapacity - maxCapacity;
         } else {
             diff = maxCapacity - _maxCapacity;
         }
 
         // Store the max capacity change
-        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(
-            _isUp,
-            diff
-        );
+        IPriorityPoolFactory(priorityPoolFactory).updateMaxCapacity(isUp, diff);
     }
 
     /**
@@ -663,9 +668,18 @@ contract PriorityPool is
             monthsToAdd++;
         }
 
-        uint256 endMonth = currentMonth + monthsToAdd;
+        uint256 endYear = currentYear;
+        uint256 endMonth;
 
-        coverInMonth[currentYear][endMonth] += _amount;
+        // Check if the cover will end in the same year
+        if (currentMonth + monthsToAdd > 12) {
+            endMonth = currentMonth + monthsToAdd - 12;
+            ++endYear;
+        } else {
+            endMonth = currentMonth + monthsToAdd;
+        }
+
+        coverInMonth[endYear][endMonth] += _amount;
     }
 
     /**

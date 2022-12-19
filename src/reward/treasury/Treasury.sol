@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "../../util/OwnableWithoutContextUpgradeable.sol";
 
 import "../../util/SimpleIERC20.sol";
 
@@ -19,7 +19,11 @@ import "./TreasuryEventError.sol";
  *         he will get 10% of the income of that project pool.
  *
  */
-contract Treasury is TreasuryEventError, Initializable, TreasuryDependencies {
+contract Treasury is
+    TreasuryEventError,
+    OwnableWithoutContextUpgradeable,
+    TreasuryDependencies
+{
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -30,36 +34,22 @@ contract Treasury is TreasuryEventError, Initializable, TreasuryDependencies {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public owner;
-
     mapping(uint256 => uint256) public poolIncome;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // constructor(
-    //     address _shield,
-    //     address _executor,
-    //     address _policyCenter
-    // ) {
-    //     executor = _executor;
-    //     shield = _shield;
-    //     policyCenter = _policyCenter;
-
-    //     owner = msg.sender;
-    // }
-
     function initialize(
         address _shield,
         address _executor,
         address _policyCenter
     ) public initializer {
+        __Ownable_init();
+
         executor = _executor;
         shield = _shield;
         policyCenter = _policyCenter;
-
-        owner = msg.sender;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -107,10 +97,8 @@ contract Treasury is TreasuryEventError, Initializable, TreasuryDependencies {
      *
      * @param _amount Amount to claim
      */
-    function claim(uint256 _amount) external {
-        if (msg.sender != owner) revert Treasury__OnlyOwner();
-
-        SimpleIERC20(shield).transfer(owner, _amount);
+    function claim(uint256 _amount) external onlyOwner {
+        SimpleIERC20(shield).transfer(owner(), _amount);
 
         emit ClaimedByOwner(_amount);
     }

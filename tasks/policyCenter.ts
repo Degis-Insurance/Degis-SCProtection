@@ -11,8 +11,14 @@ import {
   MockVeDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
+  PayoutPool,
+  PayoutPool__factory,
   PolicyCenter,
   PolicyCenter__factory,
+  PriceGetter,
+  PriceGetter__factory,
+  ProtectionPool,
+  ProtectionPool__factory,
   WeightedFarmingPool,
   WeightedFarmingPool__factory,
 } from "../typechain-types";
@@ -75,12 +81,17 @@ task("buyCover", "Buy a cover")
       addressList[network.name].PolicyCenter
     );
 
+    const swapPath = ["", ""];
+
     const tx = await center.buyCover(
       taskArgs.id,
       parseUnits(taskArgs.amount, 6),
       taskArgs.length,
-      parseUnits("10000")
+      parseUnits("10000"),
+      swapPath
     );
 
     console.log("Tx details", await tx.wait());
   });
+
+

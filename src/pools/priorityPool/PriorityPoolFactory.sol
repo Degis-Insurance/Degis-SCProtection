@@ -76,6 +76,7 @@ contract PriorityPoolFactory is
     // Whether a pool is already dynamic
     mapping(address => bool) public dynamic;
 
+    // Total dynamic pools
     uint256 public dynamicPoolCounter;
 
     // Record whether a protocol token or pool address has been registered
@@ -217,6 +218,16 @@ contract PriorityPoolFactory is
 
         uint256 currentPoolId = ++poolCounter;
 
+        address newAddress = IPriorityPoolDeployer(priorityPoolDeployer)
+            .getPoolAddress(
+                currentPoolId,
+                _name,
+                _protocolToken,
+                _maxCapacity,
+                _basePremiumRatio
+            );
+        poolRegistered[newAddress] = true;
+
         address newPoolAddress = IPriorityPoolDeployer(priorityPoolDeployer)
             .deployPool(
                 currentPoolId,
@@ -235,7 +246,6 @@ contract PriorityPoolFactory is
         );
 
         tokenRegistered[_protocolToken] = true;
-        poolRegistered[newPoolAddress] = true;
         poolAddressToId[newPoolAddress] = currentPoolId;
 
         // Store pool information in Policy Center
@@ -282,7 +292,10 @@ contract PriorityPoolFactory is
         emit DynamicPoolUpdate(_poolId, poolAddress, dynamicPoolCounter);
     }
 
-    function updateMaxCapaity(bool _isUp, uint256 _diff)
+    /**
+     * @notice Update max capacity from a priority pool
+     */
+    function updateMaxCapacity(bool _isUp, uint256 _diff)
         external
         onlyPriorityPool
     {
@@ -297,8 +310,7 @@ contract PriorityPoolFactory is
         if (msg.sender != incidentReport && msg.sender != executor)
             revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();
 
-         IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
-       
+        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);
 
         IProtectionPool(protectionPool).pauseProtectionPool(_paused);
     }

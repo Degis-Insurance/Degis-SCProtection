@@ -31,6 +31,12 @@ import {
   CoverRightTokenFactory,
   PriorityPoolDeployer,
   PriorityPoolDeployer__factory,
+  PriceGetter,
+  PriceGetter__factory,
+  Treasury,
+  Treasury__factory,
+  DexPriceGetter,
+  DexPriceGetter__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -69,6 +75,8 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
       addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
+    const miningTokenAddress =
+      addressList[network.name].ProtectionPoolMiningToken;
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
@@ -93,6 +101,11 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
         incidentReportAddress
       );
       console.log("Tx details: ", await tx_3.wait());
+    }
+
+    if ((await protectionPool.miningToken()) != miningTokenAddress) {
+      const tx_4 = await protectionPool.setMiningToken(miningTokenAddress);
+      console.log("Tx details: ", await tx_4.wait());
     }
 
     console.log("\nFinish setting contract addresses in protection pool\n");
@@ -252,9 +265,12 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
-    const exchangeAddress = addressList[network.name].MockExchange;
+    const exchangeAddress =
+      network.name != "avax" && network.name != "avaxTest"
+        ? addressList[network.name].MockExchange
+        : addressList[network.name].Exchange;
     const priceGetterAddress =
-      network.name != "avax"
+      network.name != "avax" && network.name != "avaxTest"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -263,6 +279,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].WeightedFarmingPool;
     const payoutPoolAddress = addressList[network.name].PayoutPool;
     const treasuryAddress = addressList[network.name].Treasury;
+    const dexPriceGetterAddress = addressList[network.name].DexPriceGetter;
 
     const policyCenter: PolicyCenter = new PolicyCenter__factory(
       dev_account
@@ -277,10 +294,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_1.wait());
     }
 
-    if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
-      const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
+    //   const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     if ((await policyCenter.exchange()) != exchangeAddress) {
       const tx_3 = await policyCenter.setExchange(exchangeAddress);
@@ -319,6 +336,11 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       const tx_8 = await policyCenter.setTreasury(treasuryAddress);
       console.log("Tx details: ", await tx_8.wait());
     }
+
+    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+    //   console.log("Tx details: ", await tx_9.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }
@@ -394,19 +416,19 @@ task("setFarmingPool", "Set address in weighted farming pool").setAction(
         addressList[network.name].WeightedFarmingPool
       );
 
-    if ((await weightedFarmingPool.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await weightedFarmingPool.setPolicyCenter(
-        policyCenterAddress
-      );
-      console.log("Tx details: ", await tx_1.wait());
-    }
+    // if ((await weightedFarmingPool.policyCenter()) != policyCenterAddress) {
+    //   const tx_1 = await weightedFarmingPool.setPolicyCenter(
+    //     policyCenterAddress
+    //   );
+    //   console.log("Tx details: ", await tx_1.wait());
+    // }
 
-    if ((await weightedFarmingPool.priorityPoolFactory()) != factoryAddress) {
-      const tx_2 = await weightedFarmingPool.setPriorityPoolFactory(
-        factoryAddress
-      );
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await weightedFarmingPool.priorityPoolFactory()) != factoryAddress) {
+    //   const tx_2 = await weightedFarmingPool.setPriorityPoolFactory(
+    //     factoryAddress
+    //   );
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in farming pool\n");
   }
@@ -433,15 +455,15 @@ task("setCRFactory", "Set cover right token factory").setAction(
         addressList[network.name].CoverRightTokenFactory
       );
 
-    if ((await crFactory.policyCenter()) != policyCenterAddress) {
-      const tx_1 = await crFactory.setPolicyCenter(policyCenterAddress);
-      console.log("Tx details: ", await tx_1.wait());
-    }
+    // if ((await crFactory.policyCenter()) != policyCenterAddress) {
+    //   const tx_1 = await crFactory.setPolicyCenter(policyCenterAddress);
+    //   console.log("Tx details: ", await tx_1.wait());
+    // }
 
-    if ((await crFactory.incidentReport()) != incidentReportAddress) {
-      const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
-      console.log("Tx details: ", await tx_2.wait());
-    }
+    // if ((await crFactory.incidentReport()) != incidentReportAddress) {
+    //   const tx_2 = await crFactory.setIncidentReport(incidentReportAddress);
+    //   console.log("Tx details: ", await tx_2.wait());
+    // }
 
     if ((await crFactory.payoutPool()) != payoutPoolAddress) {
       const tx_3 = await crFactory.setPayoutPool(payoutPoolAddress);
@@ -494,31 +516,31 @@ task("approvePROLP", "Approve pro lp token").setAction(async (_, hre) => {
   console.log("tx details", await tx.wait());
 });
 
-task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
-  const { network } = hre;
+// task("coverPrice", "Calculate cover price").setAction(async (taskArgs, hre) => {
+//   const { network } = hre;
 
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+//   // Signers
+//   const [dev_account] = await hre.ethers.getSigners();
+//   console.log("The default signer is: ", dev_account.address);
 
-  const addressList = readAddressList();
+//   const addressList = readAddressList();
 
-  const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
-    dev_account
-  ).attach(addressList[network.name].PriorityPoolFactory);
+//   const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
+//     dev_account
+//   ).attach(addressList[network.name].PriorityPoolFactory);
 
-  const pool1Address = (await factory.pools(1)).poolAddress;
+//   const pool1Address = (await factory.pools(1)).poolAddress;
 
-  const priorityPool: PriorityPool = new PriorityPool__factory(
-    dev_account
-  ).attach(pool1Address);
+//   const priorityPool: PriorityPool = new PriorityPool__factory(
+//     dev_account
+//   ).attach(pool1Address);
 
-  const ratio = await priorityPool.dynamicPremiumRatio(parseUnits("10", 6));
-  console.log("ratio", ratio.toString());
+//   const ratio = await priorityPool.dynamicPremiumRatio(parseUnits("10", 6));
+//   console.log("ratio", ratio.toString());
 
-  const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
-  console.log("price", formatUnits(price.price, 6));
-});
+//   const price = await priorityPool.coverPrice(parseUnits("10", 6), 1);
+//   console.log("price", formatUnits(price.price, 6));
+// });
 
 task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
   async (_, hre) => {
@@ -585,3 +607,148 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   );
   console.log("tx details:", await tx.wait());
 });
+
+task("check").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const treasury: Treasury = new Treasury__factory(dev_account).attach(
+    addressList[network.name].Treasury
+  );
+
+  const tx = await treasury.policyCenter();
+  console.log("tx details:", tx);
+});
+
+// Price Feed for AVAX
+// Name: AVAX
+// Address: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 (WAVAX)
+// Feed: 0x0A77230d17318075983913bC2145DB16C7366156
+// Decimals: 8
+
+task("addPriceFeed", "Add price feed in price getter")
+  .addParam("name", "Token name", null, types.string)
+  .addParam("address", "Oracle address", null, types.string)
+  .addParam("feed", "Oracle feed address", null, types.string)
+  .addParam("decimals", "Decimals of the price feed", null, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const priceGetter: PriceGetter = new PriceGetter__factory(
+      dev_account
+    ).attach(addressList[network.name].PriceGetter);
+
+    const tx = await priceGetter.setPriceFeed(
+      taskArgs.name,
+      taskArgs.address,
+      taskArgs.feed,
+      taskArgs.decimals
+    );
+    console.log("Tx details: ", await tx.wait());
+  });
+
+// name: GMX
+// Pair: 0x0c91a070f862666bBcce281346BE45766d874D98
+
+task("addDexPriceFeed")
+  .addParam("name", "Token name", null, types.string)
+  .addParam("pair", "Trader joe pair", null, types.string)
+  .addOptionalParam("decimals", "Token decimals", 18, types.string)
+  .addOptionalParam("interval", "Sample interval", 60, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const dexGetter: DexPriceGetter = new DexPriceGetter__factory(
+      dev_account
+    ).attach(addressList[network.name].DexPriceGetter);
+
+    const tx = await dexGetter.addIDOPair(
+      taskArgs.name,
+      taskArgs.pair,
+      taskArgs.decimals,
+      taskArgs.interval
+    );
+    console.log("Tx details:", await tx.wait());
+  });
+
+task("setAddressToName")
+  .addParam("address", "Token address", null, types.string)
+  .addParam("name", "Token name", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const dexGetter: DexPriceGetter = new DexPriceGetter__factory(
+      dev_account
+    ).attach(addressList[network.name].DexPriceGetter);
+
+    const tx = await dexGetter.setAddressToName(
+      taskArgs.address,
+      taskArgs.name
+    );
+    console.log("Tx details:", await tx.wait());
+  });
+
+task("setDexPriceGetter").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const dexGetter = addressList[network.name].DexPriceGetter;
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  const tx = await policyCenter.setDexPriceGetter(dexGetter);
+  console.log("Tx details", await tx.wait());
+});
+
+task("setOracleType")
+  .addParam("address", "Token address", null, types.string)
+  .addOptionalParam("type", "Oracle type", 1, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const policyCenter: PolicyCenter = new PolicyCenter__factory(
+      dev_account
+    ).attach(addressList[network.name].PolicyCenter);
+
+    const tx = await policyCenter.setOracleType(
+      taskArgs.address,
+      taskArgs.type
+    );
+    console.log("Tx details", await tx.wait());
+  });

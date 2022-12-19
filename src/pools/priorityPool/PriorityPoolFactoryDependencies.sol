@@ -57,6 +57,14 @@ interface IPriorityPoolDeployer {
         uint256 _maxCapacity,
         uint256 _basePremiumRatio
     ) external returns (address);
+
+    function getPoolAddress(
+        uint256 poolId,
+        string calldata _name,
+        address _protocolToken,
+        uint256 _maxCapacity,
+        uint256 _basePremiumRatio
+    ) external view returns (address);
 }
 
 abstract contract PriorityPoolFactoryDependencies {

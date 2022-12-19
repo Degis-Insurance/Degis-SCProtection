@@ -94,7 +94,7 @@ contract IncidentReport is
         uint256 numFor; // Votes voting for
         uint256 numAgainst; // Votes voting against
         uint256 round; // 0: Initial round 3 days, 1: Extended round 1 day, 2: Double extended 1 day
-        uint256 status; // PENDING, VOTING, SETTLED, CLOSED
+        uint256 status; // 0: INIT, 1: PENDING, 2: VOTING, 3: SETTLED, 404: CLOSED
         uint256 result; // 1: Pass, 2: Reject, 3: Tied
         uint256 votingReward; // Voting reward per veDEG
         uint256 payout; // Payout amount of this report (partial payout)
@@ -180,9 +180,6 @@ contract IncidentReport is
         return poolReports[_poolId].length;
     }
 
-    function addPoolReports(uint256 _poolId, uint256 _number) external {
-        poolReports[_poolId].push(_number);
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
@@ -269,7 +266,8 @@ contract IncidentReport is
             revert IncidentReport__WrongPeriod();
 
         currentReport.status = CLOSE_STATUS;
-        reported[_id] = false;
+
+        _setReportedStatus(_id, false);
 
         poolReports[currentReport.poolId].pop();
 
@@ -329,7 +327,7 @@ contract IncidentReport is
                 if (res != PASS_RESULT) {
                     uint256 poolId = currentReport.poolId;
                     _unpausePools(poolId);
-                    reported[poolId] = false;
+                    _setReportedStatus(poolId, false);
 
                     poolReports[poolId].pop();
                 }
@@ -341,9 +339,11 @@ contract IncidentReport is
             } else {
                 currentReport.result = FAILED_RESULT;
                 uint256 poolId = currentReport.poolId;
+
                 // FAILED: unlock the priority pool & protection pool immediately
                 _unpausePools(poolId);
-                reported[poolId] = false;
+                _setReportedStatus(poolId, false);
+
                 emit ReportFailed(_id);
             }
         } else {
@@ -361,10 +361,6 @@ contract IncidentReport is
      */
     function claimReward(uint256 _id) external {
         _claimReward(_id, msg.sender);
-    }
-
-    function setReported(uint256 _id) external {
-        reported[_id] = false;
     }
 
     /**
@@ -419,8 +415,7 @@ contract IncidentReport is
         if (msg.sender != executor) revert IncidentReport__OnlyExecutor();
 
         uint256 poolId = reports[_reportId].poolId;
-        reported[poolId] = false;
-
+        _setReportedStatus(poolId, false);
         _unpausePools(poolId);
     }
 
@@ -448,7 +443,7 @@ contract IncidentReport is
         _checkPoolStatus(_poolId, _payout);
 
         // Mark as already reported
-        reported[_poolId] = true;
+        _setReportedStatus(_poolId, true);
 
         uint256 currentId = ++reportCounter;
         // Record the new report
@@ -463,10 +458,10 @@ contract IncidentReport is
         // Need to add this smart contract to burner list
         deg.burnDegis(_user, REPORT_THRESHOLD);
 
-        // TODO: Check this part
+        // Record this report id to this pool's all reports list
         poolReports[_poolId].push(currentId);
 
-        // @audit Pause pools immediately when report
+        // Pause pools immediately when report
         _pausePools(_poolId);
 
         emit ReportCreated(currentId, _poolId, block.timestamp, _user, _payout);
@@ -861,5 +856,15 @@ contract IncidentReport is
      */
     function _lockVeDEG(address _user, uint256 _amount) internal {
         veDeg.lockVeDEG(_user, _amount);
+    }
+
+    /**
+     * @notice Set reported status for a pool
+     *
+     * @param _poolId   Pool id
+     * @param _reported Whether already reported
+     */
+    function _setReportedStatus(uint256 _poolId, bool _reported) internal {
+        reported[_poolId] = _reported;
     }
 }

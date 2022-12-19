@@ -79,7 +79,9 @@ abstract contract PriorityPoolDependencies {
 
     uint256 internal constant SCALE = 1e12;
     uint256 internal constant SECONDS_PER_YEAR = 86400 * 365;
-    uint256 internal constant DYNAMIC_TIME = 10 minutes;
+
+    // TODO: Different parameters for test and mainnet
+    uint256 internal constant DYNAMIC_TIME = 7 days;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //

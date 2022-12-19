@@ -5,6 +5,7 @@ import {
   readAddressList,
   readImpList,
   storeAddressList,
+  storeImpList,
 } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -63,13 +64,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priorityPoolDeployer.implementation;
 
   console.log(
-    "Payout pool deployer deployed to address: ",
+    "Priority pool deployer deployed to address: ",
     priorityPoolDeployer.address,
+    "\n"
+  );
+
+  console.log(
+    "Priority pool deployer implementation deployed to address: ",
+    priorityPoolDeployer.implementation,
     "\n"
   );
 
   // Store the address list after deployment
   storeAddressList(addressList);
+  storeImpList(impList);
 };
 
 func.tags = ["PriorityPoolDeployer"];

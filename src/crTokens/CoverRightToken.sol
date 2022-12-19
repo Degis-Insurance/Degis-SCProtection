@@ -48,7 +48,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
 
     // Those covers bought within 2 days will be excluded
     // TODO: test will set it as 0
-    uint256 public constant EXCLUDE_DAYS = 0;
+    uint256 public constant EXCLUDE_DAYS = 2;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -98,6 +98,16 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Only called from permitted addresses
+     *
+     *         Permitted addresses:
+     *            1) Policy center
+     *            2) Payout pool
+     *
+     *         For policyCenter, when deploying new crTokens, the policyCenter address is still not initialized,
+     *         so we only skip the test when policyCenter is address(0)
+     */
     modifier onlyPermitted() {
         if (policyCenter != address(0)) {
             require(
@@ -106,15 +116,6 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
             );
         }
         _;
-    }
-
-    // TODO: not needed
-    function setPolicyCenter(address _policyCenter) external {
-        policyCenter = _policyCenter;
-    }
-
-    function setPayoutPool(address _payoutPool) external {
-        payoutPool = _payoutPool;
     }
 
     /**
@@ -146,9 +147,12 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
         require(_amount > 0, "Zero Amount");
         require(_poolId == poolId, "Wrong pool id");
 
-        uint256 effectiveFrom = _getEOD(
-            block.timestamp + EXCLUDE_DAYS * 1 days
-        );
+        // uint256 effectiveFrom = _getEOD(
+        //     block.timestamp + EXCLUDE_DAYS * 1 days
+        // );
+
+        // Start from today's last timestamp
+        uint256 effectiveFrom = _getEOD(block.timestamp);
 
         coverStartFrom[_user][effectiveFrom] += _amount;
 
