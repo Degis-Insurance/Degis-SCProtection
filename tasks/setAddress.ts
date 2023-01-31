@@ -633,7 +633,7 @@ task("check").setAction(async (_, hre) => {
 
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
-  .addParam("address", "Oracle address", null, types.string)
+  .addParam("address", "Token address", null, types.string)
   .addParam("feed", "Oracle feed address", null, types.string)
   .addParam("decimals", "Decimals of the price feed", null, types.int)
   .setAction(async (taskArgs, hre) => {

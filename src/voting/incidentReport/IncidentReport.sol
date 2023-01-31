@@ -216,7 +216,7 @@ contract IncidentReport is
      * @param _poolId Pool id to report incident
      * @param _payout Payout amount of this report
      */
-    function report(uint256 _poolId, uint256 _payout) external {
+    function report(uint256 _poolId, uint256 _payout) external onlyOwner {
         _report(_poolId, _payout, msg.sender);
     }
 
@@ -456,7 +456,7 @@ contract IncidentReport is
 
         // Burn degis tokens to start a report
         // Need to add this smart contract to burner list
-        deg.burnDegis(_user, REPORT_THRESHOLD);
+        // deg.burnDegis(_user, REPORT_THRESHOLD);
 
         // Record this report id to this pool's all reports list
         poolReports[_poolId].push(currentId);

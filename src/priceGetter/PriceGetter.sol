@@ -89,6 +89,7 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
      *      The price result decimal should be less than 18
      *
      * @param _tokenName   Address of the token
+     * @param _tokenAddress Address of the token
      * @param _feedAddress Price feed oracle address
      * @param _decimals    Decimals of this price feed service
      */
