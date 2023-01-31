@@ -12,7 +12,7 @@ import "./TreasuryEventError.sol";
 /**
  * @notice Treasury Contract
  *
- *         Treasury will receive 5% of the premium income (Shield) from policyCenter.
+ *         Treasury will receive 5% of the premium income (usdc) from policyCenter.
  *         They are counted as different pools.
  *
  *         When a reporter gives a correct report (passed voting and executed),
@@ -30,6 +30,8 @@ contract Treasury is
 
     uint256 public constant REPORTER_REWARD = 1000; // 10%
 
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -41,14 +43,12 @@ contract Treasury is
     // ---------------------------------------------------------------------------------------- //
 
     function initialize(
-        address _shield,
         address _executor,
         address _policyCenter
     ) public initializer {
         __Ownable_init();
 
         executor = _executor;
-        shield = _shield;
         policyCenter = _policyCenter;
     }
 
@@ -71,7 +71,7 @@ contract Treasury is
         uint256 amount = (poolIncome[_poolId] * REPORTER_REWARD) / 10000;
 
         poolIncome[_poolId] -= amount;
-        SimpleIERC20(shield).transfer(_reporter, amount);
+        SimpleIERC20(USDC).transfer(_reporter, amount);
 
         emit ReporterRewarded(_reporter, amount);
     }
@@ -82,7 +82,7 @@ contract Treasury is
      *         Only called from policy center
      *
      * @param _poolId Pool id
-     * @param _amount Premium amount (shield)
+     * @param _amount Premium amount (usdc)
      */
     function premiumIncome(uint256 _poolId, uint256 _amount) external {
         if (msg.sender != policyCenter) revert Treasury__OnlyPolicyCenter();
@@ -93,12 +93,12 @@ contract Treasury is
     }
 
     /**
-     * @notice Claim shield by the owner
+     * @notice Claim usdc by the owner
      *
      * @param _amount Amount to claim
      */
     function claim(uint256 _amount) external onlyOwner {
-        SimpleIERC20(shield).transfer(owner(), _amount);
+        SimpleIERC20(USDC).transfer(owner(), _amount);
 
         emit ClaimedByOwner(_amount);
     }

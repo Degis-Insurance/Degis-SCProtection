@@ -8,13 +8,13 @@ interface ProtectionPoolEventError {
     // ---------------------------------------------------------------------------------------- //
 
     event LiquidityProvided(
-        uint256 shieldAmount,
+        uint256 usdcAmount,
         uint256 lpAmount,
         address sender
     );
     event LiquidityRemoved(
         uint256 lpAmount,
-        uint256 shieldAmount,
+        uint256 usdcAmount,
         address sender
     );
 

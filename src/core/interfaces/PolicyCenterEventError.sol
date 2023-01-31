@@ -12,7 +12,7 @@ interface PolicyCenterEventError {
         uint256 indexed poolId,
         uint256 coverDuration,
         uint256 coverAmount,
-        uint256 premiumInShield
+        uint256 premiumInUSDC
     );
 
     event LiquidityProvided(address indexed user, uint256 amount);

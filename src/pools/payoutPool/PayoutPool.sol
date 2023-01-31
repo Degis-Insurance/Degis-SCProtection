@@ -48,11 +48,11 @@ contract PayoutPool is Initializable {
 
     uint256 public constant CLAIM_PERIOD = 30 days;
 
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    address public shield;
 
     address public crFactory;
 
@@ -96,12 +96,10 @@ contract PayoutPool is Initializable {
     // ---------------------------------------------------------------------------------------- //
 
     function initialize(
-        address _shield,
         address _policyCenter,
         address _crFactory,
         address _priorityPoolFactory
     ) public initializer {
-        shield = _shield;
         policyCenter = _policyCenter;
         crFactory = _crFactory;
         priorityPoolFactory = _priorityPoolFactory;
@@ -225,7 +223,7 @@ contract PayoutPool is Initializable {
             claimableBalance
         );
 
-        SimpleIERC20(shield).transfer(_user, claimed);
+        SimpleIERC20(USDC).transfer(_user, claimed);
 
         // Amount of new generation cr token to be minted
         newGenerationCRAmount = claimableBalance - claimable;

@@ -48,7 +48,7 @@ import "../../libraries/StringUtils.sol";
  *         This reward is distributed in another contract (WeightedFarmingPool)
  *         By default, policy center will help user to deposit into farming pool when staking liquidity
  *
- *         For liquidation process, the pool will first redeem Shield from protectionPool with the staked RP_LP tokens.
+ *         For liquidation process, the pool will first redeem USDC from protectionPool with the staked RP_LP tokens.
  *         - If that is enough, no more redeeming.
  *         - If still need some liquidity to cover, it will directly transfer part of the protectionPool assets to users.
  *
@@ -202,10 +202,10 @@ contract PriorityPool is
     /**
      * @notice Cost to buy a cover for a given period of time and amount of tokens
      *
-     * @param _amount        Amount being covered (Shield)
+     * @param _amount        Amount being covered (usdc)
      * @param _coverDuration Cover length in month
      *
-     * @return price  Cover price in shield
+     * @return price  Cover price in usdc
      * @return length Real length in timestamp
      */
     function coverPrice(uint256 _amount, uint256 _coverDuration)
@@ -275,7 +275,7 @@ contract PriorityPool is
      *         Depends on the covers sold and liquidity amount in all dynamic priority pools
      *         For the first 7 days, use the base premium ratio
      *
-     * @param _coverAmount New cover amount (shield) being bought
+     * @param _coverAmount New cover amount (usdc) being bought
      *
      * @return ratio The dynamic ratio
      */
@@ -446,7 +446,7 @@ contract PriorityPool is
      * @notice Update the record when new policy is bought
      *         Only called from policy center
      *
-     * @param _amount          Cover amount (shield)
+     * @param _amount          Cover amount (usdc)
      * @param _premium         Premium for priority pool (in protocol token)
      * @param _length          Cover length (in month)
      * @param _timestampLength Cover length (in second)
@@ -721,7 +721,7 @@ contract PriorityPool is
     /**
      * @notice Retrieve assets from Protection Pool for payout
      *
-     * @param _amount Amount of SHIELD to retrieve
+     * @param _amount Amount of usdc to retrieve
      */
     function _retrievePayout(uint256 _amount)
         internal
@@ -748,12 +748,12 @@ contract PriorityPool is
                 ((currentLPAmount - neededLPAmount) * SCALE) /
                 currentLPAmount;
         } else {
-            uint256 shieldGot = proPool.removedLiquidity(
+            uint256 usdcGot = proPool.removedLiquidity(
                 currentLPAmount,
                 payoutPool
             );
 
-            uint256 remainingPayout = _amount - shieldGot;
+            uint256 remainingPayout = _amount - usdcGot;
 
             proPool.removedLiquidityWhenClaimed(remainingPayout, payoutPool);
 

@@ -74,21 +74,16 @@ contract PolicyCenter is
     function initialize(
         address _deg,
         address _veDeg,
-        address _shield,
         address _protectionPool
     ) public initializer {
         __Ownable_init();
-        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __ExternalToken__Init(_deg, _veDeg);
 
-        // Peotection pool as pool 0 and with shield token
+        // Peotection pool as pool 0 and with usdc token
         priorityPools[0] = _protectionPool;
-        tokenByPoolId[0] = _shield;
+        tokenByPoolId[0] = USDC;
 
         protectionPool = _protectionPool;
-
-        // Approve USDC for later depositing for Shield
-        // Use parameter rather than storage variable
-        IERC20(USDC).approve(address(shield), type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -99,8 +94,7 @@ contract PolicyCenter is
      * @notice Whether the pool exists
      */
     modifier poolExists(uint256 _poolId) {
-        if (_poolId == 0) revert PolicyCenter__NonExistentPool();
-        if (priorityPools[_poolId] == address(0))
+        if (_poolId == 0 || priorityPools[_poolId] == address(0))
             revert PolicyCenter__NonExistentPool();
         _;
     }
@@ -112,9 +106,13 @@ contract PolicyCenter is
     /**
      * @notice Returns the current LP address for a Pool ID
      *
+     *         "Current" means the LP address that is currently being used
+     *         Because each priority pool may have several generations of LP tokens
+     *         Once reported and paid out, the LP generation will be updated
+     *
      * @param _poolId Priority Pool ID
      *
-     * @return lpAddress Current LP token address
+     * @return lpAddress Current generation LP token address
      */
     function currentLPAddress(uint256 _poolId)
         external
@@ -195,7 +193,7 @@ contract PolicyCenter is
      * @notice Buy new cover for a given pool
      *
      *         Select a pool with parameter "poolId"
-     *         Cover amount is in shield and duration is in month
+     *         Cover amount is in usdc and duration is in month
      *         The premium ratio may be dynamic so "maxPayment" is similar to "slippage"
      *
      * @param _poolId        Pool id
@@ -216,7 +214,7 @@ contract PolicyCenter is
 
         _checkCapacity(_poolId, _coverAmount);
 
-        // Premium in USD (shield) and duration in second
+        // Premium in USD and duration in second
         (uint256 premium, uint256 timestampDuration) = _getCoverPrice(
             _poolId,
             _coverAmount,
@@ -260,14 +258,14 @@ contract PolicyCenter is
     /**
      * @notice Provide liquidity to Protection Pool
      *
-     * @param _amount Amount of liquidity(shield) to provide
+     * @param _amount Amount of liquidity (usdc) to provide
      */
     function provideLiquidity(uint256 _amount) external {
         if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
-        // Mint PRO-LP tokens and transfer shield
+        // Mint PRO-LP tokens and transfer usdc
         IProtectionPool(protectionPool).providedLiquidity(_amount, msg.sender);
-        SimpleIERC20(shield).transferFrom(msg.sender, protectionPool, _amount);
+        SimpleIERC20(USDC).transferFrom(msg.sender, protectionPool, _amount);
 
         emit LiquidityProvided(msg.sender, _amount);
     }
@@ -493,13 +491,13 @@ contract PolicyCenter is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Swap tokens to USDC and then to shield
+     * @notice Swap tokens to USDC
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
      * @param _path      Swap path
      *
-     * @return received Actual shield amount received
+     * @return received Actual usdc amount received
      */
     function _swapTokens(
         address _fromToken,
@@ -524,10 +522,6 @@ contract PolicyCenter is
 
         // Received amount is the second element of the return value
         received = amountsOut[length - 1];
-
-        // Deposit USDC and get back shield
-        // When depositing USDC, no slippage
-        shield.deposit(1, USDC, received, received);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }
@@ -705,7 +699,7 @@ contract PolicyCenter is
     /**
      * @notice Split premium for a pool
      *         To priority pool is paid in native token
-     *         To protection pool and treasury is paid in shield
+     *         To protection pool and treasury is paid in usdc
      *
      * @param _poolId       Pool id
      * @param _premiumInUSD Premium in USD
@@ -739,17 +733,17 @@ contract PolicyCenter is
         // Native tokens to Priority pool
         toPriority = (premiumInNativeToken * PREMIUM_TO_PRIORITY) / 10000;
 
-        // Swap native tokens to shield
-        // Except for amount to priority pool, remaining is distributed in Shield
+        // Swap native tokens to usdc
+        // Except for amount to priority pool, remaining is distributed in usdc
         uint256 amountToSwap = premiumInNativeToken - toPriority;
-        // Shield amount received
+        // USDC amount received
         uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, _path);
 
-        // Shield to Protection Pool
+        // USDC to Protection Pool
         toProtection =
             (amountReceived * PREMIUM_TO_PROTECTION) /
             (PREMIUM_TO_PROTECTION + PREMIUM_TO_TREASURY);
-        // Shield to Treasury
+        // USDC to Treasury
         toTreasury = amountReceived - toProtection;
 
         emit PremiumSplitted(toPriority, toProtection, toTreasury);
@@ -757,8 +751,8 @@ contract PolicyCenter is
         // @audit Add real transfer
         // Transfer tokens to different pools
         IERC20(nativeToken).transfer(weightedFarmingPool, toPriority);
-        shield.transfer(protectionPool, toProtection);
-        shield.transfer(treasury, toTreasury);
+        SimpleIERC20(USDC).transfer(protectionPool, toProtection);
+        SimpleIERC20(USDC).transfer(treasury, toTreasury);
     }
 
     /**
@@ -776,7 +770,7 @@ contract PolicyCenter is
      * @notice Get cover price from insurance pool
      *
      * @param _poolId        Pool id
-     * @param _coverAmount   Cover amount (shield)
+     * @param _coverAmount   Cover amount (usdc)
      * @param _coverDuration Cover length in months (1,2,3)
      */
     function _getCoverPrice(
@@ -792,14 +786,14 @@ contract PolicyCenter is
      * @notice Check priority pool capacity
      *
      * @param _poolId      Pool id
-     * @param _coverAmount Amount (shield) to cover
+     * @param _coverAmount Amount (usdc) to cover
      */
     function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
         internal
         view
     {
         IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
-        uint256 maxCapacityAmount = (IShield(shield).balanceOf(
+        uint256 maxCapacityAmount = (SimpleIERC20(USDC).balanceOf(
             address(protectionPool)
         ) * pool.maxCapacity()) / 10000;
 

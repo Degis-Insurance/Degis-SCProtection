@@ -90,7 +90,7 @@ contract Executor is
      * @notice Execute a report
      *         The report must already been settled and the result is PASSED
      *         Execution means:
-     *             1) Give 10% of protocol income to reporter (SHIELD)
+     *             1) Give 10% of protocol income to reporter (USDC)
      *             2) Move the total payout amount out of the priority pool (to payout pool)
      *             3) Deploy new generations of CRTokens and PRI-LP tokens
      *

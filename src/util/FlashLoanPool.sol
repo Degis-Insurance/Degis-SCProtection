@@ -21,8 +21,8 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
         uint256 fee
     );
 
-    function __FlashLoan__Init(address _shield) internal onlyInitializing {
-        token = _shield;
+    function __FlashLoan__Init(address _usdc) internal onlyInitializing {
+        token = _usdc;
     }
 
     function flashLoan(
@@ -69,12 +69,12 @@ abstract contract FlashLoanPool is IERC3156FlashLender, Initializable {
         override
         returns (uint256)
     {
-        require(_token == token, "Only shield");
+        require(_token == token, "Only usdc");
         return (_amount * FEE) / 10000;
     }
 
     function maxFlashLoan(address _token) external view returns (uint256) {
-        require(_token == token, "only shield");
+        require(_token == token, "only usdc");
         return IERC20(token).balanceOf(address(this));
     }
 }

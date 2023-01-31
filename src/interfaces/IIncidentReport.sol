@@ -134,8 +134,6 @@ interface IIncidentReport {
 
     function settle(uint256 _reportId) external;
 
-    function shield() external view returns (address);
-
     function startVoting(uint256 _reportId) external;
 
     function transferOwnership(address newOwner) external;

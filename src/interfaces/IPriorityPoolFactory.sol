@@ -13,7 +13,7 @@ interface IPriorityPoolFactory {
         string protocolName,
         address protocolToken,
         uint256 maxCapacity,
-        uint256 policyPricePerShield
+        uint256 policyPricePerUSDC
     );
 
     struct PoolInfo {
@@ -59,7 +59,7 @@ interface IPriorityPoolFactory {
             address poolAddress,
             address protocolToken,
             uint256 maxCapacity,
-            uint256 policyPricePerShield
+            uint256 policyPricePerUSDC
         );
 
     function poolRegistered(address) external view returns (bool);
@@ -69,8 +69,6 @@ interface IPriorityPoolFactory {
     function setProtectionPool(address _protectionPool) external;
 
     function updateMaxCapacity(bool _isUp, uint256 _maxCapacity) external;
-
-    function shield() external view returns (address);
 
     function tokenRegistered(address) external view returns (bool);
 
