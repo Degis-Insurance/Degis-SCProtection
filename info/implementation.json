@@ -116,5 +116,6 @@
 	},
 	"rinkeby": {},
 	"fujiTest": {},
-	"reserve": {}
+	"reserve": {},
+	"avaxNew": {}
 }
