@@ -30,7 +30,7 @@ import "../interfaces/IPriceGetter.sol";
 
 import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../libraries/SimpleSafeERC20.sol";
 
 /**
  * @title Policy Center
@@ -48,7 +48,7 @@ contract PolicyCenter is
     ExternalTokenDependencies,
     PolicyCenterDependencies
 {
-    using SafeERC20 for IERC20;
+    using SimpleSafeERC20 for SimpleIERC20;
     using StringUtils for uint256;
 
     // ---------------------------------------------------------------------------------------- //
@@ -57,9 +57,12 @@ contract PolicyCenter is
 
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
 
-    // poolId => address, updated once pools are deployed
+    // Pool Id => Priority Pool Address
+    // Updated once pools are deployed
     // Protection Pool is pool 0
     mapping(uint256 => address) public priorityPools;
+
+    // Pool Id => Pool Native Token Address
     mapping(uint256 => address) public tokenByPoolId;
 
     // Protocol token => Oracle type
@@ -297,7 +300,7 @@ contract PolicyCenter is
             _amount,
             address(this)
         );
-        IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+        SimpleIERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
         IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
         IWeightedFarmingPool(weightedFarmingPool).depositFromPolicyCenter(
@@ -306,7 +309,7 @@ contract PolicyCenter is
             _amount,
             msg.sender
         );
-        IERC20(lpToken).transfer(weightedFarmingPool, _amount);
+        SimpleIERC20(lpToken).transfer(weightedFarmingPool, _amount);
 
         emit LiquidityStaked(msg.sender, _poolId, _amount);
     }
@@ -327,7 +330,7 @@ contract PolicyCenter is
 
         // Mint PRI-LP tokens to the user directly
         IPriorityPool(pool).stakedLiquidity(_amount, msg.sender);
-        IERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
+        SimpleIERC20(protectionPool).transferFrom(msg.sender, pool, _amount);
 
         IProtectionPool(protectionPool).updateStakedSupply(true, _amount);
 
@@ -512,9 +515,15 @@ contract PolicyCenter is
         // Swap for USDC and return the received amount
         uint256[] memory amountsOut = new uint256[](2);
 
+        // @audit Calculating slippage
+        uint256[] memory amountOutCal = IExchange(exchange).getAmountsOut(
+            _amount,
+            _path
+        );
+
         amountsOut = IExchange(exchange).swapExactTokensForTokens(
             _amount,
-            ((_amount * (10000 - SLIPPAGE)) / 10000),
+            ((amountOutCal[length - 1] * (10000 - SLIPPAGE)) / 10000),
             _path,
             address(this),
             block.timestamp + 1
@@ -689,7 +698,7 @@ contract PolicyCenter is
         premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
 
         // Pay native tokens
-        IERC20(_token).safeTransferFrom(
+        SimpleIERC20(_token).safeTransferFrom(
             msg.sender,
             address(this),
             premiumInNativeToken
@@ -724,6 +733,7 @@ contract PolicyCenter is
         if (_premiumInUSD == 0) revert PolicyCenter__ZeroPremium();
 
         address nativeToken = tokenByPoolId[_poolId];
+
         // Premium in project native token (paid in internal function)
         uint256 premiumInNativeToken = _getNativeTokenAmount(
             _premiumInUSD,
@@ -750,7 +760,7 @@ contract PolicyCenter is
 
         // @audit Add real transfer
         // Transfer tokens to different pools
-        IERC20(nativeToken).transfer(weightedFarmingPool, toPriority);
+        SimpleIERC20(nativeToken).transfer(weightedFarmingPool, toPriority);
         SimpleIERC20(USDC).transfer(protectionPool, toProtection);
         SimpleIERC20(USDC).transfer(treasury, toTreasury);
     }
@@ -763,7 +773,7 @@ contract PolicyCenter is
     function _approvePoolToken(address _token) internal {
         if (exchange == address(0)) revert PolicyCenter__NoExchange();
         // approve exchange to swap policy center tokens for deg
-        IERC20(_token).approve(exchange, type(uint256).max);
+        SimpleIERC20(_token).approve(exchange, type(uint256).max);
     }
 
     /**

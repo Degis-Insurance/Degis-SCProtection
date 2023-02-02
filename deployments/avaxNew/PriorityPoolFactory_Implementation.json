@@ -1,0 +1,1051 @@
+{
+  "address": "0xFD346840b5668A48960893ec28A17c4169a38d5f",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__AlreadyDynamicPool",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__NotOwnerOrFactory",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__OnlyExecutor",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__OnlyIncidentReportOrExecutor",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__OnlyOwnerOrExecutor",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__OnlyPolicyCenter",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__OnlyPriorityPool",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__PoolNotRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__TokenAlreadyRegistered",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PriorityPoolFactory__WrongLPToken",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "dynamicPoolCounter",
+          "type": "uint256"
+        }
+      ],
+      "name": "DynamicPoolUpdate",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalMaxCapacity",
+          "type": "uint256"
+        }
+      ],
+      "name": "MaxCapacityUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "poolId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "protocolName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "protocolToken",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "maxCapacity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "basePremiumRatio",
+          "type": "uint256"
+        }
+      ],
+      "name": "PoolCreated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "USDC",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_protocolToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_maxCapacity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_basePremiumRatio",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "dynamic",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "dynamicPoolCounter",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "executor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPoolAddressList",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPoolInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "protocolName",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "poolAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "protocolToken",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxCapacity",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "basePremiumRatio",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PriorityPoolFactory.PoolInfo",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "incidentReport",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_deg",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_veDeg",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_protectionPool",
+          "type": "address"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_paused",
+          "type": "bool"
+        }
+      ],
+      "name": "pausePriorityPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "policyCenter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "poolAddressToId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolCounter",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "poolRegistered",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "pools",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "protocolName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "protocolToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "maxCapacity",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "basePremiumRatio",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "priorityPoolDeployer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protectionPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_executor",
+          "type": "address"
+        }
+      ],
+      "name": "setExecutor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_incidentReport",
+          "type": "address"
+        }
+      ],
+      "name": "setIncidentReport",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_policyCenter",
+          "type": "address"
+        }
+      ],
+      "name": "setPolicyCenter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_priorityPoolDeployer",
+          "type": "address"
+        }
+      ],
+      "name": "setPriorityPoolDeployer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_protectionPool",
+          "type": "address"
+        }
+      ],
+      "name": "setProtectionPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_weightedFarmingPool",
+          "type": "address"
+        }
+      ],
+      "name": "setWeightedFarmingPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "tokenRegistered",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalMaxCapacity",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_poolId",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateDynamicPool",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "_isUp",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_diff",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateMaxCapacity",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "weightedFarmingPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x2728d1ec1a26c57757511a19cdf05c98b51ef43956dd267b6d892b2806f8773b",
+  "receipt": {
+    "to": null,
+    "from": "0xeB496257B64Cc2D39c291B209F465f3cfADE0873",
+    "contractAddress": "0xFD346840b5668A48960893ec28A17c4169a38d5f",
+    "transactionIndex": 3,
+    "gasUsed": "1432098",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x42dff3bb709e22d0398da016798114871855ea16ad2a5abe655c536cd923ad16",
+    "transactionHash": "0x2728d1ec1a26c57757511a19cdf05c98b51ef43956dd267b6d892b2806f8773b",
+    "logs": [],
+    "blockNumber": 25728521,
+    "cumulativeGasUsed": "1919423",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "345825b3da4beec99ff04bc4a201062c",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"PriorityPoolFactory__AlreadyDynamicPool\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__NotOwnerOrFactory\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__OnlyExecutor\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__OnlyIncidentReportOrExecutor\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__OnlyOwnerOrExecutor\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__OnlyPolicyCenter\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__OnlyPriorityPool\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__PoolNotRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__TokenAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PriorityPoolFactory__WrongLPToken\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pool\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"dynamicPoolCounter\",\"type\":\"uint256\"}],\"name\":\"DynamicPoolUpdate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"totalMaxCapacity\",\"type\":\"uint256\"}],\"name\":\"MaxCapacityUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"poolId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"poolAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"protocolName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"protocolToken\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"maxCapacity\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"basePremiumRatio\",\"type\":\"uint256\"}],\"name\":\"PoolCreated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"USDC\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_protocolToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_maxCapacity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_basePremiumRatio\",\"type\":\"uint256\"}],\"name\":\"deployPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"dynamic\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dynamicPoolCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"executor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPoolAddressList\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"}],\"name\":\"getPoolInfo\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"protocolName\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"poolAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"protocolToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxCapacity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"basePremiumRatio\",\"type\":\"uint256\"}],\"internalType\":\"struct PriorityPoolFactory.PoolInfo\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"incidentReport\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_deg\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_veDeg\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_protectionPool\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"_paused\",\"type\":\"bool\"}],\"name\":\"pausePriorityPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"policyCenter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"poolAddressToId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"poolRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"pools\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"protocolName\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"poolAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"protocolToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"maxCapacity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"basePremiumRatio\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"priorityPoolDeployer\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"protectionPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_executor\",\"type\":\"address\"}],\"name\":\"setExecutor\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_incidentReport\",\"type\":\"address\"}],\"name\":\"setIncidentReport\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_policyCenter\",\"type\":\"address\"}],\"name\":\"setPolicyCenter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_priorityPoolDeployer\",\"type\":\"address\"}],\"name\":\"setPriorityPoolDeployer\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_protectionPool\",\"type\":\"address\"}],\"name\":\"setProtectionPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_weightedFarmingPool\",\"type\":\"address\"}],\"name\":\"setWeightedFarmingPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"tokenRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalMaxCapacity\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_poolId\",\"type\":\"uint256\"}],\"name\":\"updateDynamicPool\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"_isUp\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"_diff\",\"type\":\"uint256\"}],\"name\":\"updateMaxCapacity\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"weightedFarmingPool\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Eric Lee (ylikp.ust@gmail.com)\",\"kind\":\"dev\",\"methods\":{\"deployPool(string,address,uint256,uint256)\":{\"params\":{\"_basePremiumRatio\":\"Initial policy price per usdc\",\"_maxCapacity\":\"Maximum capacity of the pool\",\"_name\":\"Name of the protocol\",\"_protocolToken\":\"Address of the token used for the protocol\"},\"returns\":{\"_0\":\"address Address of the new insurance pool\"}},\"getPoolAddressList()\":{\"returns\":{\"_0\":\"List of pool addresses\"}},\"getPoolInfo(uint256)\":{\"params\":{\"_poolId\":\"Pool id\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"},\"updateDynamicPool(uint256)\":{\"params\":{\"_poolId\":\"Pool id\"}}},\"title\":\"Insurance Pool Factory\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"deployPool(string,address,uint256,uint256)\":{\"notice\":\"Create a new priority pool         Called by executor when an onboard proposal has passed\"},\"getPoolAddressList()\":{\"notice\":\"Get the pool address list\"},\"getPoolInfo(uint256)\":{\"notice\":\"Get the pool information by pool id\"},\"updateDynamicPool(uint256)\":{\"notice\":\"Update a priority pool status to dynamic         Only sent from priority pool         \\\"Dynamic\\\" means:                  The priority pool will be counted in the dynamic premium formula\"},\"updateMaxCapacity(bool,uint256)\":{\"notice\":\"Update max capacity from a priority pool\"}},\"notice\":\"This is the factory contract for deploying new insurance pools         Each pool represents a project that has joined Degis Protocol Protection         Liquidity providers of Protection Pool can stake their LP tokens into priority pools         Benefit:             - Share the 45% part of the premium income (in native token form)         Risk:             - Will be liquidated first to pay for the claim amount\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/pools/priorityPool/PriorityPoolFactory.sol\":\"PriorityPoolFactory\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363735333234353538303734\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"src/interfaces/CommonDependencies.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nabstract contract CommonDependencies {\\n    uint256 internal constant SCALE = 1e12;\\n}\\n\",\"keccak256\":\"0x0b0bd779fda3629bfc0f8123f333bd55fc88972c612cd3b9f035b954b520d69f\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/ExternalTokenDependencies.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"./IVeDEG.sol\\\";\\nimport \\\"./IDegisToken.sol\\\";\\nimport \\\"./CommonDependencies.sol\\\";\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @notice External token dependencies\\n *         Include the tokens that are not deployed by this repo\\n *         DEG, veDEG\\n *         They are set as immutable\\n */\\nabstract contract ExternalTokenDependencies is\\n    CommonDependencies,\\n    Initializable\\n{\\n    IDegisToken internal deg;\\n    IVeDEG internal veDeg;\\n\\n    function __ExternalToken__Init(address _deg, address _veDeg)\\n        internal\\n        onlyInitializing\\n    {\\n        deg = IDegisToken(_deg);\\n        veDeg = IVeDEG(_veDeg);\\n    }\\n}\\n\",\"keccak256\":\"0x59a44780f820a90040fe4d2e59f22b094881df2b5c578db1b21e72d7de93a909\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IDegisToken.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"../util/SimpleIERC20.sol\\\";\\n\\ninterface IDegisToken is SimpleIERC20 {\\n    // Mint degis token\\n    function mintDegis(address _account, uint256 _amount) external;\\n\\n    // Burn degis token\\n    function burnDegis(address _account, uint256 _amount) external;\\n}\\n\",\"keccak256\":\"0x926ec7ef1eb5d6178e8cc0e29f12d1853f6ed27ec6b1864697e7a845e4a6294d\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IPriorityPool.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IPriorityPool {\\n    //\\n\\n    function lpTokenAddress(uint256 _generation)\\n        external\\n        view\\n        returns (address);\\n\\n    function insuredToken() external view returns (address);\\n\\n    function pausePriorityPool(bool _paused) external;\\n\\n    function setCoverIndex(uint256 _newIndex) external;\\n\\n    function minAssetRequirement() external view returns (uint256);\\n\\n    function activeCovered() external view returns (uint256);\\n\\n    function currentLPAddress() external view returns (address);\\n\\n    function liquidatePool(uint256 amount) external;\\n\\n    function generation() external view returns (uint256);\\n\\n    function crTokenAddress(uint256 generation) external view returns (address);\\n\\n    function poolInfo()\\n        external\\n        view\\n        returns (\\n            bool,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256,\\n            uint256\\n        );\\n\\n    function updateWhenBuy(\\n        uint256 _amount,\\n        uint256 _premium,\\n        uint256 _length,\\n        uint256 _timestampLength\\n    ) external;\\n\\n    function stakedLiquidity(uint256 _amount, address _provider)\\n        external\\n        returns (address);\\n\\n    function unstakedLiquidity(\\n        address _lpToken,\\n        uint256 _amount,\\n        address _provider\\n    ) external;\\n\\n    function coverPrice(uint256 _amount, uint256 _length)\\n        external\\n        view\\n        returns (uint256, uint256);\\n\\n    function maxCapacity() external view returns (uint256);\\n\\n    function coverIndex() external view returns (uint256);\\n\\n    function paused() external view returns (bool);\\n\\n    function basePremiumRatio() external view returns (uint256);\\n\\n    function updateWhenClaimed(uint256 expiry, uint256 amount) external;\\n}\\n\",\"keccak256\":\"0xa43d1d0398e9cfaff0258c21e978549777688cc1b5d0d1c9b30c2e6998f14bc4\",\"license\":\"GPL-3.0-or-later\"},\"src/interfaces/IVeDEG.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.13;\\n\\nimport \\\"../util/SimpleIERC20.sol\\\";\\n\\n/**\\n * @dev Interface of the VeDEG\\n */\\ninterface IVeDEG is SimpleIERC20 {\\n    // Get the locked amount of a user's veDeg\\n    function locked(address _user) external view returns (uint256);\\n\\n    // Lock veDEG\\n    function lockVeDEG(address _to, uint256 _amount) external;\\n\\n    // Unlock veDEG\\n    function unlockVeDEG(address _to, uint256 _amount) external;\\n}\\n\",\"keccak256\":\"0x8e86f7b957f4a1d3e5e34a57f051b90c5008f431c00ce2e0a1d47c6c8ad5911d\",\"license\":\"MIT\"},\"src/pools/priorityPool/PriorityPoolFactory.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\n/*\\n //======================================================================\\\\\\\\\\n //======================================================================\\\\\\\\\\n  *******         **********     ***********     *****     ***********\\n  *      *        *              *                 *       *\\n  *        *      *              *                 *       *\\n  *         *     *              *                 *       *\\n  *         *     *              *                 *       *\\n  *         *     **********     *       *****     *       ***********\\n  *         *     *              *         *       *                 *\\n  *         *     *              *         *       *                 *\\n  *        *      *              *         *       *                 *\\n  *      *        *              *         *       *                 *\\n  *******         **********     ***********     *****     ***********\\n \\\\\\\\======================================================================//\\n \\\\\\\\======================================================================//\\n*/\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"./PriorityPoolFactoryDependencies.sol\\\";\\n\\nimport \\\"../../util/OwnableWithoutContextUpgradeable.sol\\\";\\nimport \\\"../../interfaces/ExternalTokenDependencies.sol\\\";\\nimport \\\"./PriorityPoolFactoryEventError.sol\\\";\\n\\n// import \\\"./PriorityPool.sol\\\";\\n\\nimport \\\"../../interfaces/IPriorityPool.sol\\\";\\n\\n/**\\n * @title Insurance Pool Factory\\n *\\n * @author Eric Lee (ylikp.ust@gmail.com)\\n *\\n * @notice This is the factory contract for deploying new insurance pools\\n *         Each pool represents a project that has joined Degis Protocol Protection\\n *\\n *         Liquidity providers of Protection Pool can stake their LP tokens into priority pools\\n *         Benefit:\\n *             - Share the 45% part of the premium income (in native token form)\\n *         Risk:\\n *             - Will be liquidated first to pay for the claim amount\\n *\\n *\\n */\\ncontract PriorityPoolFactory is\\n    PriorityPoolFactoryEventError,\\n    OwnableWithoutContextUpgradeable,\\n    ExternalTokenDependencies,\\n    PriorityPoolFactoryDependencies\\n{\\n    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Variables **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    struct PoolInfo {\\n        string protocolName;\\n        address poolAddress;\\n        address protocolToken;\\n        uint256 maxCapacity; // max capacity ratio\\n        uint256 basePremiumRatio;\\n    }\\n    // poolId => Pool Information\\n    mapping(uint256 => PoolInfo) public pools;\\n\\n    mapping(address => uint256) public poolAddressToId;\\n\\n    uint256 public poolCounter;\\n\\n    // Total max capacity\\n    uint256 public totalMaxCapacity;\\n\\n    // Whether a pool is already dynamic\\n    mapping(address => bool) public dynamic;\\n\\n    // Total dynamic pools\\n    uint256 public dynamicPoolCounter;\\n\\n    // Record whether a protocol token or pool address has been registered\\n    mapping(address => bool) public poolRegistered;\\n    mapping(address => bool) public tokenRegistered;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constructor ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function initialize(\\n        address _deg,\\n        address _veDeg,\\n        address _protectionPool\\n    ) public initializer {\\n        __ExternalToken__Init(_deg, _veDeg);\\n        __Ownable_init();\\n\\n        protectionPool = _protectionPool;\\n\\n        poolRegistered[_protectionPool] = true;\\n        tokenRegistered[USDC] = true;\\n\\n        // Protection pool as pool 0\\n        pools[0] = PoolInfo(\\\"ProtectionPool\\\", _protectionPool, USDC, 0, 0);\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************** Modifiers *************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    modifier onlyPriorityPool() {\\n        if (!poolRegistered[msg.sender])\\n            revert PriorityPoolFactory__OnlyPriorityPool();\\n        _;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ View Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Get the pool address list\\n     *\\n     * @return List of pool addresses\\n     */\\n    function getPoolAddressList() external view returns (address[] memory) {\\n        uint256 poolAmount = poolCounter + 1;\\n\\n        address[] memory list = new address[](poolAmount);\\n\\n        for (uint256 i; i < poolAmount; ) {\\n            list[i] = pools[i].poolAddress;\\n\\n            unchecked {\\n                ++i;\\n            }\\n        }\\n\\n        return list;\\n    }\\n\\n    /**\\n     * @notice Get the pool information by pool id\\n     *\\n     * @param _poolId Pool id\\n     */\\n    function getPoolInfo(uint256 _poolId)\\n        public\\n        view\\n        returns (PoolInfo memory)\\n    {\\n        return pools[_poolId];\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Set Functions ************************************* //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function setPolicyCenter(address _policyCenter) external onlyOwner {\\n        policyCenter = _policyCenter;\\n    }\\n\\n    function setWeightedFarmingPool(address _weightedFarmingPool)\\n        external\\n        onlyOwner\\n    {\\n        weightedFarmingPool = _weightedFarmingPool;\\n    }\\n\\n    function setProtectionPool(address _protectionPool) external onlyOwner {\\n        protectionPool = _protectionPool;\\n    }\\n\\n    function setExecutor(address _executor) external onlyOwner {\\n        executor = _executor;\\n    }\\n\\n    function setIncidentReport(address _incidentReport) external onlyOwner {\\n        incidentReport = _incidentReport;\\n    }\\n\\n    function setPriorityPoolDeployer(address _priorityPoolDeployer)\\n        external\\n        onlyOwner\\n    {\\n        priorityPoolDeployer = _priorityPoolDeployer;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Main Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Create a new priority pool\\n     *         Called by executor when an onboard proposal has passed\\n     *\\n     * @param _name             Name of the protocol\\n     * @param _protocolToken    Address of the token used for the protocol\\n     * @param _maxCapacity      Maximum capacity of the pool\\n     * @param _basePremiumRatio Initial policy price per usdc\\n     *\\n     * @return address Address of the new insurance pool\\n     */\\n    function deployPool(\\n        string calldata _name,\\n        address _protocolToken,\\n        uint256 _maxCapacity,\\n        uint256 _basePremiumRatio\\n    ) public returns (address) {\\n        if (msg.sender != owner() && msg.sender != executor)\\n            revert PriorityPoolFactory__OnlyOwnerOrExecutor();\\n        if (tokenRegistered[_protocolToken])\\n            revert PriorityPoolFactory__TokenAlreadyRegistered();\\n\\n        // Add new pool max capacity to sum of max capacities\\n        totalMaxCapacity += _maxCapacity;\\n\\n        uint256 currentPoolId = ++poolCounter;\\n\\n        address newAddress = IPriorityPoolDeployer(priorityPoolDeployer)\\n            .getPoolAddress(\\n                currentPoolId,\\n                _name,\\n                _protocolToken,\\n                _maxCapacity,\\n                _basePremiumRatio\\n            );\\n        poolRegistered[newAddress] = true;\\n\\n        address newPoolAddress = IPriorityPoolDeployer(priorityPoolDeployer)\\n            .deployPool(\\n                currentPoolId,\\n                _name,\\n                _protocolToken,\\n                _maxCapacity,\\n                _basePremiumRatio\\n            );\\n\\n        pools[currentPoolId] = PoolInfo(\\n            _name,\\n            newPoolAddress,\\n            _protocolToken,\\n            _maxCapacity,\\n            _basePremiumRatio\\n        );\\n\\n        tokenRegistered[_protocolToken] = true;\\n        poolAddressToId[newPoolAddress] = currentPoolId;\\n\\n        // Store pool information in Policy Center\\n        IPolicyCenter(policyCenter).storePoolInformation(\\n            newPoolAddress,\\n            _protocolToken,\\n            currentPoolId\\n        );\\n\\n        // Add reward token in farming pool\\n        IWeightedFarmingPool(weightedFarmingPool).addPool(_protocolToken);\\n\\n        emit PoolCreated(\\n            currentPoolId,\\n            newPoolAddress,\\n            _name,\\n            _protocolToken,\\n            _maxCapacity,\\n            _basePremiumRatio\\n        );\\n\\n        return newPoolAddress;\\n    }\\n\\n    /**\\n     * @notice Update a priority pool status to dynamic\\n     *         Only sent from priority pool\\n     *         \\\"Dynamic\\\" means:\\n     *                  The priority pool will be counted in the dynamic premium formula\\n     *\\n     * @param _poolId Pool id\\n     */\\n    function updateDynamicPool(uint256 _poolId) external onlyPriorityPool {\\n        address poolAddress = pools[_poolId].poolAddress;\\n        if (dynamic[poolAddress])\\n            revert PriorityPoolFactory__AlreadyDynamicPool();\\n\\n        dynamic[poolAddress] = true;\\n\\n        unchecked {\\n            ++dynamicPoolCounter;\\n        }\\n\\n        emit DynamicPoolUpdate(_poolId, poolAddress, dynamicPoolCounter);\\n    }\\n\\n    /**\\n     * @notice Update max capacity from a priority pool\\n     */\\n    function updateMaxCapacity(bool _isUp, uint256 _diff)\\n        external\\n        onlyPriorityPool\\n    {\\n        if (_isUp) {\\n            totalMaxCapacity += _diff;\\n        } else totalMaxCapacity -= _diff;\\n\\n        emit MaxCapacityUpdated(totalMaxCapacity);\\n    }\\n\\n    function pausePriorityPool(uint256 _poolId, bool _paused) external {\\n        if (msg.sender != incidentReport && msg.sender != executor)\\n            revert PriorityPoolFactory__OnlyIncidentReportOrExecutor();\\n\\n        IPriorityPool(pools[_poolId].poolAddress).pausePriorityPool(_paused);\\n\\n        IProtectionPool(protectionPool).pauseProtectionPool(_paused);\\n    }\\n}\\n\",\"keccak256\":\"0x5af4dab2e23a0ff3371ab5bef527c61934050b67967ec4abb276c320c69f3522\",\"license\":\"GPL-3.0-or-later\"},\"src/pools/priorityPool/PriorityPoolFactoryDependencies.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface IPolicyCenter {\\n    function storePoolInformation(\\n        address _pool,\\n        address _token,\\n        uint256 _poolId\\n    ) external;\\n}\\n\\ninterface IWeightedFarmingPool {\\n    function addPool(address _token) external;\\n\\n    function addToken(\\n        uint256 _id,\\n        address _token,\\n        uint256 _weight\\n    ) external;\\n\\n    function updateRewardSpeed(\\n        uint256 _id,\\n        uint256 _newSpeed,\\n        uint256[] memory _years,\\n        uint256[] memory _months\\n    ) external;\\n\\n    function updateWeight(\\n        uint256 _id,\\n        address _token,\\n        uint256 _newWeight\\n    ) external;\\n}\\n\\ninterface IProtectionPool {\\n    function getTotalActiveCovered() external view returns (uint256);\\n\\n    function getLatestPrice() external returns (uint256);\\n\\n    function removedLiquidity(uint256 _amount, address _provider)\\n        external\\n        returns (uint256);\\n\\n    function removedLiquidityWhenClaimed(uint256 _amount, address _to) external;\\n\\n    function pauseProtectionPool(bool _paused) external;\\n\\n    function stakedSupply() external view returns (uint256);\\n}\\n\\ninterface IPriorityPoolDeployer {\\n    function deployPool(\\n        uint256 poolId,\\n        string calldata _name,\\n        address _protocolToken,\\n        uint256 _maxCapacity,\\n        uint256 _basePremiumRatio\\n    ) external returns (address);\\n\\n    function getPoolAddress(\\n        uint256 poolId,\\n        string calldata _name,\\n        address _protocolToken,\\n        uint256 _maxCapacity,\\n        uint256 _basePremiumRatio\\n    ) external view returns (address);\\n}\\n\\nabstract contract PriorityPoolFactoryDependencies {\\n    // Priority Pools need access to executor address\\n    address public executor;\\n    address public policyCenter;\\n    address public protectionPool;\\n    address public incidentReport;\\n    address public weightedFarmingPool;\\n\\n    address public priorityPoolDeployer;\\n}\\n\",\"keccak256\":\"0x416c7043db44936c19c4d93c4ba49e8a52d073c0b985583f3323429ed6459ce2\",\"license\":\"GPL-3.0-or-later\"},\"src/pools/priorityPool/PriorityPoolFactoryEventError.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\npragma solidity ^0.8.13;\\n\\ninterface PriorityPoolFactoryEventError {\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    event PoolCreated(\\n        uint256 poolId,\\n        address poolAddress,\\n        string protocolName,\\n        address protocolToken,\\n        uint256 maxCapacity,\\n        uint256 basePremiumRatio\\n    );\\n\\n    event DynamicPoolUpdate(\\n        uint256 poolId,\\n        address pool,\\n        uint256 dynamicPoolCounter\\n    );\\n\\n    event MaxCapacityUpdated(uint256 totalMaxCapacity);\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Errors ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    error PriorityPoolFactory__OnlyExecutor();\\n    error PriorityPoolFactory__OnlyPolicyCenter();\\n    error PriorityPoolFactory__OnlyOwnerOrExecutor();\\n    error PriorityPoolFactory__OnlyPriorityPool();\\n    error PriorityPoolFactory__OnlyIncidentReportOrExecutor();\\n    error PriorityPoolFactory__PoolNotRegistered();\\n    error PriorityPoolFactory__TokenAlreadyRegistered();\\n    error PriorityPoolFactory__AlreadyDynamicPool();\\n    error PriorityPoolFactory__NotOwnerOrFactory();\\n    error PriorityPoolFactory__WrongLPToken();\\n}\\n\",\"keccak256\":\"0x32043478737717a98d0ccea14a4a58e97e5b4749e1f3f8593864f07612c80465\",\"license\":\"GPL-3.0-or-later\"},\"src/util/OwnableWithoutContextUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\\\";\\n\\nabstract contract OwnableWithoutContextUpgradeable is Initializable {\\n    address private _owner;\\n\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    function __Ownable_init() internal onlyInitializing {\\n        __Ownable_init_unchained();\\n    }\\n\\n    function __Ownable_init_unchained() internal onlyInitializing {\\n        _transferOwnership(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        require(_owner == msg.sender, \\\"Only owner\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() external onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) external onlyOwner {\\n        require(\\n            newOwner != address(0),\\n            \\\"Ownable: new owner is the zero address\\\"\\n        );\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal {\\n        emit OwnershipTransferred(_owner, newOwner);\\n        _owner = newOwner;\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[49] private __gap;\\n}\\n\",\"keccak256\":\"0xb7c1bac54d6b38b0ff582113689643e43bdbc9eaf4dcd906373c3f44f7b2eab5\",\"license\":\"MIT\"},\"src/util/SimpleIERC20.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface SimpleIERC20 {\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address account) external view returns (uint256);\\n\\n    function transfer(address to, uint256 amount) external returns (bool);\\n\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 amount\\n    ) external returns (bool);\\n\\n    function approve(address spender, uint256 amount) external returns (bool);\\n}\\n\",\"keccak256\":\"0x287cc23d2f983675929f9892ce173553da2d997cc62c61c13943a54c05f09f87\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60808060405234610016576118eb908161001c8239f35b600080fdfe6080604052600436101561001257600080fd5b6000803560e01c80630121cff5146115155780630f89b77d146114ec57806310b44dfa146114c35780631b352789146113b35780631c3c0ea81461136a5780632a50489a146112a65780632dd57bb01461125d5780632f380b3514611188578063412497451461114957806345f0db7d1461110057806349e51b251461104957806358bf0f2c146110005780636bdbd19514610ef95780636c1b700f14610ed0578063715018a614610e61578063746376ee14610e2357806389a3027114610df45780638da5cb5b14610dc95780639e3079cb14610dab578063a2e1ce6214610d6c578063a7e9f1c714610d4e578063ac4afa3814610cd2578063b567dc6a14610ca9578063bb9febaf146106d9578063c0c53b8b14610301578063c34c08e5146102d8578063e3356ccf1461028f578063e8adbf2f14610266578063ef3722981461022d578063f2fde38b146101925763f6cb90ab1461017257600080fd5b3461018f578060031936011261018f576020603d54604051908152f35b80fd5b503461018f57602036600319011261018f576101ac61155e565b60018060a01b036101c481845460101c1633146117a3565b8116156101d9576101d490611855565b604051f35b60405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608490fd5b503461018f57602036600319011261018f576020906040906001600160a01b0361025561155e565b168152603b83522054604051908152f35b503461018f578060031936011261018f576035546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f576102a961155e565b60018060a01b03906102c282845460101c1633146117a3565b1660018060a01b03196037541617603755604051f35b503461018f578060031936011261018f576034546040516001600160a01b039091168152602090f35b503461018f57606036600319011261018f5761031b61155e565b610323611574565b6044356001600160a01b03811691908290036106d45783549060ff8260081c1615938480956106c7575b80156106b0575b15610654576103bf9160ff1993866001868316178955610643575b5060ff875460081c16916103828361170a565b603280546001600160a01b039283166001600160a01b031991821617909155603380549390921692169190911790556103ba8161170a565b61170a565b6103c833611855565b8160018060a01b0319603654161760365581845260406020526040842060018282541617905573b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e908185526041602052600160408620918254161790556040519061042682611628565b604080516001600160401b03949181018581118282101761062d57604052600e81526d141c9bdd1958dd1a5bdb941bdbdb60921b6020820152835260208301526040820152836060820152836080820152838052603a6020526040842091815180519182116106195761049984546115db565b601f81116105d8575b50602090601f831160011461056c579180600494926080948992610561575b50508160011b916000199060031b1c19161784555b60208101516001850180546001600160a01b039283166001600160a01b031991821617909155604083015160028701805491909316911617905560608101516003850155015191015561052857604051f35b61ff001981541681557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498602060405160018152a1604051f35b0151905038806104c1565b908487526020872091875b601f19851681106105c05750926004949260019260809583601f198116106105a7575b505050811b0184556104d6565b015160001960f88460031b161c1916905538808061059a565b91926020600181928685015181550194019201610577565b84875260208720601f840160051c810160208510610612575b601f830160051c820181106106075750506104a2565b8881556001016105f1565b50806105f1565b634e487b7160e01b86526041600452602486fd5b634e487b7160e01b600052604160045260246000fd5b61ffff19166101011787553861036f565b60405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608490fd5b50303b1580156103545750600160ff841614610354565b50600160ff84161061034d565b600080fd5b503461018f57608036600319011261018f576001600160401b036004351161018f5736602360043501121561018f576001600160401b03600435600401351161018f573660246004356004013560043501011161018f57610738611574565b9060018060a01b03815460101c1633141580610c94575b610c82576001600160a01b03821681526041602052604081205460ff16610c705761077e604435603d5461176a565b603d55603c54916000198314610c5c5760018301603c5560018060a01b0360395416602060405180926365eb884f60e01b825281806107d860643560443589600435600401358d600160246004350191016004880161181c565b03915afa908115610c51578391610c32575b5060018060a01b03168252604060205260408220600160ff1982541617905560018060a01b03603954169160206040518094634758ff0160e01b825281848161084f6064356044358a8d6004356004013590600160246004350191016004880161181c565b03925af1928315610c25578193610bf4575b5060405161086e81611628565b60405161088a600480350135601f01601f191660200182611643565b60048035908101358083529060240160208301378260206004356004013583010152815260018060a01b038416602082015260018060a01b038316604082015260443560608201526064356080820152600185018252603a602052604082209080518051906001600160401b038211610be05761090784546115db565b601f8111610b9f575b50602090601f8311600114610b33579180600494926080948892610b28575b50508160011b916000199060031b1c19161784555b602081810151600186810180546001600160a01b03199081166001600160a01b039485161790915560408086015160028a018054909316908516179091556060850151600389015594909301519490950193909355858416855260418352818520805460ff1916821790558684168552603b9092528320908601905560355416803b15610b1057604051630b6cccdd60e41b81526001600160a01b038581166004830152841660248201526001860160448201529082908290606490829084905af18015610b0557908291610b14575b50506038546001600160a01b0316803b15610b105760405163d914cd4b60e01b81526001600160a01b03841660048201529082908290602490829084905af18015610b0557610af1575b6020847f6f92dd7fd4aaa286bc76a2ea88bede9a5077443cccc9b4aece620689e3fc63de6001888760405192839201825260018060a01b0385168683015260c06040830152610abc60c08301600435600401356024600435016117fb565b6001600160a01b039091166060830152604435608083015260643560a08301520390a16040516001600160a01b039091168152f35b610afb8291611615565b61018f5780610a5e565b6040513d84823e3d90fd5b5080fd5b610b1d90611615565b61018f578038610a14565b01519050388061092f565b908486526020862091865b601f1985168110610b875750926004949260019260809583601f19811610610b6e575b505050811b018455610944565b015160001960f88460031b161c19169055388080610b61565b91926020600181928685015181550194019201610b3e565b84865260208620601f840160051c810160208510610bd9575b601f830160051c82018110610bce575050610910565b878155600101610bb8565b5080610bb8565b634e487b7160e01b85526041600452602485fd5b610c1791935060203d602011610c1e575b610c0f8183611643565b8101906117dc565b9138610861565b503d610c05565b50604051903d90823e3d90fd5b610c4b915060203d602011610c1e57610c0f8183611643565b386107ea565b6040513d85823e3d90fd5b634e487b7160e01b82526011600452602482fd5b6040516308ba7c3f60e31b8152600490fd5b604051636adaa0f960e01b8152600490fd5b506034546001600160a01b031633141561074f565b503461018f578060031936011261018f576038546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f576040610d35916004358152603a60205220610cfe81611664565b9060018060a01b0390816001820154169160028201541690600460038201549101549160405195869560a0875260a087019061158a565b9360208601526040850152606084015260808301520390f35b503461018f578060031936011261018f576020603f54604051908152f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b03610d9761155e565b168152604184522054166040519015158152f35b503461018f578060031936011261018f576020603c54604051908152f35b503461018f578060031936011261018f575460405160109190911c6001600160a01b03168152602090f35b503461018f578060031936011261018f57602060405173b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e8152f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b03610e4e61155e565b1681528184522054166040519015158152f35b503461018f578060031936011261018f5780546001600160a01b0390610e8d9060101c821633146117a3565b6000546000604051928260101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08285a362010000600160b01b031916600055f35b503461018f578060031936011261018f576036546040516001600160a01b039091168152602090f35b503461018f578060031936011261018f57603c54906001198211610fec5790600180910190610f278261178c565b92610f356040519485611643565b828452610f418361178c565b9360209384820195601f1901368737825b818110610f9a5750506040519380850191818652518092526040850195925b828110610f7e5785870386f35b83516001600160a01b0316875295810195928101928401610f71565b808496939497959752603a835260018060a01b0387604088200154168451821015610fd857908791848260051b870101520195939594929194610f52565b634e487b7160e01b87526032600452602487fd5b634e487b7160e01b81526011600452602490fd5b503461018f57602036600319011261018f5761101a61155e565b60018060a01b039061103382845460101c1633146117a3565b1660018060a01b03196038541617603855604051f35b503461018f57604036600319011261018f5760043580151581036106d45760243590338352604060205260ff604084205416156110ee57156110c75761109190603d5461176a565b603d555b7f8b8564868e5db4ac945b0fd897338876dcc0c95a5f183b340f47285ebbcb6af16020603d54604051908152a1604051f35b603d548181106110da5703603d55611095565b634e487b7160e01b83526011600452602483fd5b604051630fc64fb960e21b8152600490fd5b503461018f57602036600319011261018f5761111a61155e565b60018060a01b039061113382845460101c1633146117a3565b1660018060a01b03196039541617603955604051f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b0361117461155e565b168152603e84522054166040519015158152f35b503461018f57602080600319360112610b105760408260a093608083516111ae81611628565b606081528286820152828582015282606082015201526004358152603a835220604051916111db83611628565b6111e482611664565b8352600180851b0391826001820154169282850193845280600283015416604086019081528161123e600460038601549560608a0196875201549560808901968752604051998a99828b5251918a015260c089019061158a565b9551166040870152511660608501525160808401525160a08301520390f35b503461018f57602036600319011261018f5761127761155e565b60018060a01b039061129082845460101c1633146117a3565b1660018060a01b03196035541617603555604051f35b503461018f57602080600319360112610b10576004353383526040825260ff604084205416156110ee57808352603a82526040808420600101546001600160a01b0316808552603e84529084205490919060ff16611358577fa16172101044efd65843cd11b767b8aa758d7da7be12573e0c897b52b71444fd92826060938652603e825260408620600160ff198254161790556001603f54019182603f556040519384528301526040820152a1604051f35b6040516334c8f8b960e01b8152600490fd5b503461018f57602036600319011261018f5761138461155e565b60018060a01b039061139d82845460101c1633146117a3565b1660018060a01b03196034541617603455604051f35b503461018f57604036600319011261018f57602435801515809103610b10576037546001600160a01b0391908216331415806114b5575b6114a35782916004358352603a60205280600160408520015416803b1561149e5783906024604051809781936305e5fe2360e41b83528760048401525af18015610c515761148a575b8293506036541690813b1561148657829160248392604051948593849263a8a2b43160e01b845260048401525af18015610b0557611472575b50604051f35b61147b90611615565b61018f57803861146c565b5050fd5b91909261149690611615565b908290611433565b505050fd5b60405163570d52bd60e11b8152600490fd5b5081603454163314156113ea565b503461018f578060031936011261018f576039546040516001600160a01b039091168152602090f35b503461018f578060031936011261018f576037546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f5761152f61155e565b60018060a01b039061154882845460101c1633146117a3565b1660018060a01b03196036541617603655604051f35b600435906001600160a01b03821682036106d457565b602435906001600160a01b03821682036106d457565b91908251928382526000905b8482106115c35750928060209394116115b6575b601f01601f1916010190565b60008382840101526115aa565b90602090818082850101519082860101520190611596565b90600182811c9216801561160b575b60208310146115f557565b634e487b7160e01b600052602260045260246000fd5b91607f16916115ea565b6001600160401b03811161062d57604052565b60a081019081106001600160401b0382111761062d57604052565b90601f801991011681019081106001600160401b0382111761062d57604052565b9060405191826000825492611678846115db565b9081845260019485811690816000146116e757506001146116a4575b50506116a292500383611643565b565b9093915060005260209081600020936000915b8183106116cf5750506116a293508201013880611694565b855488840185015294850194879450918301916116b7565b9150506116a294506020925060ff191682840152151560051b8201013880611694565b1561171157565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b81198111611776570190565b634e487b7160e01b600052601160045260246000fd5b6001600160401b03811161062d5760051b60200190565b156117aa57565b60405162461bcd60e51b815260206004820152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b908160209103126106d457516001600160a01b03811681036106d45790565b908060209392818452848401376000828201840152601f01601f1916010190565b92916080949796959261183c92855260a0602086015260a08501916117fb565b6001600160a01b03909616604083015260608201520152565b6000549060018060a01b03808216908360101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e06000604051a362010000600160b01b031990911660109190911b62010000600160b01b03161760005556fea264697066735822122005d5d8a9c6258b6a33c85f2d33b9b7b6d181e7272f9fba42a67eba8ef944178e64736f6c634300080f0033",
+  "deployedBytecode": "0x6080604052600436101561001257600080fd5b6000803560e01c80630121cff5146115155780630f89b77d146114ec57806310b44dfa146114c35780631b352789146113b35780631c3c0ea81461136a5780632a50489a146112a65780632dd57bb01461125d5780632f380b3514611188578063412497451461114957806345f0db7d1461110057806349e51b251461104957806358bf0f2c146110005780636bdbd19514610ef95780636c1b700f14610ed0578063715018a614610e61578063746376ee14610e2357806389a3027114610df45780638da5cb5b14610dc95780639e3079cb14610dab578063a2e1ce6214610d6c578063a7e9f1c714610d4e578063ac4afa3814610cd2578063b567dc6a14610ca9578063bb9febaf146106d9578063c0c53b8b14610301578063c34c08e5146102d8578063e3356ccf1461028f578063e8adbf2f14610266578063ef3722981461022d578063f2fde38b146101925763f6cb90ab1461017257600080fd5b3461018f578060031936011261018f576020603d54604051908152f35b80fd5b503461018f57602036600319011261018f576101ac61155e565b60018060a01b036101c481845460101c1633146117a3565b8116156101d9576101d490611855565b604051f35b60405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608490fd5b503461018f57602036600319011261018f576020906040906001600160a01b0361025561155e565b168152603b83522054604051908152f35b503461018f578060031936011261018f576035546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f576102a961155e565b60018060a01b03906102c282845460101c1633146117a3565b1660018060a01b03196037541617603755604051f35b503461018f578060031936011261018f576034546040516001600160a01b039091168152602090f35b503461018f57606036600319011261018f5761031b61155e565b610323611574565b6044356001600160a01b03811691908290036106d45783549060ff8260081c1615938480956106c7575b80156106b0575b15610654576103bf9160ff1993866001868316178955610643575b5060ff875460081c16916103828361170a565b603280546001600160a01b039283166001600160a01b031991821617909155603380549390921692169190911790556103ba8161170a565b61170a565b6103c833611855565b8160018060a01b0319603654161760365581845260406020526040842060018282541617905573b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e908185526041602052600160408620918254161790556040519061042682611628565b604080516001600160401b03949181018581118282101761062d57604052600e81526d141c9bdd1958dd1a5bdb941bdbdb60921b6020820152835260208301526040820152836060820152836080820152838052603a6020526040842091815180519182116106195761049984546115db565b601f81116105d8575b50602090601f831160011461056c579180600494926080948992610561575b50508160011b916000199060031b1c19161784555b60208101516001850180546001600160a01b039283166001600160a01b031991821617909155604083015160028701805491909316911617905560608101516003850155015191015561052857604051f35b61ff001981541681557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb3847402498602060405160018152a1604051f35b0151905038806104c1565b908487526020872091875b601f19851681106105c05750926004949260019260809583601f198116106105a7575b505050811b0184556104d6565b015160001960f88460031b161c1916905538808061059a565b91926020600181928685015181550194019201610577565b84875260208720601f840160051c810160208510610612575b601f830160051c820181106106075750506104a2565b8881556001016105f1565b50806105f1565b634e487b7160e01b86526041600452602486fd5b634e487b7160e01b600052604160045260246000fd5b61ffff19166101011787553861036f565b60405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152608490fd5b50303b1580156103545750600160ff841614610354565b50600160ff84161061034d565b600080fd5b503461018f57608036600319011261018f576001600160401b036004351161018f5736602360043501121561018f576001600160401b03600435600401351161018f573660246004356004013560043501011161018f57610738611574565b9060018060a01b03815460101c1633141580610c94575b610c82576001600160a01b03821681526041602052604081205460ff16610c705761077e604435603d5461176a565b603d55603c54916000198314610c5c5760018301603c5560018060a01b0360395416602060405180926365eb884f60e01b825281806107d860643560443589600435600401358d600160246004350191016004880161181c565b03915afa908115610c51578391610c32575b5060018060a01b03168252604060205260408220600160ff1982541617905560018060a01b03603954169160206040518094634758ff0160e01b825281848161084f6064356044358a8d6004356004013590600160246004350191016004880161181c565b03925af1928315610c25578193610bf4575b5060405161086e81611628565b60405161088a600480350135601f01601f191660200182611643565b60048035908101358083529060240160208301378260206004356004013583010152815260018060a01b038416602082015260018060a01b038316604082015260443560608201526064356080820152600185018252603a602052604082209080518051906001600160401b038211610be05761090784546115db565b601f8111610b9f575b50602090601f8311600114610b33579180600494926080948892610b28575b50508160011b916000199060031b1c19161784555b602081810151600186810180546001600160a01b03199081166001600160a01b039485161790915560408086015160028a018054909316908516179091556060850151600389015594909301519490950193909355858416855260418352818520805460ff1916821790558684168552603b9092528320908601905560355416803b15610b1057604051630b6cccdd60e41b81526001600160a01b038581166004830152841660248201526001860160448201529082908290606490829084905af18015610b0557908291610b14575b50506038546001600160a01b0316803b15610b105760405163d914cd4b60e01b81526001600160a01b03841660048201529082908290602490829084905af18015610b0557610af1575b6020847f6f92dd7fd4aaa286bc76a2ea88bede9a5077443cccc9b4aece620689e3fc63de6001888760405192839201825260018060a01b0385168683015260c06040830152610abc60c08301600435600401356024600435016117fb565b6001600160a01b039091166060830152604435608083015260643560a08301520390a16040516001600160a01b039091168152f35b610afb8291611615565b61018f5780610a5e565b6040513d84823e3d90fd5b5080fd5b610b1d90611615565b61018f578038610a14565b01519050388061092f565b908486526020862091865b601f1985168110610b875750926004949260019260809583601f19811610610b6e575b505050811b018455610944565b015160001960f88460031b161c19169055388080610b61565b91926020600181928685015181550194019201610b3e565b84865260208620601f840160051c810160208510610bd9575b601f830160051c82018110610bce575050610910565b878155600101610bb8565b5080610bb8565b634e487b7160e01b85526041600452602485fd5b610c1791935060203d602011610c1e575b610c0f8183611643565b8101906117dc565b9138610861565b503d610c05565b50604051903d90823e3d90fd5b610c4b915060203d602011610c1e57610c0f8183611643565b386107ea565b6040513d85823e3d90fd5b634e487b7160e01b82526011600452602482fd5b6040516308ba7c3f60e31b8152600490fd5b604051636adaa0f960e01b8152600490fd5b506034546001600160a01b031633141561074f565b503461018f578060031936011261018f576038546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f576040610d35916004358152603a60205220610cfe81611664565b9060018060a01b0390816001820154169160028201541690600460038201549101549160405195869560a0875260a087019061158a565b9360208601526040850152606084015260808301520390f35b503461018f578060031936011261018f576020603f54604051908152f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b03610d9761155e565b168152604184522054166040519015158152f35b503461018f578060031936011261018f576020603c54604051908152f35b503461018f578060031936011261018f575460405160109190911c6001600160a01b03168152602090f35b503461018f578060031936011261018f57602060405173b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e8152f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b03610e4e61155e565b1681528184522054166040519015158152f35b503461018f578060031936011261018f5780546001600160a01b0390610e8d9060101c821633146117a3565b6000546000604051928260101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08285a362010000600160b01b031916600055f35b503461018f578060031936011261018f576036546040516001600160a01b039091168152602090f35b503461018f578060031936011261018f57603c54906001198211610fec5790600180910190610f278261178c565b92610f356040519485611643565b828452610f418361178c565b9360209384820195601f1901368737825b818110610f9a5750506040519380850191818652518092526040850195925b828110610f7e5785870386f35b83516001600160a01b0316875295810195928101928401610f71565b808496939497959752603a835260018060a01b0387604088200154168451821015610fd857908791848260051b870101520195939594929194610f52565b634e487b7160e01b87526032600452602487fd5b634e487b7160e01b81526011600452602490fd5b503461018f57602036600319011261018f5761101a61155e565b60018060a01b039061103382845460101c1633146117a3565b1660018060a01b03196038541617603855604051f35b503461018f57604036600319011261018f5760043580151581036106d45760243590338352604060205260ff604084205416156110ee57156110c75761109190603d5461176a565b603d555b7f8b8564868e5db4ac945b0fd897338876dcc0c95a5f183b340f47285ebbcb6af16020603d54604051908152a1604051f35b603d548181106110da5703603d55611095565b634e487b7160e01b83526011600452602483fd5b604051630fc64fb960e21b8152600490fd5b503461018f57602036600319011261018f5761111a61155e565b60018060a01b039061113382845460101c1633146117a3565b1660018060a01b03196039541617603955604051f35b503461018f57602036600319011261018f5760209060ff906040906001600160a01b0361117461155e565b168152603e84522054166040519015158152f35b503461018f57602080600319360112610b105760408260a093608083516111ae81611628565b606081528286820152828582015282606082015201526004358152603a835220604051916111db83611628565b6111e482611664565b8352600180851b0391826001820154169282850193845280600283015416604086019081528161123e600460038601549560608a0196875201549560808901968752604051998a99828b5251918a015260c089019061158a565b9551166040870152511660608501525160808401525160a08301520390f35b503461018f57602036600319011261018f5761127761155e565b60018060a01b039061129082845460101c1633146117a3565b1660018060a01b03196035541617603555604051f35b503461018f57602080600319360112610b10576004353383526040825260ff604084205416156110ee57808352603a82526040808420600101546001600160a01b0316808552603e84529084205490919060ff16611358577fa16172101044efd65843cd11b767b8aa758d7da7be12573e0c897b52b71444fd92826060938652603e825260408620600160ff198254161790556001603f54019182603f556040519384528301526040820152a1604051f35b6040516334c8f8b960e01b8152600490fd5b503461018f57602036600319011261018f5761138461155e565b60018060a01b039061139d82845460101c1633146117a3565b1660018060a01b03196034541617603455604051f35b503461018f57604036600319011261018f57602435801515809103610b10576037546001600160a01b0391908216331415806114b5575b6114a35782916004358352603a60205280600160408520015416803b1561149e5783906024604051809781936305e5fe2360e41b83528760048401525af18015610c515761148a575b8293506036541690813b1561148657829160248392604051948593849263a8a2b43160e01b845260048401525af18015610b0557611472575b50604051f35b61147b90611615565b61018f57803861146c565b5050fd5b91909261149690611615565b908290611433565b505050fd5b60405163570d52bd60e11b8152600490fd5b5081603454163314156113ea565b503461018f578060031936011261018f576039546040516001600160a01b039091168152602090f35b503461018f578060031936011261018f576037546040516001600160a01b039091168152602090f35b503461018f57602036600319011261018f5761152f61155e565b60018060a01b039061154882845460101c1633146117a3565b1660018060a01b03196036541617603655604051f35b600435906001600160a01b03821682036106d457565b602435906001600160a01b03821682036106d457565b91908251928382526000905b8482106115c35750928060209394116115b6575b601f01601f1916010190565b60008382840101526115aa565b90602090818082850101519082860101520190611596565b90600182811c9216801561160b575b60208310146115f557565b634e487b7160e01b600052602260045260246000fd5b91607f16916115ea565b6001600160401b03811161062d57604052565b60a081019081106001600160401b0382111761062d57604052565b90601f801991011681019081106001600160401b0382111761062d57604052565b9060405191826000825492611678846115db565b9081845260019485811690816000146116e757506001146116a4575b50506116a292500383611643565b565b9093915060005260209081600020936000915b8183106116cf5750506116a293508201013880611694565b855488840185015294850194879450918301916116b7565b9150506116a294506020925060ff191682840152151560051b8201013880611694565b1561171157565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b81198111611776570190565b634e487b7160e01b600052601160045260246000fd5b6001600160401b03811161062d5760051b60200190565b156117aa57565b60405162461bcd60e51b815260206004820152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b908160209103126106d457516001600160a01b03811681036106d45790565b908060209392818452848401376000828201840152601f01601f1916010190565b92916080949796959261183c92855260a0602086015260a08501916117fb565b6001600160a01b03909616604083015260608201520152565b6000549060018060a01b03808216908360101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e06000604051a362010000600160b01b031990911660109190911b62010000600160b01b03161760005556fea264697066735822122005d5d8a9c6258b6a33c85f2d33b9b7b6d181e7272f9fba42a67eba8ef944178e64736f6c634300080f0033",
+  "devdoc": {
+    "author": "Eric Lee (ylikp.ust@gmail.com)",
+    "kind": "dev",
+    "methods": {
+      "deployPool(string,address,uint256,uint256)": {
+        "params": {
+          "_basePremiumRatio": "Initial policy price per usdc",
+          "_maxCapacity": "Maximum capacity of the pool",
+          "_name": "Name of the protocol",
+          "_protocolToken": "Address of the token used for the protocol"
+        },
+        "returns": {
+          "_0": "address Address of the new insurance pool"
+        }
+      },
+      "getPoolAddressList()": {
+        "returns": {
+          "_0": "List of pool addresses"
+        }
+      },
+      "getPoolInfo(uint256)": {
+        "params": {
+          "_poolId": "Pool id"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      },
+      "updateDynamicPool(uint256)": {
+        "params": {
+          "_poolId": "Pool id"
+        }
+      }
+    },
+    "title": "Insurance Pool Factory",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "deployPool(string,address,uint256,uint256)": {
+        "notice": "Create a new priority pool         Called by executor when an onboard proposal has passed"
+      },
+      "getPoolAddressList()": {
+        "notice": "Get the pool address list"
+      },
+      "getPoolInfo(uint256)": {
+        "notice": "Get the pool information by pool id"
+      },
+      "updateDynamicPool(uint256)": {
+        "notice": "Update a priority pool status to dynamic         Only sent from priority pool         \"Dynamic\" means:                  The priority pool will be counted in the dynamic premium formula"
+      },
+      "updateMaxCapacity(bool,uint256)": {
+        "notice": "Update max capacity from a priority pool"
+      }
+    },
+    "notice": "This is the factory contract for deploying new insurance pools         Each pool represents a project that has joined Degis Protocol Protection         Liquidity providers of Protection Pool can stake their LP tokens into priority pools         Benefit:             - Share the 45% part of the premium income (in native token form)         Risk:             - Will be liquidated first to pay for the claim amount",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 184,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 187,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 17599,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "_owner",
+        "offset": 2,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 17706,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)49_storage"
+      },
+      {
+        "astId": 6143,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "deg",
+        "offset": 0,
+        "slot": "50",
+        "type": "t_contract(IDegisToken)6259"
+      },
+      {
+        "astId": 6146,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "veDeg",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_contract(IVeDEG)7390"
+      },
+      {
+        "astId": 13331,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "executor",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_address"
+      },
+      {
+        "astId": 13333,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "policyCenter",
+        "offset": 0,
+        "slot": "53",
+        "type": "t_address"
+      },
+      {
+        "astId": 13335,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "protectionPool",
+        "offset": 0,
+        "slot": "54",
+        "type": "t_address"
+      },
+      {
+        "astId": 13337,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "incidentReport",
+        "offset": 0,
+        "slot": "55",
+        "type": "t_address"
+      },
+      {
+        "astId": 13339,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "weightedFarmingPool",
+        "offset": 0,
+        "slot": "56",
+        "type": "t_address"
+      },
+      {
+        "astId": 13341,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "priorityPoolDeployer",
+        "offset": 0,
+        "slot": "57",
+        "type": "t_address"
+      },
+      {
+        "astId": 12763,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "pools",
+        "offset": 0,
+        "slot": "58",
+        "type": "t_mapping(t_uint256,t_struct(PoolInfo)12758_storage)"
+      },
+      {
+        "astId": 12767,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "poolAddressToId",
+        "offset": 0,
+        "slot": "59",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 12769,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "poolCounter",
+        "offset": 0,
+        "slot": "60",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 12771,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "totalMaxCapacity",
+        "offset": 0,
+        "slot": "61",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 12775,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "dynamic",
+        "offset": 0,
+        "slot": "62",
+        "type": "t_mapping(t_address,t_bool)"
+      },
+      {
+        "astId": 12777,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "dynamicPoolCounter",
+        "offset": 0,
+        "slot": "63",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 12781,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "poolRegistered",
+        "offset": 0,
+        "slot": "64",
+        "type": "t_mapping(t_address,t_bool)"
+      },
+      {
+        "astId": 12785,
+        "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+        "label": "tokenRegistered",
+        "offset": 0,
+        "slot": "65",
+        "type": "t_mapping(t_address,t_bool)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)49_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[49]",
+        "numberOfBytes": "1568"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_contract(IDegisToken)6259": {
+        "encoding": "inplace",
+        "label": "contract IDegisToken",
+        "numberOfBytes": "20"
+      },
+      "t_contract(IVeDEG)7390": {
+        "encoding": "inplace",
+        "label": "contract IVeDEG",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_mapping(t_uint256,t_struct(PoolInfo)12758_storage)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => struct PriorityPoolFactory.PoolInfo)",
+        "numberOfBytes": "32",
+        "value": "t_struct(PoolInfo)12758_storage"
+      },
+      "t_string_storage": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_struct(PoolInfo)12758_storage": {
+        "encoding": "inplace",
+        "label": "struct PriorityPoolFactory.PoolInfo",
+        "members": [
+          {
+            "astId": 12749,
+            "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+            "label": "protocolName",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_string_storage"
+          },
+          {
+            "astId": 12751,
+            "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+            "label": "poolAddress",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address"
+          },
+          {
+            "astId": 12753,
+            "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+            "label": "protocolToken",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address"
+          },
+          {
+            "astId": 12755,
+            "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+            "label": "maxCapacity",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 12757,
+            "contract": "src/pools/priorityPool/PriorityPoolFactory.sol:PriorityPoolFactory",
+            "label": "basePremiumRatio",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256"
+          }
+        ],
+        "numberOfBytes": "160"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}

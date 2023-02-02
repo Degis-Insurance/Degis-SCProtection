@@ -54,21 +54,31 @@ contract PayoutPool is Initializable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Cover Right Token Factory
     address public crFactory;
 
+    // Policy Center
     address public policyCenter;
 
+    // Priority Pool Factory
     address public priorityPoolFactory;
 
+    // About "ratio" and "coverIndex"
+    // E.g. You have 1000 available crTokens
+    //      There is a payout with ratio 1e11 and coverIndex 1000
+    //      That means:
+    //        - 10% of your crTokens can be used for claim (100 crTokens)
+    //        - 1 crToken can be used to claim 0.1 USDC (get 10 USDC back)
     struct Payout {
-        uint256 amount;
-        uint256 remaining;
-        uint256 endTiemstamp;
-        uint256 ratio;
-        uint256 coverIndex;
-        address priorityPool;
+        uint256 amount; // Total amount of this payment
+        uint256 remaining; // Remaining amount
+        uint256 endTiemstamp; // Claim period end timestamp
+        uint256 ratio; // Ratio of your crTokens that can be claimed (SCALE = 1e12 = 100%)
+        uint256 coverIndex;  // Index of the cover (ratio of the crTokens to USDC) (10000 = 100%)
+        address priorityPool; // Which priority pool this payout belongs to
     }
     // Pool id => Generation => Payout
+    // One pool & one generation has only one payout
     mapping(uint256 => mapping(uint256 => Payout)) public payouts;
 
     // ---------------------------------------------------------------------------------------- //
@@ -109,6 +119,7 @@ contract PayoutPool is Initializable {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Only be called from one of the priority pools
     modifier onlyPriorityPool(uint256 _poolId) {
         (, address poolAddress, , , ) = IPriorityPoolFactory(
             priorityPoolFactory
@@ -117,6 +128,7 @@ contract PayoutPool is Initializable {
         _;
     }
 
+    // Only be called from policy center
     modifier onlyPolicyCenter() {
         if (msg.sender != policyCenter) revert PayoutPool__NotPolicyCenter();
         _;

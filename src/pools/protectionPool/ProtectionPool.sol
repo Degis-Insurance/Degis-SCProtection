@@ -74,9 +74,6 @@ contract ProtectionPool is
     // Total amount staked
     uint256 public stakedSupply;
 
-    // Mining token address
-    address public miningToken;
-
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
@@ -184,10 +181,6 @@ contract ProtectionPool is
         priorityPoolFactory = _priorityPoolFactory;
     }
 
-    function setMiningToken(address _miningToken) external onlyOwner {
-        miningToken = _miningToken;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -248,9 +241,6 @@ contract ProtectionPool is
         uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
         emit LiquidityProvided(_amount, amountToMint, _provider);
-
-        // Mint mining tokens to the user
-        IMiningToken(miningToken).mint(_provider, amountToMint);
     }
 
     /**
@@ -296,11 +286,6 @@ contract ProtectionPool is
         SimpleIERC20(USDC).transfer(_provider, usdcToTransfer);
 
         emit LiquidityRemoved(_amount, usdcToTransfer, _provider);
-
-        // Burn mining token
-        if (msg.sender == policyCenter) {
-            IMiningToken(miningToken).burn(realPayer, usdcToTransfer);
-        }
     }
 
     function checkEnoughLiquidity(uint256 _amountToRemove) public view {
@@ -375,6 +360,7 @@ contract ProtectionPool is
 
     /**
      * @notice Set paused state of the protection pool
+     *         Only callable by owner, incidentReport, or priorityPoolFactory
      *
      * @param _paused True for pause, false for unpause
      */

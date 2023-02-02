@@ -1,0 +1,637 @@
+{
+  "address": "0xa890F00080adF7e737e51BbB22Bc8010F239AD68",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "policyToken",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "pair",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "decimals",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "sampleInterval",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "isToken0",
+          "type": "uint256"
+        }
+      ],
+      "name": "NewIDOPair",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "policyToken",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "priceAverage",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "SamplePrice",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "USDC",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WAVAX",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyToken",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_pair",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_interval",
+          "type": "uint256"
+        }
+      ],
+      "name": "addIDOPair",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "addressToName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "basePriceGetter",
+      "outputs": [
+        {
+          "internalType": "contract IPriceGetter",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "getLatestPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyToken",
+          "type": "string"
+        }
+      ],
+      "name": "getLatestPriceFromName",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_priceGetter",
+          "type": "address"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "priceFeeds",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pair",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "decimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sampleInterval",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "isToken0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "priceAverage",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "priceCumulativeLast",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyToken",
+          "type": "string"
+        }
+      ],
+      "name": "samplePrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        }
+      ],
+      "name": "setAddressToName",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyToken",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x867843ff8bcba241f7747a59b881319e079f46ed00267b2b94ec88a433e48cb9",
+  "receipt": {
+    "to": null,
+    "from": "0xeB496257B64Cc2D39c291B209F465f3cfADE0873",
+    "contractAddress": "0xa890F00080adF7e737e51BbB22Bc8010F239AD68",
+    "transactionIndex": 6,
+    "gasUsed": "1196201",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x9b72c22ca768df3f07b4fef870fee74a410bb12ed33e13ecfe0948fa4dbd55ea",
+    "transactionHash": "0x867843ff8bcba241f7747a59b881319e079f46ed00267b2b94ec88a433e48cb9",
+    "logs": [],
+    "blockNumber": 25730204,
+    "cumulativeGasUsed": "1806840",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "e19bc942bc7908e79d6f31ff9183fbe7",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"policyToken\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"sampleInterval\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"isToken0\",\"type\":\"uint256\"}],\"name\":\"NewIDOPair\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"policyToken\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"priceAverage\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"SamplePrice\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"USDC\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"WAVAX\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_policyToken\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_pair\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_decimals\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_interval\",\"type\":\"uint256\"}],\"name\":\"addIDOPair\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"addressToName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"basePriceGetter\",\"outputs\":[{\"internalType\":\"contract IPriceGetter\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"getLatestPrice\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_policyToken\",\"type\":\"string\"}],\"name\":\"getLatestPriceFromName\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"price\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_priceGetter\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"priceFeeds\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"sampleInterval\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"isToken0\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"priceAverage\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"priceCumulativeLast\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"lastTimestamp\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_policyToken\",\"type\":\"string\"}],\"name\":\"samplePrice\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"}],\"name\":\"setAddressToName\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_policyToken\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_price\",\"type\":\"uint256\"}],\"name\":\"setPrice\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"getLatestPrice(address)\":{\"params\":{\"_token\":\"Address of the token\"},\"returns\":{\"_0\":\"price The latest price\"}},\"getLatestPriceFromName(string)\":{\"params\":{\"_policyToken\":\"Policy token name\"},\"returns\":{\"price\":\"USD price of the base token\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"setPrice(string,uint256)\":{\"params\":{\"_policyToken\":\"Policy token name\",\"_price\":\"Price in avax\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"title\":\"Price Getter for IDO Protection\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getLatestPrice(address)\":{\"notice\":\"Get latest price of a token\"},\"getLatestPriceFromName(string)\":{\"notice\":\"Get latest price\"},\"setPrice(string,uint256)\":{\"notice\":\"Set price in avax         Price in avax should be in 1e18\"}},\"notice\":\"This is the contract for getting price feed from DEX         IDO projects does not have Chainlink feeds so we use DEX TWAP price as oracle         Workflow:         1. Deploy naughty token for the IDO project and set its type as \\\"IDO\\\"         2. Add ido price feed info by calling \\\"addIDOPair\\\" function         3. Set auto tasks start within PERIOD to endTime to sample prices from DEX         4. Call \\\"settleFinalResult\\\" function in core to settle the final price\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/priceGetter/DexPriceGetter.sol\":\"DexPriceGetter\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363735333237383439383034\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"../utils/ContextUpgradeable.sol\\\";\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Contract module which provides a basic access control mechanism, where\\n * there is an account (an owner) that can be granted exclusive access to\\n * specific functions.\\n *\\n * By default, the owner account will be the one that deploys the contract. This\\n * can later be changed with {transferOwnership}.\\n *\\n * This module is used through inheritance. It will make available the modifier\\n * `onlyOwner`, which can be applied to your functions to restrict their use to\\n * the owner.\\n */\\nabstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {\\n    address private _owner;\\n\\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    function __Ownable_init() internal onlyInitializing {\\n        __Ownable_init_unchained();\\n    }\\n\\n    function __Ownable_init_unchained() internal onlyInitializing {\\n        _transferOwnership(_msgSender());\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        _checkOwner();\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view virtual returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Throws if the sender is not the owner.\\n     */\\n    function _checkOwner() internal view virtual {\\n        require(owner() == _msgSender(), \\\"Ownable: caller is not the owner\\\");\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() public virtual onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\n        require(newOwner != address(0), \\\"Ownable: new owner is the zero address\\\");\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal virtual {\\n        address oldOwner = _owner;\\n        _owner = newOwner;\\n        emit OwnershipTransferred(oldOwner, newOwner);\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[49] private __gap;\\n}\\n\",\"keccak256\":\"0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)\\n\\npragma solidity ^0.8.0;\\nimport \\\"../proxy/utils/Initializable.sol\\\";\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract ContextUpgradeable is Initializable {\\n    function __Context_init() internal onlyInitializing {\\n    }\\n\\n    function __Context_init_unchained() internal onlyInitializing {\\n    }\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[50] private __gap;\\n}\\n\",\"keccak256\":\"0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149\",\"license\":\"MIT\"},\"src/interfaces/IPriceGetter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\npragma solidity ^0.8.13;\\n\\ninterface IPriceGetter {\\n    function getLatestPrice(string memory _tokenName)\\n        external\\n        returns (uint256 price);\\n\\n    function getLatestPrice(address _token) external returns (uint256 price);\\n}\\n\",\"keccak256\":\"0xc5aafa39687526f14693cfc52febd22b659a7bb7da9a7c3957edb74d77185b2a\",\"license\":\"GPL-3.0-or-later\"},\"src/libraries/FixedPoint.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\n// a library for handling binary fixed point numbers (https://en.wikipedia.org/wiki/Q_(number_format))\\nlibrary FixedPoint {\\n    // range: [0, 2**112 - 1]\\n    // resolution: 1 / 2**112\\n    struct uq112x112 {\\n        uint224 _x;\\n    }\\n\\n    // range: [0, 2**144 - 1]\\n    // resolution: 1 / 2**112\\n    struct uq144x112 {\\n        uint256 _x;\\n    }\\n\\n    uint8 private constant RESOLUTION = 112;\\n\\n    // encode a uint112 as a UQ112x112\\n    function encode(uint112 x) internal pure returns (uq112x112 memory) {\\n        return uq112x112(uint224(x) << RESOLUTION);\\n    }\\n\\n    // encodes a uint144 as a UQ144x112\\n    function encode144(uint144 x) internal pure returns (uq144x112 memory) {\\n        return uq144x112(uint256(x) << RESOLUTION);\\n    }\\n\\n    // divide a UQ112x112 by a uint112, returning a UQ112x112\\n    function div(uq112x112 memory self, uint112 x)\\n        internal\\n        pure\\n        returns (uq112x112 memory)\\n    {\\n        require(x != 0, \\\"FixedPoint: DIV_BY_ZERO\\\");\\n        return uq112x112(self._x / uint224(x));\\n    }\\n\\n    // multiply a UQ112x112 by a uint, returning a UQ144x112\\n    // reverts on overflow\\n    function mul(uq112x112 memory self, uint256 y)\\n        internal\\n        pure\\n        returns (uq144x112 memory)\\n    {\\n        uint256 z;\\n        require(\\n            y == 0 || (z = uint256(self._x) * y) / y == uint256(self._x),\\n            \\\"FixedPoint: MULTIPLICATION_OVERFLOW\\\"\\n        );\\n        return uq144x112(z);\\n    }\\n\\n    // returns a UQ112x112 which represents the ratio of the numerator to the denominator\\n    // equivalent to encode(numerator).div(denominator)\\n    function fraction(uint112 numerator, uint112 denominator)\\n        internal\\n        pure\\n        returns (uq112x112 memory)\\n    {\\n        require(denominator > 0, \\\"FixedPoint: DIV_BY_ZERO\\\");\\n        return uq112x112((uint224(numerator) << RESOLUTION) / denominator);\\n    }\\n\\n    // decode a UQ112x112 into a uint112 by truncating after the radix point\\n    function decode(uq112x112 memory self) internal pure returns (uint112) {\\n        return uint112(self._x >> RESOLUTION);\\n    }\\n\\n    // decode a UQ144x112 into a uint144 by truncating after the radix point\\n    function decode144(uq144x112 memory self) internal pure returns (uint144) {\\n        return uint144(self._x >> RESOLUTION);\\n    }\\n}\\n\",\"keccak256\":\"0xd6d4daea888f780256589abc3e31f1884f8256690697a17fa049626e72bf5141\",\"license\":\"MIT\"},\"src/libraries/IUniswapV2Pair.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\ninterface IUniswapV2Pair {\\n    event Approval(\\n        address indexed owner,\\n        address indexed spender,\\n        uint256 value\\n    );\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    function name() external pure returns (string memory);\\n\\n    function symbol() external pure returns (string memory);\\n\\n    function decimals() external pure returns (uint8);\\n\\n    function totalSupply() external view returns (uint256);\\n\\n    function balanceOf(address owner) external view returns (uint256);\\n\\n    function allowance(address owner, address spender)\\n        external\\n        view\\n        returns (uint256);\\n\\n    function approve(address spender, uint256 value) external returns (bool);\\n\\n    function transfer(address to, uint256 value) external returns (bool);\\n\\n    function transferFrom(\\n        address from,\\n        address to,\\n        uint256 value\\n    ) external returns (bool);\\n\\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\\n\\n    function PERMIT_TYPEHASH() external pure returns (bytes32);\\n\\n    function nonces(address owner) external view returns (uint256);\\n\\n    function permit(\\n        address owner,\\n        address spender,\\n        uint256 value,\\n        uint256 deadline,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) external;\\n\\n    event Mint(address indexed sender, uint256 amount0, uint256 amount1);\\n    event Burn(\\n        address indexed sender,\\n        uint256 amount0,\\n        uint256 amount1,\\n        address indexed to\\n    );\\n    event Swap(\\n        address indexed sender,\\n        uint256 amount0In,\\n        uint256 amount1In,\\n        uint256 amount0Out,\\n        uint256 amount1Out,\\n        address indexed to\\n    );\\n    event Sync(uint112 reserve0, uint112 reserve1);\\n\\n    function MINIMUM_LIQUIDITY() external pure returns (uint256);\\n\\n    function factory() external view returns (address);\\n\\n    function token0() external view returns (address);\\n\\n    function token1() external view returns (address);\\n\\n    function getReserves()\\n        external\\n        view\\n        returns (\\n            uint112 reserve0,\\n            uint112 reserve1,\\n            uint32 blockTimestampLast\\n        );\\n\\n    function price0CumulativeLast() external view returns (uint256);\\n\\n    function price1CumulativeLast() external view returns (uint256);\\n\\n    function kLast() external view returns (uint256);\\n\\n    function mint(address to) external returns (uint256 liquidity);\\n\\n    function burn(address to)\\n        external\\n        returns (uint256 amount0, uint256 amount1);\\n\\n    function swap(\\n        uint256 amount0Out,\\n        uint256 amount1Out,\\n        address to,\\n        bytes calldata data\\n    ) external;\\n\\n    function skim(address to) external;\\n\\n    function sync() external;\\n\\n    function initialize(address, address) external;\\n}\\n\",\"keccak256\":\"0x65dabcff713313d82c0fb2ef442b0007d486dce0a0672e6c3d9ec1f8263358fa\",\"license\":\"MIT\"},\"src/libraries/UniswapV2Library.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"./IUniswapV2Pair.sol\\\";\\n\\nlibrary SafeMath {\\n    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {\\n        require((z = x + y) >= x, \\\"ds-math-add-overflow\\\");\\n    }\\n\\n    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {\\n        require((z = x - y) <= x, \\\"ds-math-sub-underflow\\\");\\n    }\\n\\n    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {\\n        require(y == 0 || (z = x * y) / y == x, \\\"ds-math-mul-overflow\\\");\\n    }\\n}\\n\\nlibrary UniswapV2Library {\\n    using SafeMath for uint256;\\n\\n    // returns sorted token addresses, used to handle return values from pairs sorted in this order\\n    function sortTokens(address tokenA, address tokenB)\\n        internal\\n        pure\\n        returns (address token0, address token1)\\n    {\\n        require(tokenA != tokenB, \\\"UniswapV2Library: IDENTICAL_ADDRESSES\\\");\\n        (token0, token1) = tokenA < tokenB\\n            ? (tokenA, tokenB)\\n            : (tokenB, tokenA);\\n        require(token0 != address(0), \\\"UniswapV2Library: ZERO_ADDRESS\\\");\\n    }\\n\\n    // calculates the CREATE2 address for a pair without making any external calls\\n    function pairFor(\\n        address factory,\\n        address tokenA,\\n        address tokenB\\n    ) internal pure returns (address pair) {\\n        (address token0, address token1) = sortTokens(tokenA, tokenB);\\n        pair = address(\\n            uint160(\\n                uint256(\\n                    keccak256(\\n                        abi.encodePacked(\\n                            hex\\\"ff\\\",\\n                            factory,\\n                            keccak256(abi.encodePacked(token0, token1)),\\n                            hex\\\"96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f\\\" // init code hash\\n                        )\\n                    )\\n                )\\n            )\\n        );\\n    }\\n\\n    // fetches and sorts the reserves for a pair\\n    function getReserves(\\n        address factory,\\n        address tokenA,\\n        address tokenB\\n    ) internal view returns (uint256 reserveA, uint256 reserveB) {\\n        (address token0, ) = sortTokens(tokenA, tokenB);\\n        (uint256 reserve0, uint256 reserve1, ) = IUniswapV2Pair(\\n            pairFor(factory, tokenA, tokenB)\\n        ).getReserves();\\n        (reserveA, reserveB) = tokenA == token0\\n            ? (reserve0, reserve1)\\n            : (reserve1, reserve0);\\n    }\\n\\n    // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset\\n    function quote(\\n        uint256 amountA,\\n        uint256 reserveA,\\n        uint256 reserveB\\n    ) internal pure returns (uint256 amountB) {\\n        require(amountA > 0, \\\"UniswapV2Library: INSUFFICIENT_AMOUNT\\\");\\n        require(\\n            reserveA > 0 && reserveB > 0,\\n            \\\"UniswapV2Library: INSUFFICIENT_LIQUIDITY\\\"\\n        );\\n        amountB = amountA.mul(reserveB) / reserveA;\\n    }\\n\\n    // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset\\n    function getAmountOut(\\n        uint256 amountIn,\\n        uint256 reserveIn,\\n        uint256 reserveOut\\n    ) internal pure returns (uint256 amountOut) {\\n        require(amountIn > 0, \\\"UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT\\\");\\n        require(\\n            reserveIn > 0 && reserveOut > 0,\\n            \\\"UniswapV2Library: INSUFFICIENT_LIQUIDITY\\\"\\n        );\\n        uint256 amountInWithFee = amountIn.mul(997);\\n        uint256 numerator = amountInWithFee.mul(reserveOut);\\n        uint256 denominator = reserveIn.mul(1000).add(amountInWithFee);\\n        amountOut = numerator / denominator;\\n    }\\n\\n    // given an output amount of an asset and pair reserves, returns a required input amount of the other asset\\n    function getAmountIn(\\n        uint256 amountOut,\\n        uint256 reserveIn,\\n        uint256 reserveOut\\n    ) internal pure returns (uint256 amountIn) {\\n        require(amountOut > 0, \\\"UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT\\\");\\n        require(\\n            reserveIn > 0 && reserveOut > 0,\\n            \\\"UniswapV2Library: INSUFFICIENT_LIQUIDITY\\\"\\n        );\\n        uint256 numerator = reserveIn.mul(amountOut).mul(1000);\\n        uint256 denominator = reserveOut.sub(amountOut).mul(997);\\n        amountIn = (numerator / denominator).add(1);\\n    }\\n\\n    // performs chained getAmountOut calculations on any number of pairs\\n    function getAmountsOut(\\n        address factory,\\n        uint256 amountIn,\\n        address[] memory path\\n    ) internal view returns (uint256[] memory amounts) {\\n        require(path.length >= 2, \\\"UniswapV2Library: INVALID_PATH\\\");\\n        amounts = new uint256[](path.length);\\n        amounts[0] = amountIn;\\n        for (uint256 i; i < path.length - 1; i++) {\\n            (uint256 reserveIn, uint256 reserveOut) = getReserves(\\n                factory,\\n                path[i],\\n                path[i + 1]\\n            );\\n            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);\\n        }\\n    }\\n\\n    // performs chained getAmountIn calculations on any number of pairs\\n    function getAmountsIn(\\n        address factory,\\n        uint256 amountOut,\\n        address[] memory path\\n    ) internal view returns (uint256[] memory amounts) {\\n        require(path.length >= 2, \\\"UniswapV2Library: INVALID_PATH\\\");\\n        amounts = new uint256[](path.length);\\n        amounts[amounts.length - 1] = amountOut;\\n        for (uint256 i = path.length - 1; i > 0; i--) {\\n            (uint256 reserveIn, uint256 reserveOut) = getReserves(\\n                factory,\\n                path[i - 1],\\n                path[i]\\n            );\\n            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x447a27cdb57ce6bd761b68c75f68b0b27040ebd90d51c69f114af276de0fee8d\",\"license\":\"MIT\"},\"src/libraries/UniswapV2OracleLibrary.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"./IUniswapV2Pair.sol\\\";\\nimport \\\"./FixedPoint.sol\\\";\\n\\n// library with helper methods for oracles that are concerned with computing average prices\\nlibrary UniswapV2OracleLibrary {\\n    using FixedPoint for *;\\n\\n    // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]\\n    function currentBlockTimestamp() internal view returns (uint32) {\\n        return uint32(block.timestamp % 2**32);\\n    }\\n\\n    // produces the cumulative price using counterfactuals to save gas and avoid a call to sync.\\n    function currentCumulativePrices(address pair)\\n        internal\\n        view\\n        returns (\\n            uint256 price0Cumulative,\\n            uint256 price1Cumulative,\\n            uint32 blockTimestamp\\n        )\\n    {\\n        blockTimestamp = currentBlockTimestamp();\\n        price0Cumulative = IUniswapV2Pair(pair).price0CumulativeLast();\\n        price1Cumulative = IUniswapV2Pair(pair).price1CumulativeLast();\\n\\n        // if time has elapsed since the last update on the pair, mock the accumulated price values\\n        (\\n            uint112 reserve0,\\n            uint112 reserve1,\\n            uint32 blockTimestampLast\\n        ) = IUniswapV2Pair(pair).getReserves();\\n        if (blockTimestampLast != blockTimestamp) {\\n            // subtraction overflow is desired\\n            uint32 timeElapsed = blockTimestamp - blockTimestampLast;\\n            // addition overflow is desired\\n            // counterfactual\\n            price0Cumulative +=\\n                uint256(FixedPoint.fraction(reserve1, reserve0)._x) *\\n                timeElapsed;\\n            // counterfactual\\n            price1Cumulative +=\\n                uint256(FixedPoint.fraction(reserve0, reserve1)._x) *\\n                timeElapsed;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x93d92ee4ecc0011a5e86f558200e0ea66fb37d9f1eebbca40d64fd65100d1ca5\",\"license\":\"MIT\"},\"src/priceGetter/DexPriceGetter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\n/*\\n //======================================================================\\\\\\\\\\n //======================================================================\\\\\\\\\\n    *******         **********     ***********     *****     ***********\\n    *      *        *              *                 *       *\\n    *        *      *              *                 *       *\\n    *         *     *              *                 *       *\\n    *         *     *              *                 *       *\\n    *         *     **********     *       *****     *       ***********\\n    *         *     *              *         *       *                 *\\n    *         *     *              *         *       *                 *\\n    *        *      *              *         *       *                 *\\n    *      *        *              *         *       *                 *\\n    *******         **********     ***********     *****     ***********\\n \\\\\\\\======================================================================//\\n \\\\\\\\======================================================================//\\n*/\\n\\npragma solidity ^0.8.13;\\n\\nimport {OwnableUpgradeable} from \\\"@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol\\\";\\nimport {IPriceGetter} from \\\"../interfaces/IPriceGetter.sol\\\";\\n\\nimport {IUniswapV2Pair} from \\\"../libraries/IUniswapV2Pair.sol\\\";\\nimport {FixedPoint} from \\\"../libraries/FixedPoint.sol\\\";\\nimport {UniswapV2OracleLibrary} from \\\"../libraries/UniswapV2OracleLibrary.sol\\\";\\nimport {UniswapV2Library} from \\\"../libraries/UniswapV2Library.sol\\\";\\n\\n/**\\n * @title Price Getter for IDO Protection\\n *\\n * @notice This is the contract for getting price feed from DEX\\n *         IDO projects does not have Chainlink feeds so we use DEX TWAP price as oracle\\n *\\n *         Workflow:\\n *         1. Deploy naughty token for the IDO project and set its type as \\\"IDO\\\"\\n *         2. Add ido price feed info by calling \\\"addIDOPair\\\" function\\n *         3. Set auto tasks start within PERIOD to endTime to sample prices from DEX\\n *         4. Call \\\"settleFinalResult\\\" function in core to settle the final price\\n */\\n\\ncontract DexPriceGetter is OwnableUpgradeable {\\n    using FixedPoint for *;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constants **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    // WAVAX address\\n    address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;\\n    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Variables **************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    // Base price getter to transfer the price into USD\\n    IPriceGetter public basePriceGetter;\\n\\n    struct IDOPriceInfo {\\n        address pair; // Pair on TraderJoe\\n        uint256 decimals; // If no special settings, it would be 0\\n        uint256 sampleInterval;\\n        uint256 isToken0;\\n        uint256 priceAverage;\\n        uint256 priceCumulativeLast;\\n        uint256 lastTimestamp;\\n    }\\n    // Policy Base Token Name => IDO Info\\n    mapping(string => IDOPriceInfo) public priceFeeds;\\n\\n    mapping(address => string) public addressToName;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    event SamplePrice(\\n        string policyToken,\\n        uint256 priceAverage,\\n        uint256 timestamp\\n    );\\n\\n    event NewIDOPair(\\n        string policyToken,\\n        address pair,\\n        uint256 decimals,\\n        uint256 sampleInterval,\\n        uint256 isToken0\\n    );\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constructor ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function initialize(address _priceGetter) public initializer {\\n        __Ownable_init();\\n\\n        basePriceGetter = IPriceGetter(_priceGetter);\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Set Functions ************************************* //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function addIDOPair(\\n        string calldata _policyToken,\\n        address _pair,\\n        uint256 _decimals,\\n        uint256 _interval\\n    ) external onlyOwner {\\n        require(IUniswapV2Pair(_pair).token0() != address(0), \\\"Non exist pair\\\");\\n        require(\\n            IUniswapV2Pair(_pair).token0() == WAVAX ||\\n                IUniswapV2Pair(_pair).token1() == WAVAX,\\n            \\\"Not avax pair\\\"\\n        );\\n        require(\\n            priceFeeds[_policyToken].pair == address(0),\\n            \\\"Pair already exists\\\"\\n        );\\n\\n        IDOPriceInfo storage newFeed = priceFeeds[_policyToken];\\n\\n        newFeed.pair = _pair;\\n        // Decimals should keep the priceAverage to have 18 decimals\\n        // WAVAX always have 18 decimals\\n        // E.g. Pair token both 18 decimals => price decimals 18\\n        //      (5e18, 10e18) real price 0.5 => we show priceAverage 0.5 * 10^18\\n        //      Pair token (18, 6) decimals => price decimals 6\\n        //      (5e18, 10e6) real price 0.5 => we show priceAverage 0.5 * 10^18\\n        newFeed.decimals = _decimals;\\n        newFeed.sampleInterval = _interval;\\n\\n        // Check if the policy base token is token0\\n        bool isToken0 = !(IUniswapV2Pair(_pair).token0() == WAVAX);\\n\\n        newFeed.isToken0 = isToken0 ? 1 : 0;\\n\\n        (, , newFeed.lastTimestamp) = IUniswapV2Pair(_pair).getReserves();\\n\\n        // Record the initial priceCumulativeLast\\n        newFeed.priceCumulativeLast = isToken0\\n            ? IUniswapV2Pair(_pair).price0CumulativeLast()\\n            : IUniswapV2Pair(_pair).price1CumulativeLast();\\n\\n        emit NewIDOPair(\\n            _policyToken,\\n            _pair,\\n            _decimals,\\n            _interval,\\n            newFeed.isToken0\\n        );\\n    }\\n\\n    /**\\n     * @notice Set price in avax\\n     *         Price in avax should be in 1e18\\n     *\\n     * @param _policyToken Policy token name\\n     * @param _price       Price in avax\\n     */\\n    function setPrice(string calldata _policyToken, uint256 _price)\\n        external\\n        onlyOwner\\n    {\\n        priceFeeds[_policyToken].priceAverage = _price;\\n    }\\n\\n    function setAddressToName(address _token, string memory _name)\\n        external\\n        onlyOwner\\n    {\\n        addressToName[_token] = _name;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Main Functions ************************************ //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function samplePrice(string calldata _policyToken) external {\\n        IDOPriceInfo storage priceFeed = priceFeeds[_policyToken];\\n\\n        (\\n            uint256 price0Cumulative,\\n            uint256 price1Cumulative,\\n            uint32 blockTimestamp\\n        ) = UniswapV2OracleLibrary.currentCumulativePrices(priceFeed.pair);\\n\\n        // Time between this sampling and last sampling (seconds)\\n        uint32 timeElapsed = blockTimestamp - uint32(priceFeed.lastTimestamp);\\n\\n        uint256 decimals = priceFeed.decimals;\\n\\n        require(\\n            timeElapsed > priceFeed.sampleInterval,\\n            \\\"Minimum sample interval\\\"\\n        );\\n\\n        // Update priceAverage and priceCumulativeLast\\n        uint256 newPriceAverage;\\n\\n        if (priceFeed.isToken0 > 0) {\\n            newPriceAverage = FixedPoint\\n                .uq112x112(\\n                    uint224(\\n                        ((price0Cumulative - priceFeed.priceCumulativeLast) *\\n                            10**decimals) / timeElapsed\\n                    )\\n                )\\n                .decode();\\n\\n            priceFeed.priceCumulativeLast = price0Cumulative;\\n        } else {\\n            newPriceAverage = FixedPoint\\n                .uq112x112(\\n                    uint224(\\n                        ((price1Cumulative - priceFeed.priceCumulativeLast) *\\n                            10**decimals) / timeElapsed\\n                    )\\n                )\\n                .decode();\\n\\n            priceFeed.priceCumulativeLast = price1Cumulative;\\n        }\\n\\n        priceFeed.priceAverage = newPriceAverage;\\n\\n        // Update lastTimestamp\\n        priceFeed.lastTimestamp = blockTimestamp;\\n\\n        emit SamplePrice(_policyToken, newPriceAverage, blockTimestamp);\\n    }\\n\\n    /**\\n     * @notice Get latest price of a token\\n     *\\n     * @param _token Address of the token\\n     *\\n     * @return price The latest price\\n     */\\n    function getLatestPrice(address _token) public returns (uint256) {\\n        return getLatestPriceFromName(addressToName[_token]);\\n    }\\n\\n    /**\\n     * @notice Get latest price\\n     *\\n     * @param _policyToken Policy token name\\n     *\\n     * @return price USD price of the base token\\n     */\\n    function getLatestPriceFromName(string memory _policyToken)\\n        public\\n        returns (uint256 price)\\n    {\\n        uint256 priceInAVAX;\\n\\n        // If token0 is WAVAX, use price1Average\\n        // Else, use price0Average\\n        priceInAVAX = priceFeeds[_policyToken].priceAverage;\\n\\n        require(priceInAVAX > 0, \\\"Zero Price\\\");\\n\\n        // AVAX price, 1e18 scale\\n        uint256 avaxPrice = basePriceGetter.getLatestPrice(\\\"AVAX\\\");\\n\\n        // Warning: for DCAR we tempararily double the price because the settlement price is 0.165\\n        //          but we set it as 0.33 (they changed the ido price after this round online)\\n\\n        // This final price is also multiplied by 1e18\\n        price = (avaxPrice * priceInAVAX) / 1e18;\\n    }\\n}\\n\",\"keccak256\":\"0x1957a59a650c0c13d539d5209a7a61291760fcd26d101744217a791f65933ac8\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x60808060405234610016576114a8908161001c8239f35b600080fdfe6040608081526004908136101561001557600080fd5b600091823560e01c806316345f1814610e8b57806322e0119214610e3557806349bb4d27146109f85780636bf8910a146109cf578063715018a61461096f57806373b295c21461094057806389a30271146109115780638da5cb5b146108e8578063b4972aef14610776578063c4d66de81461061d578063cb8ae86c1461057b578063d171578b14610538578063e2392718146101c4578063e2a04b621461015a5763f2fde38b146100c657600080fd5b34610156576020366003190112610156576100df610ec8565b906100e86110cd565b6001600160a01b03821615610104575061010190611125565b51f35b608490602084519162461bcd60e51b8352820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152fd5b8280fd5b8284346101c15760203660031901126101c1576101919082906001600160a01b03610183610ec8565b168152606760205220611027565b9080518092602082526101b38151809281602086015260208686019101610fb8565b601f01601f19168101030190f35b80fd5b50919034610534576020806003193601126101565783356001600160401b038111610530576101f69036908601610ee3565b90918351828482378181848101606681520301902060018060a01b038154169663ffffffff8181421693858b8a5195868092635909c0d560e01b82525afa938415610526578a946104f3575b508184878d8c5193848092635a3d549360e01b82525afa9182156104e957908492918d926104b3575b506060829e8d5194858092630240bc6b60e21b82525afa80156104a9578d9081948291610474575b508988821603610411575b5050505050600681019a6102b5848d54168761125d565b9060018301549460028401549216918211156103d457918b9c93918795937f9b4359a4024cf42372af876d367b36bafd6cb68f8b58b78b1611b664ea994a299c9d506003830154151560001461038657506103319061032c600584019561032661032088548c611288565b91611293565b906112a1565b6112b4565b8c5161033c81610f10565b6001600160e01b03821690529590925560709490941c6001600160701b03169384915b015555610378875195869560608752606087019161123c565b92840152858301520390a151f35b96506103a29061032c600584019561032661032088548c611288565b8c516103ad81610f10565b6001600160e01b03821690529590925560709490941c6001600160701b031693849161035f565b8a5162461bcd60e51b81528085018990526017602482015276135a5b9a5b5d5b481cd85b5c1b19481a5b9d195c9d985b604a1b6044820152606490fd5b610469959f506104569394985061044b9161045c610432610462938d61125d565b946001600160e01b0394610456908c9087908f876112e0565b5116971680976112a1565b906112d4565b996112e0565b51166112a1565b99388080808061029e565b91505061049991935060603d81116104a2575b6104918183610f41565b810190611206565b91939138610293565b503d610487565b8c513d8f823e3d90fd5b89809294508193503d83116104e2575b6104cd8183610f41565b810103126104de575183913861026b565b8b80fd5b503d6104c3565b8b513d8e823e3d90fd5b9093508581813d831161051f575b61050b8183610f41565b8101031261051b57519238610242565b8980fd5b503d610501565b89513d8c823e3d90fd5b8380fd5b5080fd5b5091346101c15760203660031901126101c1578235906001600160401b0382116101c1575061056f60209361057492369101610f62565b61136d565b9051908152f35b5034610156576020366003190112610156578035926001600160401b0384116101c157506105c560206105b360e09536908501610f62565b81855193828580945193849201610fb8565b8101606681520301902060018060a01b03815416926001820154926002830154600384015491840154926006600586015495015495815197885260208801528601526060850152608084015260a083015260c0820152f35b503461015657602036600319011261015657610637610ec8565b835460ff8160081c161592838094610769575b8015610752575b156106f8575060ff1981166001178555826106e7575b5061068160ff855460081c1661067c81611173565b611173565b61068a33611125565b606580546001600160a01b0319166001600160a01b03929092169190911790556106b15751f35b61ff001982541682557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024986020825160018152a151f35b61ffff191661010117845538610667565b608490602086519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b1580156106515750600160ff831614610651565b50600160ff83161061064a565b50919034610534578060031936011261053457610791610ec8565b926001600160401b036024358181116108e4576107b19036908401610f62565b946107ba6110cd565b6001600160a01b031684526067602090815283852086519093909283116108d157506107e68354610fed565b601f811161088e575b5080601f831160011461082b575084958293949592610820575b50508160011b916000199060031b1c191617905551f35b015190503880610809565b90601f198316968487528287209287905b898210610876575050836001959697981061085d575b505050811b01905551f35b015160001960f88460031b161c19169055388080610852565b8060018596829496860151815501950193019061083c565b838652818620601f840160051c8101918385106108c7575b601f0160051c01905b8181106108bc57506107ef565b8681556001016108af565b90915081906108a6565b634e487b7160e01b865260419052602485fd5b8480fd5b50503461053457816003193601126105345760335490516001600160a01b039091168152602090f35b5050346105345781600319360112610534576020905173b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e8152f35b5050346105345781600319360112610534576020905173b31f66aa3c1e785363f0875a1b74e27b85fd66c78152f35b5050346105345781600319360112610534576109896110cd565b603380546001600160a01b0319811690915590519082906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08284a3f35b50503461053457816003193601126105345760655490516001600160a01b039091168152602090f35b50346101565760803660031901126101565780356001600160401b03811161053057610a279036908301610ee3565b6024356001600160a01b0381811691829003610e3157606435604435610a4b6110cd565b875193630dfe168160e01b9384865260209586818b81865afa80156104e95782918d91610e14575b501615610de057895185815286818b81865afa80156104e95782918d91610dc3575b5073b31f66aa3c1e785363f0875a1b74e27b85fd66c7921682148015610d6d575b15610d3a57808b51898b823788818b810160668152030190205416610d01578a51888a823760668982019081528190038801902080546001600160a01b0319168417815560018101859055600281018690558b519687529587818c81875afa9081156104a9578d91610cd4575b50161480159490610ccc5760ff60015b16948560038301558b8b51630240bc6b60e21b81526060818d81885afa908115610cc25763ffffffff9291610ca1575b5016600683015515610c2557858a51809a635909c0d560e01b825281855afa988915610c1b578b99610be7575b5060057f212544a34bde618b1304355fe54ed52a00db3723be0aae4d1f842043a23579af99915b0155610bcf895197889760a0895260a089019161123c565b9486015287850152606084015260808301520390a151f35b98508589813d8311610c14575b610bfe8183610f41565b81010312610c10579751976005610b90565b8a80fd5b503d610bf4565b8a513d8d823e3d90fd5b858a51809a635a3d549360e01b825281855afa988915610c1b578b99610c71575b5060057f212544a34bde618b1304355fe54ed52a00db3723be0aae4d1f842043a23579af9991610bb7565b98508589813d8311610c9a575b610c888183610f41565b81010312610c10579751976005610c46565b503d610c7e565b610cb9915060603d81116104a2576104918183610f41565b91505038610b63565b8d513d84823e3d90fd5b60ff8b610b33565b610cf49150883d8a11610cfa575b610cec8183610f41565b8101906111d3565b38610b23565b503d610ce2565b8a5162461bcd60e51b8152808b0188905260136024820152725061697220616c72656164792065786973747360681b6044820152606490fd5b8a5162461bcd60e51b8152808b01889052600d60248201526c2737ba1030bb30bc103830b4b960991b6044820152606490fd5b508a5163d21220a760e01b81528c88828d81885afa8015610db7578492849291610d9a575b501614610ab6565b610db191508a3d8c11610cfa57610cec8183610f41565b38610d92565b508c51903d90823e3d90fd5b610dda9150883d8a11610cfa57610cec8183610f41565b38610a95565b895162461bcd60e51b8152808a01879052600e60248201526d2737b71032bc34b9ba103830b4b960911b6044820152606490fd5b610e2b9150883d8a11610cfa57610cec8183610f41565b38610a73565b8680fd5b503461015657816003193601126101565780356001600160401b03811161053057610e639036908301610ee3565b610e6e9291926110cd565b808451938437820191606683526020816024359403019020015551f35b505034610534576020366003190112610534576020916105749061056f9083906001600160a01b03610ebb610ec8565b1681526067865220611027565b600435906001600160a01b0382168203610ede57565b600080fd5b9181601f84011215610ede578235916001600160401b038311610ede5760208381860195010111610ede57565b602081019081106001600160401b03821117610f2b57604052565b634e487b7160e01b600052604160045260246000fd5b90601f801991011681019081106001600160401b03821117610f2b57604052565b81601f82011215610ede578035906001600160401b038211610f2b5760405192610f96601f8401601f191660200185610f41565b82845260208383010111610ede57816000926020809301838601378301015290565b918091926000905b828210610fd8575011610fd1575050565b6000910152565b91508060209183015181860152018291610fc0565b90600182811c9216801561101d575b602083101461100757565b634e487b7160e01b600052602260045260246000fd5b91607f1691610ffc565b906040519182600082549261103b84610fed565b9081845260019485811690816000146110aa5750600114611067575b505061106592500383610f41565b565b9093915060005260209081600020936000915b81831061109257505061106593508201013880611057565b8554888401850152948501948794509183019161107a565b91505061106594506020925060ff191682840152151560051b8201013880611057565b6033546001600160a01b031633036110e157565b606460405162461bcd60e51b815260206004820152602060248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152fd5b603380546001600160a01b039283166001600160a01b031982168117909255604051919216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3565b1561117a57565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b90816020910312610ede57516001600160a01b0381168103610ede5790565b51906001600160701b0382168203610ede57565b90816060910312610ede5761121a816111f2565b916040611229602084016111f2565b92015163ffffffff81168103610ede5790565b908060209392818452848401376000828201840152601f01601f1916010190565b63ffffffff9182169116818110611272570390565b634e487b7160e01b600052601160045260246000fd5b818110611272570390565b604d811161127257600a0a90565b8060001904821181151516611272570290565b81156112be570490565b634e487b7160e01b600052601260045260246000fd5b81198111611272570190565b9060006040516112ef81610f10565b526001600160701b031690811561132e576040519161130d83610f10565b60709190911b600160701b600160e01b0316046001600160e01b0316815290565b60405162461bcd60e51b81526020600482015260176024820152764669786564506f696e743a204449565f42595f5a45524f60481b6044820152606490fd5b600460405182818094516113878160209788809601610fb8565b8101606681520301902001549081156114415760655460405163f66a1b7160e01b81526004808201849052602482015263082ac82b60e31b6044820152908290829060649082906000906001600160a01b03165af191821561143557600092611404575b5050670de0b6b3a764000091611400916112a1565b0490565b81819392933d831161142e575b61141b8183610f41565b810103126101c1575051816114006113eb565b503d611411565b6040513d6000823e3d90fd5b6064906040519062461bcd60e51b82526004820152600a6024820152695a65726f20507269636560b01b6044820152fdfea2646970667358221220e3a9d38fae6987574931bea6c46e2c6bb9bbc6763055aff7a043593d18e0cd0364736f6c634300080f0033",
+  "deployedBytecode": "0x6040608081526004908136101561001557600080fd5b600091823560e01c806316345f1814610e8b57806322e0119214610e3557806349bb4d27146109f85780636bf8910a146109cf578063715018a61461096f57806373b295c21461094057806389a30271146109115780638da5cb5b146108e8578063b4972aef14610776578063c4d66de81461061d578063cb8ae86c1461057b578063d171578b14610538578063e2392718146101c4578063e2a04b621461015a5763f2fde38b146100c657600080fd5b34610156576020366003190112610156576100df610ec8565b906100e86110cd565b6001600160a01b03821615610104575061010190611125565b51f35b608490602084519162461bcd60e51b8352820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152fd5b8280fd5b8284346101c15760203660031901126101c1576101919082906001600160a01b03610183610ec8565b168152606760205220611027565b9080518092602082526101b38151809281602086015260208686019101610fb8565b601f01601f19168101030190f35b80fd5b50919034610534576020806003193601126101565783356001600160401b038111610530576101f69036908601610ee3565b90918351828482378181848101606681520301902060018060a01b038154169663ffffffff8181421693858b8a5195868092635909c0d560e01b82525afa938415610526578a946104f3575b508184878d8c5193848092635a3d549360e01b82525afa9182156104e957908492918d926104b3575b506060829e8d5194858092630240bc6b60e21b82525afa80156104a9578d9081948291610474575b508988821603610411575b5050505050600681019a6102b5848d54168761125d565b9060018301549460028401549216918211156103d457918b9c93918795937f9b4359a4024cf42372af876d367b36bafd6cb68f8b58b78b1611b664ea994a299c9d506003830154151560001461038657506103319061032c600584019561032661032088548c611288565b91611293565b906112a1565b6112b4565b8c5161033c81610f10565b6001600160e01b03821690529590925560709490941c6001600160701b03169384915b015555610378875195869560608752606087019161123c565b92840152858301520390a151f35b96506103a29061032c600584019561032661032088548c611288565b8c516103ad81610f10565b6001600160e01b03821690529590925560709490941c6001600160701b031693849161035f565b8a5162461bcd60e51b81528085018990526017602482015276135a5b9a5b5d5b481cd85b5c1b19481a5b9d195c9d985b604a1b6044820152606490fd5b610469959f506104569394985061044b9161045c610432610462938d61125d565b946001600160e01b0394610456908c9087908f876112e0565b5116971680976112a1565b906112d4565b996112e0565b51166112a1565b99388080808061029e565b91505061049991935060603d81116104a2575b6104918183610f41565b810190611206565b91939138610293565b503d610487565b8c513d8f823e3d90fd5b89809294508193503d83116104e2575b6104cd8183610f41565b810103126104de575183913861026b565b8b80fd5b503d6104c3565b8b513d8e823e3d90fd5b9093508581813d831161051f575b61050b8183610f41565b8101031261051b57519238610242565b8980fd5b503d610501565b89513d8c823e3d90fd5b8380fd5b5080fd5b5091346101c15760203660031901126101c1578235906001600160401b0382116101c1575061056f60209361057492369101610f62565b61136d565b9051908152f35b5034610156576020366003190112610156578035926001600160401b0384116101c157506105c560206105b360e09536908501610f62565b81855193828580945193849201610fb8565b8101606681520301902060018060a01b03815416926001820154926002830154600384015491840154926006600586015495015495815197885260208801528601526060850152608084015260a083015260c0820152f35b503461015657602036600319011261015657610637610ec8565b835460ff8160081c161592838094610769575b8015610752575b156106f8575060ff1981166001178555826106e7575b5061068160ff855460081c1661067c81611173565b611173565b61068a33611125565b606580546001600160a01b0319166001600160a01b03929092169190911790556106b15751f35b61ff001982541682557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024986020825160018152a151f35b61ffff191661010117845538610667565b608490602086519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b1580156106515750600160ff831614610651565b50600160ff83161061064a565b50919034610534578060031936011261053457610791610ec8565b926001600160401b036024358181116108e4576107b19036908401610f62565b946107ba6110cd565b6001600160a01b031684526067602090815283852086519093909283116108d157506107e68354610fed565b601f811161088e575b5080601f831160011461082b575084958293949592610820575b50508160011b916000199060031b1c191617905551f35b015190503880610809565b90601f198316968487528287209287905b898210610876575050836001959697981061085d575b505050811b01905551f35b015160001960f88460031b161c19169055388080610852565b8060018596829496860151815501950193019061083c565b838652818620601f840160051c8101918385106108c7575b601f0160051c01905b8181106108bc57506107ef565b8681556001016108af565b90915081906108a6565b634e487b7160e01b865260419052602485fd5b8480fd5b50503461053457816003193601126105345760335490516001600160a01b039091168152602090f35b5050346105345781600319360112610534576020905173b97ef9ef8734c71904d8002f8b6bc66dd9c48a6e8152f35b5050346105345781600319360112610534576020905173b31f66aa3c1e785363f0875a1b74e27b85fd66c78152f35b5050346105345781600319360112610534576109896110cd565b603380546001600160a01b0319811690915590519082906001600160a01b03167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08284a3f35b50503461053457816003193601126105345760655490516001600160a01b039091168152602090f35b50346101565760803660031901126101565780356001600160401b03811161053057610a279036908301610ee3565b6024356001600160a01b0381811691829003610e3157606435604435610a4b6110cd565b875193630dfe168160e01b9384865260209586818b81865afa80156104e95782918d91610e14575b501615610de057895185815286818b81865afa80156104e95782918d91610dc3575b5073b31f66aa3c1e785363f0875a1b74e27b85fd66c7921682148015610d6d575b15610d3a57808b51898b823788818b810160668152030190205416610d01578a51888a823760668982019081528190038801902080546001600160a01b0319168417815560018101859055600281018690558b519687529587818c81875afa9081156104a9578d91610cd4575b50161480159490610ccc5760ff60015b16948560038301558b8b51630240bc6b60e21b81526060818d81885afa908115610cc25763ffffffff9291610ca1575b5016600683015515610c2557858a51809a635909c0d560e01b825281855afa988915610c1b578b99610be7575b5060057f212544a34bde618b1304355fe54ed52a00db3723be0aae4d1f842043a23579af99915b0155610bcf895197889760a0895260a089019161123c565b9486015287850152606084015260808301520390a151f35b98508589813d8311610c14575b610bfe8183610f41565b81010312610c10579751976005610b90565b8a80fd5b503d610bf4565b8a513d8d823e3d90fd5b858a51809a635a3d549360e01b825281855afa988915610c1b578b99610c71575b5060057f212544a34bde618b1304355fe54ed52a00db3723be0aae4d1f842043a23579af9991610bb7565b98508589813d8311610c9a575b610c888183610f41565b81010312610c10579751976005610c46565b503d610c7e565b610cb9915060603d81116104a2576104918183610f41565b91505038610b63565b8d513d84823e3d90fd5b60ff8b610b33565b610cf49150883d8a11610cfa575b610cec8183610f41565b8101906111d3565b38610b23565b503d610ce2565b8a5162461bcd60e51b8152808b0188905260136024820152725061697220616c72656164792065786973747360681b6044820152606490fd5b8a5162461bcd60e51b8152808b01889052600d60248201526c2737ba1030bb30bc103830b4b960991b6044820152606490fd5b508a5163d21220a760e01b81528c88828d81885afa8015610db7578492849291610d9a575b501614610ab6565b610db191508a3d8c11610cfa57610cec8183610f41565b38610d92565b508c51903d90823e3d90fd5b610dda9150883d8a11610cfa57610cec8183610f41565b38610a95565b895162461bcd60e51b8152808a01879052600e60248201526d2737b71032bc34b9ba103830b4b960911b6044820152606490fd5b610e2b9150883d8a11610cfa57610cec8183610f41565b38610a73565b8680fd5b503461015657816003193601126101565780356001600160401b03811161053057610e639036908301610ee3565b610e6e9291926110cd565b808451938437820191606683526020816024359403019020015551f35b505034610534576020366003190112610534576020916105749061056f9083906001600160a01b03610ebb610ec8565b1681526067865220611027565b600435906001600160a01b0382168203610ede57565b600080fd5b9181601f84011215610ede578235916001600160401b038311610ede5760208381860195010111610ede57565b602081019081106001600160401b03821117610f2b57604052565b634e487b7160e01b600052604160045260246000fd5b90601f801991011681019081106001600160401b03821117610f2b57604052565b81601f82011215610ede578035906001600160401b038211610f2b5760405192610f96601f8401601f191660200185610f41565b82845260208383010111610ede57816000926020809301838601378301015290565b918091926000905b828210610fd8575011610fd1575050565b6000910152565b91508060209183015181860152018291610fc0565b90600182811c9216801561101d575b602083101461100757565b634e487b7160e01b600052602260045260246000fd5b91607f1691610ffc565b906040519182600082549261103b84610fed565b9081845260019485811690816000146110aa5750600114611067575b505061106592500383610f41565b565b9093915060005260209081600020936000915b81831061109257505061106593508201013880611057565b8554888401850152948501948794509183019161107a565b91505061106594506020925060ff191682840152151560051b8201013880611057565b6033546001600160a01b031633036110e157565b606460405162461bcd60e51b815260206004820152602060248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152fd5b603380546001600160a01b039283166001600160a01b031982168117909255604051919216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3565b1561117a57565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b90816020910312610ede57516001600160a01b0381168103610ede5790565b51906001600160701b0382168203610ede57565b90816060910312610ede5761121a816111f2565b916040611229602084016111f2565b92015163ffffffff81168103610ede5790565b908060209392818452848401376000828201840152601f01601f1916010190565b63ffffffff9182169116818110611272570390565b634e487b7160e01b600052601160045260246000fd5b818110611272570390565b604d811161127257600a0a90565b8060001904821181151516611272570290565b81156112be570490565b634e487b7160e01b600052601260045260246000fd5b81198111611272570190565b9060006040516112ef81610f10565b526001600160701b031690811561132e576040519161130d83610f10565b60709190911b600160701b600160e01b0316046001600160e01b0316815290565b60405162461bcd60e51b81526020600482015260176024820152764669786564506f696e743a204449565f42595f5a45524f60481b6044820152606490fd5b600460405182818094516113878160209788809601610fb8565b8101606681520301902001549081156114415760655460405163f66a1b7160e01b81526004808201849052602482015263082ac82b60e31b6044820152908290829060649082906000906001600160a01b03165af191821561143557600092611404575b5050670de0b6b3a764000091611400916112a1565b0490565b81819392933d831161142e575b61141b8183610f41565b810103126101c1575051816114006113eb565b503d611411565b6040513d6000823e3d90fd5b6064906040519062461bcd60e51b82526004820152600a6024820152695a65726f20507269636560b01b6044820152fdfea2646970667358221220e3a9d38fae6987574931bea6c46e2c6bb9bbc6763055aff7a043593d18e0cd0364736f6c634300080f0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "getLatestPrice(address)": {
+        "params": {
+          "_token": "Address of the token"
+        },
+        "returns": {
+          "_0": "price The latest price"
+        }
+      },
+      "getLatestPriceFromName(string)": {
+        "params": {
+          "_policyToken": "Policy token name"
+        },
+        "returns": {
+          "price": "USD price of the base token"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "setPrice(string,uint256)": {
+        "params": {
+          "_policyToken": "Policy token name",
+          "_price": "Price in avax"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      }
+    },
+    "title": "Price Getter for IDO Protection",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "getLatestPrice(address)": {
+        "notice": "Get latest price of a token"
+      },
+      "getLatestPriceFromName(string)": {
+        "notice": "Get latest price"
+      },
+      "setPrice(string,uint256)": {
+        "notice": "Set price in avax         Price in avax should be in 1e18"
+      }
+    },
+    "notice": "This is the contract for getting price feed from DEX         IDO projects does not have Chainlink feeds so we use DEX TWAP price as oracle         Workflow:         1. Deploy naughty token for the IDO project and set its type as \"IDO\"         2. Add ido price feed info by calling \"addIDOPair\" function         3. Set auto tasks start within PERIOD to endTime to sample prices from DEX         4. Call \"settleFinalResult\" function in core to settle the final price",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 184,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 187,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 1326,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 56,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_address"
+      },
+      {
+        "astId": 176,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "52",
+        "type": "t_array(t_uint256)49_storage"
+      },
+      {
+        "astId": 14304,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "basePriceGetter",
+        "offset": 0,
+        "slot": "101",
+        "type": "t_contract(IPriceGetter)6939"
+      },
+      {
+        "astId": 14324,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "priceFeeds",
+        "offset": 0,
+        "slot": "102",
+        "type": "t_mapping(t_string_memory_ptr,t_struct(IDOPriceInfo)14319_storage)"
+      },
+      {
+        "astId": 14328,
+        "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+        "label": "addressToName",
+        "offset": 0,
+        "slot": "103",
+        "type": "t_mapping(t_address,t_string_storage)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)49_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[49]",
+        "numberOfBytes": "1568"
+      },
+      "t_array(t_uint256)50_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_contract(IPriceGetter)6939": {
+        "encoding": "inplace",
+        "label": "contract IPriceGetter",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_string_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => string)",
+        "numberOfBytes": "32",
+        "value": "t_string_storage"
+      },
+      "t_mapping(t_string_memory_ptr,t_struct(IDOPriceInfo)14319_storage)": {
+        "encoding": "mapping",
+        "key": "t_string_memory_ptr",
+        "label": "mapping(string => struct DexPriceGetter.IDOPriceInfo)",
+        "numberOfBytes": "32",
+        "value": "t_struct(IDOPriceInfo)14319_storage"
+      },
+      "t_string_memory_ptr": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_string_storage": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_struct(IDOPriceInfo)14319_storage": {
+        "encoding": "inplace",
+        "label": "struct DexPriceGetter.IDOPriceInfo",
+        "members": [
+          {
+            "astId": 14306,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "pair",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 14308,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "decimals",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 14310,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "sampleInterval",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 14312,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "isToken0",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 14314,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "priceAverage",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 14316,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "priceCumulativeLast",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256"
+          },
+          {
+            "astId": 14318,
+            "contract": "src/priceGetter/DexPriceGetter.sol:DexPriceGetter",
+            "label": "lastTimestamp",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256"
+          }
+        ],
+        "numberOfBytes": "224"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}

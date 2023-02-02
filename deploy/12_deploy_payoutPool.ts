@@ -26,7 +26,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
   const impList = readImpList();
 
-  const [, , shieldAddress] = getExternalTokenAddress(network.name);
   const policyCenterAddress = addressList[network.name].PolicyCenter;
   const crTokenFactoryAddress =
     addressList[network.name].CoverRightTokenFactory;
@@ -40,7 +39,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       init: {
         methodName: "initialize",
         args: [
-          shieldAddress,
           policyCenterAddress,
           crTokenFactoryAddress,
           priorityPoolFactoryAddress,

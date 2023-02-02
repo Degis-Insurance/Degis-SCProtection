@@ -26,14 +26,23 @@ import "../voting/interfaces/VotingParameters.sol";
 import "./interfaces/ExecutorEventError.sol";
 
 /**
- * @title Executor
+ * @title Executor Contract
  *
- * @author Eric Lee (ylikp.ust@gmail.com) & Primata (primata@375labs.org)
+ * @author Eric Lee (ericlee@375labs.org) & Primata (primata@375labs.org)
  *
- * @notice This is the executor for degis Protocol Protection
+ * @notice This is the executor contract for degis Protocol Protection
+ * 
  *         The executor is responsible for the execution of the reports and pool proposals
  *         Both administrators or users can execute proposals and reports
- *
+ * 
+ *         Execute a report means:
+ *             - Mark the report as executed
+ *             - Reward the reported from the Treasury
+ *             - Liquidate / Move the total payout amount out of the priority pool (to the payout pool) 
+ * 
+ *         Execute a proposal means:
+ *             - Mark the proposal as executed
+ *             - Create a new priority pool
  */
 contract Executor is
     VotingParameters,

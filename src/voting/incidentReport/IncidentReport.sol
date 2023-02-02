@@ -239,10 +239,6 @@ contract IncidentReport is
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
 
-        // @audit Pause pools when report rather than start voting
-        // // Pause insurance pool and reinsurance pool
-        // _pausePools(currentReport.poolId);
-
         emit ReportVotingStart(_id, block.timestamp);
     }
 
