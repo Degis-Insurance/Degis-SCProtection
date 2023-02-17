@@ -83,11 +83,10 @@ contract OnboardProposal is
 
     function initialize(
         address _deg,
-        address _veDeg,
-        address _shield
+        address _veDeg
     ) public initializer {
         __Ownable_init();
-        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __ExternalToken__Init(_deg, _veDeg);
 
         // Initial quorum 30%
         quorumRatio = 30;

@@ -112,8 +112,6 @@ interface IOnboardProposal {
 
     function settle(uint256 _proposalId) external;
 
-    function shield() external view returns (address);
-
     function startVoting(uint256 _proposalId) external;
 
     function transferOwnership(address newOwner) external;

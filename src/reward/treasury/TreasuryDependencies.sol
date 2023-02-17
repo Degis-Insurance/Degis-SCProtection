@@ -6,6 +6,4 @@ abstract contract TreasuryDependencies {
     address public executor;
 
     address public policyCenter;
-
-    address public shield;
 }

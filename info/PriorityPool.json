@@ -73,5 +73,35 @@
 	},
 	"rinkeby": {},
 	"fujiTest": {},
-	"reserve": {}
+	"reserve": {},
+	"avaxNew": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0xCFA41F38C144baeC74A2B52C3A9d4e45b856cB73",
+			"name": "GMX",
+			"token": "0x62edc0692BD897D2295872a9FFCac5425011c661",
+			"premium": "280"
+		},
+		"2": {
+			"id": "2",
+			"poolAddress": "0xE745FCB4f9470C6E7Adde23Be906a520A56d615c",
+			"name": "TraderJoe",
+			"token": "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+			"premium": "260"
+		},
+		"3": {
+			"id": "3",
+			"poolAddress": "0x32a953D94647d9f36617daBb4FE5ca7Af7b26733",
+			"name": "PTP",
+			"token": "0x22d4002028f537599bE9f666d1c4Fa138522f9c8",
+			"premium": "280"
+		},
+		"4": {
+			"id": "4",
+			"poolAddress": "0xae2b2b106c9f5723cE4fe5cBa0a270AdedA39b80",
+			"name": "Vector",
+			"token": "0x5817D4F0b62A59b17f75207DA1848C2cE75e7AF4",
+			"premium": "350"
+		}
+	}
 }

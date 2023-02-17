@@ -52,6 +52,8 @@ contract PriorityPoolFactory is
     ExternalTokenDependencies,
     PriorityPoolFactoryDependencies
 {
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -90,19 +92,18 @@ contract PriorityPoolFactory is
     function initialize(
         address _deg,
         address _veDeg,
-        address _shield,
         address _protectionPool
     ) public initializer {
-        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __ExternalToken__Init(_deg, _veDeg);
         __Ownable_init();
 
         protectionPool = _protectionPool;
 
         poolRegistered[_protectionPool] = true;
-        tokenRegistered[_shield] = true;
+        tokenRegistered[USDC] = true;
 
         // Protection pool as pool 0
-        pools[0] = PoolInfo("ProtectionPool", _protectionPool, _shield, 0, 0);
+        pools[0] = PoolInfo("ProtectionPool", _protectionPool, USDC, 0, 0);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -198,7 +199,7 @@ contract PriorityPoolFactory is
      * @param _name             Name of the protocol
      * @param _protocolToken    Address of the token used for the protocol
      * @param _maxCapacity      Maximum capacity of the pool
-     * @param _basePremiumRatio Initial policy price per shield
+     * @param _basePremiumRatio Initial policy price per usdc
      *
      * @return address Address of the new insurance pool
      */

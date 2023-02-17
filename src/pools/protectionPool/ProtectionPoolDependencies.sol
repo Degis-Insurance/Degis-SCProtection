@@ -31,13 +31,7 @@ interface IPriorityPool {
     function activeCovered() external view returns (uint256);
 }
 
-interface IMiningToken {
-    function mint(address _to, uint256 _amount) external;
-
-    function burn(address _to, uint256 _amount) external;
-}
-
-abstract contract ProtectionPoolDependencies is CommonDependencies {
+abstract contract ProtectionPoolDependencies {
     address public priorityPoolFactory;
     address public policyCenter;
     address public incidentReport;

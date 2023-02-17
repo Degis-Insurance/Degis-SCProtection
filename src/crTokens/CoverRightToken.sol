@@ -122,7 +122,7 @@ contract CoverRightToken is ERC20, ReentrancyGuard {
      * @notice Override the decimals funciton
      *
      *         Cover right token is minted with reference to the cover amount he bought
-     *         So keep the decimals the same with Shield
+     *         So keep the decimals the same with USDC
      */
     function decimals() public pure override returns (uint8) {
         return 6;

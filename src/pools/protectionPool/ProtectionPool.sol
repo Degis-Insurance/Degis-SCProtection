@@ -56,6 +56,8 @@ contract ProtectionPool is
 {
     using DateTimeLibrary for uint256;
 
+    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -72,9 +74,6 @@ contract ProtectionPool is
     // Total amount staked
     uint256 public stakedSupply;
 
-    // Mining token address
-    address public miningToken;
-
     // Year => Month => Speed
     mapping(uint256 => mapping(uint256 => uint256)) public rewardSpeed;
 
@@ -84,14 +83,13 @@ contract ProtectionPool is
 
     function initialize(
         address _deg,
-        address _veDeg,
-        address _shield
+        address _veDeg
     ) public initializer {
         __ERC20_init("ProtectionPool", "PRO-LP");
-        __FlashLoan__Init(_shield);
+        __FlashLoan__Init(USDC);
         __Ownable_init();
         __Pausable_init();
-        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __ExternalToken__Init(_deg, _veDeg);
 
         // Register time that pool was deployed
         startTime = block.timestamp;
@@ -183,10 +181,6 @@ contract ProtectionPool is
         priorityPoolFactory = _priorityPoolFactory;
     }
 
-    function setMiningToken(address _miningToken) external onlyOwner {
-        miningToken = _miningToken;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -201,7 +195,7 @@ contract ProtectionPool is
 
         uint256 poolAmount = factory.poolCounter();
 
-        uint256 currentReserved = IShield(shield).balanceOf(address(this));
+        uint256 currentReserved = SimpleIERC20(USDC).balanceOf(address(this));
 
         uint256 indexToCut;
         uint256 minRequirement;
@@ -234,7 +228,7 @@ contract ProtectionPool is
      * @notice Finish providing liquidity
      *         Only callable through policyCenter
      *
-     * @param _amount   Liquidity amount (shield)
+     * @param _amount   Liquidity amount (usdc)
      * @param _provider Provider address
      */
     function providedLiquidity(uint256 _amount, address _provider)
@@ -247,9 +241,6 @@ contract ProtectionPool is
         uint256 amountToMint = (_amount * SCALE) / price;
         _mint(_provider, amountToMint);
         emit LiquidityProvided(_amount, amountToMint, _provider);
-
-        // Mint mining tokens to the user
-        IMiningToken(miningToken).mint(_provider, amountToMint);
     }
 
     /**
@@ -265,7 +256,7 @@ contract ProtectionPool is
     function removedLiquidity(uint256 _amount, address _provider)
         external
         whenNotPaused
-        returns (uint256 shieldToTransfer)
+        returns (uint256 usdcToTransfer)
     {
         if (
             msg.sender != policyCenter &&
@@ -280,10 +271,10 @@ contract ProtectionPool is
         _updatePrice();
 
         // Burn PRO_LP tokens to the user
-        shieldToTransfer = (_amount * price) / SCALE;
+        usdcToTransfer = (_amount * price) / SCALE;
 
         if (msg.sender == policyCenter) {
-            checkEnoughLiquidity(shieldToTransfer);
+            checkEnoughLiquidity(usdcToTransfer);
         }
 
         // @audit Change path
@@ -292,21 +283,16 @@ contract ProtectionPool is
         address realPayer = msg.sender == policyCenter ? _provider : msg.sender;
 
         _burn(realPayer, _amount);
-        SimpleIERC20(shield).transfer(_provider, shieldToTransfer);
+        SimpleIERC20(USDC).transfer(_provider, usdcToTransfer);
 
-        emit LiquidityRemoved(_amount, shieldToTransfer, _provider);
-
-        // Burn mining token
-        if (msg.sender == policyCenter) {
-            IMiningToken(miningToken).burn(realPayer, shieldToTransfer);
-        }
+        emit LiquidityRemoved(_amount, usdcToTransfer, _provider);
     }
 
     function checkEnoughLiquidity(uint256 _amountToRemove) public view {
-        // Minimum shield requirement
+        // Minimum usdc requirement
         uint256 minRequirement = minAssetRequirement();
 
-        uint256 currentReserved = IShield(shield).balanceOf(address(this));
+        uint256 currentReserved = SimpleIERC20(USDC).balanceOf(address(this));
 
         if (currentReserved < minRequirement + _amountToRemove)
             revert ProtectionPool__NotEnoughLiquidity();
@@ -355,10 +341,10 @@ contract ProtectionPool is
             )
         ) revert ProtectionPool__OnlyPriorityPool();
 
-        if (_amount > SimpleIERC20(shield).balanceOf(address(this)))
+        if (_amount > SimpleIERC20(USDC).balanceOf(address(this)))
             revert ProtectionPool__NotEnoughBalance();
 
-        SimpleIERC20(shield).transfer(_to, _amount);
+        SimpleIERC20(USDC).transfer(_to, _amount);
 
         _updatePrice();
 
@@ -374,6 +360,7 @@ contract ProtectionPool is
 
     /**
      * @notice Set paused state of the protection pool
+     *         Only callable by owner, incidentReport, or priorityPoolFactory
      *
      * @param _paused True for pause, false for unpause
      */
@@ -408,7 +395,7 @@ contract ProtectionPool is
             return;
         }
         price =
-            ((SimpleIERC20(shield).balanceOf(address(this))) * SCALE) /
+            ((SimpleIERC20(USDC).balanceOf(address(this))) * SCALE) /
             totalSupply();
 
         emit PriceUpdated(price);

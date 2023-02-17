@@ -55,7 +55,7 @@ contract PriorityPoolDeployer is Initializable {
      * @param _name             Name of the protocol
      * @param _protocolToken    Address of the token used for the protocol
      * @param _maxCapacity      Maximum capacity of the pool
-     * @param _basePremiumRatio Initial policy price per shield
+     * @param _basePremiumRatio Initial policy price per usdc
      *
      * @return address Address of the new insurance pool
      */

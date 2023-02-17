@@ -123,7 +123,7 @@ contract CoverRightTokenFactory is OwnableWithoutContextUpgradeable {
             abi.encodePacked(_poolId, _expiry, _generation)
         );
 
-        require(!deployed[salt], "already deployed");
+        require(!deployed[salt], "Already deployed");
         deployed[salt] = true;
 
         bytes memory bytecode = _getCRTokenBytecode(

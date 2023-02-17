@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 
 import "./IVeDEG.sol";
 import "./IDegisToken.sol";
-import "./IShield.sol";
 import "./CommonDependencies.sol";
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -12,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /**
  * @notice External token dependencies
  *         Include the tokens that are not deployed by this repo
- *         DEG, veDEG & SHIELD
+ *         DEG, veDEG
  *         They are set as immutable
  */
 abstract contract ExternalTokenDependencies is
@@ -21,15 +20,12 @@ abstract contract ExternalTokenDependencies is
 {
     IDegisToken internal deg;
     IVeDEG internal veDeg;
-    IShield internal shield;
 
-    function __ExternalToken__Init(
-        address _deg,
-        address _veDeg,
-        address _shield
-    ) internal onlyInitializing {
+    function __ExternalToken__Init(address _deg, address _veDeg)
+        internal
+        onlyInitializing
+    {
         deg = IDegisToken(_deg);
         veDeg = IVeDEG(_veDeg);
-        shield = IShield(_shield);
     }
 }

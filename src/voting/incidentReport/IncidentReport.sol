@@ -130,11 +130,10 @@ contract IncidentReport is
 
     function initialize(
         address _deg,
-        address _veDeg,
-        address _shield
+        address _veDeg
     ) public initializer {
         __Ownable_init();
-        __ExternalToken__Init(_deg, _veDeg, _shield);
+        __ExternalToken__Init(_deg, _veDeg);
 
         // Initial quorum 50%
         quorumRatio = 50;
@@ -209,7 +208,7 @@ contract IncidentReport is
      * @notice Start a new incident report
      *
      *         1000 DEG tokens are staked to start a report
-     *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
+     *         If the report is correct, reporter gets back 1000DEG + 10% usdc income + extra 1000DEG
      *         If the report is wrong, reporter loses 1000DEG to those who vote against
      *         Only callable through proposal center
      *
@@ -239,10 +238,6 @@ contract IncidentReport is
 
         currentReport.status = VOTING_STATUS;
         currentReport.voteTimestamp = block.timestamp;
-
-        // @audit Pause pools when report rather than start voting
-        // // Pause insurance pool and reinsurance pool
-        // _pausePools(currentReport.poolId);
 
         emit ReportVotingStart(_id, block.timestamp);
     }
@@ -427,7 +422,7 @@ contract IncidentReport is
      * @notice Start a new incident report
      *
      *         1000 DEG tokens are staked to start a report
-     *         If the report is correct, reporter gets back 1000DEG + 10% shield income + extra 1000DEG
+     *         If the report is correct, reporter gets back 1000DEG + 10% usdc income + extra 1000DEG
      *         If the report is wrong, reporter loses 1000DEG to those who vote against
      *
      * @param _poolId Pool id to report incident

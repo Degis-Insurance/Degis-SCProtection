@@ -27,7 +27,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const priceGetterAddress = addressList[network.name].PriceGetter;
 
-  if (network.name == "avax" || network.name == "avaxTest") {
+  if (
+    network.name == "avax" ||
+    network.name == "avaxTest" ||
+    network.name == "avaxNew"
+  ) {
     const proxyOptions: ProxyOptions = {
       proxyContract: "OpenZeppelinTransparentProxy",
       viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },

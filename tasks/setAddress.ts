@@ -9,8 +9,6 @@ import {
   IncidentReport__factory,
   PriorityPoolFactory,
   PriorityPoolFactory__factory,
-  MockDEG,
-  MockDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
   PolicyCenter,
@@ -75,8 +73,6 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
       addressList[network.name].PriorityPoolFactory;
     const incidentReportAddress = addressList[network.name].IncidentReport;
     const policyCenterAddress = addressList[network.name].PolicyCenter;
-    const miningTokenAddress =
-      addressList[network.name].ProtectionPoolMiningToken;
 
     const protectionPool: ProtectionPool = new ProtectionPool__factory(
       dev_account
@@ -101,11 +97,6 @@ task("setProtectionPool", "Set contract address in protectionPool").setAction(
         incidentReportAddress
       );
       console.log("Tx details: ", await tx_3.wait());
-    }
-
-    if ((await protectionPool.miningToken()) != miningTokenAddress) {
-      const tx_4 = await protectionPool.setMiningToken(miningTokenAddress);
-      console.log("Tx details: ", await tx_4.wait());
     }
 
     console.log("\nFinish setting contract addresses in protection pool\n");
@@ -252,7 +243,7 @@ task("setOnboardProposal", "Set contract address in onboardProposal").setAction(
 
 task("setPolicyCenter", "Set contract address in policyCenter").setAction(
   async (_, hre) => {
-    console.log("\nSetting contract addresses in onbardproposal\n");
+    console.log("\nSetting contract addresses in policy center \n");
 
     const { network } = hre;
 
@@ -266,11 +257,15 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
     const exchangeAddress =
-      network.name != "avax" && network.name != "avaxTest"
+      network.name != "avax" &&
+      network.name != "avaxTest" &&
+      network.name != "avaxNew"
         ? addressList[network.name].MockExchange
         : addressList[network.name].Exchange;
     const priceGetterAddress =
-      network.name != "avax" && network.name != "avaxTest"
+      network.name != "avax" &&
+      network.name != "avaxTest" &&
+      network.name != "avaxNew"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -294,10 +289,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_1.wait());
     }
 
-    // if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
-    //   const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
-    //   console.log("Tx details: ", await tx_2.wait());
-    // }
+    if ((await policyCenter.protectionPool()) != protectionPoolAddress) {
+      const tx_2 = await policyCenter.setProtectionPool(protectionPoolAddress);
+      console.log("Tx details: ", await tx_2.wait());
+    }
 
     if ((await policyCenter.exchange()) != exchangeAddress) {
       const tx_3 = await policyCenter.setExchange(exchangeAddress);
@@ -337,10 +332,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_8.wait());
     }
 
-    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
-    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
-    //   console.log("Tx details: ", await tx_9.wait());
-    // }
+    if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+      const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+      console.log("Tx details: ", await tx_9.wait());
+    }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }
@@ -631,6 +626,8 @@ task("check").setAction(async (_, hre) => {
 // Feed: 0x0A77230d17318075983913bC2145DB16C7366156
 // Decimals: 8
 
+// npx hardhat addPriceFeed --network avaxNew --name AVAX --address 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 --feed 0x0A77230d17318075983913bC2145DB16C7366156 --decimals 8
+
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
   .addParam("address", "Token address", null, types.string)
@@ -658,13 +655,16 @@ task("addPriceFeed", "Add price feed in price getter")
     console.log("Tx details: ", await tx.wait());
   });
 
-// name: GMX
-// Pair: 0x0c91a070f862666bBcce281346BE45766d874D98
+// name: PTP
+// Pair: 0xCDFD91eEa657cc2701117fe9711C9a4F61FEED23
+
+// name: Vector
+// Pair: 0x9ef0c12b787f90f59cbbe0b611b82d30cab92929
 
 task("addDexPriceFeed")
   .addParam("name", "Token name", null, types.string)
   .addParam("pair", "Trader joe pair", null, types.string)
-  .addOptionalParam("decimals", "Token decimals", 18, types.string)
+  .addOptionalParam("decimals", "Token decimals", "18", types.string)
   .addOptionalParam("interval", "Sample interval", 60, types.int)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;

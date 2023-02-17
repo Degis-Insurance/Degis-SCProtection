@@ -38,6 +38,4 @@ interface IPayoutPool {
         );
 
     function policyCenter() external view returns (address);
-
-    function shield() external view returns (address);
 }

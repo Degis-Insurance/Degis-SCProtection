@@ -21,13 +21,16 @@ abstract contract PolicyCenterDependencies {
     uint256 internal constant MAX_COVER_LENGTH = 3;
 
     // 10000 = 100%
+    // Priority pool 45%
     uint256 internal constant PREMIUM_TO_PRIORITY = 4500;
+    // Protection pool 50%
     uint256 internal constant PREMIUM_TO_PROTECTION = 5000;
+    // Treasury 5%
     uint256 internal constant PREMIUM_TO_TREASURY = 500;
 
     // Swap slippage
     // TODO: Slippage tolerance parameter 10000 as 100%
-    uint256 internal constant SLIPPAGE = 10000;
+    uint256 internal constant SLIPPAGE = 100;
 
     address public protectionPool;
     address public priceGetter;

@@ -10,6 +10,10 @@ import {
 } from "../../typechain-types";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
+// npx hardhat proposeNewPool --network avaxNew
+// --name BTC.b --token 0x152b9d0FdC40C096757F570A51E494bd4b943E50
+// --capacity 5000 --premium 280
+
 task("proposeNewPool", "Proposa a new pool in onboard proposal")
   .addParam("name", "Protocol name", null, types.string)
   .addParam("token", "Token address", null, types.string)
