@@ -30,11 +30,12 @@ import {
 } from "../../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
-// npx hardhat deployPriorityPool --network fuji --name TraderJoe --token 0x2C563651419A72e721D83151713428D467f1Ce22 --capacity 2000 --premium 200
-// npx hardhat deployPriorityPool --network fuji --name GMX --token 0x10C9F09503048B0b93B12b316C4eb93324a79fdf --capacity 2000 --premium 200
-// npx hardhat deployPriorityPool --network fuji --name PTP --token 0x1A0F76C19F9A9301A3cDE8532f72ce703FE58856 --capacity 2000 --premium 250
-// npx hardhat deployPriorityPool --network fuji --name IME --token 0xe6b592f03Cc0447E61004C5437c3579b590B6Efb --capacity 2000 --premium 250
-// npx hardhat deployPriorityPool --network fuji --name XAVA --token 0x8BfA09Bc7778f98505160C08d1E2D519B4c6137e --capacity 2500 --premium 200
+// npx hardhat deployPriorityPool --network avaxNew --name GMX --token 0x62edc0692BD897D2295872a9FFCac5425011c661 --capacity 4000 --premium 280
+// npx hardhat deployPriorityPool --network avaxNew --name TraderJoe --token 0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd --capacity 4000 --premium 260
+// npx hardhat deployPriorityPool --network avaxNew --name PTP --token 0x22d4002028f537599be9f666d1c4fa138522f9c8 --capacity 4000 --premium 280
+
+
+// npx hardhat deployPriorityPool --network avaxNew --name Vector --token 0x5817D4F0b62A59b17f75207DA1848C2cE75e7AF4 --capacity 3000 --premium 350
 
 task("deployPriorityPool", "Deploy a new priority pool by owner")
   .addParam("name", "Protocol name", null, types.string)

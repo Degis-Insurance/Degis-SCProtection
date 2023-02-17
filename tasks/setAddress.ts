@@ -626,6 +626,8 @@ task("check").setAction(async (_, hre) => {
 // Feed: 0x0A77230d17318075983913bC2145DB16C7366156
 // Decimals: 8
 
+// npx hardhat addPriceFeed --network avaxNew --name AVAX --address 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 --feed 0x0A77230d17318075983913bC2145DB16C7366156 --decimals 8
+
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
   .addParam("address", "Token address", null, types.string)
@@ -653,13 +655,16 @@ task("addPriceFeed", "Add price feed in price getter")
     console.log("Tx details: ", await tx.wait());
   });
 
-// name: GMX
-// Pair: 0x0c91a070f862666bBcce281346BE45766d874D98
+// name: PTP
+// Pair: 0xCDFD91eEa657cc2701117fe9711C9a4F61FEED23
+
+// name: Vector
+// Pair: 0x9ef0c12b787f90f59cbbe0b611b82d30cab92929
 
 task("addDexPriceFeed")
   .addParam("name", "Token name", null, types.string)
   .addParam("pair", "Trader joe pair", null, types.string)
-  .addOptionalParam("decimals", "Token decimals", 18, types.string)
+  .addOptionalParam("decimals", "Token decimals", "18", types.string)
   .addOptionalParam("interval", "Sample interval", 60, types.int)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
