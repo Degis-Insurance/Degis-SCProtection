@@ -2,59 +2,34 @@
 
 pragma solidity ^0.8.13;
 
-import "./utils/ContractSetupBaseTest.sol";
-
+import "test/utils/ContractSetupBaseTest.sol";
 import "src/interfaces/IOnboardProposal.sol";
 import "src/interfaces/IPriorityPool.sol";
 
-import "src/voting/onboardProposal/OnboardProposalParameters.sol";
+import "./ExecutorTestConstants.sol";
+
 import "src/voting/onboardProposal/OnboardProposalEventError.sol";
-import "src/voting/incidentReport/IncidentReportParameters.sol";
 import "src/voting/incidentReport/IncidentReportEventError.sol";
 import "src/core/interfaces/ExecutorEventError.sol";
 
 contract ExecutorTest is
     ExecutorEventError,
     ContractSetupBaseTest,
-    OnboardProposalParameters,
-    IncidentReportParameters,
+    ExecutorTestConstants,
     OnboardProposalEventError,
     IncidentReportEventError
 {
-    uint256 internal constant SCALE = 1e12;
+    // Mock user addresses
+    address internal alice = mkaddr("alice");
+    address internal bob = mkaddr("bob");
+    address internal charlie = mkaddr("charlie");
 
-    address internal ALICE = mkaddr("Alice");
-    address internal BOB = mkaddr("Bob");
-    address internal CHARLIE = mkaddr("Charlie");
-
-    uint256 internal constant CAPACITY_1 = 40;
-    uint256 internal constant CAPACITY_2 = 30;
-    uint256 internal constant CAPACITY_3 = 40;
-
-    uint256 internal constant PREMIUMRATIO_1 = 200;
-    uint256 internal constant PREMIUMRATIO_2 = 250;
-    uint256 internal constant PREMIUMRATIO_3 = 400;
-
-    uint256 internal constant PAYOUT = 1000e6;
-    uint256 internal constant LIQUIDITY = 1000 ether;
-
-    uint256 internal constant VOTE_AMOUNT = 100 ether;
-
-    uint256 internal constant PROPOSE_TIME = 0;
-    uint256 internal constant REPORT_TIME = 0;
-
-    uint256 internal constant PROPOSAL_VOTE_TIME = 0;
-    uint256 internal constant INCIDENT_VOTE_TIME = PENDING_PERIOD;
-
-    uint256 internal constant PROPOSAL_SETTLE_TIME =
-        PROPOSAL_VOTE_TIME + PROPOSAL_VOTING_PERIOD;
-    uint256 internal constant INCIDENT_SETTLE_TIME =
-        INCIDENT_VOTE_TIME + INCIDENT_VOTING_PERIOD;
-
+    // Mock priority pools
     IPriorityPool internal joePool;
     PriorityPool internal ptpPool;
     IPriorityPool internal gmxPool;
 
+    // Mock native tokens for priority pools
     MockERC20 internal joe;
     MockERC20 internal ptp;
     MockERC20 internal gmx;
@@ -82,19 +57,19 @@ contract ExecutorTest is
         joeLPAddress = joePool.currentLPAddress();
 
         // Mint usdc to provide liquidity
-        shield.mint(CHARLIE, 1000 ether);
+        shield.mint(charlie, 1000 ether);
 
-        vm.prank(CHARLIE);
+        vm.prank(charlie);
         shield.approve(address(policyCenter), LIQUIDITY);
 
         // Provide Liquidity by one user
-        vm.prank(CHARLIE);
+        vm.prank(charlie);
         policyCenter.provideLiquidity(LIQUIDITY);
 
         // Propose a new priority pool
-        deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
+        deg.mintDegis(charlie, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
-        vm.prank(CHARLIE);
+        vm.prank(charlie);
         onboardProposal.propose(
             "Platypus",
             address(ptp),
@@ -103,9 +78,9 @@ contract ExecutorTest is
         );
 
         // Proopose a new priority pool
-        deg.mintDegis(CHARLIE, PROPOSE_THRESHOLD);
+        deg.mintDegis(charlie, PROPOSE_THRESHOLD);
         vm.warp(PROPOSE_TIME);
-        vm.prank(CHARLIE);
+        vm.prank(charlie);
         onboardProposal.propose(
             "GMX",
             address(gmx),
@@ -113,31 +88,31 @@ contract ExecutorTest is
             PREMIUMRATIO_3
         );
 
-        deg.mintDegis(CHARLIE, REPORT_THRESHOLD);
+        deg.mintDegis(charlie, REPORT_THRESHOLD);
         vm.warp(REPORT_TIME);
-        vm.prank(CHARLIE);
+        vm.prank(charlie);
         incidentReport.report(1, PAYOUT);
 
         // Preparations
-        veDEG.mint(ALICE, VOTE_AMOUNT * 2);
-        veDEG.mint(BOB, VOTE_AMOUNT * 2);
+        veDEG.mint(alice, VOTE_AMOUNT * 2);
+        veDEG.mint(bob, VOTE_AMOUNT * 2);
     }
 
     function _voteReport() private {
         vm.warp(INCIDENT_VOTE_TIME);
         incidentReport.startVoting(1);
-        vm.prank(ALICE);
+        vm.prank(alice);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
-        vm.prank(BOB);
+        vm.prank(bob);
         incidentReport.vote(1, VOTE_FOR, VOTE_AMOUNT);
     }
 
     function _voteProposal() private {
         vm.warp(PROPOSAL_VOTE_TIME);
         onboardProposal.startVoting(1);
-        vm.prank(ALICE);
+        vm.prank(alice);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
-        vm.prank(BOB);
+        vm.prank(bob);
         onboardProposal.vote(1, VOTE_FOR, VOTE_AMOUNT);
     }
 
@@ -279,7 +254,7 @@ contract ExecutorTest is
 
         // Check the report record is intanct
         assertEq(report.poolId, 1);
-        assertEq(report.reporter, CHARLIE);
+        assertEq(report.reporter, charlie);
         assertEq(report.reportTimestamp, REPORT_TIME);
         assertEq(report.status, SETTLED_STATUS);
         assertEq(report.payout, PAYOUT);

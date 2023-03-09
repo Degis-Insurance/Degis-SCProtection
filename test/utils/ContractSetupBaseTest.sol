@@ -24,7 +24,6 @@ import "src/crTokens/CoverRightTokenFactory.sol";
 import "src/mock/MockERC20.sol";
 import "src/mock/MockDEG.sol";
 import "src/mock/MockVeDEG.sol";
-import "src/mock/MockSHIELD.sol";
 import "src/mock/MockExchange.sol";
 import "src/mock/MockPriceGetter.sol";
 import "src/mock/MockUSDC.sol";
@@ -47,7 +46,6 @@ contract ContractSetupBaseTest is BaseTest {
 
     MockDEG internal deg;
     MockVeDEG internal veDEG;
-    MockSHIELD internal shield;
     MockUSDC internal usdc;
 
     MockPriceGetter internal priceGetter;
@@ -57,7 +55,6 @@ contract ContractSetupBaseTest is BaseTest {
         // Set up mock tokens
         deg = new MockDEG(0, "Degis", 18, "DEG");
         veDEG = new MockVeDEG(0, "VoteEscrowedDegis", 18, "veDEG");
-        shield = new MockSHIELD(0, "Shield", 6, "SHD");
         usdc = new MockUSDC("MockUSDC", "MockUSDC", 6);
 
         priceGetter = new MockPriceGetter();
@@ -85,8 +82,7 @@ contract ContractSetupBaseTest is BaseTest {
     function _setupProtectionPool() internal {
         protectionPool = new ProtectionPool(
             address(deg),
-            address(veDEG),
-            address(shield)
+            address(veDEG)
         );
     }
 
@@ -94,7 +90,6 @@ contract ContractSetupBaseTest is BaseTest {
         priorityPoolFactory = new PriorityPoolFactory(
             address(deg),
             address(veDEG),
-            address(shield),
             address(protectionPool)
         );
     }
@@ -103,7 +98,6 @@ contract ContractSetupBaseTest is BaseTest {
         policyCenter = new PolicyCenter(
             address(deg),
             address(veDEG),
-            address(shield),
             address(protectionPool),
             address(usdc)
         );
@@ -122,7 +116,6 @@ contract ContractSetupBaseTest is BaseTest {
 
     function _setupPayoutPool() internal {
         payoutPool = new PayoutPool(
-            address(shield),
             address(policyCenter),
             address(crFactory),
             address(priorityPoolFactory)
@@ -131,7 +124,6 @@ contract ContractSetupBaseTest is BaseTest {
 
     function _setupTreasury() internal {
         treasury = new Treasury(
-            address(shield),
             address(executor),
             address(policyCenter)
         );
@@ -147,16 +139,14 @@ contract ContractSetupBaseTest is BaseTest {
     function _setupIncidentReport() internal {
         incidentReport = new IncidentReport(
             address(deg),
-            address(veDEG),
-            address(shield)
+            address(veDEG)
         );
     }
 
     function _setupOnboardProposal() internal {
         onboardProposal = new OnboardProposal(
             address(deg),
-            address(veDEG),
-            address(shield)
+            address(veDEG)
         );
     }
 
