@@ -11,6 +11,7 @@
     "reason-string": ["warn", { "maxLength": 60 }],
     "not-rely-on-time": "off",
     "no-inline-assembly": "off",
-    "no-global-import": "off"
+    "no-global-import": "off",
+    "no-console": "off"
   }
 }

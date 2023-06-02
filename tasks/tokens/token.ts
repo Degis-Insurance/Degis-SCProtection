@@ -56,10 +56,12 @@ task("mintMockERC20", "Mint mock erc20 tokens").setAction(async (_, hre) => {
   const addressList = readAddressList();
 
   const token: MockERC20 = new MockERC20__factory(dev_account).attach(
-    addressList[network.name].MockERC20
+    addressList[network.name].MockUSDC
   );
 
-  const tx = await token.mint(dev_account.address, parseUnits("10000"));
+  const to = dev_account.address;
+
+  const tx = await token.mint(to, parseUnits("1000000"));
   console.log("tx details", await tx.wait());
 
   await token.approve(
@@ -123,6 +125,7 @@ task("mintMockUSD", "Mint mockUSD for mockExchange").setAction(
 
     const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
       addressList[network.name].MockUSDC
+      // "0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3"
     );
 
     const tx = await usd.mint(
@@ -190,7 +193,7 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   ).attach(addressList[network.name].PolicyCenter);
 
   const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].XAVAToken
+    addressList[network.name].TestProject2
   );
   console.log("tx details:", await tx.wait());
 });

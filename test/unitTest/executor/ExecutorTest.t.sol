@@ -57,10 +57,10 @@ contract ExecutorTest is
         joeLPAddress = joePool.currentLPAddress();
 
         // Mint usdc to provide liquidity
-        shield.mint(charlie, 1000 ether);
+        usdc.mint(charlie, 1000 ether);
 
         vm.prank(charlie);
-        shield.approve(address(policyCenter), LIQUIDITY);
+        usdc.approve(address(policyCenter), LIQUIDITY);
 
         // Provide Liquidity by one user
         vm.prank(charlie);

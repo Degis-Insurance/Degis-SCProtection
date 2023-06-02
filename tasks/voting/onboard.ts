@@ -3,15 +3,15 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 import {
-  MockVeDEG,
-  MockVeDEG__factory,
   OnboardProposal,
   OnboardProposal__factory,
 } from "../../typechain-types";
-import { formatEther, parseUnits } from "ethers/lib/utils";
 
 // npx hardhat proposeNewPool --network avaxNew
 // --name BTC.b --token 0x152b9d0FdC40C096757F570A51E494bd4b943E50
+// --capacity 5000 --premium 280
+
+// --name ETH.b --token 0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB
 // --capacity 5000 --premium 280
 
 task("proposeNewPool", "Proposa a new pool in onboard proposal")
@@ -57,8 +57,10 @@ task("startVotingProposal", "Start voting process of a proposal")
       dev_account
     ).attach(addressList[network.name].OnboardProposal);
 
-    const tx = await onboardProposal.startVoting(taskArgs.id);
+    const currentId = await onboardProposal.proposalCounter();
+    console.log("Current proposal id:", currentId.toString());
 
+    const tx = await onboardProposal.startVoting(taskArgs.id);
     console.log("Tx details:", await tx.wait());
   });
 
@@ -95,6 +97,25 @@ task("settleProposal", "Settle a proposal voting result")
 
     // const totalSupply = await veDEG.totalSupply();
     // console.log(formatEther(totalSupply));
+  });
+
+task("closeProposal", "Close a proposal voting result")
+  .addParam("id", "Proposal id", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const onboardProposal: OnboardProposal = new OnboardProposal__factory(
+      dev_account
+    ).attach(addressList[network.name].OnboardProposal);
+
+    const tx = await onboardProposal.closeProposal(taskArgs.id);
+    console.log("Tx details:", await tx.wait());
   });
 
 task("getProposal", "Get proposal info")

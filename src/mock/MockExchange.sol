@@ -8,6 +8,18 @@ import "../interfaces/IERC20Decimals.sol";
 contract MockExchange {
     constructor() {}
 
+    function getAmountsOut(uint256 _amount, address[] memory _path) external view returns(uint256[] memory amountsOut) {
+        amountsOut = new uint256[](_path.length);
+
+        uint256 decimalDiff = IERC20Decimals(_path[0]).decimals() -
+            IERC20Decimals(_path[1]).decimals();
+
+        uint256 amountOut = _amount / 10**decimalDiff;
+
+        amountsOut[0] = _amount;
+        amountsOut[1] = amountOut;
+    }
+
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256,

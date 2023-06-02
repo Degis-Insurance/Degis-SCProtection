@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 
 import {
-  getExternalTokenAddress,
   readAddressList,
   readImpList,
   storeAddressList,

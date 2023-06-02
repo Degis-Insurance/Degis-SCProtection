@@ -73,3 +73,20 @@ task("deployPoolLocal", "Deploy a new priority pool by owner").setAction(
     storePriorityPoolList(priorityPoolList);
   }
 );
+
+task("kkk").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  const exchangeAddress = await policyCenter.exchange();
+  console.log("Exchange address", exchangeAddress);
+});

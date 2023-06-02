@@ -7,20 +7,9 @@ import {
   CoverRightTokenFactory__factory,
   MockSHIELD,
   MockSHIELD__factory,
-  MockVeDEG,
-  MockVeDEG__factory,
-  OnboardProposal,
-  OnboardProposal__factory,
-  PayoutPool,
-  PayoutPool__factory,
+  MockUSDC__factory,
   PolicyCenter,
   PolicyCenter__factory,
-  PriceGetter,
-  PriceGetter__factory,
-  ProtectionPool,
-  ProtectionPool__factory,
-  WeightedFarmingPool,
-  WeightedFarmingPool__factory,
 } from "../typechain-types";
 import { formatEther, formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -94,4 +83,27 @@ task("buyCover", "Buy a cover")
     console.log("Tx details", await tx.wait());
   });
 
+task("provideLiquidityTest", "Provide liquidity to protection pool").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
 
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+
+    const addressList = readAddressList();
+
+    const center = new PolicyCenter__factory(dev_account).attach(
+      addressList[network.name].PolicyCenter
+    );
+
+    const usd = new MockUSDC__factory(dev_account).attach(
+      // addressList[network.name].MockUSDC
+      "0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3"
+    );
+
+    await usd.approve(center.address, parseUnits("100000000"));
+
+    const tx = await center.provideLiquidity(parseUnits("1", 6));
+    console.log("Tx details", await tx.wait());
+  }
+);

@@ -14,7 +14,7 @@ contract AddressCenter {
         require(msg.sender == owner, "AddressCenter: caller is not the owner");
         _;
     }
-
+ 
     modifier alreadyInitialized() {
         require(initialized, "AddressCenter: not already initialized");
         _;

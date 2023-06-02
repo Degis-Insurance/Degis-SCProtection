@@ -332,10 +332,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_8.wait());
     }
 
-    if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
-      const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
-      console.log("Tx details: ", await tx_9.wait());
-    }
+    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+    //   console.log("Tx details: ", await tx_9.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }
@@ -627,6 +627,7 @@ task("check").setAction(async (_, hre) => {
 // Decimals: 8
 
 // npx hardhat addPriceFeed --network avaxNew --name AVAX --address 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 --feed 0x0A77230d17318075983913bC2145DB16C7366156 --decimals 8
+// npx hardhat addPriceFeed --network avaxNew --name WETH --address 0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB --feed 0x976B3D034E162d8bD72D6b9C989d545b839003b0 --decimals 8
 
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
@@ -752,3 +753,44 @@ task("setOracleType")
     );
     console.log("Tx details", await tx.wait());
   });
+
+task("setExchangeByToken")
+  .addParam("token")
+  .addParam("exchange")
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const policyCenter: PolicyCenter = new PolicyCenter__factory(
+      dev_account
+    ).attach(addressList[network.name].PolicyCenter);
+
+    const tx = await policyCenter.setExchangeByToken(
+      taskArgs.token,
+      taskArgs.exchange
+    );
+    console.log("Tx details", await tx.wait());
+  });
+task("setExchange").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const exchange = "0x454206AD825cAfaE03c9581014AF6b74f7D53713";
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  const tx = await policyCenter.setExchange(exchange);
+  console.log("Tx details", await tx.wait());
+});

@@ -1,5 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction, DeployResult, ProxyOptions } from "hardhat-deploy/types";
+import {
+  DeployFunction,
+  DeployResult,
+  ProxyOptions,
+} from "hardhat-deploy/types";
 
 import {
   getExternalTokenAddress,
@@ -26,9 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
   const impList = readImpList();
 
-  const [degAddress, veDegAddress] = getExternalTokenAddress(
-    network.name
-  );
+  const [degAddress, veDegAddress] = getExternalTokenAddress(network.name);
 
   const proxyOptions: ProxyOptions = {
     proxyContract: "OpenZeppelinTransparentProxy",
@@ -46,11 +48,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     contract: "ProtectionPool",
     from: deployer,
     proxy: proxyOptions,
-    args: [],
     log: true,
+    args: [],
   });
-  addressList[network.name].ProtectionPool = protectionPool.address;
 
+  addressList[network.name].ProtectionPool = protectionPool.address;
   impList[network.name].ProtectionPool = protectionPool.implementation;
 
   console.log(
