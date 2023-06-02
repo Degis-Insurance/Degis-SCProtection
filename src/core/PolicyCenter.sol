@@ -531,7 +531,7 @@ contract PolicyCenter is
         );
 
         // Use token-specific router to swap
-        amountsOut = IExchange(exchange).swapExactTokensForTokens(
+        amountsOut = IExchange(router).swapExactTokensForTokens(
             _amount,
             ((amountOutCal[length - 1] * (10000 - SLIPPAGE)) / 10000),
             _path,
@@ -777,9 +777,10 @@ contract PolicyCenter is
      * @param _token Token address
      */
     function _approvePoolToken(address _token) internal {
-        if (exchange == address(0)) revert PolicyCenter__NoExchange();
+        address router = exchangeByToken[_token];
+        if (router == address(0)) revert PolicyCenter__NoExchange();
         // approve exchange to swap policy center tokens for deg
-        SimpleIERC20(_token).approve(exchange, type(uint256).max);
+        SimpleIERC20(_token).approve(router, type(uint256).max);
     }
 
     /**
