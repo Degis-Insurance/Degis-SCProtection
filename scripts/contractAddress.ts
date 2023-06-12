@@ -96,7 +96,13 @@ export const storeILMList = function (ILMList: object) {
 
 export const getExternalTokenAddress = function (chain: string) {
   const addressList = readAddressList();
-  if (chain == "avax" || chain == "avaxTest" || chain == "avaxNew") {
+  if (
+    chain == "avax" ||
+    chain == "avaxTest" ||
+    chain == "avaxNew" ||
+    chain == "arb" ||
+    chain == "arb_goerli"
+  ) {
     return [
       addressList[chain].DegisToken,
       addressList[chain].VoteEscrowedDegis,

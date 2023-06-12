@@ -55,7 +55,7 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+    address public constant USDC = 0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3;
 
     // Pool Id => Priority Pool Address
     // Updated once pools are deployed
@@ -69,6 +69,10 @@ contract PolicyCenter is
     // 0: Default as chainlink oracle
     // 1: Dex oracle by traderJoe
     mapping(address => uint256) public oracleType;
+
+    // Protocol token => Exchange router address
+    // Some tokens use Joe-V1, some use Joe-LiquidityBook
+    mapping(address => address) public exchangeByToken;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -117,11 +121,9 @@ contract PolicyCenter is
      *
      * @return lpAddress Current generation LP token address
      */
-    function currentLPAddress(uint256 _poolId)
-        external
-        view
-        returns (address lpAddress)
-    {
+    function currentLPAddress(
+        uint256 _poolId
+    ) external view returns (address lpAddress) {
         lpAddress = IPriorityPool(priorityPools[_poolId]).currentLPAddress();
     }
 
@@ -141,24 +143,21 @@ contract PolicyCenter is
         protectionPool = _protectionPool;
     }
 
-    function setWeightedFarmingPool(address _weightedFarmingPool)
-        external
-        onlyOwner
-    {
+    function setWeightedFarmingPool(
+        address _weightedFarmingPool
+    ) external onlyOwner {
         weightedFarmingPool = _weightedFarmingPool;
     }
 
-    function setCoverRightTokenFactory(address _coverRightTokenFactory)
-        external
-        onlyOwner
-    {
+    function setCoverRightTokenFactory(
+        address _coverRightTokenFactory
+    ) external onlyOwner {
         coverRightTokenFactory = _coverRightTokenFactory;
     }
 
-    function setPriorityPoolFactory(address _priorityPoolFactory)
-        external
-        onlyOwner
-    {
+    function setPriorityPoolFactory(
+        address _priorityPoolFactory
+    ) external onlyOwner {
         priorityPoolFactory = _priorityPoolFactory;
     }
 
@@ -177,6 +176,13 @@ contract PolicyCenter is
     function setOracleType(address _token, uint256 _type) external onlyOwner {
         require(_type < 2, "Wrong type");
         oracleType[_token] = _type;
+    }
+
+    function setExchangeByToken(
+        address _token,
+        address _exchange
+    ) external onlyOwner {
+        exchangeByToken[_token] = _exchange;
     }
 
     /**
@@ -284,10 +290,10 @@ contract PolicyCenter is
      * @param _poolId Pool id
      * @param _amount Amount of PRO-LP tokens to stake
      */
-    function stakeLiquidity(uint256 _poolId, uint256 _amount)
-        public
-        poolExists(_poolId)
-    {
+    function stakeLiquidity(
+        uint256 _poolId,
+        uint256 _amount
+    ) public poolExists(_poolId) {
         if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
@@ -320,10 +326,10 @@ contract PolicyCenter is
      * @param _poolId Pool id
      * @param _amount Amount of PRO-LP amount
      */
-    function stakeLiquidityWithoutFarming(uint256 _poolId, uint256 _amount)
-        public
-        poolExists(_poolId)
-    {
+    function stakeLiquidityWithoutFarming(
+        uint256 _poolId,
+        uint256 _amount
+    ) public poolExists(_poolId) {
         if (_amount == 0) revert PolicyCenter__ZeroAmount();
 
         address pool = priorityPools[_poolId];
@@ -515,13 +521,17 @@ contract PolicyCenter is
         // Swap for USDC and return the received amount
         uint256[] memory amountsOut = new uint256[](2);
 
+        // The swap router used by this token
+        address router = exchangeByToken[_fromToken];
+
         // @audit Calculating slippage
-        uint256[] memory amountOutCal = IExchange(exchange).getAmountsOut(
+        uint256[] memory amountOutCal = IExchange(router).getAmountsOut(
             _amount,
             _path
         );
 
-        amountsOut = IExchange(exchange).swapExactTokensForTokens(
+        // Use token-specific router to swap
+        amountsOut = IExchange(router).swapExactTokensForTokens(
             _amount,
             ((amountOutCal[length - 1] * (10000 - SLIPPAGE)) / 10000),
             _path,
@@ -555,10 +565,10 @@ contract PolicyCenter is
      *
      * @return crToken Cover right token address
      */
-    function _checkCRToken(uint256 _poolId, uint256 _coverDuration)
-        internal
-        returns (address crToken)
-    {
+    function _checkCRToken(
+        uint256 _poolId,
+        uint256 _coverDuration
+    ) internal returns (address crToken) {
         // Get the expiry timestamp
         (uint256 expiry, uint256 year, uint256 month) = DateTimeLibrary
             ._getExpiry(block.timestamp, _coverDuration);
@@ -678,10 +688,10 @@ contract PolicyCenter is
      *
      * @return premiumInNativeToken Premium calculated in native token
      */
-    function _getNativeTokenAmount(uint256 _premium, address _token)
-        internal
-        returns (uint256 premiumInNativeToken)
-    {
+    function _getNativeTokenAmount(
+        uint256 _premium,
+        address _token
+    ) internal returns (uint256 premiumInNativeToken) {
         // Price in 18 decimals
         uint256 price;
         if (oracleType[_token] == 0) {
@@ -695,7 +705,7 @@ contract PolicyCenter is
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
         uint256 decimalDiff = IERC20Decimals(_token).decimals() - 6;
-        premiumInNativeToken = (_premium * 1e18 * (10**decimalDiff)) / price;
+        premiumInNativeToken = (_premium * 1e18 * (10 ** decimalDiff)) / price;
 
         // Pay native tokens
         SimpleIERC20(_token).safeTransferFrom(
@@ -724,11 +734,7 @@ contract PolicyCenter is
         address[] memory _path
     )
         internal
-        returns (
-            uint256 toPriority,
-            uint256 toProtection,
-            uint256 toTreasury
-        )
+        returns (uint256 toPriority, uint256 toProtection, uint256 toTreasury)
     {
         if (_premiumInUSD == 0) revert PolicyCenter__ZeroPremium();
 
@@ -771,9 +777,10 @@ contract PolicyCenter is
      * @param _token Token address
      */
     function _approvePoolToken(address _token) internal {
-        if (exchange == address(0)) revert PolicyCenter__NoExchange();
+        address router = exchangeByToken[_token];
+        if (router == address(0)) revert PolicyCenter__NoExchange();
         // approve exchange to swap policy center tokens for deg
-        SimpleIERC20(_token).approve(exchange, type(uint256).max);
+        SimpleIERC20(_token).approve(router, type(uint256).max);
     }
 
     /**
@@ -798,10 +805,10 @@ contract PolicyCenter is
      * @param _poolId      Pool id
      * @param _coverAmount Amount (usdc) to cover
      */
-    function _checkCapacity(uint256 _poolId, uint256 _coverAmount)
-        internal
-        view
-    {
+    function _checkCapacity(
+        uint256 _poolId,
+        uint256 _coverAmount
+    ) internal view {
         IPriorityPool pool = IPriorityPool(priorityPools[_poolId]);
         uint256 maxCapacityAmount = (SimpleIERC20(USDC).balanceOf(
             address(protectionPool)

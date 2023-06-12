@@ -10,6 +10,8 @@
     "func-visibility": ["warn", { "ignoreConstructors": true }],
     "reason-string": ["warn", { "maxLength": 60 }],
     "not-rely-on-time": "off",
-    "no-inline-assembly": "off"
+    "no-inline-assembly": "off",
+    "no-global-import": "off",
+    "no-console": "off"
   }
 }

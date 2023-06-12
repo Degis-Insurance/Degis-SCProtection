@@ -35,6 +35,7 @@ import {
   Treasury__factory,
   DexPriceGetter,
   DexPriceGetter__factory,
+  MockERC20__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -332,10 +333,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_8.wait());
     }
 
-    if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
-      const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
-      console.log("Tx details: ", await tx_9.wait());
-    }
+    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+    //   console.log("Tx details: ", await tx_9.wait());
+    // }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }
@@ -584,25 +585,6 @@ task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
   }
 );
 
-task("approvePolicyCenter").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
-
-  const policyCenter: PolicyCenter = new PolicyCenter__factory(
-    dev_account
-  ).attach(addressList[network.name].PolicyCenter);
-
-  const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].XAVAToken
-  );
-  console.log("tx details:", await tx.wait());
-});
-
 task("check").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -627,6 +609,7 @@ task("check").setAction(async (_, hre) => {
 // Decimals: 8
 
 // npx hardhat addPriceFeed --network avaxNew --name AVAX --address 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 --feed 0x0A77230d17318075983913bC2145DB16C7366156 --decimals 8
+// npx hardhat addPriceFeed --network avaxNew --name WETH --address 0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB --feed 0x976B3D034E162d8bD72D6b9C989d545b839003b0 --decimals 8
 
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
@@ -730,25 +713,35 @@ task("setDexPriceGetter").setAction(async (_, hre) => {
   console.log("Tx details", await tx.wait());
 });
 
-task("setOracleType")
-  .addParam("address", "Token address", null, types.string)
-  .addOptionalParam("type", "Oracle type", 1, types.int)
-  .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
 
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
 
-    const addressList = readAddressList();
+task("setExchange").setAction(async (_, hre) => {
+  const { network } = hre;
 
-    const policyCenter: PolicyCenter = new PolicyCenter__factory(
-      dev_account
-    ).attach(addressList[network.name].PolicyCenter);
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
 
-    const tx = await policyCenter.setOracleType(
-      taskArgs.address,
-      taskArgs.type
-    );
-    console.log("Tx details", await tx.wait());
-  });
+  const addressList = readAddressList();
+
+  const exchange = "0x454206AD825cAfaE03c9581014AF6b74f7D53713";
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  // const tx = await policyCenter.setExchange(exchange);
+  // console.log("Tx details", await tx.wait());
+
+  const token = addressList[network.name].TestProject1;
+  const exchangeByToken = await policyCenter.exchangeByToken(token);
+  console.log("Exchange by  token", exchangeByToken);
+
+  const t = new MockERC20__factory(dev_account).attach(token);
+
+  const allowance = await t.allowance(
+    addressList[network.name].PolicyCenter,
+    exchange
+  );
+  console.log("Allowance", allowance.toString());
+});

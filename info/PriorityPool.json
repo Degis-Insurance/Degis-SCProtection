@@ -102,6 +102,21 @@
 			"name": "Vector",
 			"token": "0x5817D4F0b62A59b17f75207DA1848C2cE75e7AF4",
 			"premium": "350"
+		},
+		"6": {
+			"id": "6",
+			"poolAddress": "0x185a0bC07dDce6ac7ef2FffAa0A4FDDDaF7dAd50",
+			"name": "WETH.b",
+			"token": "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
+			"premium": "280"
+		},
+		"7": {
+			"id": "7",
+			"poolAddress": "0x194BA8A5421C43E34eAFDd50feeDcC2127AFa493",
+			"name": "YieldYak",
+			"token": "0x59414b3089ce2AF0010e7523Dea7E2b35d776ec7",
+			"premium": "320"
 		}
-	}
+	},
+	"arb_goerli": {}
 }

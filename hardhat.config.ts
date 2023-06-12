@@ -22,6 +22,7 @@ import "./tasks/pools/pool";
 import "./tasks/weightedFarming";
 import "./tasks/tokens/token";
 import "./tasks/policyCenter";
+import "./tasks/oracle/dexPriceGetter";
 
 function getRemappings() {
   return fs
@@ -49,7 +50,7 @@ const config: HardhatUserConfig = {
       fuji: 0,
       fujiInternal: 0,
       avax: 0,
-      avaxNew: 0
+      avaxNew: 0,
     },
   },
   networks: {
@@ -98,6 +99,19 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
+    },
+    arb: {
+      url: process.env.ARB_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
+        count: 20,
+      },
+    },
+    arb_goerli: {
+      url: process.env.ARB_GOERLI_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
   etherscan: {

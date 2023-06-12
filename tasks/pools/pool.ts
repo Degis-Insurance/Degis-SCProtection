@@ -11,17 +11,9 @@ import {
   DexPriceGetter__factory,
   MockSHIELD,
   MockSHIELD__factory,
-  MockVeDEG,
-  MockVeDEG__factory,
-  OnboardProposal,
-  OnboardProposal__factory,
   PolicyCenter,
   PolicyCenter__factory,
-  PriceGetter,
-  PriceGetter__factory,
   PriorityPool,
-  PriorityPoolDeployer,
-  PriorityPoolDeployer__factory,
   PriorityPoolFactory,
   PriorityPoolFactory__factory,
   PriorityPool__factory,
@@ -34,8 +26,9 @@ import { formatUnits, parseUnits } from "ethers/lib/utils";
 // npx hardhat deployPriorityPool --network avaxNew --name TraderJoe --token 0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd --capacity 4000 --premium 260
 // npx hardhat deployPriorityPool --network avaxNew --name PTP --token 0x22d4002028f537599be9f666d1c4fa138522f9c8 --capacity 4000 --premium 280
 
-
 // npx hardhat deployPriorityPool --network avaxNew --name Vector --token 0x5817D4F0b62A59b17f75207DA1848C2cE75e7AF4 --capacity 3000 --premium 350
+
+// npx hardhat deployPriorityPool --network avaxNew --name WETH.b --token 0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB --capacity 5000 --premium 280
 
 task("deployPriorityPool", "Deploy a new priority pool by owner")
   .addParam("name", "Protocol name", null, types.string)
@@ -188,21 +181,21 @@ task("checkPri", "Check priority pool status").setAction(
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const priorityPoolList = readPriorityPoolList();
-
-    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
-      addressList[network.name].PolicyCenter
-    );
 
     const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
       dev_account
     ).attach(addressList[network.name].PriorityPoolFactory);
 
-    const priAddress = (await factory.pools(2)).poolAddress;
+    const poolId = 7;
+
+    const priAddress = (await factory.pools(poolId)).poolAddress;
     console.log("Priority pool address:", priAddress);
     const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
       priAddress
     );
+
+    const insuredToken = await priPool.insuredToken();
+    console.log("insured token: ", insuredToken);
 
     const priLPAddress = await priPool.currentLPAddress();
     console.log("current lp address: ", priLPAddress);
@@ -352,7 +345,6 @@ task("updateIndexCut", "Update cover index").setAction(async (_, hre) => {
   console.log("Tx details", await tx.wait());
 });
 
-
 task("coverPrice", "Set mining token in protection pool")
   .addParam("id", "Pool id", null, types.string)
   .setAction(async (taskArgs, hre) => {
@@ -375,7 +367,7 @@ task("coverPrice", "Set mining token in protection pool")
       poolAddress
     );
 
-    const amount = hre.ethers.utils.parseUnits("500", 6);
+    const amount = hre.ethers.utils.parseUnits("10", 6);
     const duration = 1;
 
     const ratio = await pool.dynamicPremiumRatio(amount);
