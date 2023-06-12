@@ -257,16 +257,18 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
-    const exchangeAddress =
-      network.name != "avax" &&
-      network.name != "avaxTest" &&
-      network.name != "avaxNew"
-        ? addressList[network.name].MockExchange
-        : addressList[network.name].Exchange;
+    // const exchangeAddress =
+    //   network.name != "avax" &&
+    //   network.name != "avaxTest" &&
+    //   network.name != "avaxNew" &&
+    //   network.name != "arb"
+    //     ? addressList[network.name].MockExchange
+    //     : addressList[network.name].Exchange;
     const priceGetterAddress =
       network.name != "avax" &&
       network.name != "avaxTest" &&
-      network.name != "avaxNew"
+      network.name != "avaxNew" &&
+      network.name != "arb"
         ? addressList[network.name].MockPriceGetter
         : addressList[network.name].PriceGetter;
     const crTokenFactoryAddress =
@@ -295,10 +297,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    if ((await policyCenter.exchange()) != exchangeAddress) {
-      const tx_3 = await policyCenter.setExchange(exchangeAddress);
-      console.log("Tx details: ", await tx_3.wait());
-    }
+    // if ((await policyCenter.exchange()) != exchangeAddress) {
+    //   const tx_3 = await policyCenter.setExchange(exchangeAddress);
+    //   console.log("Tx details: ", await tx_3.wait());
+    // }
 
     if ((await policyCenter.priceGetter()) != priceGetterAddress) {
       const tx_4 = await policyCenter.setPriceGetter(priceGetterAddress);
@@ -333,10 +335,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_8.wait());
     }
 
-    // if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
-    //   const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
-    //   console.log("Tx details: ", await tx_9.wait());
-    // }
+    if ((await policyCenter.dexPriceGetter()) != dexPriceGetterAddress) {
+      const tx_9 = await policyCenter.setDexPriceGetter(dexPriceGetterAddress);
+      console.log("Tx details: ", await tx_9.wait());
+    }
 
     console.log("\nFinish setting contract addresses in policy center\n");
   }
