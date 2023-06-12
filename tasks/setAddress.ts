@@ -35,6 +35,7 @@ import {
   Treasury__factory,
   DexPriceGetter,
   DexPriceGetter__factory,
+  MockERC20__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -584,25 +585,6 @@ task("setPolicyCenterForCR", "Set policy center for cr token").setAction(
   }
 );
 
-task("approvePolicyCenter").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
-
-  const policyCenter: PolicyCenter = new PolicyCenter__factory(
-    dev_account
-  ).attach(addressList[network.name].PolicyCenter);
-
-  const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].XAVAToken
-  );
-  console.log("tx details:", await tx.wait());
-});
-
 task("check").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -731,51 +713,8 @@ task("setDexPriceGetter").setAction(async (_, hre) => {
   console.log("Tx details", await tx.wait());
 });
 
-task("setOracleType")
-  .addParam("address", "Token address", null, types.string)
-  .addOptionalParam("type", "Oracle type", 1, types.int)
-  .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
 
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
 
-    const addressList = readAddressList();
-
-    const policyCenter: PolicyCenter = new PolicyCenter__factory(
-      dev_account
-    ).attach(addressList[network.name].PolicyCenter);
-
-    const tx = await policyCenter.setOracleType(
-      taskArgs.address,
-      taskArgs.type
-    );
-    console.log("Tx details", await tx.wait());
-  });
-
-task("setExchangeByToken")
-  .addParam("token")
-  .addParam("exchange")
-  .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
-
-    const policyCenter: PolicyCenter = new PolicyCenter__factory(
-      dev_account
-    ).attach(addressList[network.name].PolicyCenter);
-
-    const tx = await policyCenter.setExchangeByToken(
-      taskArgs.token,
-      taskArgs.exchange
-    );
-    console.log("Tx details", await tx.wait());
-  });
 task("setExchange").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -791,6 +730,18 @@ task("setExchange").setAction(async (_, hre) => {
     dev_account
   ).attach(addressList[network.name].PolicyCenter);
 
-  const tx = await policyCenter.setExchange(exchange);
-  console.log("Tx details", await tx.wait());
+  // const tx = await policyCenter.setExchange(exchange);
+  // console.log("Tx details", await tx.wait());
+
+  const token = addressList[network.name].TestProject1;
+  const exchangeByToken = await policyCenter.exchangeByToken(token);
+  console.log("Exchange by  token", exchangeByToken);
+
+  const t = new MockERC20__factory(dev_account).attach(token);
+
+  const allowance = await t.allowance(
+    addressList[network.name].PolicyCenter,
+    exchange
+  );
+  console.log("Allowance", allowance.toString());
 });

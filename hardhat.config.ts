@@ -22,6 +22,7 @@ import "./tasks/pools/pool";
 import "./tasks/weightedFarming";
 import "./tasks/tokens/token";
 import "./tasks/policyCenter";
+import "./tasks/oracle/dexPriceGetter";
 
 function getRemappings() {
   return fs
@@ -49,7 +50,7 @@ const config: HardhatUserConfig = {
       fuji: 0,
       fujiInternal: 0,
       avax: 0,
-      avaxNew: 0
+      avaxNew: 0,
     },
   },
   networks: {

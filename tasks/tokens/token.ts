@@ -56,7 +56,7 @@ task("mintMockERC20", "Mint mock erc20 tokens").setAction(async (_, hre) => {
   const addressList = readAddressList();
 
   const token: MockERC20 = new MockERC20__factory(dev_account).attach(
-    addressList[network.name].MockUSDC
+    addressList[network.name].TestProject2
   );
 
   const to = dev_account.address;
@@ -193,7 +193,7 @@ task("approvePolicyCenter").setAction(async (_, hre) => {
   ).attach(addressList[network.name].PolicyCenter);
 
   const tx = await policyCenter.approvePoolToken(
-    addressList[network.name].TestProject2
+    addressList[network.name].MockUSDC
   );
   console.log("tx details:", await tx.wait());
 });

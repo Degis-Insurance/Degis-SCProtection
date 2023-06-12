@@ -133,6 +133,9 @@ task("getProposal", "Get proposal info")
       dev_account
     ).attach(addressList[network.name].OnboardProposal);
 
+    const currentId = await onboardProposal.proposalCounter();
+    console.log("Current proposal id:", currentId.toString());
+
     const proposal = await onboardProposal.proposals(taskArgs.id);
     console.log(proposal);
   });

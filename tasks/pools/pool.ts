@@ -181,21 +181,21 @@ task("checkPri", "Check priority pool status").setAction(
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const priorityPoolList = readPriorityPoolList();
-
-    const center: PolicyCenter = new PolicyCenter__factory(dev_account).attach(
-      addressList[network.name].PolicyCenter
-    );
 
     const factory: PriorityPoolFactory = new PriorityPoolFactory__factory(
       dev_account
     ).attach(addressList[network.name].PriorityPoolFactory);
 
-    const priAddress = (await factory.pools(2)).poolAddress;
+    const poolId = 7;
+
+    const priAddress = (await factory.pools(poolId)).poolAddress;
     console.log("Priority pool address:", priAddress);
     const priPool: PriorityPool = new PriorityPool__factory(dev_account).attach(
       priAddress
     );
+
+    const insuredToken = await priPool.insuredToken();
+    console.log("insured token: ", insuredToken);
 
     const priLPAddress = await priPool.currentLPAddress();
     console.log("current lp address: ", priLPAddress);
