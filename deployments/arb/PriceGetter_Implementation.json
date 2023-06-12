@@ -1,0 +1,456 @@
+{
+  "address": "0x7b7c51cC0F16f3f91FbCF0Ee58C0fac51643D126",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "version",
+          "type": "uint8"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint80",
+          "name": "roundID",
+          "type": "uint80"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "price",
+          "type": "int256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "startedAt",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timeStamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint80",
+          "name": "answeredInRound",
+          "type": "uint80"
+        }
+      ],
+      "name": "LatestPriceGet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "tokenName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "tokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "feedAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "decimals",
+          "type": "uint256"
+        }
+      ],
+      "name": "PriceFeedChanged",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getLatestPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "finalPrice",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_tokenName",
+          "type": "string"
+        }
+      ],
+      "name": "getLatestPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "nameToAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "priceFeedInfo",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "priceFeedAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "decimals",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_tokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_tokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_feedAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPriceFeed",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xa64aab1fb6a76ffb79efd8868cabda0396c794b8e7c311491cee49654a65650e",
+  "receipt": {
+    "to": null,
+    "from": "0xeB496257B64Cc2D39c291B209F465f3cfADE0873",
+    "contractAddress": "0x7b7c51cC0F16f3f91FbCF0Ee58C0fac51643D126",
+    "transactionIndex": 2,
+    "gasUsed": "4004812",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x8ef036eb2ba8b432b343afe355db093dbf4ed2a11082c03a6641474d9c515e3f",
+    "transactionHash": "0xa64aab1fb6a76ffb79efd8868cabda0396c794b8e7c311491cee49654a65650e",
+    "logs": [],
+    "blockNumber": 100401313,
+    "cumulativeGasUsed": "4328513",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "d5d947386d36ed6e16864e6399319b4e",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.15+commit.e14f2714\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint80\",\"name\":\"roundID\",\"type\":\"uint80\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"price\",\"type\":\"int256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"startedAt\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timeStamp\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint80\",\"name\":\"answeredInRound\",\"type\":\"uint80\"}],\"name\":\"LatestPriceGet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"tokenName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"feedAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"PriceFeedChanged\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"name\":\"getLatestPrice\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"finalPrice\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_tokenName\",\"type\":\"string\"}],\"name\":\"getLatestPrice\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"nameToAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"priceFeedInfo\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"priceFeedAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_tokenName\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_feedAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_decimals\",\"type\":\"uint256\"}],\"name\":\"setPriceFeed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"The price from chainlink priceFeed has different decimals, be careful.\",\"kind\":\"dev\",\"methods\":{\"getLatestPrice(address)\":{\"params\":{\"_tokenAddress\":\"Address of the token\"},\"returns\":{\"finalPrice\":\"The latest price\"}},\"getLatestPrice(string)\":{\"params\":{\"_tokenName\":\"Name of the token\"},\"returns\":{\"_0\":\"price The latest price\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"setPriceFeed(string,address,address,uint256)\":{\"details\":\"Only callable by the owner      The price result decimal should be less than 18\",\"params\":{\"_decimals\":\"Decimals of this price feed service\",\"_feedAddress\":\"Price feed oracle address\",\"_tokenAddress\":\"Address of the token\",\"_tokenName\":\"Address of the token\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"title\":\"Price Getter\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getLatestPrice(address)\":{\"notice\":\"Get latest price of a token\"},\"getLatestPrice(string)\":{\"notice\":\"Get latest price of a token\"},\"setPriceFeed(string,address,address,uint256)\":{\"notice\":\"Set a price feed oracle address for a token\"}},\"notice\":\"This is the contract for getting price feed from chainlink.         The contract will keep a record from tokenName => priceFeed Address.         Got the sponsorship and collaboration with Chainlink.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/priceGetter/PriceGetter.sol\":\"PriceGetter\"},\"evmVersion\":\"london\",\"libraries\":{\":__CACHE_BREAKER__\":\"0x0000000000000031363836353733373333343539\"},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":100},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface AggregatorV3Interface {\\n  function decimals() external view returns (uint8);\\n\\n  function description() external view returns (string memory);\\n\\n  function version() external view returns (uint256);\\n\\n  function getRoundData(uint80 _roundId)\\n    external\\n    view\\n    returns (\\n      uint80 roundId,\\n      int256 answer,\\n      uint256 startedAt,\\n      uint256 updatedAt,\\n      uint80 answeredInRound\\n    );\\n\\n  function latestRoundData()\\n    external\\n    view\\n    returns (\\n      uint80 roundId,\\n      int256 answer,\\n      uint256 startedAt,\\n      uint256 updatedAt,\\n      uint80 answeredInRound\\n    );\\n}\\n\",\"keccak256\":\"0x6e6e4b0835904509406b070ee173b5bc8f677c19421b76be38aea3b1b3d30846\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (proxy/utils/Initializable.sol)\\n\\npragma solidity ^0.8.2;\\n\\nimport \\\"../../utils/AddressUpgradeable.sol\\\";\\n\\n/**\\n * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed\\n * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an\\n * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer\\n * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.\\n *\\n * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be\\n * reused. This mechanism prevents re-execution of each \\\"step\\\" but allows the creation of new initialization steps in\\n * case an upgrade adds a module that needs to be initialized.\\n *\\n * For example:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * contract MyToken is ERC20Upgradeable {\\n *     function initialize() initializer public {\\n *         __ERC20_init(\\\"MyToken\\\", \\\"MTK\\\");\\n *     }\\n * }\\n * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {\\n *     function initializeV2() reinitializer(2) public {\\n *         __ERC20Permit_init(\\\"MyToken\\\");\\n *     }\\n * }\\n * ```\\n *\\n * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as\\n * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.\\n *\\n * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure\\n * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.\\n *\\n * [CAUTION]\\n * ====\\n * Avoid leaving a contract uninitialized.\\n *\\n * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation\\n * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke\\n * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:\\n *\\n * [.hljs-theme-light.nopadding]\\n * ```\\n * /// @custom:oz-upgrades-unsafe-allow constructor\\n * constructor() {\\n *     _disableInitializers();\\n * }\\n * ```\\n * ====\\n */\\nabstract contract Initializable {\\n    /**\\n     * @dev Indicates that the contract has been initialized.\\n     * @custom:oz-retyped-from bool\\n     */\\n    uint8 private _initialized;\\n\\n    /**\\n     * @dev Indicates that the contract is in the process of being initialized.\\n     */\\n    bool private _initializing;\\n\\n    /**\\n     * @dev Triggered when the contract has been initialized or reinitialized.\\n     */\\n    event Initialized(uint8 version);\\n\\n    /**\\n     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,\\n     * `onlyInitializing` functions can be used to initialize parent contracts. Equivalent to `reinitializer(1)`.\\n     */\\n    modifier initializer() {\\n        bool isTopLevelCall = !_initializing;\\n        require(\\n            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),\\n            \\\"Initializable: contract is already initialized\\\"\\n        );\\n        _initialized = 1;\\n        if (isTopLevelCall) {\\n            _initializing = true;\\n        }\\n        _;\\n        if (isTopLevelCall) {\\n            _initializing = false;\\n            emit Initialized(1);\\n        }\\n    }\\n\\n    /**\\n     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the\\n     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be\\n     * used to initialize parent contracts.\\n     *\\n     * `initializer` is equivalent to `reinitializer(1)`, so a reinitializer may be used after the original\\n     * initialization step. This is essential to configure modules that are added through upgrades and that require\\n     * initialization.\\n     *\\n     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in\\n     * a contract, executing them in the right order is up to the developer or operator.\\n     */\\n    modifier reinitializer(uint8 version) {\\n        require(!_initializing && _initialized < version, \\\"Initializable: contract is already initialized\\\");\\n        _initialized = version;\\n        _initializing = true;\\n        _;\\n        _initializing = false;\\n        emit Initialized(version);\\n    }\\n\\n    /**\\n     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the\\n     * {initializer} and {reinitializer} modifiers, directly or indirectly.\\n     */\\n    modifier onlyInitializing() {\\n        require(_initializing, \\\"Initializable: contract is not initializing\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.\\n     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized\\n     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called\\n     * through proxies.\\n     */\\n    function _disableInitializers() internal virtual {\\n        require(!_initializing, \\\"Initializable: contract is initializing\\\");\\n        if (_initialized < type(uint8).max) {\\n            _initialized = type(uint8).max;\\n            emit Initialized(type(uint8).max);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x0203dcadc5737d9ef2c211d6fa15d18ebc3b30dfa51903b64870b01a062b0b4e\",\"license\":\"MIT\"},\"@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v4.7.0) (utils/Address.sol)\\n\\npragma solidity ^0.8.1;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary AddressUpgradeable {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\\n     *\\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\\n     * constructor.\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize/address.code.length, which returns 0\\n        // for contracts in construction, since the code is only stored at the end\\n        // of the constructor execution.\\n\\n        return account.code.length > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n                /// @solidity memory-safe-assembly\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x611aa3f23e59cfdd1863c536776407b3e33d695152a266fa7cfb34440a29a8a3\",\"license\":\"MIT\"},\"src/priceGetter/PriceGetter.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\n\\n/*\\n //======================================================================\\\\\\\\\\n //======================================================================\\\\\\\\\\n    *******         **********     ***********     *****     ***********\\n    *      *        *              *                 *       *\\n    *        *      *              *                 *       *\\n    *         *     *              *                 *       *\\n    *         *     *              *                 *       *\\n    *         *     **********     *       *****     *       ***********\\n    *         *     *              *         *       *                 *\\n    *         *     *              *         *       *                 *\\n    *        *      *              *         *       *                 *\\n    *      *        *              *         *       *                 *\\n    *******         **********     ***********     *****     ***********\\n \\\\\\\\======================================================================//\\n \\\\\\\\======================================================================//\\n*/\\n\\npragma solidity ^0.8.13;\\n\\nimport {AggregatorV3Interface} from \\\"@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol\\\";\\nimport {OwnableWithoutContextUpgradeable} from \\\"../util/OwnableWithoutContextUpgradeable.sol\\\";\\n\\n/**\\n * @title  Price Getter\\n * @notice This is the contract for getting price feed from chainlink.\\n *         The contract will keep a record from tokenName => priceFeed Address.\\n *         Got the sponsorship and collaboration with Chainlink.\\n * @dev    The price from chainlink priceFeed has different decimals, be careful.\\n */\\ncontract PriceGetter is OwnableWithoutContextUpgradeable {\\n    struct PriceFeedInfo {\\n        address priceFeedAddress;\\n        uint256 decimals;\\n    }\\n    // Use token address as the mapping key\\n    mapping(address => PriceFeedInfo) public priceFeedInfo;\\n\\n    // Find address according to name\\n    mapping(string => address) public nameToAddress;\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Events ***************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n    event PriceFeedChanged(\\n        string tokenName,\\n        address tokenAddress,\\n        address feedAddress,\\n        uint256 decimals\\n    );\\n\\n    event LatestPriceGet(\\n        uint80 roundID,\\n        int256 price,\\n        uint256 startedAt,\\n        uint256 timeStamp,\\n        uint80 answeredInRound\\n    );\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Constructor ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    function initialize() public initializer {\\n        __Ownable_init();\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // *************************************** Modifiers ************************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Can not give zero address\\n     */\\n    modifier notZeroAddress(address _address) {\\n        require(_address != address(0), \\\"Zero address\\\");\\n        _;\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************ Set Functions ************************************* //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Set a price feed oracle address for a token\\n     * @dev Only callable by the owner\\n     *      The price result decimal should be less than 18\\n     *\\n     * @param _tokenName   Address of the token\\n     * @param _tokenAddress Address of the token\\n     * @param _feedAddress Price feed oracle address\\n     * @param _decimals    Decimals of this price feed service\\n     */\\n    function setPriceFeed(\\n        string memory _tokenName,\\n        address _tokenAddress,\\n        address _feedAddress,\\n        uint256 _decimals\\n    ) public onlyOwner notZeroAddress(_feedAddress) {\\n        require(_decimals <= 18, \\\"Too many decimals\\\");\\n\\n        priceFeedInfo[_tokenAddress] = PriceFeedInfo(_feedAddress, _decimals);\\n        nameToAddress[_tokenName] = _tokenAddress;\\n\\n        emit PriceFeedChanged(\\n            _tokenName,\\n            _tokenAddress,\\n            _feedAddress,\\n            _decimals\\n        );\\n    }\\n\\n    // ---------------------------------------------------------------------------------------- //\\n    // ************************************* Main Functions *********************************** //\\n    // ---------------------------------------------------------------------------------------- //\\n\\n    /**\\n     * @notice Get latest price of a token\\n     *\\n     * @param _tokenName Name of the token\\n     *\\n     * @return price The latest price\\n     */\\n    function getLatestPrice(string memory _tokenName) public returns (uint256) {\\n        return getLatestPrice(nameToAddress[_tokenName]);\\n    }\\n\\n    /**\\n     * @notice Get latest price of a token\\n     *\\n     * @param _tokenAddress Address of the token\\n     *\\n     * @return finalPrice The latest price\\n     */\\n    function getLatestPrice(address _tokenAddress)\\n        public\\n        returns (uint256 finalPrice)\\n    {\\n        PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];\\n\\n        if (priceFeed.priceFeedAddress == address(0)) {\\n            finalPrice = 1e18;\\n        } else {\\n            (\\n                uint80 roundID,\\n                int256 price,\\n                uint256 startedAt,\\n                uint256 timeStamp,\\n                uint80 answeredInRound\\n            ) = AggregatorV3Interface(priceFeed.priceFeedAddress)\\n                    .latestRoundData();\\n\\n            // require(price > 0, \\\"Only accept price that > 0\\\");\\n            if (price < 0) price = 0;\\n\\n            emit LatestPriceGet(\\n                roundID,\\n                price,\\n                startedAt,\\n                timeStamp,\\n                answeredInRound\\n            );\\n            // Transfer the result decimals\\n            finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x30d1875419f9a127d5f567338b9e253d5b123c2e21e473c3e97fe0e219763da3\",\"license\":\"GPL-3.0-or-later\"},\"src/util/OwnableWithoutContextUpgradeable.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.13;\\n\\nimport \\\"@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol\\\";\\n\\nabstract contract OwnableWithoutContextUpgradeable is Initializable {\\n    address private _owner;\\n\\n    event OwnershipTransferred(\\n        address indexed previousOwner,\\n        address indexed newOwner\\n    );\\n\\n    /**\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\n     */\\n    function __Ownable_init() internal onlyInitializing {\\n        __Ownable_init_unchained();\\n    }\\n\\n    function __Ownable_init_unchained() internal onlyInitializing {\\n        _transferOwnership(msg.sender);\\n    }\\n\\n    /**\\n     * @dev Throws if called by any account other than the owner.\\n     */\\n    modifier onlyOwner() {\\n        require(_owner == msg.sender, \\\"Only owner\\\");\\n        _;\\n    }\\n\\n    /**\\n     * @dev Returns the address of the current owner.\\n     */\\n    function owner() public view returns (address) {\\n        return _owner;\\n    }\\n\\n    /**\\n     * @dev Leaves the contract without owner. It will not be possible to call\\n     * `onlyOwner` functions anymore. Can only be called by the current owner.\\n     *\\n     * NOTE: Renouncing ownership will leave the contract without an owner,\\n     * thereby removing any functionality that is only available to the owner.\\n     */\\n    function renounceOwnership() external onlyOwner {\\n        _transferOwnership(address(0));\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Can only be called by the current owner.\\n     */\\n    function transferOwnership(address newOwner) external onlyOwner {\\n        require(\\n            newOwner != address(0),\\n            \\\"Ownable: new owner is the zero address\\\"\\n        );\\n        _transferOwnership(newOwner);\\n    }\\n\\n    /**\\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\\n     * Internal function without access restriction.\\n     */\\n    function _transferOwnership(address newOwner) internal {\\n        emit OwnershipTransferred(_owner, newOwner);\\n        _owner = newOwner;\\n    }\\n\\n    /**\\n     * @dev This empty reserved space is put in place to allow future versions to add new\\n     * variables without shifting down storage in the inheritance chain.\\n     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps\\n     */\\n    uint256[49] private __gap;\\n}\\n\",\"keccak256\":\"0xb7c1bac54d6b38b0ff582113689643e43bdbc9eaf4dcd906373c3f44f7b2eab5\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60808060405234610016576109e9908161001c8239f35b600080fdfe6040608081526004908136101561001557600080fd5b6000803560e01c806308d88aad1461059a57806316345f1814610574578063715018a61461050e57806377def8d4146103385780638129fc1c146102075780638da5cb5b146101d7578063a9ff6c0f14610192578063f2fde38b146100f45763f66a1b711461008357600080fd5b346100f15760203660031901126100f15782359067ffffffffffffffff82116100f157506100b96020936100ea9236910161063a565b836100cc84519283815193849201610696565b603390820190815281900384019020546001600160a01b0316610731565b9051908152f35b80fd5b50913461018e57602036600319011261018e5761010f6106cb565b9060018060a01b0361012881865460101c1633146106e1565b82161561013c575061013990610953565b51f35b608490602084519162461bcd60e51b8352820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152fd5b8280fd5b50346100f15760203660031901126100f1576001600160a01b03906001908390836101bb6106cb565b1681526032602052209182541691015482519182526020820152f35b5090346102035781600319360112610203579054905160109190911c6001600160a01b03168152602090f35b5080fd5b50913461018e578260031936011261018e57825460ff8160081c16159182809361032b575b8015610314575b156102ba575060ff1981166001178455816102a9575b5061026360ff845460081c1661025e816108f3565b6108f3565b61026c33610953565b6102735751f35b61ff001982541682557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024986020825160018152a151f35b61ffff191661010117835538610249565b608490602085519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b1580156102335750600160ff831614610233565b50600160ff83161061022c565b50913461018e57608036600319011261018e5767ffffffffffffffff90803582811161050a5761036b903690830161063a565b916001600160a01b039160243583811690819003610506576044359184831680930361050257606435936103a6868a5460101c1633146106e1565b83156104d057601285116104995787519182890191821183831017610486575092610468959260a095927fae6fc5315f41d4c4e0f943524e6ce313a0b92e68d1f72bc87205ce434f7571dd98958a5282815260016020820195858752838d5260326020528b8d209251169581808a1b031996878454161783555191015588519381865195602081818a019861043c81838c610696565b810160338152030190209182541617905588519687956080875251809581608089015288880190610696565b6020850152878401526060830152601f01601f19168101030190a151f35b634e487b7160e01b8a5260419052602489fd5b875162461bcd60e51b81526020818401526011602482015270546f6f206d616e7920646563696d616c7360781b6044820152606490fd5b875162461bcd60e51b8152602081840152600c60248201526b5a65726f206164647265737360a01b6044820152606490fd5b8780fd5b8680fd5b8480fd5b5090346102035781600319360112610203578154601081901c6001600160a01b031691839061053e3385146106e1565b51927f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08285a362010000600160b01b0319168255f35b509034610203576020366003190112610203576020906100ea6105956106cb565b610731565b50346100f15760203660031901126100f15782359067ffffffffffffffff82116100f157506020926105ce9136910161063a565b826105e183519283815193849201610696565b6033908201908152819003830190205490516001600160a01b039091168152f35b90601f8019910116810190811067ffffffffffffffff82111761062457604052565b634e487b7160e01b600052604160045260246000fd5b81601f820112156106915780359067ffffffffffffffff8211610624576040519261066f601f8401601f191660200185610602565b8284526020838301011161069157816000926020809301838601378301015290565b600080fd5b918091926000905b8282106106b65750116106af575050565b6000910152565b9150806020918301518186015201829161069e565b600435906001600160a01b038216820361069157565b156106e857565b60405162461bcd60e51b815260206004820152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b519069ffffffffffffffffffff8216820361069157565b60018060a01b038060009216825260326020526040908183209180519181830183811067ffffffffffffffff8211176108df576020916001918452855416948585520154920191825282156000146107935750505050670de0b6b3a764000090565b60a0600493825194858092633fabe5a360e21b82525afa80156108d557849085948687918893610871575b50878712610869575b845169ffffffffffffffffffff9485168152602081018890529485015260608401521660808201527fc7851f2a8f2b8a66cfb8738f664e014401b6b82af7958036c58001411ed923e49060a090a1518060121061085557601203604d811161085557600a0a91816000190483118215151661084157500290565b634e487b7160e01b81526011600452602490fd5b634e487b7160e01b83526011600452602483fd5b8796506107c7565b96505050505060a0833d82116108cd575b8161088f60a09383610602565b810103126108c9576108a08361071a565b9260208101519082810151946108bd60806060840151930161071a565b909295919091386107be565b8380fd5b3d9150610882565b81513d86823e3d90fd5b634e487b7160e01b86526041600452602486fd5b156108fa57565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b6000549060018060a01b03808216908360101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e06000604051a362010000600160b01b031990911660109190911b62010000600160b01b03161760005556fea2646970667358221220875931fc388c513faa9a851222a84879a3185281edce1b3f5f6453550bb115c964736f6c634300080f0033",
+  "deployedBytecode": "0x6040608081526004908136101561001557600080fd5b6000803560e01c806308d88aad1461059a57806316345f1814610574578063715018a61461050e57806377def8d4146103385780638129fc1c146102075780638da5cb5b146101d7578063a9ff6c0f14610192578063f2fde38b146100f45763f66a1b711461008357600080fd5b346100f15760203660031901126100f15782359067ffffffffffffffff82116100f157506100b96020936100ea9236910161063a565b836100cc84519283815193849201610696565b603390820190815281900384019020546001600160a01b0316610731565b9051908152f35b80fd5b50913461018e57602036600319011261018e5761010f6106cb565b9060018060a01b0361012881865460101c1633146106e1565b82161561013c575061013990610953565b51f35b608490602084519162461bcd60e51b8352820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152fd5b8280fd5b50346100f15760203660031901126100f1576001600160a01b03906001908390836101bb6106cb565b1681526032602052209182541691015482519182526020820152f35b5090346102035781600319360112610203579054905160109190911c6001600160a01b03168152602090f35b5080fd5b50913461018e578260031936011261018e57825460ff8160081c16159182809361032b575b8015610314575b156102ba575060ff1981166001178455816102a9575b5061026360ff845460081c1661025e816108f3565b6108f3565b61026c33610953565b6102735751f35b61ff001982541682557f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024986020825160018152a151f35b61ffff191661010117835538610249565b608490602085519162461bcd60e51b8352820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b6064820152fd5b50303b1580156102335750600160ff831614610233565b50600160ff83161061022c565b50913461018e57608036600319011261018e5767ffffffffffffffff90803582811161050a5761036b903690830161063a565b916001600160a01b039160243583811690819003610506576044359184831680930361050257606435936103a6868a5460101c1633146106e1565b83156104d057601285116104995787519182890191821183831017610486575092610468959260a095927fae6fc5315f41d4c4e0f943524e6ce313a0b92e68d1f72bc87205ce434f7571dd98958a5282815260016020820195858752838d5260326020528b8d209251169581808a1b031996878454161783555191015588519381865195602081818a019861043c81838c610696565b810160338152030190209182541617905588519687956080875251809581608089015288880190610696565b6020850152878401526060830152601f01601f19168101030190a151f35b634e487b7160e01b8a5260419052602489fd5b875162461bcd60e51b81526020818401526011602482015270546f6f206d616e7920646563696d616c7360781b6044820152606490fd5b875162461bcd60e51b8152602081840152600c60248201526b5a65726f206164647265737360a01b6044820152606490fd5b8780fd5b8680fd5b8480fd5b5090346102035781600319360112610203578154601081901c6001600160a01b031691839061053e3385146106e1565b51927f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08285a362010000600160b01b0319168255f35b509034610203576020366003190112610203576020906100ea6105956106cb565b610731565b50346100f15760203660031901126100f15782359067ffffffffffffffff82116100f157506020926105ce9136910161063a565b826105e183519283815193849201610696565b6033908201908152819003830190205490516001600160a01b039091168152f35b90601f8019910116810190811067ffffffffffffffff82111761062457604052565b634e487b7160e01b600052604160045260246000fd5b81601f820112156106915780359067ffffffffffffffff8211610624576040519261066f601f8401601f191660200185610602565b8284526020838301011161069157816000926020809301838601378301015290565b600080fd5b918091926000905b8282106106b65750116106af575050565b6000910152565b9150806020918301518186015201829161069e565b600435906001600160a01b038216820361069157565b156106e857565b60405162461bcd60e51b815260206004820152600a60248201526927b7363c9037bbb732b960b11b6044820152606490fd5b519069ffffffffffffffffffff8216820361069157565b60018060a01b038060009216825260326020526040908183209180519181830183811067ffffffffffffffff8211176108df576020916001918452855416948585520154920191825282156000146107935750505050670de0b6b3a764000090565b60a0600493825194858092633fabe5a360e21b82525afa80156108d557849085948687918893610871575b50878712610869575b845169ffffffffffffffffffff9485168152602081018890529485015260608401521660808201527fc7851f2a8f2b8a66cfb8738f664e014401b6b82af7958036c58001411ed923e49060a090a1518060121061085557601203604d811161085557600a0a91816000190483118215151661084157500290565b634e487b7160e01b81526011600452602490fd5b634e487b7160e01b83526011600452602483fd5b8796506107c7565b96505050505060a0833d82116108cd575b8161088f60a09383610602565b810103126108c9576108a08361071a565b9260208101519082810151946108bd60806060840151930161071a565b909295919091386107be565b8380fd5b3d9150610882565b81513d86823e3d90fd5b634e487b7160e01b86526041600452602486fd5b156108fa57565b60405162461bcd60e51b815260206004820152602b60248201527f496e697469616c697a61626c653a20636f6e7472616374206973206e6f74206960448201526a6e697469616c697a696e6760a81b6064820152608490fd5b6000549060018060a01b03808216908360101c167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e06000604051a362010000600160b01b031990911660109190911b62010000600160b01b03161760005556fea2646970667358221220875931fc388c513faa9a851222a84879a3185281edce1b3f5f6453550bb115c964736f6c634300080f0033",
+  "devdoc": {
+    "details": "The price from chainlink priceFeed has different decimals, be careful.",
+    "kind": "dev",
+    "methods": {
+      "getLatestPrice(address)": {
+        "params": {
+          "_tokenAddress": "Address of the token"
+        },
+        "returns": {
+          "finalPrice": "The latest price"
+        }
+      },
+      "getLatestPrice(string)": {
+        "params": {
+          "_tokenName": "Name of the token"
+        },
+        "returns": {
+          "_0": "price The latest price"
+        }
+      },
+      "owner()": {
+        "details": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+      },
+      "setPriceFeed(string,address,address,uint256)": {
+        "details": "Only callable by the owner      The price result decimal should be less than 18",
+        "params": {
+          "_decimals": "Decimals of this price feed service",
+          "_feedAddress": "Price feed oracle address",
+          "_tokenAddress": "Address of the token",
+          "_tokenName": "Address of the token"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+      }
+    },
+    "title": "Price Getter",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "getLatestPrice(address)": {
+        "notice": "Get latest price of a token"
+      },
+      "getLatestPrice(string)": {
+        "notice": "Get latest price of a token"
+      },
+      "setPriceFeed(string,address,address,uint256)": {
+        "notice": "Set a price feed oracle address for a token"
+      }
+    },
+    "notice": "This is the contract for getting price feed from chainlink.         The contract will keep a record from tokenName => priceFeed Address.         Got the sponsorship and collaboration with Chainlink.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 184,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "_initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 187,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "_initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 17723,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "_owner",
+        "offset": 2,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 17830,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "__gap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)49_storage"
+      },
+      {
+        "astId": 14877,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "priceFeedInfo",
+        "offset": 0,
+        "slot": "50",
+        "type": "t_mapping(t_address,t_struct(PriceFeedInfo)14872_storage)"
+      },
+      {
+        "astId": 14881,
+        "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+        "label": "nameToAddress",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_mapping(t_string_memory_ptr,t_address)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)49_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[49]",
+        "numberOfBytes": "1568"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_struct(PriceFeedInfo)14872_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => struct PriceGetter.PriceFeedInfo)",
+        "numberOfBytes": "32",
+        "value": "t_struct(PriceFeedInfo)14872_storage"
+      },
+      "t_mapping(t_string_memory_ptr,t_address)": {
+        "encoding": "mapping",
+        "key": "t_string_memory_ptr",
+        "label": "mapping(string => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_string_memory_ptr": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_struct(PriceFeedInfo)14872_storage": {
+        "encoding": "inplace",
+        "label": "struct PriceGetter.PriceFeedInfo",
+        "members": [
+          {
+            "astId": 14869,
+            "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+            "label": "priceFeedAddress",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address"
+          },
+          {
+            "astId": 14871,
+            "contract": "src/priceGetter/PriceGetter.sol:PriceGetter",
+            "label": "decimals",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}

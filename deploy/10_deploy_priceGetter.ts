@@ -28,7 +28,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   if (
     network.name == "avax" ||
     network.name == "avaxTest" ||
-    network.name == "avaxNew"
+    network.name == "avaxNew" ||
+    network.name == "arb"
   ) {
     const proxyOptions: ProxyOptions = {
       proxyContract: "OpenZeppelinTransparentProxy",
