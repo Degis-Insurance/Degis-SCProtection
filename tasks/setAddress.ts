@@ -257,13 +257,13 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
     const priorityPoolFactoryAddress =
       addressList[network.name].PriorityPoolFactory;
     const protectionPoolAddress = addressList[network.name].ProtectionPool;
-    // const exchangeAddress =
-    //   network.name != "avax" &&
-    //   network.name != "avaxTest" &&
-    //   network.name != "avaxNew" &&
-    //   network.name != "arb"
-    //     ? addressList[network.name].MockExchange
-    //     : addressList[network.name].Exchange;
+    const exchangeAddress =
+      network.name != "avax" &&
+      network.name != "avaxTest" &&
+      network.name != "avaxNew" &&
+      network.name != "arb"
+        ? addressList[network.name].MockExchange
+        : addressList[network.name].SwapHelper;
     const priceGetterAddress =
       network.name != "avax" &&
       network.name != "avaxTest" &&
@@ -277,7 +277,7 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       addressList[network.name].WeightedFarmingPool;
     const payoutPoolAddress = addressList[network.name].PayoutPool;
     const treasuryAddress = addressList[network.name].Treasury;
-    const dexPriceGetterAddress = addressList[network.name].DexPriceGetter;
+    const dexPriceGetterAddress = addressList[network.name].DexPriceGetterV2;
 
     const policyCenter: PolicyCenter = new PolicyCenter__factory(
       dev_account
@@ -297,10 +297,10 @@ task("setPolicyCenter", "Set contract address in policyCenter").setAction(
       console.log("Tx details: ", await tx_2.wait());
     }
 
-    // if ((await policyCenter.exchange()) != exchangeAddress) {
-    //   const tx_3 = await policyCenter.setExchange(exchangeAddress);
-    //   console.log("Tx details: ", await tx_3.wait());
-    // }
+    if ((await policyCenter.swapHelper()) != exchangeAddress) {
+      const tx_3 = await policyCenter.setSwapHelper(exchangeAddress);
+      console.log("Tx details: ", await tx_3.wait());
+    }
 
     if ((await policyCenter.priceGetter()) != priceGetterAddress) {
       const tx_4 = await policyCenter.setPriceGetter(priceGetterAddress);
@@ -613,6 +613,9 @@ task("check").setAction(async (_, hre) => {
 // npx hardhat addPriceFeed --network avaxNew --name AVAX --address 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7 --feed 0x0A77230d17318075983913bC2145DB16C7366156 --decimals 8
 // npx hardhat addPriceFeed --network avaxNew --name WETH --address 0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB --feed 0x976B3D034E162d8bD72D6b9C989d545b839003b0 --decimals 8
 
+// Arbitrum: GMX JOE and ARB uses PriceGetter
+//           WOM, GNS, LDO uses DexPriceGetter
+
 task("addPriceFeed", "Add price feed in price getter")
   .addParam("name", "Token name", null, types.string)
   .addParam("address", "Token address", null, types.string)
@@ -645,6 +648,8 @@ task("addPriceFeed", "Add price feed in price getter")
 
 // name: Vector
 // Pair: 0x9ef0c12b787f90f59cbbe0b611b82d30cab92929
+
+// name:
 
 task("addDexPriceFeed")
   .addParam("name", "Token name", null, types.string)
@@ -714,8 +719,6 @@ task("setDexPriceGetter").setAction(async (_, hre) => {
   const tx = await policyCenter.setDexPriceGetter(dexGetter);
   console.log("Tx details", await tx.wait());
 });
-
-
 
 task("setExchange").setAction(async (_, hre) => {
   const { network } = hre;

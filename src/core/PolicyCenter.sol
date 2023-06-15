@@ -32,6 +32,8 @@ import "../libraries/DateTime.sol";
 import "../libraries/StringUtils.sol";
 import "../libraries/SimpleSafeERC20.sol";
 
+import "../swapHelper/ISwapHelper.sol";
+
 /**
  * @title Policy Center
  *
@@ -55,7 +57,7 @@ contract PolicyCenter is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    address public constant USDC = 0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3;
+    address public constant USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
 
     // Pool Id => Priority Pool Address
     // Updated once pools are deployed
@@ -73,6 +75,8 @@ contract PolicyCenter is
     // Protocol token => Exchange router address
     // Some tokens use Joe-V1, some use Joe-LiquidityBook
     mapping(address => address) public exchangeByToken;
+
+    address public swapHelper;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -173,6 +177,10 @@ contract PolicyCenter is
         dexPriceGetter = _dexPriceGetter;
     }
 
+    function setSwapHelper(address _swapHelper) external onlyOwner {
+        swapHelper = _swapHelper;
+    }
+
     function setOracleType(address _token, uint256 _type) external onlyOwner {
         require(_type < 2, "Wrong type");
         oracleType[_token] = _type;
@@ -216,8 +224,7 @@ contract PolicyCenter is
         uint256 _poolId,
         uint256 _coverAmount,
         uint256 _coverDuration,
-        uint256 _maxPayment,
-        address[] memory path
+        uint256 _maxPayment
     ) external poolExists(_poolId) returns (address) {
         if (!_withinLength(_coverDuration)) revert PolicyCenter__BadLength();
 
@@ -242,7 +249,7 @@ contract PolicyCenter is
             uint256 premiumToPriorityPool,
             ,
             uint256 premiumToTreasury
-        ) = _splitPremium(_poolId, premium, path);
+        ) = _splitPremium(_poolId, premium);
 
         IProtectionPool(protectionPool).updateWhenBuy();
         IPriorityPool(priorityPools[_poolId]).updateWhenBuy(
@@ -504,43 +511,15 @@ contract PolicyCenter is
      *
      * @param _fromToken Token address to swap from
      * @param _amount    Amount of token to swap from
-     * @param _path      Swap path
      *
      * @return received Actual usdc amount received
      */
     function _swapTokens(
         address _fromToken,
-        uint256 _amount,
-        address[] memory _path
+        uint256 _amount
     ) internal returns (uint256 received) {
-        uint256 length = _path.length;
-
-        if (_path[length - 1] != USDC) revert PolicyCenter__WrongPath();
-        if (_path[0] != _fromToken) revert PolicyCenter__WrongPath();
-
-        // Swap for USDC and return the received amount
-        uint256[] memory amountsOut = new uint256[](2);
-
-        // The swap router used by this token
-        address router = exchangeByToken[_fromToken];
-
-        // @audit Calculating slippage
-        uint256[] memory amountOutCal = IExchange(router).getAmountsOut(
-            _amount,
-            _path
-        );
-
-        // Use token-specific router to swap
-        amountsOut = IExchange(router).swapExactTokensForTokens(
-            _amount,
-            ((amountOutCal[length - 1] * (10000 - SLIPPAGE)) / 10000),
-            _path,
-            address(this),
-            block.timestamp + 1
-        );
-
-        // Received amount is the second element of the return value
-        received = amountsOut[length - 1];
+        SimpleIERC20(_fromToken).transfer(swapHelper, _amount);
+        received = ISwapHelper(swapHelper).swap(_fromToken, _amount);
 
         emit PremiumSwapped(_fromToken, _amount, received);
     }
@@ -700,7 +679,7 @@ contract PolicyCenter is
         } else if (oracleType[_token] == 1) {
             // If no chainlink oracle, use dex price getter
             price = IPriceGetter(dexPriceGetter).getLatestPrice(_token);
-        } else revert("Wrong type");
+        } else revert("Wrong oracle type");
 
         // @audit Fix decimal for native tokens
         // Check the real decimal diff
@@ -722,7 +701,6 @@ contract PolicyCenter is
      *
      * @param _poolId       Pool id
      * @param _premiumInUSD Premium in USD
-     * @param _path         Swap path
      *
      * @return toPriority   Premium to priority pool
      * @return toProtection Premium to protection pool
@@ -730,8 +708,7 @@ contract PolicyCenter is
      */
     function _splitPremium(
         uint256 _poolId,
-        uint256 _premiumInUSD,
-        address[] memory _path
+        uint256 _premiumInUSD
     )
         internal
         returns (uint256 toPriority, uint256 toProtection, uint256 toTreasury)
@@ -753,7 +730,7 @@ contract PolicyCenter is
         // Except for amount to priority pool, remaining is distributed in usdc
         uint256 amountToSwap = premiumInNativeToken - toPriority;
         // USDC amount received
-        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap, _path);
+        uint256 amountReceived = _swapTokens(nativeToken, amountToSwap);
 
         // USDC to Protection Pool
         toProtection =

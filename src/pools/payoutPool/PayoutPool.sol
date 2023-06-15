@@ -48,7 +48,7 @@ contract PayoutPool is Initializable {
 
     uint256 public constant CLAIM_PERIOD = 30 days;
 
-    address public constant USDC = 0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3;
+    address public constant USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //

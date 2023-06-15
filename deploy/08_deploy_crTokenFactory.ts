@@ -49,6 +49,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].CoverRightTokenFactory = crTokenFactory.address;
 
+  impList[network.name].CoverRightTokenFactory = crTokenFactory.implementation;
+
   console.log(
     "\nCoverRightTokenFactory deployed to address: ",
     crTokenFactory.address,

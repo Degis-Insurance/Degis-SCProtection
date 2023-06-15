@@ -29,7 +29,6 @@ interface IJoeLiquidityBook {
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
-        uint256[] memory pairBinSteps,
         address[] memory path,
         address to,
         uint256 deadline

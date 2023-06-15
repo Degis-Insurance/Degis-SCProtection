@@ -34,14 +34,18 @@ function getRemappings() {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.15",
-    settings: {
-      viaIR: true,
-      optimizer: {
-        enabled: true,
-        runs: 100,
+    compilers: [
+      {
+        version: "0.8.15",
+        settings: {
+          viaIR: true,
+          optimizer: {
+            enabled: true,
+            runs: 100,
+          },
+        },
       },
-    },
+    ],
   },
   namedAccounts: {
     deployer: {

@@ -118,5 +118,49 @@
 			"premium": "320"
 		}
 	},
-	"arb_goerli": {}
+	"arb_goerli": {},
+	"arb": {
+		"1": {
+			"id": "1",
+			"poolAddress": "0x1C674DC50D1bB24851Ed19B43fB768AC1E2b1d3c",
+			"name": "TraderJoe",
+			"token": "0x371c7ec6D8039ff7933a2AA28EB827Ffe1F52f07",
+			"premium": "320"
+		},
+		"2": {
+			"id": "2",
+			"poolAddress": "0xec225C69c6Bc020Bf0118a8ee15CAD4154373416",
+			"name": "GMX",
+			"token": "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
+			"premium": "340"
+		},
+		"3": {
+			"id": "3",
+			"poolAddress": "0x0b3b5AD3d6cf1dcc64Fd2016ad33D2ED1edADb8B",
+			"name": "Wombat",
+			"token": "0x7B5EB3940021Ec0e8e463D5dBB4B7B09a89DDF96",
+			"premium": "280"
+		},
+		"4": {
+			"id": "4",
+			"poolAddress": "0xa64ee03edc3e402f87faa9945470B8FB01Ad4537",
+			"name": "Gains",
+			"token": "0x18c11FD286C5EC11c3b683Caa813B77f5163A122",
+			"premium": "360"
+		},
+		"5": {
+			"id": "5",
+			"poolAddress": "0xB4D75c599f8842E7aAEfcec7eeFb07A8e6Ae5a07",
+			"name": "Lido",
+			"token": "0x13Ad51ed4F1B7e9Dc168d8a00cB3f4dDD85EfA60",
+			"premium": "320"
+		},
+		"6": {
+			"id": "6",
+			"poolAddress": "0x53f9B78aB104c1d88EcDc7bbB06E8B953cda6672",
+			"name": "Arb",
+			"token": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+			"premium": "280"
+		}
+	}
 }

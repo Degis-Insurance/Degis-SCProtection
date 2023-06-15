@@ -29,14 +29,14 @@ interface PriorityPoolFactoryEventError {
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    error PriorityPoolFactory__OnlyExecutor();
-    error PriorityPoolFactory__OnlyPolicyCenter();
-    error PriorityPoolFactory__OnlyOwnerOrExecutor();
-    error PriorityPoolFactory__OnlyPriorityPool();
-    error PriorityPoolFactory__OnlyIncidentReportOrExecutor();
-    error PriorityPoolFactory__PoolNotRegistered();
-    error PriorityPoolFactory__TokenAlreadyRegistered();
-    error PriorityPoolFactory__AlreadyDynamicPool();
-    error PriorityPoolFactory__NotOwnerOrFactory();
-    error PriorityPoolFactory__WrongLPToken();
+    error PriorityPoolFactory__OnlyExecutor(); // 5900a8a9
+    error PriorityPoolFactory__OnlyPolicyCenter(); // b4e0f8d9
+    error PriorityPoolFactory__OnlyOwnerOrExecutor(); // 6adaa0f9a
+    error PriorityPoolFactory__OnlyPriorityPool(); // 3f193ee4
+    error PriorityPoolFactory__OnlyIncidentReportOrExecutor(); // ae1aa57a
+    error PriorityPoolFactory__PoolNotRegistered(); // 76213a28
+    error PriorityPoolFactory__TokenAlreadyRegistered(); // 45d3e1f8
+    error PriorityPoolFactory__AlreadyDynamicPool(); // 34c8f8b9
+    error PriorityPoolFactory__NotOwnerOrFactory(); // 8bc3f382
+    error PriorityPoolFactory__WrongLPToken(); // 00de38c2
 }
