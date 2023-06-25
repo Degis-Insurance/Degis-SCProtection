@@ -22,6 +22,7 @@ import "../util/OwnableWithoutContextUpgradeable.sol";
 
 import "./ISwapRouter.sol";
 import "./ILBRouter.sol";
+import "./ICamelotRouter.sol";
 
 pragma solidity ^0.8.13;
 
@@ -45,17 +46,19 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
         0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public constant JOEV21_ROUTER =
         0xb4315e873dBcf96Ffd0acd8EA43f689D8c20fB30;
+    address public constant CAMELOT_ROUTER =
+        0xc873fEcbd354f5A56E00E710B90EF4201db2448d;
 
     // Fee rate in Uniswap V3
-    uint256 public constant WETH_USDC_FEE = 500; // 0.05%
-    uint256 public constant WETH_USDT_FEE = 500; // 0.05%
+    uint24 public constant WETH_USDC_FEE = 500; // 0.05%
+    uint24 public constant WETH_USDT_FEE = 500; // 0.05%
 
-    uint256 public constant WOM_USDT_FEE = 3000;
+    uint24 public constant WOM_USDT_FEE = 3000;
 
-    uint256 public constant GMX_WETH_FEE = 3000;
-    uint256 public constant GNS_WETH_FEE = 3000;
-    uint256 public constant LDO_WETH_FEE = 3000;
-    uint256 public constant ARB_WETH_FEE = 500;
+    uint24 public constant GMX_WETH_FEE = 3000;
+    uint24 public constant GNS_WETH_FEE = 3000;
+    uint24 public constant LDO_WETH_FEE = 3000;
+    uint24 public constant ARB_WETH_FEE = 500;
 
     // Router types:
     // 1: Uniswap V3
@@ -71,11 +74,13 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
 
         routerTypes[GMX] = 1;
         routerTypes[GNS] = 1;
-        routerTypes[WOM] = 1;
+
         routerTypes[LDO] = 1;
         routerTypes[ARB] = 1;
 
         routerTypes[JOE] = 2;
+
+        routerTypes[WOM] = 3;
     }
 
     function setRouterType(address _token, uint256 _type) external onlyOwner {
@@ -89,13 +94,46 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
             return _univ3_swapExactTokensForTokens(_token, _amount);
         } else if (routerType == 2) {
             return _joev21_swapExactTokensForTokens(_token, _amount);
+        } else if (routerType == 3) {
+            return _camelot_swapExactTokensForTokens(_token, _amount);
         } else revert("Wrong token");
     }
 
-    function _univ3_swapExactTokensForTokens(
-        address _token,
-        uint256 _amount
-    ) internal returns (uint256 amountOut) {
+    function _camelot_swapExactTokensForTokens(address _token, uint256 _amount)
+        internal
+        returns (uint256 amountOut)
+    {
+        if (
+            IERC20(_token).allowance(address(this), CAMELOT_ROUTER) < 1000000e18
+        ) {
+            IERC20(_token).approve(CAMELOT_ROUTER, type(uint256).max);
+        }
+
+        address[] memory path = new address[](2);
+        path[0] = _token;
+        path[1] = USDT;
+
+        uint256 balanceBefore = IERC20(USDT).balanceOf(msg.sender);
+
+        ICamelotRouter(CAMELOT_ROUTER)
+            .swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                _amount,
+                0,
+                path,
+                msg.sender,
+                address(0),
+                block.timestamp
+            );
+
+        uint256 balanceAfter = IERC20(USDT).balanceOf(msg.sender);
+
+        amountOut = balanceAfter - balanceBefore;
+    }
+
+    function _univ3_swapExactTokensForTokens(address _token, uint256 _amount)
+        internal
+        returns (uint256 amountOut)
+    {
         if (
             IERC20(_token).allowance(address(this), UNIV3_ROUTER) < 1000000e18
         ) {
@@ -116,9 +154,11 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
         amountOut = ISwapRouter(UNIV3_ROUTER).exactInput(params);
     }
 
-    function _getPairBinSteps(
-        address _token
-    ) internal pure returns (uint256[] memory pairBinSteps) {
+    function _getPairBinSteps(address _token)
+        internal
+        pure
+        returns (uint256[] memory pairBinSteps)
+    {
         pairBinSteps = new uint256[](2);
 
         if (_token == JOE) {
@@ -127,9 +167,11 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
         } else revert("Wrong token");
     }
 
-    function _getVersions(
-        address _token
-    ) internal pure returns (ILBRouter.Version[] memory versions) {
+    function _getVersions(address _token)
+        internal
+        pure
+        returns (ILBRouter.Version[] memory versions)
+    {
         versions = new ILBRouter.Version[](2);
 
         if (_token == JOE) {
@@ -138,10 +180,10 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
         }
     }
 
-    function _joev21_swapExactTokensForTokens(
-        address _token,
-        uint256 _amount
-    ) internal returns (uint256 amountOut) {
+    function _joev21_swapExactTokensForTokens(address _token, uint256 _amount)
+        internal
+        returns (uint256 amountOut)
+    {
         if (
             IERC20(_token).allowance(address(this), JOEV21_ROUTER) < 1000000e18
         ) {
@@ -172,16 +214,18 @@ contract SwapHelper is OwnableWithoutContextUpgradeable {
         );
     }
 
-    function getUniV3Path(
-        address _token
-    ) public pure returns (bytes memory path) {
+    function getUniV3Path(address _token)
+        public
+        pure
+        returns (bytes memory path)
+    {
         if (_token == WOM) {
             path = abi.encodePacked(
                 WOM,
                 WOM_USDT_FEE,
                 USDT,
                 WETH_USDT_FEE,
-                USDT
+                WETH
             );
         } else if (_token == GMX) {
             path = abi.encodePacked(

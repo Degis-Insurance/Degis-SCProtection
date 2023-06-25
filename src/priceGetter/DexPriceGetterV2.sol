@@ -48,12 +48,13 @@ contract DexPriceGetterV2 is OwnableWithoutContextUpgradeable {
 
     address public constant WOM = 0x7B5EB3940021Ec0e8e463D5dBB4B7B09a89DDF96;
 
-    uint256 public constant WOM_USDT_FEE = 3000;
-
     uint256 public constant GMX_WETH_FEE = 3000;
     uint256 public constant GNS_WETH_FEE = 3000;
     uint256 public constant LDO_WETH_FEE = 3000;
     uint256 public constant ARB_WETH_FEE = 500;
+
+    address public constant DEXPRICEGETTER_V1 =
+        0x45e292eC740cDBd20C68fA932Ecbec925fDAf5A7;
 
     // Base price getter to transfer the price into USD
     IPriceGetter public basePriceGetter;
@@ -76,13 +77,17 @@ contract DexPriceGetterV2 is OwnableWithoutContextUpgradeable {
             if (block.timestamp - lbPriceFeeds[_token].lastTimestamp <= 3600)
                 return lbPriceFeeds[_token].price;
             else return samplePriceFromLB(_token);
-        } else return samplePriceFromUniV3(_token);
+        } else if (_token == WOM) {
+            return IPriceGetter(DEXPRICEGETTER_V1).getLatestPrice(WOM);
+        }
+        else return samplePriceFromUniV3(_token);
     }
 
-    function getSqrtTwapX96(
-        address uniswapV3Pool,
-        uint32 twapInterval
-    ) public view returns (uint160 sqrtPriceX96) {
+    function getSqrtTwapX96(address uniswapV3Pool, uint32 twapInterval)
+        public
+        view
+        returns (uint160 sqrtPriceX96)
+    {
         if (twapInterval == 0) {
             // return the current price if twapInterval == 0
             (sqrtPriceX96, , , , , , ) = IUniswapV3Pool(uniswapV3Pool).slot0();
@@ -107,32 +112,32 @@ contract DexPriceGetterV2 is OwnableWithoutContextUpgradeable {
         }
     }
 
-    function getPriceX96FromSqrtPriceX96(
-        uint160 sqrtPriceX96
-    ) public pure returns (uint256 priceX96) {
+    function getPriceX96FromSqrtPriceX96(uint160 sqrtPriceX96)
+        public
+        pure
+        returns (uint256 priceX96)
+    {
         return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, FixedPoint96.Q96);
     }
 
     function samplePriceFromUniV3(address _token) public returns (uint256) {
         uint256 fee = _token == ARB ? ARB_WETH_FEE : 3000;
 
-        address pool;
-
-        if (_token == WOM) {
-            pool = IUniswapV3Factory(UNI_V3_FACTORY).getPool(WOM, USDT, 3000);
-        } else {
-            pool = IUniswapV3Factory(UNI_V3_FACTORY).getPool(
-                _token,
-                WETH,
-                uint24(fee)
-            );
-        }
+        address pool = IUniswapV3Factory(UNI_V3_FACTORY).getPool(
+            _token,
+            WETH,
+            uint24(fee)
+        );
 
         uint256 priceX96 = getPriceX96FromSqrtPriceX96(
             getSqrtTwapX96(pool, 3600)
         );
 
+        uint256 priceWithETH = priceX96 / 2**96;
+
         uint256 ethPrice = basePriceGetter.getLatestPrice(WETH);
+
+        return (priceWithETH * ethPrice) / 1e18;
     }
 
     function samplePriceFromLB(address _token) public returns (uint256) {
@@ -174,7 +179,7 @@ contract DexPriceGetterV2 is OwnableWithoutContextUpgradeable {
 
         console.log("price: %s", price);
 
-        lbPriceFeed.price = (price * 1e18) / 2 ** 128;
+        lbPriceFeed.price = (price * 1e18) / 2**128;
         lbPriceFeed.lastCumulativeId = cumulativeId;
         lbPriceFeed.lastTimestamp = block.timestamp;
 
@@ -184,9 +189,11 @@ contract DexPriceGetterV2 is OwnableWithoutContextUpgradeable {
         return finalPrice;
     }
 
-    function _getLBPairBinStep(
-        address _token
-    ) internal pure returns (uint256 binStep) {
+    function _getLBPairBinStep(address _token)
+        internal
+        pure
+        returns (uint256 binStep)
+    {
         if (_token == JOE) {
             binStep = 20;
         } else revert("Wrong token");

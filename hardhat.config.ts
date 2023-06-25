@@ -126,6 +126,10 @@ const config: HardhatUserConfig = {
       avalanche: process.env.ETHERSCAN_API_KEY_AVAX
         ? process.env.ETHERSCAN_API_KEY_AVAX
         : "",
+      arbitrumOne: process.env.ETHERSCAN_API_KEY_ARB
+        ? process.env.ETHERSCAN_API_KEY_ARB
+        : "",
+
     },
   },
   paths: {

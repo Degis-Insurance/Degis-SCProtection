@@ -36,6 +36,8 @@ import {
   DexPriceGetter,
   DexPriceGetter__factory,
   MockERC20__factory,
+  SwapHelper,
+  SwapHelper__factory,
 } from "../typechain-types";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -749,4 +751,23 @@ task("setExchange").setAction(async (_, hre) => {
     exchange
   );
   console.log("Allowance", allowance.toString());
+});
+
+task("setRouterType").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const swapHelper: SwapHelper = new SwapHelper__factory(dev_account).attach(
+    addressList[network.name].SwapHelper
+  );
+
+  const token = "0x7B5EB3940021Ec0e8e463D5dBB4B7B09a89DDF96";
+
+  const tx = await swapHelper.setRouterType(token, 3);
+  console.log("Tx details", await tx.wait());
 });
