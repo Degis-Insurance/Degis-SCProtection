@@ -117,6 +117,11 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    sepolia: {
+      url: process.env.SEPOLIA_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   etherscan: {
     apiKey: {
@@ -129,7 +134,9 @@ const config: HardhatUserConfig = {
       arbitrumOne: process.env.ETHERSCAN_API_KEY_ARB
         ? process.env.ETHERSCAN_API_KEY_ARB
         : "",
-
+      sepolia: process.env.ETHERSCAN_API_KEY_SEPOLIA
+        ? process.env.ETHERSCAN_API_KEY_SEPOLIA
+        : "",
     },
   },
   paths: {
