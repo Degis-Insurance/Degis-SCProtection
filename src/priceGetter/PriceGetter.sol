@@ -134,10 +134,9 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
      *
      * @return finalPrice The latest price
      */
-    function getLatestPrice(address _tokenAddress)
-        public
-        returns (uint256 finalPrice)
-    {
+    function getLatestPrice(
+        address _tokenAddress
+    ) public returns (uint256 finalPrice) {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenAddress];
 
         if (priceFeed.priceFeedAddress == address(0)) {
@@ -154,6 +153,10 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
 
             // require(price > 0, "Only accept price that > 0");
             if (price < 0) price = 0;
+            require(
+                answeredInRound >= roundID && rawPrice > 0 && updateTime != 0,
+                "Latest Round Data is not ready"
+            );
 
             emit LatestPriceGet(
                 roundID,
@@ -163,7 +166,7 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
                 answeredInRound
             );
             // Transfer the result decimals
-            finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+            finalPrice = uint256(price) * (10 ** (18 - priceFeed.decimals));
         }
     }
 }
