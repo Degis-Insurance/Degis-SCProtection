@@ -154,7 +154,7 @@ contract PriceGetter is OwnableWithoutContextUpgradeable {
             // require(price > 0, "Only accept price that > 0");
             if (price < 0) price = 0;
             require(
-                answeredInRound >= roundID && rawPrice > 0 && updateTime != 0,
+                answeredInRound >= roundID,
                 "Latest Round Data is not ready"
             );
 
