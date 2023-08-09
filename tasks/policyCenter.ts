@@ -106,3 +106,20 @@ task("provideLiquidityTest", "Provide liquidity to protection pool").setAction(
     console.log("Tx details", await tx.wait());
   }
 );
+
+task("getUSDC")
+.setAction(async(_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+
+  const addressList = readAddressList();
+
+  const center = new PolicyCenter__factory(dev_account).attach(
+    addressList[network.name].PolicyCenter
+  );
+
+  const USDC = await center.USDC();
+  console.log("USDC address: ", USDC);
+})

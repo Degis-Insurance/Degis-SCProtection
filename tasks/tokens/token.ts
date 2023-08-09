@@ -124,17 +124,16 @@ task("mintMockUSD", "Mint mockUSD for mockExchange").setAction(
     const addressList = readAddressList();
 
     const usd: MockUSDC = new MockUSDC__factory(dev_account).attach(
-      addressList[network.name].MockUSDC
+      addressList[network.name].MockUSDT
       // "0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3"
     );
 
-    const tx = await usd.mint(
-      addressList[network.name].MockExchange,
-      parseUnits("1000000000", 6)
-    );
+    const address = "0x32eB34d060c12aD0491d260c436d30e5fB13a8Cd";
+
+    const tx = await usd.mint(address, parseUnits("1000000000", 6));
     console.log("tx details", await tx.wait());
 
-    const balance = await usd.balanceOf(addressList[network.name].MockExchange);
+    const balance = await usd.balanceOf(address);
     console.log("USDC balance of mock exchange:", formatUnits(balance, 6));
   }
 );
