@@ -713,8 +713,6 @@ task("setDexPriceGetter").setAction(async (_, hre) => {
   console.log("Tx details", await tx.wait());
 });
 
-
-
 task("setExchange").setAction(async (_, hre) => {
   const { network } = hre;
 
@@ -724,24 +722,56 @@ task("setExchange").setAction(async (_, hre) => {
 
   const addressList = readAddressList();
 
-  const exchange = "0x454206AD825cAfaE03c9581014AF6b74f7D53713";
+  const GMX = "0x62edc0692BD897D2295872a9FFCac5425011c661";
+  const JOE = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
+  const PTP = "0x22d4002028f537599be9f666d1c4fa138522f9c8"
+  const VTX = "0x5817D4F0b62A59b17f75207DA1848C2cE75e7AF4"
+  const YAK = "0x59414b3089ce2AF0010e7523Dea7E2b35d776ec7"
+  const BTCb = "0x152b9d0FdC40C096757F570A51E494bd4b943E50"
+  const WETHe = "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB"
+  const JoeRouter = "0x60aE616a2155Ee3d9A68541Ba4544862310933d4";
+
+  const USDC = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
 
   const policyCenter: PolicyCenter = new PolicyCenter__factory(
     dev_account
   ).attach(addressList[network.name].PolicyCenter);
 
-  // const tx = await policyCenter.setExchange(exchange);
-  // console.log("Tx details", await tx.wait());
+  const tx = await policyCenter.setExchangeByToken(WETHe, JoeRouter);
+  console.log("Tx details", await tx.wait());
 
-  const token = addressList[network.name].TestProject1;
-  const exchangeByToken = await policyCenter.exchangeByToken(token);
+  const exchangeByToken = await policyCenter.exchangeByToken(WETHe);
   console.log("Exchange by  token", exchangeByToken);
 
-  const t = new MockERC20__factory(dev_account).attach(token);
+  const t = new MockERC20__factory(dev_account).attach(WETHe);
+
+  // const tx = await policyCenter.approvePoolToken(GMX)
 
   const allowance = await t.allowance(
     addressList[network.name].PolicyCenter,
-    exchange
+    JoeRouter
   );
   console.log("Allowance", allowance.toString());
+});
+
+task("liyang").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const policyCenter: PolicyCenter = new PolicyCenter__factory(
+    dev_account
+  ).attach(addressList[network.name].PolicyCenter);
+
+  const usdc = await policyCenter.USDC();
+  console.log("USDC", usdc);
+
+  const JOE = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd";
+
+  const exchangeByToken = await policyCenter.exchangeByToken(JOE);
+  console.log("Exchange by  token", exchangeByToken);
 });

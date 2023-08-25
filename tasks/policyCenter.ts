@@ -70,14 +70,12 @@ task("buyCover", "Buy a cover")
       addressList[network.name].PolicyCenter
     );
 
-    const swapPath = ["", ""];
-
     const tx = await center.buyCover(
       taskArgs.id,
       parseUnits(taskArgs.amount, 6),
       taskArgs.length,
       parseUnits("10000"),
-      swapPath
+      []
     );
 
     console.log("Tx details", await tx.wait());
